@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static const Color darkBackground = Color(0xFF0D0F12);
   static const Color cardColor = Color(0xFF16191E);
+  static const Color surfaceCard = Color(0xFF16191E);
   static const Color borderColor = Color(0xFF262A33);
   static const Color limeAccent = Color(0xFFCCFF00);
   static const Color orangeUrgent = Color(0xFFFF5500);

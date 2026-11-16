@@ -6,6 +6,11 @@
 import { Router } from 'express';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
+import { merchantsRouter } from './modules/merchants/merchants.routes.js';
+import { adminRouter } from './modules/admin/admin.routes.js';
+import { uploadsRouter } from './modules/uploads/uploads.routes.js';
+import { offersRouter } from './modules/offers/offers.routes.js';
+import { aiRouter } from './modules/ai/ai.routes.js';
 
 export const apiRouter = Router();
 
@@ -23,9 +28,14 @@ apiRouter.get('/health', (req, res) => {
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/users', usersRouter);
 
+// Commerces, Administration, Médias, Offres et IA (Jour 3)
+apiRouter.use('/merchants', merchantsRouter);
+apiRouter.use('/admin', adminRouter);
+apiRouter.use('/uploads', uploadsRouter);
+apiRouter.use('/offers', offersRouter);
+apiRouter.use('/ai', aiRouter);
+
 // Les sous-routeurs suivants seront branchés lors des étapes dédiées :
-// apiRouter.use('/merchants', merchantsRouter);
-// apiRouter.use('/offers', offersRouter);
 // apiRouter.use('/orders', ordersRouter);
 // apiRouter.use('/payments', paymentsRouter);
 // apiRouter.use('/tickets', ticketsRouter);
@@ -33,6 +43,3 @@ apiRouter.use('/users', usersRouter);
 // apiRouter.use('/impact', impactRouter);
 // apiRouter.use('/dashboards', dashboardsRouter);
 // apiRouter.use('/radar', radarRouter);
-// apiRouter.use('/admin', adminRouter);
-// apiRouter.use('/uploads', uploadsRouter);
-// apiRouter.use('/ai', aiRouter);

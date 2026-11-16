@@ -12,9 +12,12 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final AppButtonVariant variant;
-  final Widget? icon;
+  final dynamic icon;
   final double height;
   final double? width;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final bool isOutlined;
 
   const AppButton({
     super.key,
@@ -25,33 +28,55 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.height = 50.0,
     this.width = double.infinity,
+    this.backgroundColor,
+    this.textColor,
+    this.isOutlined = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor;
-    Color foregroundColor;
+    Color effectiveBg;
+    Color effectiveFg;
     BorderSide borderSide = BorderSide.none;
 
     switch (variant) {
       case AppButtonVariant.primary:
-        backgroundColor = AppTheme.limeAccent;
-        foregroundColor = Colors.black;
+        effectiveBg = AppTheme.limeAccent;
+        effectiveFg = Colors.black;
         break;
       case AppButtonVariant.secondary:
-        backgroundColor = AppTheme.cardColor;
-        foregroundColor = Colors.white;
+        effectiveBg = AppTheme.cardColor;
+        effectiveFg = Colors.white;
         borderSide = const BorderSide(color: AppTheme.borderColor);
         break;
       case AppButtonVariant.outline:
-        backgroundColor = Colors.transparent;
-        foregroundColor = AppTheme.limeAccent;
+        effectiveBg = Colors.transparent;
+        effectiveFg = AppTheme.limeAccent;
         borderSide = const BorderSide(color: AppTheme.limeAccent);
         break;
       case AppButtonVariant.danger:
-        backgroundColor = AppTheme.redCritical;
-        foregroundColor = Colors.white;
+        effectiveBg = AppTheme.redCritical;
+        effectiveFg = Colors.white;
         break;
+    }
+
+    if (backgroundColor != null) {
+      effectiveBg = backgroundColor!;
+    }
+    if (textColor != null) {
+      effectiveFg = textColor!;
+    }
+    if (isOutlined) {
+      borderSide = BorderSide(color: textColor ?? AppTheme.borderColor);
+    }
+
+    Widget? resolvedIcon;
+    if (icon != null) {
+      if (icon is IconData) {
+        resolvedIcon = Icon(icon as IconData, size: 20, color: effectiveFg);
+      } else if (icon is Widget) {
+        resolvedIcon = icon as Widget;
+      }
     }
 
     return SizedBox(
@@ -60,15 +85,15 @@ class AppButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: foregroundColor,
-          disabledBackgroundColor: backgroundColor.withOpacity(0.5),
-          disabledForegroundColor: foregroundColor.withOpacity(0.5),
+          backgroundColor: effectiveBg,
+          foregroundColor: effectiveFg,
+          disabledBackgroundColor: effectiveBg.withValues(alpha: 0.5),
+          disabledForegroundColor: effectiveFg.withValues(alpha: 0.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: borderSide,
           ),
-          elevation: variant == AppButtonVariant.primary ? 4 : 0,
+          elevation: variant == AppButtonVariant.primary && !isOutlined ? 4 : 0,
         ),
         child: isLoading
             ? SizedBox(
@@ -76,15 +101,15 @@ class AppButton extends StatelessWidget {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(effectiveFg),
                 ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (icon != null) ...[
-                    icon!,
+                  if (resolvedIcon != null) ...[
+                    resolvedIcon,
                     const SizedBox(width: 8),
                   ],
                   Text(
@@ -92,7 +117,7 @@ class AppButton extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: foregroundColor,
+                      color: effectiveFg,
                     ),
                   ),
                 ],

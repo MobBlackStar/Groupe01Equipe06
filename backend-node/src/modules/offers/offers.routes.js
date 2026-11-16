@@ -1,7 +1,53 @@
-// 💡 Concept & Analogie : Routeur Express définissant les points de terminaison pour Publication, gestion et recherche d offres alimentaires avec dégressivité.
-// 🔄 Comparaison React / Flutter : Contrat d API consommé de façon symétrique par Web et Mobile.
-// 🎯 À retenir pour la soutenance : "Nous isolons la déclaration des routes par domaine fonctionnel pour une maintenance modulaire."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Comme les allées d'un supermarché organisant les rayons alimentaires et les caisses, ce routeur organise les points d'accès aux offres.
+// 🔄 Comparaison React / Flutter : Consommé par `OfferFormPage` (React) et `OfferDetailPage` (React/Flutter).
+// 🎯 À retenir pour la soutenance : "La publication d'offre requiert obligatoirement le statut de commerçant validé grâce au middleware requireApprovedMerchant."
+// Module : Offres & Catalogue
 
 import { Router } from 'express';
+import { offersController } from './offers.controller.js';
+import { authenticate } from '../../middleware/authenticate.js';
+import { requireRole } from '../../middleware/requireRole.js';
+import { requireApprovedMerchant } from '../../middleware/requireApprovedMerchant.js';
+import { validate } from '../../middleware/validate.js';
+import { createOfferSchema, updateOfferSchema } from './offers.schemas.js';
+import { ROLES } from '../../../../shared/constants.js';
+
 export const offersRouter = Router();
+
+// Création d'offre réservée aux commerçants agréés
+offersRouter.post(
+  '/',
+  authenticate,
+  requireRole(ROLES.MERCHANT),
+  requireApprovedMerchant,
+  validate({ body: createOfferSchema }),
+  offersController.createOffer
+);
+
+// Mise à jour et suppression d'offre
+offersRouter.patch(
+  '/:id',
+  authenticate,
+  requireRole(ROLES.MERCHANT),
+  validate({ body: updateOfferSchema }),
+  offersController.updateOffer
+);
+
+offersRouter.delete(
+  '/:id',
+  authenticate,
+  requireRole(ROLES.MERCHANT),
+  offersController.deleteOffer
+);
+
+// Consultation d'une offre (publique avec identification facultative pour débloquer le contenu surprise)
+offersRouter.get(
+  '/:id',
+  (req, res, next) => {
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      return authenticate(req, res, next);
+    }
+    next();
+  },
+  offersController.getOfferById
+);

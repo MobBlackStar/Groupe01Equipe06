@@ -12,43 +12,47 @@ import { PRICING_MODES } from './constants.js';
  */
 export function computeUnitPrice(offer, nowInput = Date.now()) {
   const nowMs = nowInput instanceof Date ? nowInput.getTime() : Number(nowInput);
-  const pricing = offer.pricing || offer;
+  const pricing = offer?.pricing || offer || {};
+  const mode = pricing.mode || offer.pricingType || PRICING_MODES.FIXED;
 
-  if (pricing.mode === PRICING_MODES.FIXED) {
-    if (typeof pricing.discountedPriceMillimes !== 'number') {
-      throw new Error("L'offre à prix fixe doit spécifier 'discountedPriceMillimes'");
-    }
-    return Math.round(pricing.discountedPriceMillimes);
+  if (mode === PRICING_MODES.FIXED || mode === 'FIXED') {
+    const discounted = pricing.discountedPriceMillimes ?? offer.discountedPriceMillimes ?? offer.targetPriceMillimes ?? 0;
+    return Math.round(Number(discounted));
   }
 
-  if (pricing.mode === PRICING_MODES.DUTCH_AUCTION) {
-    const start = pricing.startPriceMillimes;
-    const floor = pricing.floorPriceMillimes;
-    const step = pricing.roundingStepMillimes || 100;
+  if (mode === PRICING_MODES.DUTCH_AUCTION || mode === 'DUTCH_AUCTION' || mode === 'DUTCH') {
+    const start = Number(pricing.startPriceMillimes ?? offer.startPriceMillimes ?? offer.originalPriceMillimes ?? 0);
+    const floor = Number(pricing.floorPriceMillimes ?? offer.floorPriceMillimes ?? offer.targetPriceMillimes ?? 0);
+    const step = Math.max(1, Number(pricing.roundingStepMillimes ?? offer.stepMillimes ?? 100));
 
-    const decayStartMs = parseTimestampToMs(pricing.decayStartAt);
-    const pickupEndMs = parseTimestampToMs(offer.pickupEndAt || pricing.pickupEndAt);
+    const decayStartMs = parseTimestampToMs(pricing.decayStartAt ?? offer.decayStartAt ?? offer.pickupStartAt);
+    const pickupEndMs = parseTimestampToMs(pricing.pickupEndAt ?? offer.pickupEndAt);
 
+    // Garde-fous temporels : créneau inexistant ou inversé
     if (!decayStartMs || !pickupEndMs || pickupEndMs <= decayStartMs) {
       return start;
     }
 
+    // Avant le début de l'enchère dégressive
     if (nowMs <= decayStartMs) {
       return start;
     }
 
+    // Après l'expiration du créneau de retrait
     if (nowMs >= pickupEndMs) {
       return floor;
     }
 
+    // Progression linéaire continue
     const progress = (nowMs - decayStartMs) / (pickupEndMs - decayStartMs);
     const rawPrice = start - (start - floor) * progress;
     const steppedPrice = Math.floor(rawPrice / step) * step;
 
-    return Math.max(floor, steppedPrice);
+    // Encadrement strict entre le prix plancher et le prix de départ
+    return Math.min(start, Math.max(floor, steppedPrice));
   }
 
-  throw new Error(`Mode de tarification inconnu : ${pricing.mode}`);
+  throw new Error(`Mode de tarification inconnu : ${mode}`);
 }
 
 /**

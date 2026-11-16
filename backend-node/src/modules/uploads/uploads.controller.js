@@ -1,6 +1,14 @@
-// 💡 Concept & Analogie : Contrôleur HTTP gérant la réception des requêtes et l envoi des réponses JSON pour uploads.
-// 🔄 Comparaison React / Flutter : Renvoie des réponses standardisées avec injection automatique du temps serveur.
-// 🎯 À retenir pour la soutenance : "Le contrôleur orchestre le flux applicatif en déléguant la logique métier au service dédié."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Contrôleur HTTP réceptionnant le flux binaire multipart et retournant l'URL publique de l'image.
+// 🔄 Comparaison React / Flutter : Traite les uploads de photos d'offres soumises par les commerçants.
+// 🎯 À retenir pour la soutenance : "Ce contrôleur intercepte le fichier binaire, vérifie son intégrité et délègue au service Cloudinary."
+// Module : Médias & Téléversements
 
-export const uploadsController = {};
+import { uploadsService } from './uploads.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+
+export const uploadsController = {
+  uploadImage: asyncHandler(async (req, res) => {
+    const result = await uploadsService.uploadImage(req.file);
+    res.status(201).json(result);
+  }),
+};

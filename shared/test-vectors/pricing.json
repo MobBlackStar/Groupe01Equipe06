@@ -1,5 +1,5 @@
 {
-  "description": "Vecteurs de test pour l'algorithme d'enchère dégressive (Smart Decay (Enchère dégressive)) et prix fixe",
+  "description": "Vecteurs de test de référence pour l'algorithme d'enchère dégressive (Smart Decay) et prix fixe",
   "testCases": [
     {
       "id": "fixed_price_basic",
@@ -156,6 +156,232 @@
       "nowMs": 1700003000000,
       "expectedPriceMillimes": 5000,
       "notes": "Progression à 75% -> 8000 - 4000*0.75 = 5000"
+    },
+    {
+      "id": "fixed_price_zero_amount",
+      "offer": {
+        "pricing": {
+          "mode": "FIXED",
+          "discountedPriceMillimes": 0
+        }
+      },
+      "nowMs": 1700000000000,
+      "expectedPriceMillimes": 0,
+      "notes": "Offre gratuite (don étudiant) : retourne exactement 0 millime"
+    },
+    {
+      "id": "fixed_price_large_amount",
+      "offer": {
+        "pricing": {
+          "mode": "FIXED",
+          "discountedPriceMillimes": 38500
+        }
+      },
+      "nowMs": 1700000000000,
+      "expectedPriceMillimes": 38500,
+      "notes": "Offre traiteur grand format : 38.5 TND (38500 millimes) sans altération"
+    },
+    {
+      "id": "dutch_decay_start_equals_pickup_end",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 6000,
+          "floorPriceMillimes": 2000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700000000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700000000000,
+      "expectedPriceMillimes": 6000,
+      "notes": "Garde-fou : début et fin identiques -> retourne le prix de départ"
+    },
+    {
+      "id": "dutch_decay_start_after_pickup_end",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 7000,
+          "floorPriceMillimes": 3000,
+          "decayStartAt": 1700005000000,
+          "pickupEndAt": 1700001000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700002000000,
+      "expectedPriceMillimes": 7000,
+      "notes": "Garde-fou : horaire inversé invalide -> retourne le prix de départ"
+    },
+    {
+      "id": "dutch_pickup_end_missing",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 4500,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700000000000
+        }
+      },
+      "nowMs": 1700002000000,
+      "expectedPriceMillimes": 4500,
+      "notes": "Garde-fou : fin de retrait manquante -> repli sur le prix de départ"
+    },
+    {
+      "id": "dutch_decay_start_missing",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 4500,
+          "floorPriceMillimes": 1500,
+          "pickupEndAt": 1700009000000
+        }
+      },
+      "nowMs": 1700002000000,
+      "expectedPriceMillimes": 4500,
+      "notes": "Garde-fou : début de dégressivité manquant -> repli sur le prix de départ"
+    },
+    {
+      "id": "dutch_step_1_millime",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 1
+        }
+      },
+      "nowMs": 1700005000000,
+      "expectedPriceMillimes": 3250,
+      "notes": "Pas ultra-fin de 1 millime : à 50% de progression -> raw 3250 sans arrondi de palier"
+    },
+    {
+      "id": "dutch_step_500_millimes",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 6000,
+          "floorPriceMillimes": 1000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 500
+        }
+      },
+      "nowMs": 1700005000000,
+      "expectedPriceMillimes": 3500,
+      "notes": "Pas de 500 millimes : à 50% (raw 3500) -> 3500"
+    },
+    {
+      "id": "dutch_step_1000_millimes",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 9000,
+          "floorPriceMillimes": 2000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 1000
+        }
+      },
+      "nowMs": 1700004500000,
+      "expectedPriceMillimes": 5000,
+      "notes": "Pas de 1000 millimes : à 45% (9000 - 7000*0.45 = 5850) -> floor à 5000"
+    },
+    {
+      "id": "dutch_one_second_after_decay_start",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 8000,
+          "floorPriceMillimes": 2000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700000001000,
+      "expectedPriceMillimes": 7900,
+      "notes": "Une seconde après le début (raw 7999.4) : arrondi au pas inférieur de 100 millimes donne 7900"
+    },
+    {
+      "id": "dutch_one_second_before_pickup_end",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 8000,
+          "floorPriceMillimes": 2000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700009999000,
+      "expectedPriceMillimes": 2000,
+      "notes": "Une seconde avant la fin : le prix a atteint le plancher"
+    },
+    {
+      "id": "dutch_floor_clamp_guarantee",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 4200,
+          "floorPriceMillimes": 1350,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700009900000,
+      "expectedPriceMillimes": 1350,
+      "notes": "Garantie prix plancher : même si l'arrondi au pas inférieur donne 1300, le plancher 1350 est garanti"
+    },
+    {
+      "id": "dutch_equal_start_and_floor",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 3000,
+          "floorPriceMillimes": 3000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700005000000,
+      "expectedPriceMillimes": 3000,
+      "notes": "Prix constant dans une enchère hollandaise : reste invariant à 3000 millimes"
+    },
+    {
+      "id": "dutch_iso_string_dates",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": "2023-11-14T22:13:20.000Z",
+          "pickupEndAt": "2023-11-15T00:43:20.000Z",
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700004500000,
+      "expectedPriceMillimes": 3200,
+      "notes": "Horodatages passés sous forme de chaînes ISO 8601 : conversion transparente"
+    },
+    {
+      "id": "dutch_flat_offer_properties",
+      "offer": {
+        "pricingType": "DUTCH",
+        "originalPriceMillimes": 6000,
+        "targetPriceMillimes": 2000,
+        "pickupStartAt": 1700000000000,
+        "pickupEndAt": 1700010000000,
+        "stepMillimes": 200
+      },
+      "nowMs": 1700005000000,
+      "expectedPriceMillimes": 4000,
+      "notes": "Structure plate de document d'offre Firestore (propriétés directes sans sous-objet pricing)"
     }
   ]
 }

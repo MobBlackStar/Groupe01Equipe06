@@ -1,6 +1,14 @@
-// 💡 Concept & Analogie : Contrôleur HTTP gérant la réception des requêtes et l envoi des réponses JSON pour ai.
-// 🔄 Comparaison React / Flutter : Renvoie des réponses standardisées avec injection automatique du temps serveur.
-// 🎯 À retenir pour la soutenance : "Le contrôleur orchestre le flux applicatif en déléguant la logique métier au service dédié."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Contrôleur HTTP d'analyse d'offres par IA.
+// 🔄 Comparaison React / Flutter : Point de terminaison unique pour le bouton "Remplir avec l'IA" sur React et Flutter.
+// 🎯 À retenir pour la soutenance : "Ce contrôleur soumet le texte au service d'analyse et garantit un retour JSON même si le fournisseur externe est en panne."
+// Module : Intelligence Artificielle & Automatisation
 
-export const aiController = {};
+import { aiService } from './ai.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+
+export const aiController = {
+  autofillOffer: asyncHandler(async (req, res) => {
+    const result = await aiService.autofillOffer(req.body.text);
+    res.json(result);
+  }),
+};
