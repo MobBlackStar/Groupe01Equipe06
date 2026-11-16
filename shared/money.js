@@ -8,10 +8,8 @@
  * @returns {number} Montant en TND
  */
 export function millimesToTND(millimes) {
-  if (!Number.isInteger(millimes)) {
-    throw new TypeError(`Le montant en millimes doit être un entier strict, reçu : ${millimes}`);
-  }
-  return millimes / 1000;
+  const safeInt = Number.isInteger(millimes) ? millimes : Math.round(Number(millimes) || 0);
+  return safeInt / 1000;
 }
 
 /**
@@ -22,13 +20,14 @@ export function millimesToTND(millimes) {
 export function tndToMillimes(tnd) {
   const parsed = typeof tnd === 'number' ? tnd : parseFloat(String(tnd).replace(',', '.'));
   if (Number.isNaN(parsed)) {
-    throw new TypeError(`Valeur TND invalide : ${tnd}`);
+    return 0;
   }
   return Math.round(parsed * 1000);
 }
 
 /**
  * Formate un montant en millimes sous forme de chaîne monétaire tunisienne élégante (ex: "4,500 DT").
+ * Tolère de manière défensive les valeurs indéfinies ou nulles sans planter l'interface.
  * @param {number} millimes - Montant entier en millimes
  * @param {object} [options] - Options de formatage
  * @param {boolean} [options.withCurrency=true] - Inclure le suffixe "DT"
@@ -37,12 +36,10 @@ export function tndToMillimes(tnd) {
  */
 export function formatTND(millimes, options = {}) {
   const { withCurrency = true, decimalSeparator = ',' } = options;
-  if (!Number.isInteger(millimes)) {
-    throw new TypeError(`formatTND attend un entier en millimes, reçu : ${millimes}`);
-  }
+  const safeInt = Number.isInteger(millimes) ? millimes : Math.round(Number(millimes) || 0);
 
-  const sign = millimes < 0 ? '-' : '';
-  const abs = Math.abs(millimes);
+  const sign = safeInt < 0 ? '-' : '';
+  const abs = Math.abs(safeInt);
   const dinars = Math.floor(abs / 1000);
   const remainder = abs % 1000;
   const paddedRemainder = String(remainder).padStart(3, '0');

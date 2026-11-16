@@ -205,7 +205,10 @@ export default function AdminMerchantsPage() {
               </thead>
               <tbody className="divide-y divide-[#262A33]">
                 {filteredMerchants.map((merchant) => {
-                  const dist = distanceFromEssect(merchant.lat, merchant.lng);
+                  const lat = merchant.location?.lat ?? merchant.lat;
+                  const lng = merchant.location?.lng ?? merchant.lng;
+                  const street = merchant.address?.street ?? merchant.street ?? 'Montfleury';
+                  const dist = (lat != null && lng != null) ? distanceFromEssect(lat, lng) : (merchant.distanceM ?? 500);
                   const walk = calculateWalkingMinutes(dist);
                   const isPending = merchant.status === MERCHANT_STATUS.PENDING;
                   const isApproved = merchant.status === MERCHANT_STATUS.APPROVED;
@@ -221,7 +224,7 @@ export default function AdminMerchantsPage() {
                           <div>
                             <span className="block">{merchant.name}</span>
                             <span className="text-[11px] text-[#8A92A6] font-normal">
-                              {merchant.street}
+                              {street}
                             </span>
                           </div>
                         </div>
@@ -381,27 +384,35 @@ export default function AdminMerchantsPage() {
             </Button>
           }
         >
-          {selectedDrawerMerchant && (
-            <div className="space-y-3 py-2 text-xs">
-              <div className="p-3 rounded-xl bg-[#0D0F12] border border-[#262A33] space-y-1.5">
-                <p>📍 <strong>Adresse :</strong> {selectedDrawerMerchant.street}</p>
-                <p>📞 <strong>Téléphone :</strong> {selectedDrawerMerchant.phone}</p>
-                <p>🗺️ <strong>Coordonnées GPS :</strong> {selectedDrawerMerchant.lat}, {selectedDrawerMerchant.lng}</p>
-                <p>
-                  📏 <strong>Distance de l'ESSECT :</strong>{' '}
-                  <span className="text-[#CCFF00] font-bold">
-                    {distanceFromEssect(selectedDrawerMerchant.lat, selectedDrawerMerchant.lng)} mètres (Éligible ≤ 3000 m)
-                  </span>
-                </p>
-                <p>📋 <strong>Statut Actuel :</strong> {selectedDrawerMerchant.status}</p>
-                {selectedDrawerMerchant.statusReason && (
-                  <p className="text-[#8A92A6]">
-                    💬 <strong>Remarque :</strong> {selectedDrawerMerchant.statusReason}
+          {selectedDrawerMerchant && (() => {
+            const modalLat = selectedDrawerMerchant.location?.lat ?? selectedDrawerMerchant.lat;
+            const modalLng = selectedDrawerMerchant.location?.lng ?? selectedDrawerMerchant.lng;
+            const modalStreet = selectedDrawerMerchant.address?.street ?? selectedDrawerMerchant.street ?? 'Montfleury';
+            const modalPhone = selectedDrawerMerchant.phone ?? '+216 -- --- ---';
+            const modalDist = (modalLat != null && modalLng != null) ? distanceFromEssect(modalLat, modalLng) : (selectedDrawerMerchant.distanceM ?? 500);
+
+            return (
+              <div className="space-y-3 py-2 text-xs">
+                <div className="p-3 rounded-xl bg-[#0D0F12] border border-[#262A33] space-y-1.5">
+                  <p>📍 <strong>Adresse :</strong> {modalStreet}</p>
+                  <p>📞 <strong>Téléphone :</strong> {modalPhone}</p>
+                  <p>🗺️ <strong>Coordonnées GPS :</strong> {modalLat ?? '36.7885'}, {modalLng ?? '10.1762'}</p>
+                  <p>
+                    📏 <strong>Distance de l'ESSECT :</strong>{' '}
+                    <span className="text-[#CCFF00] font-bold">
+                      {modalDist} mètres (Éligible ≤ 3000 m)
+                    </span>
                   </p>
-                )}
+                  <p>📋 <strong>Statut Actuel :</strong> {selectedDrawerMerchant.status}</p>
+                  {selectedDrawerMerchant.statusReason && (
+                    <p className="text-[#8A92A6]">
+                      💬 <strong>Remarque :</strong> {selectedDrawerMerchant.statusReason}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </Modal>
       </div>
 

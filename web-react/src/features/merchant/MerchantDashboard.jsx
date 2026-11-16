@@ -225,7 +225,7 @@ export default function MerchantDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard
             title="Revenu Anti-Gaspi"
-            value={formatTND(kpis.revenueMillimes)}
+            value={formatTND(kpis?.revenueMillimes ?? 0)}
             subtitle="Chiffre d'affaires récupéré"
             icon={<DollarSign className="w-5 h-5" />}
             accent="lime"
@@ -352,7 +352,7 @@ export default function MerchantDashboard() {
                       </div>
                     </div>
                     <span className="font-mono text-xs font-bold text-emerald-400 whitespace-nowrap">
-                      {formatTND(item.revenueMillimes)}
+                      {formatTND(item?.revenueMillimes ?? 0)}
                     </span>
                   </div>
                 ))}

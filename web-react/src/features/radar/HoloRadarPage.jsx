@@ -3,7 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Le Montfleury Holo-Radar illustre la puissance de WebGL pour le e-commerce de proximité : les prismes 3D grandissent selon le stock disponible et clignotent en rouge lorsque l'heure de fermeture approche."
 // Module : Holo-Radar 3D WebGL
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
