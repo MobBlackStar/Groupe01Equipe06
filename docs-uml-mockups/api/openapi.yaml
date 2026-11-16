@@ -2,22 +2,134 @@ openapi: 3.0.3
 info:
   title: CampusSave API REST
   description: >
-    API REST de la plateforme intelligente de lutte contre le gaspillage alimentaire
-    autour du campus de l'ESSECT (Montfleury, Tunis). Projet pédagogique intégrateur 2026.
+    API REST transactionnelle de la plateforme omnicanale de lutte contre le gaspillage alimentaire
+    et de solidarité étudiante autour du campus de l'ESSECT (Montfleury, Tunis).
+    Projet pédagogique intégrateur 2026 — 3ème Année Licence E-Business.
   version: 1.0.0
+  contact:
+    name: Équipe CampusSave (Fedi Touati & Ritej Bejaoui)
+    email: contact@campussave.tn
 servers:
   - url: http://localhost:4000/api/v1
     description: Serveur de développement local
   - url: https://campussave-api.onrender.com/api/v1
     description: Serveur de production Cloud (Render)
 
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Santé & Système
+    description: Vérification de connectivité et synchronisation temporelle
+  - name: Authentification & Utilisateurs
+    description: Enregistrement des profils et gestion des identités par rôle
+  - name: Commerces & Partenaires
+    description: Référencement, consultation et modération des commerces de Montfleury
+  - name: Offres & Paniers Invendus
+    description: Gestion des surplus alimentaires, tarification dégressive et paniers surprises
+  - name: Assistant IA & Médias
+    description: Extraction automatique d'offres en langage naturel et téléversement d'images
+  - name: Commandes & Réservations
+    description: Réservations atomiques sous concurrence et évaluation des repas
+  - name: Paiements Électroniques
+    description: Intégration bancaire Konnect Network et webhooks idempotents
+  - name: Living Ticket & Retrait
+    description: Cryptographie HMAC-SHA256 rotative 30s et validation au comptoir
+  - name: Fidélité & Récompenses
+    description: Programme éco-responsable à 5 tampons et bons de réduction
+  - name: Radar 3D & Géolocalisation
+    description: Proximité cartographique dans le rayon piéton de 3 km de l'ESSECT
+  - name: Tableaux de Bord & Impact
+    description: Indicateurs décisionnels par rôle et métriques écologiques certifiées FAO/EPA
+  - name: Administration
+    description: Modération de la plateforme universitaire et gestion des bannissements
+
 paths:
   /health:
     get:
-      summary: État de santé du système
+      tags: [Santé & Système]
+      summary: État de santé du système et horloge serveur
+      security: []
       responses:
         '200':
-          description: Serveur et base de données opérationnels
+          description: Serveur et base Firestore opérationnels
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/register-profile:
+    post:
+      tags: [Authentification & Utilisateurs]
+      summary: Enregistrement d'un profil après authentification Firebase Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterProfileRequest'
+      responses:
+        '201':
+          description: Profil utilisateur créé ou synchronisé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /users/me:
+    get:
+      tags: [Authentification & Utilisateurs]
+      summary: Récupération du profil de l'utilisateur connecté
+      responses:
+        '200':
+          description: Profil complet de l'utilisateur connecté
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+    patch:
+      tags: [Authentification & Utilisateurs]
+      summary: Mise à jour des informations personnelles du profil
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profil mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  /users/me/fcm-token:
+    post:
+      tags: [Authentification & Utilisateurs]
+      summary: Enregistrement d'un jeton push FCM pour les notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fcmToken]
+              properties:
+                fcmToken:
+                  type: string
+                  example: dK9sL0xP2qZ_essect_fcm_token_sample
+      responses:
+        '200':
+          description: Jeton FCM associé au compte
           content:
             application/json:
               schema:
@@ -26,50 +138,1362 @@ paths:
                   ok:
                     type: boolean
                     example: true
-                  firestore:
-                    type: string
-                    example: up
-                  time:
-                    type: string
-                    format: date-time
-                  serverTime:
-                    type: integer
-                    example: 1700000000000
+
+  /merchants:
+    get:
+      tags: [Commerces & Partenaires]
+      summary: Liste des commerces approuvés dans le rayon de l'ESSECT
+      security: []
+      responses:
+        '200':
+          description: Tableau des commerces partenaires validés
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Merchant'
+    post:
+      tags: [Commerces & Partenaires]
+      summary: Création d'une fiche commerce par un commerçant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMerchantRequest'
+      responses:
+        '201':
+          description: Commerce soumis avec succès (état PENDING)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  /merchants/me:
+    get:
+      tags: [Commerces & Partenaires]
+      summary: Consultation de son propre commerce par le commerçant connecté
+      responses:
+        '200':
+          description: Fiche détaillée du commerce
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /merchants/{id}:
+    get:
+      tags: [Commerces & Partenaires]
+      summary: Fiche publique d'un commerce spécifique
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: m-chaker
+      responses:
+        '200':
+          description: Fiche du commerce
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+        '404':
+          $ref: '#/components/responses/404NotFound'
 
   /offers:
     get:
-      summary: Consultation et recherche d'offres alimentaires
+      tags: [Offres & Paniers Invendus]
+      summary: Recherche et catalogue multi-critères d'offres alimentaires
+      security: []
       parameters:
         - name: q
           in: query
           description: Mot-clé de recherche textuelle
           schema:
             type: string
+            example: makloub
         - name: category
           in: query
-          description: Catégorie de plat
           schema:
-            type: string
-            enum: [SANDWICH, PLAT_CHAUD, PIZZA, PATISSERIE, VIENNOISERIE, SALADE, BOISSON, SNACK, MIXTE]
+            $ref: '#/components/schemas/OfferCategory'
         - name: minPrice
           in: query
           schema:
             type: integer
+            example: 1000
         - name: maxPrice
           in: query
           schema:
             type: integer
+            example: 6000
+        - name: surpriseOnly
+          in: query
+          schema:
+            type: boolean
+            example: false
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [distance, price, urgency, date]
+            default: distance
       responses:
         '200':
-          description: Liste des offres avec prix temps réel calculé
+          description: Liste paginée ou filtrée des offres actives
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+    post:
+      tags: [Offres & Paniers Invendus]
+      summary: Publication d'une nouvelle offre anti-gaspillage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+      responses:
+        '201':
+          description: Offre publiée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /offers/{id}:
+    get:
+      tags: [Offres & Paniers Invendus]
+      summary: Détail complet d'une offre avec prix dégressif instantané
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: off-1
+      responses:
+        '200':
+          description: Fiche détaillée de l'offre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+    patch:
+      tags: [Offres & Paniers Invendus]
+      summary: Modification d'une offre (interdite si déjà commandée)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOfferRequest'
+      responses:
+        '200':
+          description: Offre modifiée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '409':
+          description: Conflit - Offre verrouillée par une commande active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /offers/{id}/status:
+    patch:
+      tags: [Offres & Paniers Invendus]
+      summary: Changement d'état d'une offre (ACTIVE, SOLD_OUT, DELETED)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [ACTIVE, SOLD_OUT, EXPIRED, DELETED]
+      responses:
+        '200':
+          description: Statut mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+
+  /ai/autofill:
+    post:
+      tags: [Assistant IA & Médias]
+      summary: Analyse en langage naturel pour pré-remplir une offre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  example: Il me reste 4 makloub escalope panée, 3500 au lieu de 7500 avant 18h
+      responses:
+        '200':
+          description: Offre pré-structurée par LLM ou parseur tunisien
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAutofillResponse'
+
+  /uploads/image:
+    post:
+      tags: [Assistant IA & Médias]
+      summary: Téléversement d'image sécurisé vers le CDN Cloudinary
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image optimisée et stockée sur le CDN
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  offers:
-                    type: array
-                    items:
-                      type: object
-                  serverTime:
+                  url:
+                    type: string
+                    example: https://res.cloudinary.com/campussave/image/upload/v1/dishes/makloub.webp
+                  publicId:
+                    type: string
+                    example: dishes/makloub_abc123
+
+  /orders:
+    get:
+      tags: [Commandes & Réservations]
+      summary: Liste des commandes de l'utilisateur connecté (étudiant ou commerçant)
+      responses:
+        '200':
+          description: Liste des commandes associées
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      tags: [Commandes & Réservations]
+      summary: Réservation atomique d'un panier sous concurrence stricte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Commande réservée avec compte à rebours de 10 minutes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '409':
+          description: Stock insuffisant ou offre expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders/{id}:
+    get:
+      tags: [Commandes & Réservations]
+      summary: Consultation du contrat d'une commande
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: ord-1
+      responses:
+        '200':
+          description: Détail complet de la commande
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /orders/{id}/cancel:
+    post:
+      tags: [Commandes & Réservations]
+      summary: Annulation d'une réservation avant paiement (stock restitué)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Réservation annulée et stock de l'offre restitué
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /orders/{id}/rating:
+    post:
+      tags: [Commandes & Réservations]
+      summary: Évaluation d'une commande terminée (1 à 5 étoiles)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stars]
+              properties:
+                stars:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 5
+                comment:
+                  type: string
+                  maxLength: 280
+                  example: Plats chauds et portion généreuse, merci Chez Chaker !
+      responses:
+        '200':
+          description: Note enregistrée et moyenne du commerce mise à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  ratingAvg:
+                    type: number
+                    example: 4.8
+        '409':
+          description: Commande déjà évaluée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /payments/initiate:
+    post:
+      tags: [Paiements Électroniques]
+      summary: Initialisation d'une session de paiement Konnect Sandbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId]
+              properties:
+                orderId:
+                  type: string
+                  example: ord-1
+                useRewardId:
+                  type: string
+                  nullable: true
+                  example: rew-welcome-20
+      responses:
+        '200':
+          description: Session de paiement créée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentUrl:
+                    type: string
+                    example: https://api.preprod.konnect.network/gateway/pay?id=konnect_pay_123
+                  paymentRef:
+                    type: string
+                    example: konnect_ref_456
+                  amountMillimes:
                     type: integer
+                    example: 3800
+
+  /payments/verify/{orderId}:
+    post:
+      tags: [Paiements Électroniques]
+      summary: Vérification synchrone au retour de la passerelle de paiement
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paiement validé, commande basculée à l'état PAID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /payments/webhook:
+    post:
+      tags: [Paiements Électroniques]
+      summary: Webhook asynchrone signé émis par les serveurs Konnect
+      security: []
+      responses:
+        '200':
+          description: Notification de paiement acquittée de manière idempotente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+
+  /tickets/{orderId}:
+    get:
+      tags: [Living Ticket & Retrait]
+      summary: Données cryptographiques pour générer le Living Ticket (30s HMAC)
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paramètres de signature et code de secours
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivingTicketPayload'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /tickets/validate:
+    post:
+      tags: [Living Ticket & Retrait]
+      summary: Validation physique au comptoir par le commerçant (scan QR ou code)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTicketRequest'
+      responses:
+        '200':
+          description: Retrait validé, repas remis et EcoPoints attribués
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateTicketResponse'
+        '400':
+          description: Signature cryptographique invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Tentative de scan d'une commande d'un autre commerçant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Ticket déjà consommé ou commande expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '423':
+          description: Ticket verrouillé après 5 tentatives infructueuses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /loyalty/me:
+    get:
+      tags: [Fidélité & Récompenses]
+      summary: État de la carte de fidélité étudiante, tampons et récompenses
+      responses:
+        '200':
+          description: Solde d'EcoPoints, palier végétal et coupons disponibles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoyaltyProfile'
+
+  /loyalty/claim-reward:
+    post:
+      tags: [Fidélité & Récompenses]
+      summary: Conversion de 100 EcoPoints en un coupon de réduction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rewardType]
+              properties:
+                rewardType:
+                  type: string
+                  enum: [PERCENT_OFF, FREE_SURPRISE]
+                  example: PERCENT_OFF
+      responses:
+        '200':
+          description: Récompense débloquée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardCoupon'
+
+  /radar:
+    get:
+      tags: [Radar 3D & Géolocalisation]
+      summary: Données géospatiales optimisées pour le radar 3D WebGL MapLibre
+      security: []
+      responses:
+        '200':
+          description: Positions géographiques des commerces et décomptes d'offres
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RadarResponse'
+
+  /dashboards/student:
+    get:
+      tags: [Tableaux de Bord & Impact]
+      summary: Tableau de bord analytique personnel de l'étudiant
+      responses:
+        '200':
+          description: Synthèse d'économies, repas sauvés et historique
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDashboard'
+
+  /dashboards/merchant:
+    get:
+      tags: [Tableaux de Bord & Impact]
+      summary: Tableau de bord de gestion et ventes du commerçant
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d]
+            default: 7d
+      responses:
+        '200':
+          description: Revenus, taux de no-show et palmarès des ventes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerchantDashboard'
+
+  /dashboards/admin:
+    get:
+      tags: [Tableaux de Bord & Impact]
+      summary: Console d'administration globale de la plateforme universitaire
+      responses:
+        '200':
+          description: Indicateurs système consolidés
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+
+  /impact/global:
+    get:
+      tags: [Tableaux de Bord & Impact]
+      summary: Indicateurs d'impact écologique public du campus
+      security: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 14
+      responses:
+        '200':
+          description: Repas sauvés, CO2 évité et équivalences EPA/FAO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImpactGlobal'
+
+  /impact/filieres:
+    get:
+      tags: [Tableaux de Bord & Impact]
+      summary: Classement inter-filières officiel de l'ESSECT Montfleury
+      security: []
+      responses:
+        '200':
+          description: Tableau des 5 filières triées par impact écologique
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FiliereImpact'
+
+  /admin/merchants/{id}/status:
+    patch:
+      tags: [Administration]
+      summary: Modération administrative d'un commerce (approbation/rejet)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [APPROVED, REJECTED, SUSPENDED]
+                  example: APPROVED
+                reason:
+                  type: string
+                  example: Registre du commerce et hygiène vérifiés
+      responses:
+        '200':
+          description: Statut du commerce mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchant'
+
+  /admin/users/{id}/status:
+    patch:
+      tags: [Administration]
+      summary: Suspension ou réactivation d'un utilisateur
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [ACTIVE, SUSPENDED]
+      responses:
+        '200':
+          description: Utilisateur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Jeton JWT émis par Firebase Auth (identifiant d'étudiant, commerçant ou admin)
+
+  responses:
+    400BadRequest:
+      description: Paramètres invalides ou corps de requête malformé
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    401Unauthorized:
+      description: Authentification absente ou jeton JWT expiré
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    403Forbidden:
+      description: Droits d'accès insuffisants pour ce rôle
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    404NotFound:
+      description: Ressource introuvable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    409Conflict:
+      description: Conflit transactionnel, rupture de stock ou doublon
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        firestore:
+          type: string
+          example: up
+        time:
+          type: string
+          format: date-time
+        serverTime:
+          type: integer
+          example: 1700770000000
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: OFFER_SOLD_OUT
+        message:
+          type: string
+          example: Cette offre vient d'être réservée par un autre étudiant.
+        statusCode:
+          type: integer
+          example: 409
+        details:
+          type: object
+          nullable: true
+
+    UserRole:
+      type: string
+      enum: [STUDENT, MERCHANT, ADMIN]
+
+    FiliereId:
+      type: string
+      enum: [EBUSINESS_3A, FINANCE, MARKETING, GESTION, COMPTABILITE]
+
+    OfferCategory:
+      type: string
+      enum: [SANDWICH, PLAT_CHAUD, PIZZA, PATISSERIE, VIENNOISERIE, SALADE, BOISSON, SNACK, MIXTE]
+
+    PricingMode:
+      type: string
+      enum: [FIXED, DUTCH_AUCTION]
+
+    RarityTier:
+      type: string
+      enum: [COMMON, RARE, LEGENDARY]
+
+    OrderStatus:
+      type: string
+      enum: [RESERVED, PAID, COMPLETED, CANCELLED, EXPIRED, PAYMENT_FAILED, NO_SHOW]
+
+    User:
+      type: object
+      properties:
+        uid:
+          type: string
+          example: usr_yassine_123
+        email:
+          type: string
+          format: email
+          example: yassine.trabelsi@essect.tn
+        displayName:
+          type: string
+          example: Yassine Trabelsi
+        role:
+          $ref: '#/components/schemas/UserRole'
+        filiereId:
+          $ref: '#/components/schemas/FiliereId'
+        phone:
+          type: string
+          example: +21698123456
+        ecoPoints:
+          type: integer
+          example: 90
+        loyaltyTier:
+          type: string
+          example: GRAINE
+        status:
+          type: string
+          example: ACTIVE
+
+    RegisterProfileRequest:
+      type: object
+      required: [role, displayName]
+      properties:
+        role:
+          $ref: '#/components/schemas/UserRole'
+        displayName:
+          type: string
+          example: Yassine Trabelsi
+        filiereId:
+          $ref: '#/components/schemas/FiliereId'
+        phone:
+          type: string
+          example: +21698123456
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        phone:
+          type: string
+        filiereId:
+          $ref: '#/components/schemas/FiliereId'
+
+    Merchant:
+      type: object
+      properties:
+        id:
+          type: string
+          example: m-chaker
+        name:
+          type: string
+          example: Chez Chaker Montfleury
+        type:
+          type: string
+          example: FAST_FOOD
+        description:
+          type: string
+          example: Fast-food artisanal réputé pour ses chapatis et makloubs traditionnels.
+        phone:
+          type: string
+          example: +21671390111
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: Rue Abou el Kacem Chebbi
+            city:
+              type: string
+              example: Montfleury, Tunis
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              example: 36.7885
+            lng:
+              type: number
+              example: 10.1762
+        distanceFromEssectM:
+          type: integer
+          example: 210
+        walkingMinutes:
+          type: integer
+          example: 3
+        status:
+          type: string
+          example: APPROVED
+        ratingAvg:
+          type: number
+          example: 4.8
+        ratingCount:
+          type: integer
+          example: 42
+
+    CreateMerchantRequest:
+      type: object
+      required: [name, type, phone, address, location]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        phone:
+          type: string
+        address:
+          type: object
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: off-1
+        merchantId:
+          type: string
+          example: m-chaker
+        merchantName:
+          type: string
+          example: Chez Chaker Montfleury
+        title:
+          type: string
+          example: Makloub Escalope Panée & Double Fromage
+        description:
+          type: string
+          example: Pain makloub artisanal cuit au four, garniture généreuse.
+        category:
+          $ref: '#/components/schemas/OfferCategory'
+        pricingType:
+          $ref: '#/components/schemas/PricingMode'
+        originalPriceMillimes:
+          type: integer
+          example: 7500
+        targetPriceMillimes:
+          type: integer
+          example: 3800
+        currentPriceMillimes:
+          type: integer
+          example: 3800
+        quantityAvailable:
+          type: integer
+          example: 4
+        pickupStartAt:
+          type: string
+          format: date-time
+        pickupEndAt:
+          type: string
+          format: date-time
+        isSurpriseBasket:
+          type: boolean
+          example: false
+        rarity:
+          $ref: '#/components/schemas/RarityTier'
+        imageUrl:
+          type: string
+          example: https://res.cloudinary.com/campussave/image/upload/v1/dishes/makloub.webp
+        status:
+          type: string
+          example: ACTIVE
+
+    CreateOfferRequest:
+      type: object
+      required: [title, category, pricingType, originalPriceMillimes, targetPriceMillimes, quantityAvailable, pickupStartAt, pickupEndAt]
+      properties:
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/OfferCategory'
+        pricingType:
+          $ref: '#/components/schemas/PricingMode'
+        originalPriceMillimes:
+          type: integer
+        targetPriceMillimes:
+          type: integer
+        quantityAvailable:
+          type: integer
+        pickupStartAt:
+          type: string
+          format: date-time
+        pickupEndAt:
+          type: string
+          format: date-time
+        isSurpriseBasket:
+          type: boolean
+        rarity:
+          $ref: '#/components/schemas/RarityTier'
+        secretContentsSummary:
+          type: string
+          description: Contenu confidentiel chiffré stocké en sous-collection
+
+    UpdateOfferRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        quantityAvailable:
+          type: integer
+        pickupEndAt:
+          type: string
+          format: date-time
+
+    AiAutofillResponse:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Makloub Escalope Panée
+        category:
+          $ref: '#/components/schemas/OfferCategory'
+        originalPriceMillimes:
+          type: integer
+          example: 7500
+        targetPriceMillimes:
+          type: integer
+          example: 3500
+        quantity:
+          type: integer
+          example: 4
+        isDutch:
+          type: boolean
+          example: true
+        confidence:
+          type: number
+          example: 0.95
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          example: ord-1
+        orderCode:
+          type: string
+          example: CS-8K4M9
+        studentId:
+          type: string
+          example: usr_yassine_123
+        studentName:
+          type: string
+          example: Yassine Trabelsi
+        merchantId:
+          type: string
+          example: m-chaker
+        merchantName:
+          type: string
+          example: Chez Chaker Montfleury
+        offerId:
+          type: string
+          example: off-1
+        offerTitle:
+          type: string
+          example: Makloub Escalope Panée & Double Fromage
+        quantity:
+          type: integer
+          example: 1
+        lockedUnitPriceMillimes:
+          type: integer
+          example: 3800
+        totalPriceMillimes:
+          type: integer
+          example: 3800
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        reservationExpiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required: [offerId]
+      properties:
+        offerId:
+          type: string
+          example: off-1
+        quantity:
+          type: integer
+          default: 1
+          example: 1
+
+    LivingTicketPayload:
+      type: object
+      properties:
+        orderId:
+          type: string
+          example: ord-1
+        orderCode:
+          type: string
+          example: CS-8K4M9
+        window:
+          type: integer
+          example: 56789123
+        hash:
+          type: string
+          example: 8a7c6e4b9d0f1e2a3b4c5d6e7f8a9b0c
+        expiresInSeconds:
+          type: integer
+          example: 24
+        manualCode:
+          type: string
+          example: "384912"
+
+    ValidateTicketRequest:
+      type: object
+      required: [orderId]
+      properties:
+        orderId:
+          type: string
+          example: ord-1
+        window:
+          type: integer
+          example: 56789123
+        hash:
+          type: string
+          example: 8a7c6e4b9d0f1e2a3b4c5d6e7f8a9b0c
+        manualCode:
+          type: string
+          example: "384912"
+
+    ValidateTicketResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        orderId:
+          type: string
+          example: ord-1
+        ecoPointsAwarded:
+          type: integer
+          example: 20
+        mysteryBoxRevealed:
+          type: object
+          nullable: true
+          properties:
+            rarity:
+              type: string
+              example: LEGENDARY
+            bonusPoints:
+              type: integer
+              example: 30
+            items:
+              type: array
+              items:
+                type: string
+                example: Pizza Spéciale 4 Saisons & Tiramisu Maison
+
+    LoyaltyProfile:
+      type: object
+      properties:
+        ecoPoints:
+          type: integer
+          example: 90
+        loyaltyTier:
+          type: string
+          example: GRAINE
+        stampsCount:
+          type: integer
+          example: 4
+        nextTierThreshold:
+          type: integer
+          example: 100
+        unlockedRewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardCoupon'
+
+    RewardCoupon:
+      type: object
+      properties:
+        id:
+          type: string
+          example: rew-welcome-20
+        type:
+          type: string
+          example: PERCENT_OFF
+        discountPercent:
+          type: integer
+          example: 20
+        description:
+          type: string
+          example: Bon de réduction 20% sur votre commande
+        status:
+          type: string
+          example: AVAILABLE
+
+    RadarResponse:
+      type: object
+      properties:
+        campusCoordinates:
+          type: object
+          properties:
+            lat:
+              type: number
+              example: 36.7871
+            lng:
+              type: number
+              example: 10.1748
+        merchants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              location:
+                type: object
+              activeOffersCount:
+                type: integer
+              lowestPriceMillimes:
+                type: integer
+
+    StudentDashboard:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            ordersCompleted:
+              type: integer
+              example: 4
+            totalSpentMillimes:
+              type: integer
+              example: 14500
+            totalSavedMillimes:
+              type: integer
+              example: 18000
+            foodSavedGrams:
+              type: integer
+              example: 1600
+            co2SavedGrams:
+              type: integer
+              example: 4000
+        equivalences:
+          type: object
+          properties:
+            smartphonesCharged:
+              type: integer
+              example: 400
+            carKmEquivalent:
+              type: number
+              example: 16.4
+
+    MerchantDashboard:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            offersPublished:
+              type: integer
+              example: 18
+            ordersCompleted:
+              type: integer
+              example: 36
+            revenueMillimes:
+              type: integer
+              example: 126000
+            noShowRatePercent:
+              type: number
+              example: 2.7
+        topOffers:
+          type: array
+          items:
+            type: object
+
+    AdminDashboard:
+      type: object
+      properties:
+        usersCount:
+          type: integer
+          example: 128
+        merchantsCount:
+          type: integer
+          example: 6
+        ordersCount:
+          type: integer
+          example: 248
+        totalFoodSavedKg:
+          type: number
+          example: 114.0
+
+    ImpactGlobal:
+      type: object
+      properties:
+        ordersCompleted:
+          type: integer
+          example: 248
+        mealsRescued:
+          type: integer
+          example: 285
+        foodSavedGrams:
+          type: integer
+          example: 114000
+        co2SavedGrams:
+          type: integer
+          example: 285000
+        moneySavedMillimes:
+          type: integer
+          example: 890000
+
+    FiliereImpact:
+      type: object
+      properties:
+        filiereId:
+          $ref: '#/components/schemas/FiliereId'
+        label:
+          type: string
+          example: 3ème E-Business (Promotion Pilote)
+        studentsCount:
+          type: integer
+          example: 38
+        mealsRescued:
+          type: integer
+          example: 52
+        co2SavedGrams:
+          type: integer
+          example: 52000
+        ecoPointsTotal:
+          type: integer
+          example: 1240
