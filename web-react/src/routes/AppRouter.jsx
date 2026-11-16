@@ -11,6 +11,12 @@ import { ROLES } from '@shared/constants.js';
 import { LoginPage } from '../features/auth/LoginPage.jsx';
 import RegisterPage from '../features/auth/RegisterPage.jsx';
 import ProfilePage from '../features/auth/ProfilePage.jsx';
+import MerchantOnboardingPage from '../features/merchant/MerchantOnboardingPage.jsx';
+import MerchantStorePage from '../features/merchant/MerchantStorePage.jsx';
+import MerchantOffersPage from '../features/merchant/MerchantOffersPage.jsx';
+import OfferFormPage from '../features/merchant/OfferFormPage.jsx';
+import AdminMerchantsPage from '../features/admin/AdminMerchantsPage.jsx';
+import AdminUsersPage from '../features/admin/AdminUsersPage.jsx';
 
 export function AppRouter() {
   return (
@@ -47,28 +53,19 @@ export function AppRouter() {
 
         {/* Espace Commerçant (/merchant/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.MERCHANT]} />}>
-          <Route
-            path="/merchant/*"
-            element={
-              <div className="p-6">
-                <h2 className="text-xl font-bold text-campus-lime">Espace Commerçant</h2>
-                <p className="text-sm text-slate-400">Gestion de boutique, publication d'offres et scan des tickets.</p>
-              </div>
-            }
-          />
+          <Route path="/merchant" element={<Navigate to="/merchant/offers" replace />} />
+          <Route path="/merchant/onboarding" element={<MerchantOnboardingPage />} />
+          <Route path="/merchant/store" element={<MerchantStorePage />} />
+          <Route path="/merchant/offers" element={<MerchantOffersPage />} />
+          <Route path="/merchant/offers/new" element={<OfferFormPage />} />
+          <Route path="/merchant/offers/:id/edit" element={<OfferFormPage />} />
         </Route>
 
         {/* Espace Administrateur (/admin/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
-          <Route
-            path="/admin/*"
-            element={
-              <div className="p-6">
-                <h2 className="text-xl font-bold text-campus-lime">Espace Administration</h2>
-                <p className="text-sm text-slate-400">Validation des commerces et supervision globale.</p>
-              </div>
-            }
-          />
+          <Route path="/admin" element={<Navigate to="/admin/merchants" replace />} />
+          <Route path="/admin/merchants" element={<AdminMerchantsPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
         </Route>
       </Route>
 
