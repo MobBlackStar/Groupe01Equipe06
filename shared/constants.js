@@ -68,6 +68,7 @@ export const SURPRISE_RARITY = Object.freeze({
 
 // Alias pour compatibilité transversale
 export const RARITY_TIERS = SURPRISE_RARITY;
+export const STATUS = MERCHANT_STATUS;
 
 export const ORDER_STATUS = Object.freeze({
   RESERVED: 'RESERVED',
