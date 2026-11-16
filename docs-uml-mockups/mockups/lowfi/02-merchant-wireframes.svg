@@ -1,0 +1,233 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 950" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0b0f14; }
+      .header-title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 26px; font-weight: bold; fill: #ffffff; }
+      .header-sub { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; fill: #8fa0b5; }
+      .card-bg { fill: #161f2c; stroke: #2a384c; stroke-width: 1.5; rx: 12px; }
+      .card-inner { fill: #1f2b3e; stroke: #374863; stroke-width: 1; rx: 8px; }
+      .screen-title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; font-weight: 600; fill: #64d2ff; }
+      .label-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; fill: #94a3b8; }
+      .bold-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #f1f5f9; }
+      .accent-btn { fill: #10b981; rx: 6px; }
+      .btn-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .pill { fill: #243447; stroke: #3b506a; stroke-width: 1; rx: 12px; }
+      .pill-active { fill: #0284c7; stroke: #38bdf8; stroke-width: 1; rx: 12px; }
+      .pill-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 10px; fill: #e2e8f0; text-anchor: middle; }
+      .badge-tag { fill: #eab308; rx: 4px; }
+      .badge-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9px; font-weight: bold; fill: #000000; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="950" class="bg"/>
+
+  <!-- Main Banner Header -->
+  <g transform="translate(40, 30)">
+    <rect width="1520" height="70" class="card-bg"/>
+    <text x="30" y="36" class="header-title">🏪 CampusSave — Wireframes Basse Fidélité : Espace Commerçant Partenaire</text>
+    <text x="30" y="58" class="header-sub">Écrans 1 à 6 : Enregistrement Géolocalisé, Publication Assistée par IA &amp; Scanner de Retrait Anti-Fraude</text>
+  </g>
+
+  <!-- ================= ROW 1 (3 SCREENS) ================= -->
+
+  <!-- SCREEN 1: ONBOARDING WITH MAP PIN -->
+  <g transform="translate(40, 120)">
+    <rect width="480" height="370" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">1. Enregistrement Commerçant (MerchantOnboarding)</text>
+    
+    <rect x="20" y="48" width="215" height="34" class="card-inner"/>
+    <text x="30" y="69" class="label-txt">Nom : Baguette &amp; Baguette</text>
+
+    <rect x="245" y="48" width="215" height="34" class="card-inner"/>
+    <text x="255" y="69" class="label-txt">Type : FAST_FOOD ▾</text>
+
+    <rect x="20" y="90" width="215" height="34" class="card-inner"/>
+    <text x="30" y="111" class="label-txt">Téléphone : +216 71 390 111</text>
+
+    <rect x="245" y="90" width="215" height="34" class="card-inner"/>
+    <text x="255" y="111" class="label-txt">RNE / Registre : B12345678</text>
+
+    <!-- Map Pin Area with 3km verification -->
+    <rect x="20" y="132" width="440" height="150" class="card-inner" stroke="#10b981"/>
+    <rect x="30" y="142" width="420" height="130" fill="#131c28" rx="6"/>
+    <circle cx="240" cy="207" r="50" fill="none" stroke="#25354d" stroke-width="1.5" stroke-dasharray="4,4"/>
+    <circle cx="210" cy="195" r="7" fill="#38bdf8"/>
+    <text x="180" y="185" class="label-txt" fill="#38bdf8">ESSECT Campus</text>
+    <circle cx="250" cy="205" r="7" fill="#10b981"/>
+    <text x="265" y="210" class="label-txt" fill="#10b981">Établissement (210m)</text>
+    <rect x="40" y="240" width="310" height="22" fill="#0b0f14" rx="4"/>
+    <text x="48" y="255" class="label-txt" fill="#10b981">✓ Éligible : Distance ≤ 3000 m de l'ESSECT (Haversine : 210 m)</text>
+
+    <rect x="20" y="300" width="440" height="46" class="accent-btn"/>
+    <text x="240" y="328" class="btn-txt" font-size="13px">Soumettre mon dossier à l'administrateur ESSECT →</text>
+  </g>
+
+  <!-- SCREEN 2: PENDING APPROVAL BANNER -->
+  <g transform="translate(560, 120)">
+    <rect width="480" height="370" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">2. Écran d'Attente &amp; Statut (PendingApproval)</text>
+    
+    <!-- Live status listener banner -->
+    <rect x="20" y="48" width="440" height="90" class="card-inner" stroke="#f59e0b" stroke-width="1.5"/>
+    <circle cx="50" cy="93" r="16" fill="#f59e0b"/>
+    <text x="50" y="99" class="btn-txt" font-size="16px" fill="#000000">⏳</text>
+    <text x="80" y="80" class="bold-txt" font-size="14px" fill="#f59e0b">Dossier en cours d'examen administratif</text>
+    <text x="80" y="100" class="label-txt">Statut Firestore temps réel : PENDING</text>
+    <text x="80" y="118" class="label-txt">Vous serez notifié dès validation par le responsable ESSECT.</text>
+
+    <!-- Preview Profile -->
+    <rect x="20" y="150" width="440" height="150" class="card-inner"/>
+    <text x="35" y="175" class="bold-txt">Aperçu de la fiche publique pré-remplie :</text>
+    <text x="35" y="200" class="label-txt">• Enseigne : Baguette &amp; Baguette Montfleury</text>
+    <text x="35" y="222" class="label-txt">• Adresse : Avenue Habib Bourguiba, Montfleury, Tunis</text>
+    <text x="35" y="244" class="label-txt">• Emplacement géographique : Lat 36.7885 / Lng 10.1762</text>
+    <text x="35" y="266" class="label-txt">• Documents : Registre RNE validé numériquement</text>
+
+    <rect x="20" y="315" width="440" height="38" class="card-inner" fill="#1f2b3e"/>
+    <text x="240" y="338" class="label-txt" text-anchor="middle">Écouteur Firestore : onSnapshot(doc(db, 'merchants', id))</text>
+  </g>
+
+  <!-- SCREEN 3: OFFER FORM WITH AI AUTOFILL -->
+  <g transform="translate(1080, 120)">
+    <rect width="480" height="370" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">3. Publication d'Offre (OfferFormPage)</text>
+    
+    <!-- AI Magic Box -->
+    <rect x="20" y="48" width="440" height="55" class="card-inner" stroke="#a855f7" stroke-width="1.5"/>
+    <text x="35" y="70" class="bold-txt" fill="#c084fc">✨ Assistant IA Culinaire (Génération Magique)</text>
+    <text x="35" y="88" class="label-txt">Tapez "Baguette farcie" ➔ Génère titre, tags, poids et description étudiante</text>
+
+    <rect x="20" y="110" width="280" height="32" class="card-inner"/>
+    <text x="30" y="130" class="label-txt">Titre : Baguette Farcie Escalope</text>
+
+    <rect x="310" y="110" width="150" height="32" class="card-inner"/>
+    <text x="320" y="130" class="label-txt">Catégorie : SANDWICH ▾</text>
+
+    <!-- Pricing fields millimes -->
+    <rect x="20" y="150" width="215" height="32" class="card-inner"/>
+    <text x="30" y="170" class="label-txt">Prix original : 7,500 DT (7500 m)</text>
+
+    <rect x="245" y="150" width="215" height="32" class="card-inner"/>
+    <text x="255" y="170" class="label-txt">Prix plancher : 3,000 DT (3000 m)</text>
+
+    <!-- Smart decay & surprise toggles -->
+    <rect x="20" y="190" width="440" height="42" class="card-inner"/>
+    <circle cx="40" cy="211" r="7" fill="#10b981"/>
+    <text x="55" y="215" class="label-txt">⚡ Activer l'Enchère Dégressive Smart Decay (Baisse automatique)</text>
+
+    <rect x="20" y="240" width="440" height="42" class="card-inner"/>
+    <circle cx="40" cy="261" r="7" fill="#3b506a"/>
+    <text x="55" y="265" class="label-txt">🎁 Offre Panier Mystère (Révélation surprise lors du déballage)</text>
+
+    <!-- Submit Button -->
+    <rect x="20" y="295" width="440" height="46" class="accent-btn"/>
+    <text x="240" y="323" class="btn-txt" font-size="13px">Publier l'Offre en Ligne (API Node.js) →</text>
+  </g>
+
+  <!-- ================= ROW 2 (3 SCREENS) ================= -->
+
+  <!-- SCREEN 4: ACTIVE OFFERS MANAGEMENT -->
+  <g transform="translate(40, 520)">
+    <rect width="480" height="390" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">4. Gestion du Catalogue (MerchantOffers)</text>
+    
+    <!-- Filter Tabs -->
+    <rect x="20" y="48" width="110" height="28" class="pill-active"/>
+    <text x="75" y="66" class="pill-txt">Actives (3)</text>
+    <rect x="140" y="48" width="110" height="28" class="pill"/>
+    <text x="195" y="66" class="pill-txt">Épuisées (5)</text>
+    <rect x="260" y="48" width="110" height="28" class="pill"/>
+    <text x="315" y="66" class="pill-txt">Historique</text>
+
+    <!-- Offer Item 1 -->
+    <rect x="20" y="88" width="440" height="85" class="card-inner"/>
+    <text x="35" y="112" class="bold-txt">Baguette Farcie Escalope</text>
+    <text x="35" y="130" class="label-txt">Prix dynamique actuel : 4,200 DT • Stock restant : 2 / 5</text>
+    <text x="35" y="150" class="label-txt" fill="#10b981">⚡ Smart Decay : 18:30 ➔ 20:00 (Fenêtre de sauvetage active)</text>
+    <rect x="360" y="105" width="85" height="30" class="pill-active" fill="#0284c7"/>
+    <text x="402" y="124" class="pill-txt">Modifier</text>
+
+    <!-- Offer Item 2 -->
+    <rect x="20" y="185" width="440" height="85" class="card-inner"/>
+    <text x="35" y="209" class="bold-txt">Makloub Chawarma Poulet</text>
+    <text x="35" y="227" class="label-txt">Prix fixe : 4,000 DT • Stock restant : 1 / 4</text>
+    <text x="35" y="247" class="label-txt" fill="#64d2ff">📍 Retrait immédiat comptoir</text>
+    <rect x="360" y="202" width="85" height="30" class="pill-active" fill="#0284c7"/>
+    <text x="402" y="221" class="pill-txt">Modifier</text>
+
+    <!-- Add Offer CTA -->
+    <rect x="20" y="295" width="440" height="44" class="accent-btn" fill="#1f2b3e" stroke="#10b981"/>
+    <text x="240" y="322" class="btn-txt" fill="#10b981">+ Créer une nouvelle offre anti-gaspi</text>
+  </g>
+
+  <!-- SCREEN 5: QR SCANNER & MANUAL CODE -->
+  <g transform="translate(560, 520)">
+    <rect width="480" height="390" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">5. Scanner de Retrait &amp; Sécurité (QrScanner)</text>
+    
+    <!-- Camera Viewfinder -->
+    <rect x="20" y="48" width="440" height="200" class="card-inner"/>
+    <rect x="140" y="68" width="200" height="160" fill="#000000" stroke="#10b981" stroke-width="2" rx="10"/>
+    
+    <!-- Viewfinder targeting corners -->
+    <path d="M 150 88 L 150 78 L 170 78" stroke="#64d2ff" stroke-width="3" fill="none"/>
+    <path d="M 330 88 L 330 78 L 310 78" stroke="#64d2ff" stroke-width="3" fill="none"/>
+    <path d="M 150 208 L 150 218 L 170 218" stroke="#64d2ff" stroke-width="3" fill="none"/>
+    <path d="M 330 208 L 330 218 L 310 218" stroke="#64d2ff" stroke-width="3" fill="none"/>
+    
+    <text x="240" y="152" class="label-txt" fill="#10b981" text-anchor="middle">Centrer le Living Ticket étudiant</text>
+    <text x="240" y="172" class="label-txt" text-anchor="middle">Validation cryptographique HMAC immédiate</text>
+
+    <!-- Fallback Manual 6-digit Code -->
+    <rect x="20" y="260" width="440" height="60" class="card-inner"/>
+    <text x="35" y="282" class="label-txt">Caméra indisponible ? Saisir le code de secours (6 chiffres) :</text>
+    <rect x="35" y="290" width="230" height="24" class="card-bg"/>
+    <text x="45" y="307" class="bold-txt" fill="#64d2ff">Code : 8 4 9 1 0 3</text>
+    <rect x="280" y="290" width="165" height="24" class="accent-btn"/>
+    <text x="362" y="306" class="btn-txt">Valider le code</text>
+
+    <!-- Anti-replay protection notice -->
+    <text x="20" y="350" class="label-txt">Protection anti-rejeu : Statut basculé en COMPLETED en transaction atomique</text>
+  </g>
+
+  <!-- SCREEN 6: MERCHANT DASHBOARD -->
+  <g transform="translate(1080, 520)">
+    <rect width="480" height="390" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">6. Tableau de Bord Commerçant (MerchantDashboard)</text>
+    
+    <!-- KPI cards -->
+    <rect x="20" y="48" width="135" height="75" class="card-inner"/>
+    <text x="30" y="70" class="bold-txt" font-size="18px" fill="#10b981">340,00 DT</text>
+    <text x="30" y="88" class="label-txt">Revenus ce mois</text>
+    <text x="30" y="105" class="label-txt" fill="#10b981">+24% vs m-1</text>
+
+    <rect x="170" y="48" width="135" height="75" class="card-inner"/>
+    <text x="180" y="70" class="bold-txt" font-size="18px" fill="#38bdf8">82</text>
+    <text x="180" y="88" class="label-txt">Paniers sauvés</text>
+    <text x="180" y="105" class="label-txt">Zéro déchet</text>
+
+    <rect x="320" y="48" width="140" height="75" class="card-inner"/>
+    <text x="330" y="70" class="bold-txt" font-size="18px" fill="#eab308">4.9 / 5</text>
+    <text x="330" y="88" class="label-txt">Avis étudiants</text>
+    <text x="330" y="105" class="label-txt">★ 64 avis</text>
+
+    <!-- Hourly Rescue Activity Chart -->
+    <rect x="20" y="135" width="440" height="145" class="card-inner"/>
+    <text x="35" y="158" class="bold-txt">Heures de Pointe des Retraits Étudiants</text>
+    
+    <!-- Bar chart simulation -->
+    <rect x="60" y="210" width="30" height="40" fill="#38bdf8" rx="3"/><text x="75" y="265" class="label-txt" text-anchor="middle">12h</text>
+    <rect x="110" y="190" width="30" height="60" fill="#38bdf8" rx="3"/><text x="125" y="265" class="label-txt" text-anchor="middle">13h</text>
+    <rect x="160" y="225" width="30" height="25" fill="#2d3d54" rx="3"/><text x="175" y="265" class="label-txt" text-anchor="middle">15h</text>
+    <rect x="210" y="215" width="30" height="35" fill="#2d3d54" rx="3"/><text x="225" y="265" class="label-txt" text-anchor="middle">17h</text>
+    <rect x="260" y="175" width="30" height="75" fill="#10b981" rx="3"/><text x="275" y="265" class="label-txt" text-anchor="middle">18h</text>
+    <rect x="310" y="165" width="30" height="85" fill="#10b981" rx="3"/><text x="325" y="265" class="label-txt" text-anchor="middle">19h</text>
+    <rect x="360" y="195" width="30" height="55" fill="#10b981" rx="3"/><text x="375" y="265" class="label-txt" text-anchor="middle">20h</text>
+
+    <!-- Export Button -->
+    <rect x="20" y="295" width="440" height="42" class="accent-btn" fill="#0284c7"/>
+    <text x="240" y="321" class="btn-txt">Exporter le rapport d'impact et financier (PDF) →</text>
+  </g>
+
+</svg>

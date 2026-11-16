@@ -1,0 +1,353 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0b0f14; }
+      .header-title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 26px; font-weight: bold; fill: #ffffff; }
+      .header-sub { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; fill: #8fa0b5; }
+      .card-bg { fill: #161f2c; stroke: #2a384c; stroke-width: 1.5; rx: 12px; }
+      .card-inner { fill: #1f2b3e; stroke: #374863; stroke-width: 1; rx: 8px; }
+      .screen-title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; font-weight: 600; fill: #64d2ff; }
+      .label-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; fill: #94a3b8; }
+      .bold-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #f1f5f9; }
+      .accent-btn { fill: #10b981; rx: 6px; }
+      .btn-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .pill { fill: #243447; stroke: #3b506a; stroke-width: 1; rx: 12px; }
+      .pill-active { fill: #0284c7; stroke: #38bdf8; stroke-width: 1; rx: 12px; }
+      .pill-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 10px; fill: #e2e8f0; text-anchor: middle; }
+      .badge-tag { fill: #eab308; rx: 4px; }
+      .badge-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9px; font-weight: bold; fill: #000000; text-anchor: middle; }
+      .wire-line { stroke: #384b66; stroke-dasharray: 4,4; stroke-width: 1; }
+      .lime-accent { stroke: #10b981; stroke-width: 2; fill: none; }
+      .radar-sweep { fill: url(#radarGrad); opacity: 0.25; }
+    </style>
+    <linearGradient id="radarGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="1200" class="bg"/>
+
+  <!-- Main Banner Header -->
+  <g transform="translate(40, 30)">
+    <rect width="1520" height="70" class="card-bg"/>
+    <text x="30" y="36" class="header-title">🎓 CampusSave — Wireframes Basse Fidélité : Espace Étudiant (Web &amp; Mobile)</text>
+    <text x="30" y="58" class="header-sub">Conception ergonomique conforme au Cahier des Charges ESSECT • Écrans 1 à 8 : Découverte, Enchère Dégressive, Living Ticket &amp; Fidélité</text>
+  </g>
+
+  <!-- ================= ROW 1 (4 SCREENS) ================= -->
+
+  <!-- SCREEN 1: BROWSE & FILTERS -->
+  <g transform="translate(40, 120)">
+    <rect width="360" height="500" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">1. Catalogue &amp; Recherche (BrowsePage)</text>
+    
+    <!-- Search Bar with Debounce indicator -->
+    <rect x="20" y="48" width="320" height="36" class="card-inner"/>
+    <text x="35" y="70" class="label-txt">🔍 Rechercher un plat, restaurant... (Debounce 300ms)</text>
+    <circle cx="320" cy="66" r="6" fill="#10b981"/>
+
+    <!-- Category Pills -->
+    <rect x="20" y="96" width="60" height="24" class="pill-active"/>
+    <text x="50" y="112" class="pill-txt">Tout</text>
+    <rect x="88" y="96" width="80" height="24" class="pill"/>
+    <text x="128" y="112" class="pill-txt">Sandwich</text>
+    <rect x="176" y="96" width="80" height="24" class="pill"/>
+    <text x="216" y="112" class="pill-txt">Plat Chaud</text>
+    <rect x="264" y="96" width="76" height="24" class="pill"/>
+    <text x="302" y="112" class="pill-txt">Pâtisserie</text>
+
+    <!-- Offer Card 1: Baguette Farcie -->
+    <rect x="20" y="132" width="320" height="160" class="card-inner"/>
+    <rect x="32" y="144" width="100" height="70" fill="#2d3d54" rx="6"/>
+    <text x="82" y="184" class="label-txt" text-anchor="middle">[Photo Plat]</text>
+    <text x="144" y="158" class="bold-txt">Baguette Farcie Escalope</text>
+    <text x="144" y="174" class="label-txt">Baguette &amp; Baguette Montfleury</text>
+    <text x="144" y="190" class="label-txt">📍 210m ESSECT • ⏳ 18:30 - 20:00</text>
+    <rect x="144" y="198" width="80" height="18" class="badge-tag"/>
+    <text x="184" y="211" class="badge-txt">⚡ SMART DECAY</text>
+    
+    <text x="32" y="244" class="label-txt" text-decoration="line-through">7,500 DT</text>
+    <text x="32" y="268" class="bold-txt" font-size="18px" fill="#10b981">4,200 DT</text>
+    <text x="110" y="268" class="label-txt">(-44%)</text>
+    <rect x="210" y="242" width="118" height="34" class="accent-btn"/>
+    <text x="269" y="263" class="btn-txt">Voir l'offre →</text>
+
+    <!-- Offer Card 2: Mystery Box -->
+    <rect x="20" y="306" width="320" height="160" class="card-inner" stroke="#eab308" stroke-width="1.5"/>
+    <rect x="32" y="318" width="100" height="70" fill="#3b2d18" rx="6"/>
+    <text x="82" y="358" class="label-txt" fill="#eab308" text-anchor="middle">🎁 [MYSTÈRE]</text>
+    <text x="144" y="332" class="bold-txt" fill="#fbbf24">Panier Surprise Douceurs</text>
+    <text x="144" y="348" class="label-txt">Pâtisserie Masmoudi</text>
+    <text x="144" y="364" class="label-txt">📍 340m ESSECT • Rareté : Rare</text>
+    <rect x="144" y="372" width="70" height="18" fill="#a855f7" rx="4"/>
+    <text x="179" y="385" class="badge-txt" fill="#ffffff">★ RARE</text>
+
+    <text x="32" y="418" class="label-txt" text-decoration="line-through">12,000 DT</text>
+    <text x="32" y="442" class="bold-txt" font-size="18px" fill="#10b981">5,500 DT</text>
+    <rect x="210" y="416" width="118" height="34" class="accent-btn" fill="#eab308"/>
+    <text x="269" y="437" class="btn-txt" fill="#000000">Découvrir →</text>
+
+    <!-- Status footer -->
+    <text x="20" y="486" class="label-txt">2 offres actives trouvées à proximité de l'ESSECT</text>
+  </g>
+
+  <!-- SCREEN 2: 3D HOLO-RADAR -->
+  <g transform="translate(425, 120)">
+    <rect width="360" height="500" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">2. Holo-Radar 3D &amp; Carte (RadarView)</text>
+    
+    <!-- Radar Canvas Simulation -->
+    <rect x="20" y="48" width="320" height="320" class="card-inner"/>
+    <circle cx="180" cy="208" r="140" fill="none" stroke="#25354d" stroke-width="1.5"/>
+    <circle cx="180" cy="208" r="95" fill="none" stroke="#2a4060" stroke-width="1.5"/>
+    <circle cx="180" cy="208" r="50" fill="none" stroke="#314e77" stroke-width="1.5"/>
+    <path d="M 180 208 L 290 120 A 140 140 0 0 0 180 68 Z" class="radar-sweep"/>
+
+    <!-- ESSECT Center -->
+    <circle cx="180" cy="208" r="7" fill="#38bdf8"/>
+    <text x="180" y="226" class="label-txt" font-weight="bold" fill="#38bdf8" text-anchor="middle">ESSECT (0m)</text>
+
+    <!-- Radar Range Labels -->
+    <text x="180" y="162" class="label-txt" text-anchor="middle">500 m</text>
+    <text x="180" y="118" class="label-txt" text-anchor="middle">1000 m</text>
+    <text x="180" y="74" class="label-txt" text-anchor="middle">1500 m</text>
+
+    <!-- Merchant Pin 1 (Baguette & Baguette 210m) -->
+    <circle cx="215" cy="180" r="8" fill="#10b981"/>
+    <text x="230" y="184" class="label-txt" fill="#10b981">B&amp;B (210m)</text>
+
+    <!-- Merchant Pin 2 (Cafétéria L'Étoile 120m) -->
+    <circle cx="160" cy="225" r="8" fill="#10b981"/>
+    <text x="110" y="235" class="label-txt" fill="#10b981">Étoile (120m)</text>
+
+    <!-- Merchant Pin 3 (Pâtisserie Masmoudi 340m) -->
+    <circle cx="230" cy="245" r="8" fill="#eab308"/>
+    <text x="245" y="250" class="label-txt" fill="#eab308">Masmoudi</text>
+
+    <!-- Selected Merchant Popover -->
+    <rect x="20" y="380" width="320" height="95" class="card-inner" stroke="#10b981"/>
+    <text x="35" y="404" class="bold-txt">Baguette &amp; Baguette Montfleury</text>
+    <text x="35" y="420" class="label-txt">Temps de marche piéton estimé : ~3 minutes (Facteur 1.3)</text>
+    <text x="35" y="438" class="label-txt">2 paniers restants • À partir de 4,200 DT</text>
+    <rect x="210" y="438" width="118" height="28" class="accent-btn"/>
+    <text x="269" y="456" class="btn-txt">Explorer le menu</text>
+  </g>
+
+  <!-- SCREEN 3: OFFER DETAIL & SMART DECAY -->
+  <g transform="translate(810, 120)">
+    <rect width="360" height="500" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">3. Détail Offre &amp; Enchère Dégressive</text>
+    
+    <!-- Hero Banner -->
+    <rect x="20" y="48" width="320" height="120" class="card-inner"/>
+    <text x="180" y="105" class="label-txt" text-anchor="middle">[Image HD Plat + Tag Vérifié]</text>
+    <rect x="225" y="60" width="100" height="22" class="badge-tag"/>
+    <text x="275" y="75" class="badge-txt">🔥 EN COURS (-44%)</text>
+
+    <!-- Title and merchant info -->
+    <text x="20" y="190" class="bold-txt" font-size="16px">Baguette Farcie Escalope Panée</text>
+    <text x="20" y="208" class="label-txt">Baguette &amp; Baguette • Montfleury • Poids : 400g</text>
+
+    <!-- Smart Decay Dynamic Price Graph -->
+    <rect x="20" y="222" width="320" height="120" class="card-inner"/>
+    <text x="32" y="240" class="label-txt" font-weight="bold">Courbe d'Enchère Dégressive (Smart Decay)</text>
+    <polyline points="40,310 110,290 180,270 250,250 310,235" fill="none" stroke="#10b981" stroke-width="2.5"/>
+    <circle cx="180" cy="270" r="5" fill="#38bdf8"/>
+    <text x="180" y="260" class="label-txt" fill="#38bdf8" text-anchor="middle">Prix actuel : 4,200 DT</text>
+    <text x="40" y="330" class="label-txt">18:30 (7,5 DT)</text>
+    <text x="260" y="330" class="label-txt">20:00 (3,0 DT)</text>
+
+    <!-- Timer countdown -->
+    <rect x="20" y="354" width="320" height="42" class="card-inner" stroke="#f59e0b"/>
+    <text x="35" y="380" class="bold-txt" fill="#f59e0b">⏳ Prochaine baisse de prix dans : 08m 42s</text>
+
+    <!-- Reserve CTA -->
+    <rect x="20" y="410" width="320" height="48" class="accent-btn"/>
+    <text x="180" y="440" class="btn-txt" font-size="13px">Bloquer le prix &amp; Réserver (10 min) →</text>
+    <text x="180" y="480" class="label-txt" text-anchor="middle">Verrouillage atomique du stock pendant 10 minutes</text>
+  </g>
+
+  <!-- SCREEN 4: CHECKOUT & PAYMENT -->
+  <g transform="translate(1195, 120)">
+    <rect width="360" height="500" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">4. Récapitulatif Commande &amp; Paiement</text>
+    
+    <!-- Order Summary Card -->
+    <rect x="20" y="48" width="320" height="180" class="card-inner"/>
+    <text x="35" y="74" class="bold-txt">Récapitulatif du Panier</text>
+    
+    <text x="35" y="105" class="label-txt">Article : Baguette Farcie Escalope</text>
+    <text x="300" y="105" class="label-txt" text-anchor="end">4,200 DT</text>
+    
+    <text x="35" y="130" class="label-txt">Prix original sauvé :</text>
+    <text x="300" y="130" class="label-txt" text-anchor="end">7,500 DT</text>
+
+    <text x="35" y="155" class="label-txt" fill="#10b981">Économie solidaire (-44%) :</text>
+    <text x="300" y="155" class="label-txt" fill="#10b981" text-anchor="end">-3,300 DT</text>
+
+    <line x1="35" y1="170" x2="300" y2="170" stroke="#3b506a" stroke-width="1"/>
+    <text x="35" y="198" class="bold-txt" font-size="14px">Total à régler :</text>
+    <text x="300" y="198" class="bold-txt" font-size="16px" fill="#10b981" text-anchor="end">4,200 DT</text>
+
+    <!-- Eco impact preview -->
+    <rect x="20" y="240" width="320" height="70" class="card-inner" stroke="#10b981"/>
+    <text x="35" y="265" class="bold-txt" fill="#10b981">🌱 Votre impact écologique immédiat</text>
+    <text x="35" y="285" class="label-txt">• 400g de nourriture sauvée du gaspillage</text>
+    <text x="35" y="300" class="label-txt">• 1,000 kg de CO2 évité (Facteur 2.5 g CO2/g)</text>
+
+    <!-- Payment Choice -->
+    <rect x="20" y="325" width="320" height="60" class="card-inner"/>
+    <circle cx="45" cy="355" r="9" fill="#0284c7"/>
+    <text x="65" y="352" class="bold-txt">Konnect Sandbox (Tunisie)</text>
+    <text x="65" y="370" class="label-txt">Carte Bancaire / Flouci / e-Dinar</text>
+
+    <!-- Pay Button -->
+    <rect x="20" y="405" width="320" height="46" class="accent-btn"/>
+    <text x="180" y="433" class="btn-txt" font-size="13px">Confirmer &amp; Payer 4,200 DT →</text>
+    <text x="180" y="475" class="label-txt" text-anchor="middle">Redirection sécurisée via passerelle bancaire</text>
+  </g>
+
+  <!-- ================= ROW 2 (4 SCREENS) ================= -->
+
+  <!-- SCREEN 5: LIVING TICKET -->
+  <g transform="translate(40, 650)">
+    <rect width="360" height="510" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">5. Living Ticket Boarding Pass (Retrait)</text>
+    
+    <!-- Ticket Boarding Pass Shape -->
+    <rect x="20" y="48" width="320" height="410" class="card-inner" stroke="#10b981" stroke-width="2"/>
+    <rect x="20" y="48" width="320" height="45" fill="#10b981" rx="8"/>
+    <text x="180" y="75" class="btn-txt" font-size="13px">TICKET DE RETRAIT SÉCURISÉ</text>
+
+    <!-- QR Code Box -->
+    <rect x="75" y="110" width="210" height="210" fill="#ffffff" rx="10"/>
+    <rect x="95" y="130" width="170" height="170" fill="#0b0f14" rx="6"/>
+    <text x="180" y="210" class="label-txt" fill="#10b981" font-size="13px" text-anchor="middle">[QR CODE HMAC DYNAMIQUE]</text>
+    <text x="180" y="235" class="label-txt" fill="#64d2ff" text-anchor="middle">Tournant toutes les 30s</text>
+
+    <!-- Circular Progress Timer -->
+    <text x="180" y="345" class="bold-txt" fill="#f59e0b" text-anchor="middle">⏱️ Renouvellement dans : 18s</text>
+
+    <!-- Manual Code Fallback -->
+    <rect x="40" y="365" width="280" height="42" class="card-bg"/>
+    <text x="180" y="382" class="label-txt" text-anchor="middle">Code de secours manuel (6 chiffres) :</text>
+    <text x="180" y="401" class="bold-txt" font-size="16px" fill="#64d2ff" text-anchor="middle">8 4 9 - 1 0 3</text>
+
+    <!-- Ticket Footer Info -->
+    <text x="180" y="440" class="label-txt" text-anchor="middle">Baguette &amp; Baguette Montfleury • Retrait avant 20:00</text>
+    <text x="20" y="485" class="label-txt">Vérification en temps constant (timingSafeEqual) sur le serveur</text>
+  </g>
+
+  <!-- SCREEN 6: DIGITAL LOYALTY CARD -->
+  <g transform="translate(425, 650)">
+    <rect width="360" height="510" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">6. Carte de Fidélité ÉcoPoints</text>
+    
+    <!-- Loyalty Pass Card -->
+    <rect x="20" y="48" width="320" height="150" class="card-inner" stroke="#10b981"/>
+    <text x="35" y="74" class="bold-txt">Carte de Fidélité CampusSave</text>
+    <text x="35" y="94" class="label-txt">Étudiante : Ritej Bejaoui • ESSECT 3A</text>
+    <text x="35" y="125" class="bold-txt" font-size="20px" fill="#10b981">240 ÉcoPoints</text>
+    <text x="35" y="145" class="label-txt">Palier Actuel : 🌿 POUSSE (100 à 299 pts)</text>
+    <rect x="240" y="115" width="85" height="30" class="pill-active"/>
+    <text x="282" y="134" class="pill-txt">PROCHAIN : ARBRE</text>
+
+    <!-- Tree Evolution Gauge -->
+    <rect x="20" y="210" width="320" height="85" class="card-inner"/>
+    <text x="35" y="230" class="bold-txt">Évolution de la Forêt Campus</text>
+    <line x1="40" y1="260" x2="310" y2="260" stroke="#374863" stroke-width="6" stroke-linecap="round"/>
+    <line x1="40" y1="260" x2="200" y2="260" stroke="#10b981" stroke-width="6" stroke-linecap="round"/>
+    <text x="40" y="282" class="label-txt">🌱 Graine (0)</text>
+    <text x="140" y="282" class="label-txt" fill="#10b981">🌿 Pousse (100)</text>
+    <text x="235" y="282" class="label-txt">🌳 Arbre (300)</text>
+    <text x="305" y="282" class="label-txt">🌲 (600)</text>
+
+    <!-- Stamp Card 10 Spots -->
+    <rect x="20" y="305" width="320" height="135" class="card-inner"/>
+    <text x="35" y="325" class="bold-txt">Grille de Tampons : 7 / 10</text>
+    
+    <!-- 10 stamp circles -->
+    <circle cx="55" cy="355" r="16" fill="#10b981"/><text x="55" y="360" class="btn-txt">✓</text>
+    <circle cx="105" cy="355" r="16" fill="#10b981"/><text x="105" y="360" class="btn-txt">✓</text>
+    <circle cx="155" cy="355" r="16" fill="#10b981"/><text x="155" y="360" class="btn-txt">✓</text>
+    <circle cx="205" cy="355" r="16" fill="#10b981"/><text x="205" y="360" class="btn-txt">✓</text>
+    <circle cx="255" cy="355" r="16" fill="#10b981"/><text x="255" y="360" class="btn-txt">✓</text>
+    
+    <circle cx="55" cy="400" r="16" fill="#10b981"/><text x="55" y="405" class="btn-txt">✓</text>
+    <circle cx="105" cy="400" r="16" fill="#10b981"/><text x="105" y="405" class="btn-txt">✓</text>
+    <circle cx="155" cy="400" r="16" fill="#2d3d54"/><text x="155" y="405" class="label-txt" text-anchor="middle">8</text>
+    <circle cx="205" cy="400" r="16" fill="#2d3d54"/><text x="205" y="405" class="label-txt" text-anchor="middle">9</text>
+    <circle cx="255" cy="400" r="16" fill="#eab308"/><text x="255" y="405" class="badge-txt">🎁</text>
+
+    <!-- Claim Reward Button -->
+    <rect x="20" y="450" width="320" height="40" class="accent-btn" fill="#243447"/>
+    <text x="180" y="475" class="btn-txt" fill="#94a3b8">Plus que 3 commandes pour débloquer un Panier Gratuit</text>
+  </g>
+
+  <!-- SCREEN 7: MYSTERY BOX UNBOXING -->
+  <g transform="translate(810, 650)">
+    <rect width="360" height="510" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">7. Animation Déballage Panier Surprise</text>
+    
+    <!-- Mystery Box Modal Card -->
+    <rect x="20" y="48" width="320" height="440" class="card-inner" stroke="#a855f7" stroke-width="2"/>
+    <rect x="20" y="48" width="320" height="40" fill="#a855f7" rx="8"/>
+    <text x="180" y="73" class="btn-txt">RÉVÉLATION PANIER MYSTÈRE</text>
+
+    <!-- Glowing Crate Illustration -->
+    <rect x="90" y="110" width="180" height="150" fill="#3b2059" stroke="#c084fc" stroke-width="2" rx="14"/>
+    <text x="180" y="180" class="header-title" text-anchor="middle">🎁</text>
+    <text x="180" y="210" class="bold-txt" fill="#c084fc" text-anchor="middle">Rareté : LÉGENDAIRE</text>
+
+    <!-- Content Reveal Animation Card -->
+    <rect x="40" y="280" width="280" height="120" class="card-bg"/>
+    <text x="55" y="305" class="bold-txt" fill="#38bdf8">Contenu Réel Dévoilé :</text>
+    <text x="55" y="328" class="label-txt">• 1x Pâtisserie fine Makroudh aux dattes (150g)</text>
+    <text x="55" y="348" class="label-txt">• 1x Kaak Warka fleur d'oranger (100g)</text>
+    <text x="55" y="368" class="label-txt">• 2x Mignardises chocolatées du chef (80g)</text>
+    <text x="55" y="388" class="bold-txt" fill="#10b981">Valeur réelle : 14,000 DT (Payé : 5,500 DT)</text>
+
+    <!-- Feedback CTA -->
+    <rect x="40" y="420" width="280" height="44" class="accent-btn" fill="#a855f7"/>
+    <text x="180" y="447" class="btn-txt">Noter mon expérience commerçant ★★★★★</text>
+  </g>
+
+  <!-- SCREEN 8: IMPACT & DASHBOARD -->
+  <g transform="translate(1195, 650)">
+    <rect width="360" height="510" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">8. Tableau de Bord &amp; Impact Étudiant</text>
+    
+    <!-- Total KPI Metrics -->
+    <rect x="20" y="48" width="150" height="90" class="card-inner"/>
+    <text x="35" y="72" class="bold-txt" font-size="22px" fill="#10b981">14</text>
+    <text x="35" y="92" class="label-txt">Repas sauvés</text>
+    <text x="35" y="115" class="label-txt" fill="#64d2ff">+3 cette semaine</text>
+
+    <rect x="190" y="48" width="150" height="90" class="card-inner"/>
+    <text x="205" y="72" class="bold-txt" font-size="22px" fill="#38bdf8">48,500 DT</text>
+    <text x="205" y="92" class="label-txt">Budget économisé</text>
+    <text x="205" y="115" class="label-txt" fill="#10b981">-52% vs prix fort</text>
+
+    <!-- CO2 Impact Widget -->
+    <rect x="20" y="150" width="320" height="120" class="card-inner" stroke="#10b981"/>
+    <text x="35" y="175" class="bold-txt" fill="#10b981">🌍 Équivalences Carbone Évitées</text>
+    <text x="35" y="200" class="label-txt">⚖️ 8,4 kg de nourriture détournée des bennes</text>
+    <text x="35" y="222" class="label-txt">🚗 86 km en voiture économisés (244 g CO2/km)</text>
+    <text x="35" y="244" class="label-txt">📱 2 100 recharges complètes de smartphone</text>
+
+    <!-- Inter-Filière Leaderboard ESSECT -->
+    <rect x="20" y="285" width="320" height="150" class="card-inner"/>
+    <text x="35" y="308" class="bold-txt">Classement Inter-Filières ESSECT</text>
+    <text x="35" y="335" class="bold-txt" fill="#eab308">1. 3ème E-Business (412 repas)</text>
+    <text x="35" y="360" class="label-txt">2. Master Finance (289 repas)</text>
+    <text x="35" y="385" class="label-txt">3. Licence Gestion (204 repas)</text>
+    <text x="35" y="410" class="label-txt">4. Marketing Digital (176 repas)</text>
+
+    <!-- Share button -->
+    <rect x="20" y="450" width="320" height="42" class="accent-btn" fill="#0284c7"/>
+    <text x="180" y="476" class="btn-txt">Partager mon badge impact sur LinkedIn / Insta</text>
+  </g>
+
+</svg>

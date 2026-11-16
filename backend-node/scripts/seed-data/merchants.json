@@ -1,87 +1,375 @@
 {
   "_guide_demonstration": {
-    "concept": "🧠 Concept : Ce fichier est le garde-manger de notre démonstration. Il contient les commerces réels du quartier de Montfleury entourant l'ESSECT, avec leurs spécialités et leurs prix réels en Dinars Tunisiens.",
+    "concept": "🧠 Concept : Ce fichier est le garde-manger de notre démonstration. Il contient les commerces réels du quartier de Montfleury entourant l'ESSECT, avec leurs spécialités et leurs prix réels en Dinars Tunisiens et millimes entiers.",
     "react_vs_flutter": "🔄 React vs Flutter : Ces données alimentent le radar 3D Web, la carte mobile Flutter et le catalogue initial partagé.",
     "pour_la_soutenance": "🎯 Pour la soutenance : 'Nous avons cartographié 6 établissements réels situés dans un rayon piéton de 1.5 km autour de l'ESSECT pour démontrer l'ancrage local immédiat de la solution.'",
-    "instructions_demonstration": "l'équipe UI : Tu peux ajuster les plats, photos ou descriptions de ces 6 commerces. Veille simplement à ce que les coordonnées GPS restent à moins de 1500 m de l'ESSECT (lat: 36.7871, lng: 10.1748)."
+    "regles_metier": "Toutes les catégories respectent strictement OFFER_CATEGORIES (SANDWICH, PLAT_CHAUD, PIZZA, PATISSERIE, VIENNOISERIE, SALADE, BOISSON, SNACK, MIXTE) et les prix sont synchronisés en millimes entiers stricts (1 TND = 1000 millimes) pour garantir l'intégrité financière."
   },
   "merchants": [
     {
+      "id": "merchant-baguette-baguette",
       "name": "Baguette & Baguette Montfleury",
       "type": "FAST_FOOD",
-      "description": "Sandwicherie rapide et baguettes farcies croustillantes appréciées des étudiants de l'ESSECT.",
+      "description": "Sandwicherie rapide et baguettes farcies croustillantes très appréciées des étudiants de l'ESSECT.",
       "phone": "+21671390111",
-      "address": { "street": "Avenue Habib Bourguiba, Montfleury", "area": "Montfleury", "city": "Tunis" },
-      "location": { "lat": 36.7885, "lng": 10.1762, "geohash": "snx0z8e12" },
+      "address": {
+        "street": "Avenue Habib Bourguiba, Montfleury",
+        "area": "Montfleury",
+        "city": "Tunis"
+      },
+      "location": {
+        "lat": 36.7885,
+        "lng": 10.1762,
+        "geohash": "snx0z8e12"
+      },
       "distanceFromEssectM": 210,
+      "walkingMinutes": 3,
       "items": [
-        { "name": "Baguette Farcie Escalope", "originalTND": 7.5, "weightGrams": 400 },
-        { "name": "Makloub Chawarma", "originalTND": 6.8, "weightGrams": 350 }
+        {
+          "id": "item-bb-01",
+          "name": "Baguette Farcie Escalope Panée",
+          "category": "SANDWICH",
+          "originalPriceMillimes": 7500,
+          "originalTND": 7.5,
+          "weightGramsPerUnit": 400,
+          "weightGrams": 400,
+          "description": "Baguette artisanale chaude garnie d'escalope panée croustillante, frites maison, fromage fondant et harissa douce."
+        },
+        {
+          "id": "item-bb-02",
+          "name": "Makloub Chawarma Poulet",
+          "category": "SANDWICH",
+          "originalPriceMillimes": 6800,
+          "originalTND": 6.8,
+          "weightGramsPerUnit": 350,
+          "weightGrams": 350,
+          "description": "Pâte à pizza fine roulée garnie de poulet mariné aux épices orientales, salade fraîche et sauce blanche."
+        },
+        {
+          "id": "item-bb-03",
+          "name": "Boîte Salade César Tunisienne",
+          "category": "SALADE",
+          "originalPriceMillimes": 5500,
+          "originalTND": 5.5,
+          "weightGramsPerUnit": 300,
+          "weightGrams": 300,
+          "description": "Mélange croquant de laitue, blanc de poulet grillé, croûtons à l'ail, copeaux de fromage et vinaigrette légère."
+        },
+        {
+          "id": "item-bb-04",
+          "name": "Canette Boga Cidre 33cl",
+          "category": "BOISSON",
+          "originalPriceMillimes": 1800,
+          "originalTND": 1.8,
+          "weightGramsPerUnit": 330,
+          "weightGrams": 330,
+          "description": "Boisson gazeuse tunisienne emblématique saveur caroube servie bien fraîche."
+        }
       ]
     },
     {
+      "id": "merchant-etoile-savoir",
       "name": "Cafétéria L'Étoile du Savoir",
       "type": "CAFETERIA",
-      "description": "Le spot café incontournable des révisions avec viennoiseries du matin et jus frais.",
+      "description": "Le repaire café et petit-déjeuner incontournable des étudiants de l'ESSECT à 2 minutes du campus.",
       "phone": "+21671390222",
-      "address": { "street": "Rue de l'ESSECT", "area": "Montfleury", "city": "Tunis" },
-      "location": { "lat": 36.7865, "lng": 10.1739, "geohash": "snx0z8c45" },
+      "address": {
+        "street": "Rue de l'ESSECT",
+        "area": "Montfleury",
+        "city": "Tunis"
+      },
+      "location": {
+        "lat": 36.7865,
+        "lng": 10.1739,
+        "geohash": "snx0z8c45"
+      },
       "distanceFromEssectM": 120,
+      "walkingMinutes": 2,
       "items": [
-        { "name": "Croissant Beurre & Café Express", "originalTND": 3.2, "weightGrams": 150 },
-        { "name": "Pain au chocolat artisanal", "originalTND": 1.8, "weightGrams": 90 }
+        {
+          "id": "item-es-01",
+          "name": "Croissant Beurre Pur & Café Express",
+          "category": "VIENNOISERIE",
+          "originalPriceMillimes": 3200,
+          "originalTND": 3.2,
+          "weightGramsPerUnit": 150,
+          "weightGrams": 150,
+          "description": "Formule matin express : croissant croustillant pur beurre accompagné d'un café noir illy corsé."
+        },
+        {
+          "id": "item-es-02",
+          "name": "Pain au chocolat artisanal",
+          "category": "VIENNOISERIE",
+          "originalPriceMillimes": 1800,
+          "originalTND": 1.8,
+          "weightGramsPerUnit": 90,
+          "weightGrams": 90,
+          "description": "Feuilletage doré garni de deux barres de chocolat noir fondant."
+        },
+        {
+          "id": "item-es-03",
+          "name": "Jus d'Orange Pressé Frais 300ml",
+          "category": "BOISSON",
+          "originalPriceMillimes": 3500,
+          "originalTND": 3.5,
+          "weightGramsPerUnit": 300,
+          "weightGrams": 300,
+          "description": "Jus d'oranges maltaises de Tunisie fraîchement pressées sans sucre ajouté."
+        },
+        {
+          "id": "item-es-04",
+          "name": "Part de Cake Marbré Vanille-Chocolat",
+          "category": "PATISSERIE",
+          "originalPriceMillimes": 2200,
+          "originalTND": 2.2,
+          "weightGramsPerUnit": 120,
+          "weightGrams": 120,
+          "description": "Moelleux gourmand vanillé et tourbillons chocolatés préparé le matin même."
+        }
       ]
     },
     {
+      "id": "merchant-patisserie-masmoudi",
       "name": "Pâtisserie Masmoudi Montfleury",
       "type": "PATISSERIE",
-      "description": "Finesse des pâtisseries traditionnelles tunisiennes et douceurs modernes.",
+      "description": "Excellence de la pâtisserie tunisienne raffinée, mignardises traditionnelles et douceurs du soir.",
       "phone": "+21671390333",
-      "address": { "street": "Rue de la République", "area": "Montfleury", "city": "Tunis" },
-      "location": { "lat": 36.7892, "lng": 10.1725, "geohash": "snx0z8b99" },
+      "address": {
+        "street": "Rue de la République",
+        "area": "Montfleury",
+        "city": "Tunis"
+      },
+      "location": {
+        "lat": 36.7892,
+        "lng": 10.1725,
+        "geohash": "snx0z8b99"
+      },
       "distanceFromEssectM": 340,
+      "walkingMinutes": 5,
       "items": [
-        { "name": "Boîte Assortiment Makroudh & Kaak Warka", "originalTND": 12.0, "weightGrams": 300 },
-        { "name": "Mignardises Sucrées du Soir", "originalTND": 9.5, "weightGrams": 250 }
+        {
+          "id": "item-pm-01",
+          "name": "Boîte Assortiment Makroudh & Kaak Warka",
+          "category": "PATISSERIE",
+          "originalPriceMillimes": 12000,
+          "originalTND": 12.0,
+          "weightGramsPerUnit": 300,
+          "weightGrams": 300,
+          "description": "Sélection prestige de gâteaux tunisiens : makroudh aux dattes de Tozeur et kaak warka à l'eau de fleur d'églantier."
+        },
+        {
+          "id": "item-pm-02",
+          "name": "Mignardises Sucrées du Soir",
+          "category": "PATISSERIE",
+          "originalPriceMillimes": 9500,
+          "originalTND": 9.5,
+          "weightGramsPerUnit": 250,
+          "weightGrams": 250,
+          "description": "Assortiment de petits fours frais et tartelettes individuelles du jour."
+        },
+        {
+          "id": "item-pm-03",
+          "name": "Panier Mystère Pâtisseries Fines",
+          "category": "MIXTE",
+          "originalPriceMillimes": 8000,
+          "originalTND": 8.0,
+          "weightGramsPerUnit": 350,
+          "weightGrams": 350,
+          "description": "Panier surprise anti-gaspillage contenant 4 à 6 pièces artisanales sucrées du rayon frais."
+        },
+        {
+          "id": "item-pm-04",
+          "name": "Mille-feuille Traditionnel Vanille",
+          "category": "PATISSERIE",
+          "originalPriceMillimes": 2800,
+          "originalTND": 2.8,
+          "weightGramsPerUnit": 140,
+          "weightGrams": 140,
+          "description": "Pâte feuilletée croustillante caramélisée et crème pâtissière onctueuse à la vanille Bourbon."
+        }
       ]
     },
     {
+      "id": "merchant-le-dome",
       "name": "Restaurant Le Dôme Montfleury",
       "type": "RESTAURANT",
-      "description": "Plats chauds traditionnels tunisiens et menus complets du midi.",
+      "description": "Cuisine familiale tunisienne généreuse, plats cuisinés du jour et spécialités mijotées.",
       "phone": "+21671390444",
-      "address": { "street": "Avenue Taha Hussein", "area": "Montfleury", "city": "Tunis" },
-      "location": { "lat": 36.7848, "lng": 10.1771, "geohash": "snx0z8f77" },
+      "address": {
+        "street": "Avenue Taha Hussein",
+        "area": "Montfleury",
+        "city": "Tunis"
+      },
+      "location": {
+        "lat": 36.7848,
+        "lng": 10.1771,
+        "geohash": "snx0z8f77"
+      },
       "distanceFromEssectM": 410,
+      "walkingMinutes": 6,
       "items": [
-        { "name": "Plat Ojja Merguez Vapeur", "originalTND": 8.5, "weightGrams": 450 },
-        { "name": "Couscous Poisson du Jour", "originalTND": 11.0, "weightGrams": 500 }
+        {
+          "id": "item-ld-01",
+          "name": "Plat Ojja Merguez Vapeur & Œufs Fermiers",
+          "category": "PLAT_CHAUD",
+          "originalPriceMillimes": 8500,
+          "originalTND": 8.5,
+          "weightGramsPerUnit": 450,
+          "weightGrams": 450,
+          "description": "Poêlée piquante à la tomate fraîche, poivrons rouges, merguez artisanales et œufs pochés servi avec pain tabouna."
+        },
+        {
+          "id": "item-ld-02",
+          "name": "Couscous Poisson du Jour aux Légumes",
+          "category": "PLAT_CHAUD",
+          "originalPriceMillimes": 11000,
+          "originalTND": 11.0,
+          "weightGramsPerUnit": 500,
+          "weightGrams": 500,
+          "description": "Semoule fine vapeur parfumée, poisson frais doré, courgettes, carottes et pois chiches mijotés."
+        },
+        {
+          "id": "item-ld-03",
+          "name": "Assiette Kafteji Complet au Foie",
+          "category": "PLAT_CHAUD",
+          "originalPriceMillimes": 7500,
+          "originalTND": 7.5,
+          "weightGramsPerUnit": 420,
+          "weightGrams": 420,
+          "description": "Légumes d'été finement hachés (courge, piment, pomme de terre, tomate) avec foie de veau sauté et œuf mollet."
+        },
+        {
+          "id": "item-ld-04",
+          "name": "Salade Méchouia Traditionnelle",
+          "category": "SALADE",
+          "originalPriceMillimes": 3500,
+          "originalTND": 3.5,
+          "weightGramsPerUnit": 200,
+          "weightGrams": 200,
+          "description": "Piments et tomates grillés au charbon de bois, pilés avec huile d'olive vierge, thon et câpres."
+        }
       ]
     },
     {
+      "id": "merchant-bella-napoli",
       "name": "Pizzeria Bella Napoli",
       "type": "RESTAURANT",
-      "description": "Pizzas au feu de bois avec pâte maison et garnitures généreuses.",
+      "description": "Pizzas cuites au feu de bois avec pâte maison maturée 48 heures et ingrédients frais de qualité.",
       "phone": "+21671390555",
-      "address": { "street": "Boulevard du 9 Avril", "area": "Montfleury", "city": "Tunis" },
-      "location": { "lat": 36.7915, "lng": 10.1710, "geohash": "snx0z8988" },
+      "address": {
+        "street": "Boulevard du 9 Avril",
+        "area": "Montfleury",
+        "city": "Tunis"
+      },
+      "location": {
+        "lat": 36.7915,
+        "lng": 10.1710,
+        "geohash": "snx0z8988"
+      },
       "distanceFromEssectM": 620,
+      "walkingMinutes": 9,
       "items": [
-        { "name": "Pizza Quatre Saisons", "originalTND": 9.0, "weightGrams": 550 },
-        { "name": "Pizza Thon & Fromage", "originalTND": 8.0, "weightGrams": 500 }
+        {
+          "id": "item-bn-01",
+          "name": "Pizza Quatre Saisons Artisanale",
+          "category": "PIZZA",
+          "originalPriceMillimes": 9000,
+          "originalTND": 9.0,
+          "weightGramsPerUnit": 550,
+          "weightGrams": 550,
+          "description": "Sauce tomate San Marzano, mozzarella fondante, champignons frais, artichauts, jambon de dinde et olives noires."
+        },
+        {
+          "id": "item-bn-02",
+          "name": "Pizza Thon & Fromage Mozzarella",
+          "category": "PIZZA",
+          "originalPriceMillimes": 8000,
+          "originalTND": 8.0,
+          "weightGramsPerUnit": 500,
+          "weightGrams": 500,
+          "description": "La préférée des étudiants : thon à l'huile d'olive, fromage mozzarella généreux, origan et piment rouge doux."
+        },
+        {
+          "id": "item-bn-03",
+          "name": "Pizza Neptune Soufflée Calzone",
+          "category": "PIZZA",
+          "originalPriceMillimes": 9500,
+          "originalTND": 9.5,
+          "weightGramsPerUnit": 520,
+          "weightGrams": 520,
+          "description": "Chausson doré garni de sauce tomate, thon, câpres, fromage gruyère et œuf cuit à cœur."
+        },
+        {
+          "id": "item-bn-04",
+          "name": "Box Surprise Deux Tranches Pizza Géante",
+          "category": "PIZZA",
+          "originalPriceMillimes": 6000,
+          "originalTND": 6.0,
+          "weightGramsPerUnit": 450,
+          "weightGrams": 450,
+          "description": "Deux grandes parts de pizza du service du soir prêtes à emporter à prix anti-gaspillage."
+        }
       ]
     },
     {
+      "id": "merchant-fastfood-le-phare",
       "name": "Fast Food Le Phare",
       "type": "FAST_FOOD",
-      "description": "Chapatis el Mahdia et Mlewis chauds préparés à la minute.",
+      "description": "Spécialités de street food mahdoise : chapatis moelleux et mlewis croustillants préparés à la minute.",
       "phone": "+21671390666",
-      "address": { "street": "Rue Ibn Jazzar", "area": "Montfleury", "city": "Tunis" },
-      "location": { "lat": 36.7831, "lng": 10.1722, "geohash": "snx0z8733" },
+      "address": {
+        "street": "Rue Ibn Jazzar",
+        "area": "Montfleury",
+        "city": "Tunis"
+      },
+      "location": {
+        "lat": 36.7831,
+        "lng": 10.1722,
+        "geohash": "snx0z8733"
+      },
       "distanceFromEssectM": 530,
+      "walkingMinutes": 8,
       "items": [
-        { "name": "Chapati Spécial Mahdia", "originalTND": 5.5, "weightGrams": 320 },
-        { "name": "Mlewi Thon & Fromage", "originalTND": 4.2, "weightGrams": 220 }
+        {
+          "id": "item-lp-01",
+          "name": "Chapati Spécial Mahdia Complet",
+          "category": "SANDWICH",
+          "originalPriceMillimes": 5500,
+          "originalTND": 5.5,
+          "weightGramsPerUnit": 320,
+          "weightGrams": 320,
+          "description": "Pain plat rond cuit sur plaque, omelette au persil et oignons, thon, harissa maison, fromage fondant."
+        },
+        {
+          "id": "item-lp-02",
+          "name": "Mlewi Feuilleté Thon & Fromage",
+          "category": "SANDWICH",
+          "originalPriceMillimes": 4200,
+          "originalTND": 4.2,
+          "weightGramsPerUnit": 220,
+          "weightGrams": 220,
+          "description": "Galette feuilletée traditionnelle beurrée, garnie de thon, fromage et harissa piquante."
+        },
+        {
+          "id": "item-lp-03",
+          "name": "Kaskrout Thon & Salade Méchouia",
+          "category": "SANDWICH",
+          "originalPriceMillimes": 4500,
+          "originalTND": 4.5,
+          "weightGramsPerUnit": 280,
+          "weightGrams": 280,
+          "description": "Demi-baguette croustillante garnie d'une généreuse couche de méchouia, thon émietté et tranches d'œufs durs."
+        },
+        {
+          "id": "item-lp-04",
+          "name": "Citronnade Artisanale Menthe Fraîche 33cl",
+          "category": "BOISSON",
+          "originalPriceMillimes": 2000,
+          "originalTND": 2.0,
+          "weightGramsPerUnit": 330,
+          "weightGrams": 330,
+          "description": "Citrons tunisiens mixés avec pulpe, eau de fleur d'oranger et feuilles de menthe fraîches."
+        }
       ]
     }
   ]

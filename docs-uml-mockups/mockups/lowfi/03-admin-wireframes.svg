@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 850" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0b0f14; }
+      .header-title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 26px; font-weight: bold; fill: #ffffff; }
+      .header-sub { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; fill: #8fa0b5; }
+      .card-bg { fill: #161f2c; stroke: #2a384c; stroke-width: 1.5; rx: 12px; }
+      .card-inner { fill: #1f2b3e; stroke: #374863; stroke-width: 1; rx: 8px; }
+      .screen-title { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; font-weight: 600; fill: #64d2ff; }
+      .label-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; fill: #94a3b8; }
+      .bold-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #f1f5f9; }
+      .accent-btn { fill: #10b981; rx: 6px; }
+      .danger-btn { fill: #ef4444; rx: 6px; }
+      .btn-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .pill { fill: #243447; stroke: #3b506a; stroke-width: 1; rx: 12px; }
+      .pill-active { fill: #0284c7; stroke: #38bdf8; stroke-width: 1; rx: 12px; }
+      .pill-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 10px; fill: #e2e8f0; text-anchor: middle; }
+      .badge-tag { fill: #eab308; rx: 4px; }
+      .badge-txt { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9px; font-weight: bold; fill: #000000; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="850" class="bg"/>
+
+  <!-- Main Banner Header -->
+  <g transform="translate(40, 30)">
+    <rect width="1520" height="70" class="card-bg"/>
+    <text x="30" y="36" class="header-title">🛡️ CampusSave — Wireframes Basse Fidélité : Espace Administration &amp; Supervision</text>
+    <text x="30" y="58" class="header-sub">Écrans 1 à 4 : Tableau de Bord Écosystème, Modale de Validation des Commerces &amp; Gestion des Rôles</text>
+  </g>
+
+  <!-- ================= ROW 1 (2 LARGE SCREENS) ================= -->
+
+  <!-- SCREEN 1: GLOBAL SUPERVISION DASHBOARD -->
+  <g transform="translate(40, 120)">
+    <rect width="740" height="340" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">1. Supervision Globale &amp; Métriques (AdminDashboard)</text>
+    
+    <!-- 4 KPI Blocks -->
+    <rect x="20" y="48" width="165" height="80" class="card-inner"/>
+    <text x="35" y="72" class="bold-txt" font-size="20px" fill="#10b981">6 / 6</text>
+    <text x="35" y="92" class="label-txt">Commerces Montfleury</text>
+    <text x="35" y="112" class="label-txt" fill="#10b981">100% actifs</text>
+
+    <rect x="200" y="48" width="165" height="80" class="card-inner"/>
+    <text x="215" y="72" class="bold-txt" font-size="20px" fill="#38bdf8">148</text>
+    <text x="215" y="92" class="label-txt">Étudiants ESSECT</text>
+    <text x="215" y="112" class="label-txt" fill="#38bdf8">+18 aujourd'hui</text>
+
+    <rect x="380" y="48" width="165" height="80" class="card-inner"/>
+    <text x="395" y="72" class="bold-txt" font-size="20px" fill="#eab308">1 420 kg</text>
+    <text x="395" y="92" class="label-txt">CO2 évité total</text>
+    <text x="395" y="112" class="label-txt">568 repas sauvés</text>
+
+    <rect x="560" y="48" width="160" height="80" class="card-inner"/>
+    <text x="575" y="72" class="bold-txt" font-size="20px" fill="#c084fc">99.9 %</text>
+    <text x="575" y="92" class="label-txt">Santé du Système</text>
+    <text x="575" y="112" class="label-txt" fill="#10b981">Firestore &amp; API UP</text>
+
+    <!-- Eco & Financial Balance Widget -->
+    <rect x="20" y="145" width="700" height="120" class="card-inner"/>
+    <text x="35" y="170" class="bold-txt">Volume Économique &amp; Pouvoir d'Achat Étudiant Préservé</text>
+    <text x="35" y="195" class="label-txt">• Volume Total Brut Sauvé : 4 260,000 DT (Valeur facette originale)</text>
+    <text x="35" y="215" class="label-txt">• Montant Payé par les Étudiants : 2 080,000 DT (Gain d'épargne étudiante : +2 180,000 DT)</text>
+    <text x="35" y="235" class="label-txt">• Taux Moyen de Réduction Anti-Gaspillage : 51.2%</text>
+
+    <!-- Quick action links -->
+    <rect x="20" y="280" width="340" height="38" class="accent-btn" fill="#1f2b3e" stroke="#10b981"/>
+    <text x="190" y="304" class="btn-txt" fill="#10b981">📥 Exporter le Bilan RSE ESSECT (CSV / PDF)</text>
+
+    <rect x="380" y="280" width="340" height="38" class="accent-btn" fill="#1f2b3e" stroke="#38bdf8"/>
+    <text x="550" y="304" class="btn-txt" fill="#38bdf8">🔄 Déclencher la Vérification d'Intégrité</text>
+  </g>
+
+  <!-- SCREEN 2: MERCHANT VALIDATION TABLE -->
+  <g transform="translate(820, 120)">
+    <rect width="740" height="340" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">2. Table de Validation des Établissements (AdminMerchants)</text>
+    
+    <!-- Filter Tabs -->
+    <rect x="20" y="48" width="130" height="26" class="pill-active"/>
+    <text x="85" y="65" class="pill-txt">En Attente (1)</text>
+    <rect x="160" y="48" width="130" height="26" class="pill"/>
+    <text x="225" y="65" class="pill-txt">Approuvés (6)</text>
+    <rect x="300" y="48" width="130" height="26" class="pill"/>
+    <text x="365" y="65" class="pill-txt">Rejetés (0)</text>
+
+    <!-- Table Header -->
+    <rect x="20" y="85" width="700" height="32" class="card-inner" fill="#1b2535"/>
+    <text x="35" y="105" class="bold-txt">Commerce</text>
+    <text x="220" y="105" class="bold-txt">Type</text>
+    <text x="320" y="105" class="bold-txt">Distance ESSECT</text>
+    <text x="460" y="105" class="bold-txt">Statut</text>
+    <text x="560" y="105" class="bold-txt">Actions Décisionnelles</text>
+
+    <!-- Row 1: Pending Merchant (Pizzeria Bella Napoli) -->
+    <rect x="20" y="125" width="700" height="48" class="card-inner" stroke="#f59e0b"/>
+    <text x="35" y="154" class="bold-txt">Pizzeria Bella Napoli</text>
+    <text x="220" y="154" class="label-txt">RESTAURANT</text>
+    <text x="320" y="154" class="label-txt" fill="#10b981">620 m (≤ 3 km)</text>
+    <rect x="460" y="139" width="75" height="20" class="badge-tag"/>
+    <text x="497" y="153" class="badge-txt">PENDING</text>
+    <rect x="560" y="135" width="65" height="28" class="accent-btn"/>
+    <text x="592" y="153" class="btn-txt">Valider</text>
+    <rect x="635" y="135" width="65" height="28" class="danger-btn"/>
+    <text x="667" y="153" class="btn-txt">Rejeter</text>
+
+    <!-- Row 2: Approved Merchant -->
+    <rect x="20" y="180" width="700" height="48" class="card-inner"/>
+    <text x="35" y="209" class="bold-txt">Baguette &amp; Baguette</text>
+    <text x="220" y="209" class="label-txt">FAST_FOOD</text>
+    <text x="320" y="209" class="label-txt" fill="#10b981">210 m (≤ 3 km)</text>
+    <rect x="460" y="194" width="75" height="20" fill="#10b981" rx="4"/>
+    <text x="497" y="208" class="badge-txt" fill="#ffffff">APPROVED</text>
+    <rect x="560" y="190" width="140" height="28" class="pill"/>
+    <text x="630" y="208" class="pill-txt">Voir fiche complète</text>
+
+    <!-- Row 3: Approved Merchant -->
+    <rect x="20" y="235" width="700" height="48" class="card-inner"/>
+    <text x="35" y="264" class="bold-txt">Cafétéria L'Étoile du Savoir</text>
+    <text x="220" y="264" class="label-txt">CAFETERIA</text>
+    <text x="320" y="264" class="label-txt" fill="#10b981">120 m (≤ 3 km)</text>
+    <rect x="460" y="249" width="75" height="20" fill="#10b981" rx="4"/>
+    <text x="497" y="263" class="badge-txt" fill="#ffffff">APPROVED</text>
+    <rect x="560" y="245" width="140" height="28" class="pill"/>
+    <text x="630" y="263" class="pill-txt">Voir fiche complète</text>
+
+    <text x="20" y="315" class="label-txt">Règle d'or : Toute mise à jour de statut déclenche une notification push FCM vers le gérant</text>
+  </g>
+
+  <!-- ================= ROW 2 (2 SCREENS) ================= -->
+
+  <!-- SCREEN 3: APPROVAL/REJECTION MODAL -->
+  <g transform="translate(40, 480)">
+    <rect width="740" height="340" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">3. Modale Décisionnelle d'Approbation / Rejet</text>
+    
+    <!-- Modal Dialog Box -->
+    <rect x="40" y="48" width="660" height="270" class="card-inner" stroke="#64d2ff" stroke-width="1.5"/>
+    <text x="60" y="78" class="bold-txt" font-size="15px">Décision d'agrément : Pizzeria Bella Napoli</text>
+    <text x="60" y="98" class="label-txt">Vérification de l'ancrage local pour la sécurité des étudiants de l'ESSECT</text>
+
+    <!-- Details Grid -->
+    <rect x="60" y="115" width="290" height="70" class="card-bg"/>
+    <text x="75" y="138" class="label-txt">Adresse : Boulevard du 9 Avril, Montfleury</text>
+    <text x="75" y="158" class="label-txt" fill="#10b981">Distance vérifiée : 620 m (Eligible ≤ 3000 m)</text>
+    <text x="75" y="174" class="label-txt">Coordonnées GPS : 36.7915, 10.1710</text>
+
+    <rect x="370" y="115" width="310" height="70" class="card-bg"/>
+    <text x="385" y="138" class="label-txt">Justificatif RNE : RNE-TN-2024-8849</text>
+    <text x="385" y="158" class="label-txt">Gérant : Sofiane Cherif</text>
+    <text x="385" y="174" class="label-txt">Téléphone : +216 71 390 555</text>
+
+    <!-- Reason Selector -->
+    <text x="60" y="210" class="label-txt">Motif officiel (obligatoire en cas de rejet) :</text>
+    <rect x="60" y="220" width="620" height="32" class="card-bg"/>
+    <text x="75" y="241" class="label-txt">Dossier conforme aux critères d'hygiène et de proximité ESSECT ▾</text>
+
+    <!-- Modal Actions -->
+    <rect x="60" y="265" width="160" height="38" class="pill"/>
+    <text x="140" y="289" class="pill-txt">Annuler</text>
+
+    <rect x="240" y="265" width="200" height="38" class="danger-btn"/>
+    <text x="340" y="289" class="btn-txt">Rejeter avec motif</text>
+
+    <rect x="460" y="265" width="220" height="38" class="accent-btn"/>
+    <text x="570" y="289" class="btn-txt">Approuver &amp; Notifier le Gérant ✓</text>
+  </g>
+
+  <!-- SCREEN 4: USER MANAGEMENT & AUDIT LOGS -->
+  <g transform="translate(820, 480)">
+    <rect width="740" height="340" class="card-bg"/>
+    <text x="20" y="32" class="screen-title">4. Gestion des Comptes Utilisateurs &amp; Audit (AdminUsers)</text>
+    
+    <!-- Search Bar -->
+    <rect x="20" y="48" width="460" height="32" class="card-inner"/>
+    <text x="35" y="69" class="label-txt">🔍 Filtrer par nom, email, rôle (STUDENT, MERCHANT)...</text>
+
+    <rect x="500" y="48" width="220" height="32" class="card-inner"/>
+    <text x="515" y="69" class="label-txt">Filière : E-Business 3A ▾</text>
+
+    <!-- User Rows -->
+    <rect x="20" y="90" width="700" height="44" class="card-inner"/>
+    <text x="35" y="117" class="bold-txt">Ritej Bejaoui</text>
+    <text x="200" y="117" class="label-txt">donyesbejaoui27@gmail.com</text>
+    <rect x="420" y="102" width="70" height="20" class="pill-active"/>
+    <text x="455" y="116" class="pill-txt">STUDENT</text>
+    <text x="510" y="117" class="label-txt" fill="#10b981">EBUSINESS_3A</text>
+    <rect x="630" y="98" width="80" height="26" class="pill"/>
+    <text x="670" y="115" class="pill-txt">Suspendre</text>
+
+    <rect x="20" y="142" width="700" height="44" class="card-inner"/>
+    <text x="35" y="169" class="bold-txt">Fedi Touati</text>
+    <text x="200" y="169" class="label-txt">fedi.touati@essect.u-tunis.tn</text>
+    <rect x="420" y="154" width="70" height="20" fill="#a855f7" rx="4"/>
+    <text x="455" y="168" class="badge-txt" fill="#ffffff">ADMIN</text>
+    <text x="510" y="169" class="label-txt" fill="#64d2ff">SYSTÈME</text>
+    <rect x="630" y="150" width="80" height="26" class="pill"/>
+    <text x="670" y="167" class="pill-txt">Sécurisé</text>
+
+    <rect x="20" y="194" width="700" height="44" class="card-inner"/>
+    <text x="35" y="221" class="bold-txt">Baguette &amp; Baguette Gérant</text>
+    <text x="200" y="221" class="label-txt">contact@baguette.tn</text>
+    <rect x="420" y="206" width="70" height="20" fill="#eab308" rx="4"/>
+    <text x="455" y="220" class="badge-txt">MERCHANT</text>
+    <text x="510" y="221" class="label-txt" fill="#10b981">APPROVED</text>
+    <rect x="630" y="202" width="80" height="26" class="danger-btn"/>
+    <text x="670" y="219" class="btn-txt">Bloquer</text>
+
+    <!-- Security Audit Logs Footer -->
+    <rect x="20" y="250" width="700" height="70" class="card-inner" stroke="#3b506a"/>
+    <text x="35" y="272" class="bold-txt">Piste d'Audit Sécurité (Transactions Immuables)</text>
+    <text x="35" y="292" class="label-txt">[2026-11-16 17:55] Admin fedi.touati a approuvé le commerce Pâtisserie Masmoudi (Transaction ID: tx_9921)</text>
+    <text x="35" y="308" class="label-txt">[2026-11-16 18:05] Tentative de contournement de rôle bloquée par le middleware requireRole (IP: 197.3.2.14)</text>
+  </g>
+
+</svg>
