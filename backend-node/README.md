@@ -64,3 +64,89 @@ npm run dev
 # 4. Vérification de l'état de santé
 curl http://localhost:4000/api/v1/health
 ```
+
+---
+
+## 🎲 Données de Démo pour la Soutenance (`seed` & `reset-demo`)
+
+Pour garantir une soutenance fluide et 100% reproductible devant le jury de l'ESSECT, deux scripts d'automatisation des données sont disponibles :
+
+### 1. `npm run seed`
+Initialise la base Firestore avec un jeu complet de données cohérentes :
+- **6 Commerces partenaires** autour de Montfleury (5 validés `APPROVED`, 1 en attente `PENDING` pour la démo de validation admin).
+- **20 Paniers anti-gaspillage** variés : prix fixes, enchères hollandaises dégressives en direct, et 3 paniers surprise (`COMMON`, `RARE`, `LEGENDARY`) avec contenu secret masqué côté client.
+- **8 Comptes étudiants** répartis sur les 5 filières de l'ESSECT (avec un compte de démo Yassine à 90 EcoPoints, à 10 points du palier de fidélité).
+- **1 Compte Administrateur** (`admin@campussave.tn`).
+- **14 Jours d'historique** d'impact écologique et de commandes passées pour alimenter immédiatement les graphiques de tableaux de bord.
+
+```bash
+npm run seed
+```
+
+### 2. `npm run reset-demo`
+Réinitialise les réservations, paiements et tickets créés pendant un test pour repartir d'un état propre sans supprimer les comptes et commerces de base :
+
+```bash
+npm run reset-demo
+```
+
+---
+
+## 🌐 Tunneling pour la Soutenance (Mobile Flutter & Webhooks Konnect)
+
+Pendant la présentation devant le jury, l'application mobile Flutter sur smartphone physique et les webhooks de paiement Konnect Sandbox ont besoin d'accéder au backend local. Deux solutions éprouvées :
+
+### Option A : Cloudflare Tunnel (Recommandé — gratuit et sans limite de temps)
+```bash
+# Installation rapide via winget ou npm
+cloudflared tunnel --url http://localhost:4000
+```
+Copier l'URL HTTPS générée (ex: `https://votre-tunnel.trycloudflare.com`) et renseigner :
+- Dans le `.env` backend : `BASE_URL=https://votre-tunnel.trycloudflare.com`
+- Dans la configuration mobile Flutter : `baseUrl = 'https://votre-tunnel.trycloudflare.com/api/v1'`
+
+### Option B : ngrok
+```bash
+ngrok http 4000
+```
+Reporter l'URL HTTPS fournie par ngrok dans vos variables d'environnement.
+
+---
+
+## 🚀 Déploiement en Production
+
+### 1. Déploiement sur Render (PaaS Node.js)
+1. Créer un nouveau **Web Service** sur [render.com](https://render.com).
+2. Connecter le dépôt GitHub `campussave`.
+3. Configurer le service :
+   - **Root Directory :** `backend-node`
+   - **Environment :** `Node`
+   - **Build Command :** `npm install`
+   - **Start Command :** `npm start`
+4. Ajouter les variables d'environnement dans l'onglet **Environment** (copier celles de `.env.example`).
+5. Téléverser la clé de service Firebase en variable `FIREBASE_SERVICE_ACCOUNT_KEY` (chaîne JSON) ou via Secret File.
+
+### 2. Déploiement sur Google Cloud Run (Conteneur Serverless)
+1. Construire l'image Docker :
+   ```bash
+   gcloud builds submit --tag gcr.io/campussave/backend-api
+   ```
+2. Déployer le service avec autoscaling :
+   ```bash
+   gcloud run deploy campussave-backend \
+     --image gcr.io/campussave/backend-api \
+     --platform managed \
+     --region europe-west1 \
+     --allow-unauthenticated
+   ```
+
+---
+
+## 🧪 Tests Automatisés
+
+Le backend intègre une suite de tests unitaires et d'intégration couvrant la validation Zod, la cryptographie HMAC des tickets, la tarification hollandaise dégressive et la cohérence du jeu de données :
+
+```bash
+npm test
+```
+

@@ -2,7 +2,6 @@
 // 🔄 Comparaison React / Flutter : En Flutter, nous utilisons `AnimationController`, `Transform.rotate`, `ScaleTransition` et `HapticFeedback.heavyImpact()` ; en React, ce comportement est orchestré par Framer Motion.
 // 🎯 À retenir pour la soutenance : "L'animation d'ouverture gamifiée récompense l'étudiant avec un retour haptique physique sur smartphone et une incrémentation immédiate de ses EcoPoints."
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../app/theme.dart';
@@ -207,7 +206,7 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
 
                     // Note commerçant
                     if (reveal['note'] != null) ...[

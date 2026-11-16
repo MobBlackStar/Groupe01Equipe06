@@ -4,7 +4,6 @@
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
-import '../../core/domain/loyalty.dart';
 
 class LoyaltyCardScreen extends StatefulWidget {
   const LoyaltyCardScreen({super.key});
@@ -294,7 +293,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
 
               const SizedBox(height: 20),
 

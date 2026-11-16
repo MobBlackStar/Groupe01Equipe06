@@ -11,6 +11,13 @@ import '../features/radar/radar_screen.dart';
 import '../features/dashboards/student_dashboard_screen.dart';
 import '../features/dashboards/merchant_dashboard_screen.dart';
 import '../features/impact/impact_screen.dart';
+import '../features/loyalty/loyalty_card_screen.dart';
+import '../features/explore/explore_screen.dart';
+import '../features/orders/my_orders_screen.dart';
+import '../features/merchant/merchant_offers_screen.dart';
+import '../features/merchant/merchant_orders_screen.dart';
+import '../features/merchant/offer_form_screen.dart';
+import '../features/merchant/scanner_screen.dart';
 
 class AppRouter {
   static final AuthService authService = AuthService();
@@ -67,8 +74,36 @@ class AppRouter {
         builder: (context, state) => const StudentDashboardScreen(),
       ),
       GoRoute(
+        path: '/student/explore',
+        builder: (context, state) => const ExploreScreen(),
+      ),
+      GoRoute(
+        path: '/student/loyalty',
+        builder: (context, state) => const LoyaltyCardScreen(),
+      ),
+      GoRoute(
+        path: '/student/orders',
+        builder: (context, state) => const MyOrdersScreen(),
+      ),
+      GoRoute(
         path: '/merchant/dashboard',
         builder: (context, state) => const MerchantDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/merchant/offers',
+        builder: (context, state) => const MerchantOffersScreen(),
+      ),
+      GoRoute(
+        path: '/merchant/offers/new',
+        builder: (context, state) => const OfferFormScreen(),
+      ),
+      GoRoute(
+        path: '/merchant/orders',
+        builder: (context, state) => const MerchantOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/merchant/scan',
+        builder: (context, state) => const ScannerScreen(),
       ),
       GoRoute(
         path: '/student',

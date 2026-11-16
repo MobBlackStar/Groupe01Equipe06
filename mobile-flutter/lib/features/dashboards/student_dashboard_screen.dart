@@ -320,7 +320,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
-                    LineBarData(
+                    LineChartBarData(
                       spots: _selectedChartMetric == 0
                           ? const [
                               FlSpot(0, 7.5),

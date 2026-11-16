@@ -3,7 +3,6 @@
 // 🎯 À retenir pour la soutenance : "L'application mobile permet à tout visiteur de constater en un geste la dynamique écologique des 5 filières et l'impact carbone certifié EPA."
 
 import 'package:flutter/material.dart';
-import '../../widgets/kpi_tile.dart';
 
 class ImpactScreen extends StatelessWidget {
   final String? studentFiliere;

@@ -66,6 +66,9 @@ export const SURPRISE_RARITY = Object.freeze({
   LEGENDARY: 'LEGENDARY',
 });
 
+// Alias pour compatibilité transversale
+export const RARITY_TIERS = SURPRISE_RARITY;
+
 export const ORDER_STATUS = Object.freeze({
   RESERVED: 'RESERVED',
   PAID: 'PAID',

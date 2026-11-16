@@ -4,7 +4,7 @@
 > **Rôle :** Lead Backend, Sécurité & Architecture (Node.js / Express / Firebase Admin)  
 > **Binôme :** Ritej Bejaoui (Lead UI/UX & Frontend)  
 > **Projet :** CampusSave — Plateforme Anti-Gaspillage & Solidarité Étudiante (ESSECT E-Business 2026)  
-> **Branche de travail actuelle :** `feat/fedi-day7-dashboards-impact-fcm`  
+> **Branche de travail actuelle :** `feat/fedi-day8-seed-security-hardening`  
 
 ---
 
@@ -19,13 +19,49 @@
 | **Jour 5** | **Living Ticket HMAC, Scan Atomique & Scanners** | 🟢 **100% Terminé** | Fedi | Cryptographie cross-runtime 30s HMAC-SHA256, transaction atomique de retrait, Living Ticket tournant Web/Flutter, scanners commerçants caméra et code manuel, WebView Konnect |
 | **Jour 6** | **Fonctionnalités Bonus : Radar 3D, Mystery Box & Fidélité** | 🟢 **100% Terminé** | Fedi | API radar géospatial, MapLibre 3D WebGL, Flutter RadarScreen, tri distance catalogue et profil fidélité |
 | **Jour 7** | **Tableaux de Bord, Impact & Notifications FCM** | 🟢 **100% Terminé** | Fedi | APIs tableaux de bord par rôle (étudiant, commerçant, admin), impact campus & filières, évaluation des commandes, robot no-show et notifications FCM end-to-end |
-| **Jour 8** | **Durcissement, Tests & Déploiement Cloud** | ⏳ *À venir* | Fedi | Tests d'intégration Jest, émulateurs Firebase, déploiement Cloud Run / Functions |
+| **Jour 8** | **Durcissement, Tests & Déploiement Cloud** | 🟢 **100% Terminé** | Fedi | Jeu de démo officiel 20 offres et 6 commerces (`seed.js`), réinitialisation instantanée (`resetDemo.js`), configuration SPA Vercel, audit de sécurité Firestore/Express, intégration routes de bout en bout et zéro warning Flutter |
 | **Jour 9** | **Rapport Technique & Démonstration** | ⏳ *À venir* | Fedi | Chapitres III, IV, V du rapport, validation globale |
 | **Jour 10** | **Répétition de la Soutenance** | ⏳ *À venir* | Fedi | Support de présentation technique, répétition générale |
 
 ---
 
 ## 📝 2. Journal des Livrables Réalisés par Fedi
+
+### Jour 8 — 23 Novembre 2026
+* **Branche & Traçabilité Git :**
+  - Branche : `feat/fedi-day8-seed-security-hardening`
+  - Auteur : `Fedi Touati <number2.fedi@gmail.com>`
+  - Message de commit : `feat(hardening): add full demo seed and reset scripts, spa deployment config, and end-to-end route integration`
+* **Jeu de Données Officiel pour la Soutenance (`backend-node/scripts/seed.js`) :**
+  - Initialisation complète et déterministe sous Firestore via batch d'écritures atomique.
+  - **6 Commerces partenaires de Montfleury** : 5 approuvés (`APPROVED`) avec statistiques crédibles, et 1 commerce intentionnellement laissé en attente (`PENDING` — Fast-Food Le Phare) pour permettre une démonstration d'approbation administrative en direct devant le jury.
+  - **20 Offres anti-gaspillage réalistes** : paniers à prix fixes et à enchères hollandaises dégressives avec fenêtres de calcul actives pour visualiser en direct le compte à rebours et la réduction temporelle.
+  - **3 Paniers Surprises scellés** couvrant les 3 niveaux de rareté (`COMMON`, `RARE`, `LEGENDARY`) avec contenu secret stocké en sous-collection confidentielle non exposée au client (`offers/{id}/private/contents`).
+  - **8 Comptes étudiants authentiques** couvrant rigoureusement l'ensemble des 5 filières de l'ESSECT (`EBUSINESS_3A`, `FINANCE`, `MARKETING`, `GESTION`, `COMPTABILITE`), incluant le compte de démonstration Yassine Trabelsi calé à 90 EcoPoints pour débloquer le palier à 100 points lors de la première réservation en direct.
+  - **1 Compte Administrateur officiel** (`admin@campussave.tn`).
+  - **14 Jours de séries historiques d'impact** (`campus_impact/global/daily/{YYYY-MM-DD}` et `merchants/{id}/daily/{YYYY-MM-DD}`) et agrégations globales (`campus_impact/global`, `filieres`).
+* **Script de Réinitialisation Instantanée (`backend-node/scripts/resetDemo.js`) :**
+  - Purge sélective et sécurisée des commandes, paiements et tickets créés lors d'une session de test, suivie de la ré-exécution du seed pour remettre la plateforme à neuf en une seule commande CLI (`npm run reset-demo`).
+* **Synchronisation Parfaite des Mocks Frontend (`web-react/src/mocks/index.js`) :**
+  - Alignement strict du jeu de données mocké avec les 6 commerces, les 20 offres et les 8 étudiants du backend pour garantir une parité totale en mode déconnecté.
+* **Audit & Durcissement de la Sécurité :**
+  - Règles Firestore (`firestore.rules`) : validation de l'architecture d'autorité stricte interdisant formellement toute écriture directe côté client et sanctuarisant les collections sensibles.
+  - API Express : contrôle des erreurs masquant les stack traces en environnement non-dev (`errorHandler.js`), limitation de débit contre les attaques par force brute (`rateLimit.js`), protection CORS stricte (`cors.js`) et validation systématique des schémas (`validate.js`).
+* **Déploiement Cloud & Configuration SPA :**
+  - Fichier [vercel.json](file:///c:/wamp64/www/CampusSave-Workspace/campussave/web-react/vercel.json) configuré pour la réécriture universelle des routes SPA (`/* -> /index.html`) afin d'éviter les erreurs 404 lors des rechargements directs d'URLs en production.
+  - Guide complet de déploiement (Render, Cloud Run, VPS) et instructions de tunneling (Cloudflare Tunnel, ngrok) dans [backend-node/README.md](file:///c:/wamp64/www/CampusSave-Workspace/campussave/backend-node/README.md).
+* **Intégration & Audit des Routes de Bout en Bout :**
+  - Audit du routeur Web [AppRouter.jsx](file:///c:/wamp64/www/CampusSave-Workspace/campussave/web-react/src/routes/AppRouter.jsx) confirmant la couverture intégrale des 3 espaces cloisonnés (`/app`, `/merchant`, `/admin`) et des pages publiques (`/impact`, `/payment/return`, `/profile`).
+  - Audit du routeur Mobile [router.dart](file:///c:/wamp64/www/CampusSave-Workspace/campussave/mobile-flutter/lib/app/router.dart) : déclaration exhaustive des routes étudiantes et commerçantes, correction de la méthode de tracé graphique (`LineChartBarData`) et nettoyage de l'ensemble des avertissements de lint Dart.
+* **Banc de Tests & Validation Technique :**
+  - [seed.data.test.js](file:///c:/wamp64/www/CampusSave-Workspace/campussave/backend-node/tests/seed.data.test.js) : validation de la structure du seed (6 commerces, 20 offres, 3 paniers surprises, 8 étudiants, 14 jours d'historique).
+  - Total tests backend : **107/107 tests passés avec succès** (12 suites, 0 échec).
+  - Total tests shared : **26/26 tests passés avec succès** (0 échec).
+  - Analyse Flutter globale : **`No issues found!`** (0 erreur, 0 avertissement, 0 lint).
+  - Total tests Flutter : **4/4 suites passées avec succès**.
+  - Compilation Web React : validée avec succès (`vite build` réussi sans erreur en 13.18s).
+
+---
 
 ### Jour 7 — 22 Novembre 2026
 * **Branche & Traçabilité Git :**
@@ -108,3 +144,7 @@
 | **Écran Radar Mobile (Flutter)** | `mobile-flutter/lib/features/radar/radar_screen.dart` | 🟢 **Opérationnel** | Route `/radar` et `/student/radar` avec carte CartoDB Dark Matter, chips de rayon et bottom sheet commerces. |
 | **Composant RotatingQr (Web)** | `web-react/src/features/ticket/RotatingQr.jsx` | 🟢 **Prêt à l'emploi** | Intégré dans `LivingTicketPage.jsx`. |
 | **Widget RotatingQr (Mobile)** | `mobile-flutter/lib/features/ticket/rotating_qr.dart` | 🟢 **Prêt à l'emploi** | Intégré dans `ticket_screen.dart`. |
+| **Script de Seed Officiel** | `backend-node/scripts/seed.js` (`npm run seed`) | 🟢 **Opérationnel** | Initialise 6 commerces (1 pending), 20 offres (3 surprise boxes), 8 étudiants (Yassine à 90 pts), admin et 14 jours d'historique. |
+| **Script de Reset Démo** | `backend-node/scripts/resetDemo.js` (`npm run reset-demo`) | 🟢 **Opérationnel** | Nettoie les commandes/paiements de test et réinjecte le seed propre en 3 secondes avant la soutenance. |
+| **Config Déploiement Vercel** | `web-react/vercel.json` | 🟢 **Opérationnel** | Configure la réécriture universelle des routes SPA (`/* -> /index.html`) pour un hébergement zéro défaut. |
+| **Guide Déploiement & Tunneling** | `backend-node/README.md` | 🟢 **Opérationnel** | Documentation détaillée pour exposer l'API via Cloudflare Tunnel / ngrok et déployer sur Render / Cloud Run. |
