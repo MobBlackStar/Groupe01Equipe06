@@ -19,6 +19,11 @@ import AdminMerchantsPage from '../features/admin/AdminMerchantsPage.jsx';
 import AdminUsersPage from '../features/admin/AdminUsersPage.jsx';
 import BrowsePage from '../features/explore/BrowsePage.jsx';
 import OfferDetailPage from '../features/explore/OfferDetailPage.jsx';
+import CheckoutPage from '../features/checkout/CheckoutPage.jsx';
+import PaymentReturnPage from '../features/checkout/PaymentReturnPage.jsx';
+import LivingTicketPage from '../features/ticket/LivingTicketPage.jsx';
+import MyOrdersPage from '../features/orders/MyOrdersPage.jsx';
+import MerchantOrdersPage from '../features/merchant/MerchantOrdersPage.jsx';
 
 export function AppRouter() {
   return (
@@ -28,6 +33,7 @@ export function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/payment/return" element={<PaymentReturnPage />} />
       <Route
         path="/impact"
         element={
@@ -45,28 +51,9 @@ export function AppRouter() {
           <Route path="/app" element={<BrowsePage />} />
           <Route path="/app/explore" element={<BrowsePage />} />
           <Route path="/app/offers/:id" element={<OfferDetailPage />} />
-          <Route
-            path="/app/checkout/:orderId"
-            element={
-              <div className="min-h-screen bg-[#0D0F12] flex items-center justify-center p-6">
-                <div className="p-8 max-w-md w-full bg-[#161920] border border-[#CCFF00]/30 rounded-3xl text-center space-y-4 text-white shadow-2xl">
-                  <span className="text-5xl block animate-bounce">🔒</span>
-                  <h2 className="text-xl font-black text-[#CCFF00]">Réservation Bloquée (10 min)</h2>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Votre commande a été verrouillée au prix de la seconde exacte. Vous disposez de 10 minutes pour régler via Konnect.
-                  </p>
-                  <div className="pt-4 flex flex-col gap-2">
-                    <a
-                      href="/app/explore"
-                      className="w-full py-3 rounded-2xl bg-[#CCFF00] text-black font-bold text-xs hover:bg-[#b8e600] transition-colors"
-                    >
-                      Retour au catalogue
-                    </a>
-                  </div>
-                </div>
-              </div>
-            }
-          />
+          <Route path="/app/checkout/:orderId" element={<CheckoutPage />} />
+          <Route path="/app/orders" element={<MyOrdersPage />} />
+          <Route path="/app/orders/:id/ticket" element={<LivingTicketPage />} />
         </Route>
 
         {/* Espace Commerçant (/merchant/*) */}
@@ -77,6 +64,7 @@ export function AppRouter() {
           <Route path="/merchant/offers" element={<MerchantOffersPage />} />
           <Route path="/merchant/offers/new" element={<OfferFormPage />} />
           <Route path="/merchant/offers/:id/edit" element={<OfferFormPage />} />
+          <Route path="/merchant/orders" element={<MerchantOrdersPage />} />
         </Route>
 
         {/* Espace Administrateur (/admin/*) */}
