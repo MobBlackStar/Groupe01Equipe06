@@ -28,12 +28,10 @@ class OfferDetailScreen extends StatefulWidget {
 class _OfferDetailScreenState extends State<OfferDetailScreen> {
   int _quantity = 1;
   bool _isReserving = false;
-  String? _errorMessage;
 
   void _reserve() async {
     setState(() {
       _isReserving = true;
-      _errorMessage = null;
     });
 
     await Future.delayed(const Duration(milliseconds: 700));

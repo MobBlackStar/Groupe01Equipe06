@@ -1,7 +1,46 @@
-// 💡 Concept & Analogie : Routeur Express définissant les points de terminaison pour Cycle de vie des réservations et transactions de commandes.
-// 🔄 Comparaison React / Flutter : Contrat d API consommé de façon symétrique par Web et Mobile.
-// 🎯 À retenir pour la soutenance : "Nous isolons la déclaration des routes par domaine fonctionnel pour une maintenance modulaire."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Aiguillage des requêtes liées aux commandes vers le contrôleur sécurisé.
+// 🔄 Comparaison React / Flutter : Protégé par le middleware authenticate et requireRole(STUDENT).
+// 🎯 À retenir pour la soutenance : "Seuls les utilisateurs authentifiés avec le rôle STUDENT peuvent réserver une offre."
+// Module : Commandes & Réservations
 
 import { Router } from 'express';
+import { ordersController } from './orders.controller.js';
+import { authenticate } from '../../middleware/authenticate.js';
+import { requireRole } from '../../middleware/requireRole.js';
+import { validate } from '../../middleware/validate.js';
+import { createOrderSchema } from './orders.schemas.js';
+import { ROLES } from '../../../../shared/constants.js';
+
 export const ordersRouter = Router();
+
+// Création d'une réservation (Rôle Étudiant uniquement)
+ordersRouter.post(
+  '/',
+  authenticate,
+  requireRole(ROLES.STUDENT),
+  validate({ body: createOrderSchema }),
+  ordersController.createOrder
+);
+
+// Annulation d'une réservation temporaire (Rôle Étudiant)
+ordersRouter.post(
+  '/:id/cancel',
+  authenticate,
+  requireRole(ROLES.STUDENT),
+  ordersController.cancelOrder
+);
+
+// Liste des commandes de l'étudiant connecté
+ordersRouter.get(
+  '/me',
+  authenticate,
+  requireRole(ROLES.STUDENT),
+  ordersController.getMyOrders
+);
+
+// Consultation d'une commande par identifiant (Étudiant propriétaire, Commerçant concerné ou Admin)
+ordersRouter.get(
+  '/:id',
+  authenticate,
+  ordersController.getOrderById
+);

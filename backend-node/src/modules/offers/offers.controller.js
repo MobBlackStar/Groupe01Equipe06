@@ -7,6 +7,11 @@ import { offersService } from './offers.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 export const offersController = {
+  listOffers: asyncHandler(async (req, res) => {
+    const result = await offersService.listOffers(req.query);
+    res.json(result);
+  }),
+
   createOffer: asyncHandler(async (req, res) => {
     const result = await offersService.createOffer(req.merchant, req.body);
     res.status(201).json(result);

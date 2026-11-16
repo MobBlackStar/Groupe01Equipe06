@@ -1,6 +1,29 @@
-// 💡 Concept & Analogie : Contrôleur HTTP gérant la réception des requêtes et l envoi des réponses JSON pour orders.
-// 🔄 Comparaison React / Flutter : Renvoie des réponses standardisées avec injection automatique du temps serveur.
-// 🎯 À retenir pour la soutenance : "Le contrôleur orchestre le flux applicatif en déléguant la logique métier au service dédié."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Contrôleur gérant la réception des demandes de réservation et d'annulation de commandes.
+// 🔄 Comparaison React / Flutter : Point d'accès unique pour les boutons de validation de panier.
+// 🎯 À retenir pour la soutenance : "Ce contrôleur renvoie immédiatement l'objet commande avec son orderCode unique et son horodatage de fin de validité."
+// Module : Commandes & Réservations
 
-export const ordersController = {};
+import { ordersService } from './orders.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+
+export const ordersController = {
+  createOrder: asyncHandler(async (req, res) => {
+    const result = await ordersService.createOrder(req.user, req.body);
+    res.status(201).json(result);
+  }),
+
+  cancelOrder: asyncHandler(async (req, res) => {
+    const result = await ordersService.cancelOrder(req.params.id, req.user.uid);
+    res.json(result);
+  }),
+
+  getOrderById: asyncHandler(async (req, res) => {
+    const result = await ordersService.getOrderById(req.params.id, req.user);
+    res.json(result);
+  }),
+
+  getMyOrders: asyncHandler(async (req, res) => {
+    const result = await ordersService.getMyOrders(req.user.uid);
+    res.json(result);
+  }),
+};

@@ -8,6 +8,7 @@ import { db } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { PRICING_MODES, OFFER_STATUS } from '../../../../shared/constants.js';
 import { computeRarity } from '../../../../shared/rarity.js';
+import { computeUnitPrice, computeUrgencyColor, computeMinutesLeft } from '../../../../shared/pricing.js';
 import { generateSearchKeywords } from './keywords.js';
 import { getTunisDayKey } from '../../utils/tunisTime.js';
 
@@ -125,6 +126,9 @@ export const offersService = {
         roundingStepMillimes: pricing.roundingStepMillimes || 100,
       },
       quantity,
+      quantityTotal: quantity,
+      quantityAvailable: quantity,
+      quantitySold: 0,
       remainingQuantity: quantity,
       hasOrders: false,
       pickupStartAt: new Date(pickupStartMs),
@@ -168,7 +172,148 @@ export const offersService = {
   },
 
   /**
-   * Consultation d'une offre avec détails.
+   * Recherche multi-critères et catalogue public des offres actives avec calcul temps réel des prix.
+   */
+  async listOffers(queryParams = {}) {
+    const {
+      q,
+      category,
+      merchantId,
+      minPrice,
+      maxPrice,
+      surprise,
+      sort = 'ending',
+      limit = 20,
+      cursor,
+    } = queryParams;
+
+    const nowMs = Date.now();
+
+    // 1. Requête de base sur Firestore : uniquement les offres actives
+    let queryRef = db.collection('offers').where('status', '==', OFFER_STATUS.ACTIVE);
+
+    if (category) {
+      queryRef = queryRef.where('category', '==', category);
+    }
+    if (merchantId) {
+      queryRef = queryRef.where('merchantId', '==', merchantId);
+    }
+
+    const snapshot = await queryRef.get();
+    let offersList = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      offersList.push({ id: doc.id, ...data });
+    });
+
+    // 2. Filtrage en mémoire et enrichissement dynamique
+    const filteredOffers = [];
+
+    const searchTokens = q
+      ? q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean)
+      : [];
+
+    for (const offer of offersList) {
+      // Vérification du créneau de retrait
+      const pickupEndMs = offer.pickupEndAt?.toDate
+        ? offer.pickupEndAt.toDate().getTime()
+        : new Date(offer.pickupEndAt).getTime();
+
+      // Exclure les offres dont l'heure de retrait est passée
+      if (pickupEndMs <= nowMs) {
+        continue;
+      }
+
+      // Vérification du stock restant
+      const available = offer.quantityAvailable ?? offer.remainingQuantity ?? offer.quantity ?? 0;
+      if (available <= 0) {
+        continue;
+      }
+
+      // Calcul dynamique du prix unitaire courant et de l'urgence
+      const currentPriceMillimes = computeUnitPrice(offer, nowMs);
+      const minutesLeft = computeMinutesLeft(offer.pickupEndAt, nowMs);
+      const urgencyColor = computeUrgencyColor(offer.pickupEndAt, nowMs);
+
+      // Filtre budget min
+      if (minPrice !== undefined && minPrice !== '') {
+        if (currentPriceMillimes < Number(minPrice)) continue;
+      }
+
+      // Filtre budget max
+      if (maxPrice !== undefined && maxPrice !== '') {
+        if (currentPriceMillimes > Number(maxPrice)) continue;
+      }
+
+      // Filtre panier surprise
+      if (surprise !== undefined && surprise !== '') {
+        const isSurprise = surprise === 'true' || surprise === true;
+        if (!!offer.isSurpriseBasket !== isSurprise) continue;
+      }
+
+      // Filtre textuel multi-mots-clés (titre, nom commerce, mots-clés normalisés)
+      if (searchTokens.length > 0) {
+        const keywords = offer.searchKeywords || [];
+        const titleNorm = (offer.title || '').toLowerCase();
+        const merchantNorm = (offer.merchantSnapshot?.name || '').toLowerCase();
+        const categoryNorm = (offer.category || '').toLowerCase();
+
+        const matchesAll = searchTokens.every((token) => {
+          return (
+            keywords.includes(token) ||
+            titleNorm.includes(token) ||
+            merchantNorm.includes(token) ||
+            categoryNorm.includes(token)
+          );
+        });
+
+        if (!matchesAll) continue;
+      }
+
+      filteredOffers.push({
+        ...offer,
+        currentPriceMillimes,
+        urgency: {
+          minutesLeft,
+          color: urgencyColor,
+          level: minutesLeft > 60 ? 'LOW' : minutesLeft >= 20 ? 'MEDIUM' : 'HIGH',
+        },
+      });
+    }
+
+    // 3. Tri
+    filteredOffers.sort((a, b) => {
+      if (sort === 'price') {
+        return a.currentPriceMillimes - b.currentPriceMillimes;
+      }
+      if (sort === 'distance') {
+        const distA = a.merchantSnapshot?.distanceFromEssectM ?? 99999;
+        const distB = b.merchantSnapshot?.distanceFromEssectM ?? 99999;
+        return distA - distB;
+      }
+      // Par défaut : ending (clôture imminente d'abord)
+      const endA = a.pickupEndAt?.toDate ? a.pickupEndAt.toDate().getTime() : new Date(a.pickupEndAt).getTime();
+      const endB = b.pickupEndAt?.toDate ? b.pickupEndAt.toDate().getTime() : new Date(b.pickupEndAt).getTime();
+      return endA - endB;
+    });
+
+    // 4. Pagination par curseur / offset
+    const offset = cursor ? parseInt(cursor, 10) : 0;
+    const pageSize = Math.min(parseInt(limit, 10) || 20, 50);
+    const pagedOffers = filteredOffers.slice(offset, offset + pageSize);
+    const nextCursor = offset + pageSize < filteredOffers.length ? String(offset + pageSize) : null;
+
+    return {
+      offers: pagedOffers,
+      total: filteredOffers.length,
+      nextCursor,
+      serverTime: nowMs,
+    };
+  },
+
+  /**
+   * Consultation d'une offre avec détails et calcul du prix courant.
    */
   async getOfferById(id, currentUser) {
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -176,6 +321,16 @@ export const offersService = {
       throw new AppError('Offre introuvable', 404, 'OFFER_NOT_FOUND');
     }
     const offer = offerDoc.data();
+    const nowMs = Date.now();
+
+    const currentPriceMillimes = computeUnitPrice(offer, nowMs);
+    const minutesLeft = computeMinutesLeft(offer.pickupEndAt, nowMs);
+    const urgencyColor = computeUrgencyColor(offer.pickupEndAt, nowMs);
+    const urgency = {
+      minutesLeft,
+      color: urgencyColor,
+      level: minutesLeft > 60 ? 'LOW' : minutesLeft >= 20 ? 'MEDIUM' : 'HIGH',
+    };
 
     // Si panier surprise et utilisateur autorisé (commerçant propriétaire ou admin), adjoindre le contenu privé
     if (offer.isSurpriseBasket && currentUser) {
@@ -189,7 +344,12 @@ export const offersService = {
       }
     }
 
-    return { offer };
+    return {
+      offer,
+      currentPriceMillimes,
+      urgency,
+      serverTime: nowMs,
+    };
   },
 
   /**

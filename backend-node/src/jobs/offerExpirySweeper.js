@@ -7,7 +7,15 @@ import { db } from '../config/firebase.js';
 import { logger } from '../utils/logger.js';
 import { OFFER_STATUS } from '../../../shared/constants.js';
 
+let isOfferExpirySweeperRunning = false;
+
+/**
+ * Clôture les offres actives dont la date de fin de retrait est passée.
+ */
 export async function runOfferExpirySweeper() {
+  if (isOfferExpirySweeperRunning) return;
+  isOfferExpirySweeperRunning = true;
+
   try {
     const now = new Date();
     const expiredOffersQuery = await db
@@ -17,7 +25,10 @@ export async function runOfferExpirySweeper() {
       .limit(50)
       .get();
 
-    if (expiredOffersQuery.empty) return;
+    if (expiredOffersQuery.empty) {
+      isOfferExpirySweeperRunning = false;
+      return;
+    }
 
     logger.info(`Sweeper: ${expiredOffersQuery.size} offre(s) expirée(s) trouvée(s)`);
 
@@ -32,5 +43,24 @@ export async function runOfferExpirySweeper() {
     await batch.commit();
   } catch (error) {
     logger.error({ err: error.message }, 'Erreur dans le offerExpirySweeper');
+  } finally {
+    isOfferExpirySweeperRunning = false;
   }
+}
+
+/**
+ * Démarre le sweeper d'offres expirées sur un intervalle récurrent non bloquant (.unref()).
+ */
+export function startOfferExpirySweeper(intervalMs = 60000) {
+  const timer = setInterval(() => {
+    runOfferExpirySweeper().catch((err) => {
+      logger.error({ err: err.message }, 'Erreur planifiée offerExpirySweeper');
+    });
+  }, intervalMs);
+
+  if (typeof timer.unref === 'function') {
+    timer.unref();
+  }
+
+  return timer;
 }

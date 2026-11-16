@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/domain/pricing.dart';
 import '../core/domain/money.dart';
+import '../core/time/server_clock.dart';
 import '../app/theme.dart';
 
 class LivePriceText extends StatefulWidget {
@@ -43,11 +44,11 @@ class _LivePriceTextState extends State<LivePriceText> {
   @override
   void initState() {
     super.initState();
-    _nowMs = DateTime.now().millisecondsSinceEpoch;
+    _nowMs = ServerClock.serverNowMs;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          _nowMs = DateTime.now().millisecondsSinceEpoch;
+          _nowMs = ServerClock.serverNowMs;
         });
       }
     });
@@ -117,9 +118,9 @@ class _LivePriceTextState extends State<LivePriceText> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.orangeUrgent.withOpacity(0.2),
+                  color: AppTheme.orangeUrgent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppTheme.orangeUrgent.withOpacity(0.4)),
+                  border: Border.all(color: AppTheme.orangeUrgent.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   '-$discountPercent%',

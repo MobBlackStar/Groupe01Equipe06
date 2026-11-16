@@ -5,14 +5,40 @@
 
 let serverOffsetMs = 0;
 
-export function updateServerOffset(serverTimeMs) {
-  serverOffsetMs = serverTimeMs - Date.now();
+/**
+ * Met à jour l'écart temporel avec l'horloge officielle du serveur Node.js.
+ * @param {number|string|Date} serverTime
+ */
+export function updateServerOffset(serverTime) {
+  if (!serverTime) return;
+  const timeMs = serverTime instanceof Date
+    ? serverTime.getTime()
+    : typeof serverTime === 'string'
+      ? new Date(serverTime).getTime()
+      : Number(serverTime);
+
+  if (!isNaN(timeMs)) {
+    serverOffsetMs = timeMs - Date.now();
+  }
 }
 
+/**
+ * Retourne l'horodatage courant synchronisé en millisecondes.
+ */
 export function getServerNow() {
   return Date.now() + serverOffsetMs;
 }
 
+/**
+ * Alias pour getServerNow()
+ */
+export function serverNow() {
+  return getServerNow();
+}
+
+/**
+ * Retourne l'écart courant en millisecondes entre le client et le serveur.
+ */
 export function getServerOffset() {
   return serverOffsetMs;
 }

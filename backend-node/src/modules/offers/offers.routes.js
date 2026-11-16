@@ -14,6 +14,9 @@ import { ROLES } from '../../../../shared/constants.js';
 
 export const offersRouter = Router();
 
+// Consultation du catalogue public avec recherche et filtres multi-critères
+offersRouter.get('/', offersController.listOffers);
+
 // Création d'offre réservée aux commerçants agréés
 offersRouter.post(
   '/',

@@ -11,6 +11,8 @@ import { adminRouter } from './modules/admin/admin.routes.js';
 import { uploadsRouter } from './modules/uploads/uploads.routes.js';
 import { offersRouter } from './modules/offers/offers.routes.js';
 import { aiRouter } from './modules/ai/ai.routes.js';
+import { ordersRouter } from './modules/orders/orders.routes.js';
+import { paymentsRouter } from './modules/payments/payments.routes.js';
 
 export const apiRouter = Router();
 
@@ -35,9 +37,11 @@ apiRouter.use('/uploads', uploadsRouter);
 apiRouter.use('/offers', offersRouter);
 apiRouter.use('/ai', aiRouter);
 
+// Commandes, Réservations et Paiements Konnect (Jour 4)
+apiRouter.use('/orders', ordersRouter);
+apiRouter.use('/payments', paymentsRouter);
+
 // Les sous-routeurs suivants seront branchés lors des étapes dédiées :
-// apiRouter.use('/orders', ordersRouter);
-// apiRouter.use('/payments', paymentsRouter);
 // apiRouter.use('/tickets', ticketsRouter);
 // apiRouter.use('/loyalty', loyaltyRouter);
 // apiRouter.use('/impact', impactRouter);
