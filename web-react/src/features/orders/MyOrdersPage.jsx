@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OrderRow from './OrderRow.jsx';
+import UnboxingReveal from '../surprise/UnboxingReveal.jsx';
 import { EmptyState, Spinner } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 
@@ -56,6 +57,7 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ACTIVE'); // 'ACTIVE', 'COMPLETED', 'ARCHIVED'
+  const [unboxingOrder, setUnboxingOrder] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -117,12 +119,23 @@ export default function MyOrdersPage() {
             </p>
           </div>
 
-          <Link
-            to="/app/explore"
-            className="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-bold text-xs hover:bg-[#b8e600] transition-colors self-start sm:self-auto"
-          >
-            + Sauver un repas
-          </Link>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setUnboxingOrder({ id: 'demo-unboxing', reveal: null })}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-yellow-400/40 text-yellow-300 font-bold text-xs hover:bg-yellow-400/30 transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <span>🎁</span>
+              <span>Déballer Panier Surprise</span>
+            </button>
+
+            <Link
+              to="/app/explore"
+              className="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-bold text-xs hover:bg-[#b8e600] transition-colors"
+            >
+              + Sauver un repas
+            </Link>
+          </div>
         </div>
 
         {/* Onglets */}
@@ -189,6 +202,12 @@ export default function MyOrdersPage() {
             ))}
           </div>
         )}
+        {/* Modal Unboxing Reveal */}
+        <UnboxingReveal
+          isOpen={Boolean(unboxingOrder)}
+          onClose={() => setUnboxingOrder(null)}
+          order={unboxingOrder}
+        />
       </div>
     </div>
   );

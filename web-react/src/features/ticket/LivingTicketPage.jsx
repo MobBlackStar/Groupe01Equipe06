@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import BoardingPass from './BoardingPass.jsx';
+import UnboxingReveal from '../surprise/UnboxingReveal.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { Spinner } from '../../components/ui/index.js';
@@ -27,6 +28,7 @@ export default function LivingTicketPage() {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showUnboxing, setShowUnboxing] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -86,6 +88,23 @@ export default function LivingTicketPage() {
 
         {/* Le Billet Vivant */}
         <BoardingPass ticket={currentTicket} />
+
+        {/* Bouton Démo Unboxing Panier Surprise */}
+        <button
+          type="button"
+          onClick={() => setShowUnboxing(true)}
+          className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border border-yellow-400/50 text-yellow-300 font-bold text-xs hover:bg-yellow-400/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/10"
+        >
+          <span>🎁</span>
+          <span>Simuler / Revoir l'ouverture du Panier Surprise (Unboxing)</span>
+        </button>
+
+        {/* Modal Unboxing Reveal */}
+        <UnboxingReveal
+          isOpen={showUnboxing}
+          onClose={() => setShowUnboxing(false)}
+          order={currentTicket}
+        />
 
         {/* Conseils et Consignes de retrait */}
         <div className="p-4 rounded-2xl bg-[#161920] border border-white/5 space-y-2 text-xs">

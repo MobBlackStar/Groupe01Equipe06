@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import SearchBar from './SearchBar.jsx';
 import FilterPanel from './FilterPanel.jsx';
-import { OfferCard } from '../../components/offers/index.js';
+import { OfferCard, MysteryBoxCard } from '../../components/offers/index.js';
 import { EmptyState, Spinner } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
@@ -311,9 +311,13 @@ export default function BrowsePage() {
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-            {filteredOffers.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))}
+            {filteredOffers.map((offer) =>
+              offer.isSurpriseBasket ? (
+                <MysteryBoxCard key={offer.id} offer={offer} />
+              ) : (
+                <OfferCard key={offer.id} offer={offer} />
+              )
+            )}
           </div>
         )}
       </div>

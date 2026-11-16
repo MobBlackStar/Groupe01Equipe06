@@ -4,7 +4,7 @@
 > **Rôle :** Lead UI/UX, Développeuse Frontend (React 18 / Tailwind CSS & Flutter 3 / Dart)  
 > **Binôme :** Fedi Touati (Lead Backend & Sécurité)  
 > **Projet :** CampusSave — Plateforme Anti-Gaspillage & Solidarité Étudiante (ESSECT E-Business 2026)  
-> **Branche de travail actuelle :** `feat/ritej-day5-checkout-living-ticket`  
+> **Branche de travail actuelle :** `feat/ritej-day6-loyalty-mystery-box`  
 
 ---
 
@@ -17,7 +17,7 @@
 | **Jour 3** | **Gestion Commerces, Offres IA & Console Admin** | 🟢 **100% Terminé** | Ritej | Onboarding commerçant géolocalisé, formulaire d'offres IA + Smart Decay SVG, catalogue commerçant, console validation admin, 3 écrans Flutter, banc de test IA (11/11 tests passés) |
 | **Jour 4** | **Catalogue, Recherche & Moteur de Réservation** | 🟢 **100% Terminé** | Ritej | `BrowsePage`, recherche avec debounce (300 ms), panneau filtres, `PriceTicker` & `OfferCard`, `OfferDetailPage` avec impact éco et gestion 409, 6 composants/écrans Flutter |
 | **Jour 5** | **Paiement Konnect & Living Ticket QR** | 🟢 **100% Terminé** | Ritej | `CheckoutPage` (compte à rebours 10 min, prix verrouillé, récompenses fidélité), `PaymentReturnPage` (états Konnect), `BoardingPass` & `LivingTicketPage` (QR tournant 30s + code 6 chiffres), `MyOrdersPage`, `MerchantOrdersPage`, 5 écrans Flutter |
-| **Jour 6** | **Fonctionnalités Clés : Panier Mystère & Fidélité** | ⏳ *À venir* | Ritej | Animation unboxing Framer Motion, carte de fidélité EcoPoints |
+| **Jour 6** | **Fonctionnalités Clés : Panier Mystère & Fidélité** | 🟢 **100% Terminé** | Ritej | `MysteryBoxCard` (3 raretés), animation unboxing 5 étapes Framer Motion, carte fidélité éco-digitale (5 tampons, 4 paliers végétaux, portefeuille coupons), 2 modules Flutter natifs |
 | **Jour 7** | **Tableaux de Bord, Impact Éco & Notifications** | ⏳ *À venir* | Ritej | Dashboards Étudiant / Commerçant / Admin, page publique `/impact` |
 | **Jour 8** | **Tests d'Intégration, Accessibilité & Gel** | ⏳ *À venir* | Ritej | Tests responsive, audit d'accessibilité WCAG, revue d'ergonomie |
 | **Jour 9** | **Rapport Académique & Vidéo de Démonstration** | ⏳ *À venir* | Ritej | Chapitres I, II, VI du rapport, tournage des séquences UI |
@@ -26,6 +26,27 @@
 ---
 
 ## 📝 2. Journal des Livrables Réalisés par Ritej
+
+### Jour 6 — 21 Novembre 2026
+* **Branche & Traçabilité Git :**
+  - Branche : `feat/ritej-day6-loyalty-mystery-box`
+  - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
+  - Message de commit : `feat(loyalty-surprise): add digital eco-loyalty card, 5-stamp grid, reward wallet, mystery box cards, and unboxing reveal animation`
+* **Panier Surprise & Animation d'Ouverture Web React (`web-react/src/`) :**
+  - `components/offers/MysteryBoxCard.jsx` : Carte dédiée aux paniers surprise avec boîte scellée, contours luminescents selon le tier de rareté (`COMMUN` #94A3B8, `RARE` #00E5FF, `LÉGENDAIRE` #FFD700), aperçu du commerçant, compteur de prix live (`PriceTicker`) et bouton d'action.
+  - `features/surprise/UnboxingReveal.jsx` : Expérience d'ouverture unboxing immersive en 5 séquences Framer Motion (secousse de boîte, explosion de particules lumineuses aux couleurs de rareté, jaillissement des articles secrets avec badges alimentaires, attribution des EcoPoints et annonce de palier débloqué). Respect de `prefers-reduced-motion` pour l'accessibilité.
+  - Intégration dans `BrowsePage.jsx`, `LivingTicketPage.jsx` et `MyOrdersPage.jsx` avec bouton de démonstration 1-clic pour le jury.
+* **Carte de Fidélité Éco-Digitale Web React (`web-react/src/features/loyalty/`) :**
+  - `StampGrid.jsx` : Grille dynamique de 5 tampons éco-responsables (`Math.floor((ecoPoints % 100) / 20)` sur 5) avec indicateur visuel de repas sauvés et cadeau animé au 5ème tampon.
+  - `RewardWallet.jsx` : Portefeuille de coupons débloqués (`-20%` aux paliers 100, 200, 400, 500 pts et `Panier 100% Offert` aux paliers 300, 600 pts) avec états (`AVAILABLE`, `LOCKED`, `USED`), copie de code et redirection directe vers le panier.
+  - `LoyaltyCardPage.jsx` : Pass virtuel style Apple Wallet avec gradient métallique holographique, badge de grade végétal dynamique (`GRAINE` ➔ `POUSSE` ➔ `ARBRE` ➔ `FORÊT`), jauge de progression vers le prochain palier, intégration du `StampGrid`, du `RewardWallet`, et banc de simulation interactif (+20 pts / +60 pts) pour la soutenance.
+  - Câblage de la route `/app/loyalty` dans `AppRouter.jsx`.
+* **Composants & Écrans Mobiles Flutter Équivalents (`mobile-flutter/lib/`) :**
+  - `features/surprise/unboxing_overlay.dart` : Animation d'ouverture native Flutter avec `AnimationController`, `Transform.rotate` (secousse), `ScaleTransition` (effet burst), retour haptique `HapticFeedback.heavyImpact()`, et cascade d'articles.
+  - `features/loyalty/loyalty_card_screen.dart` : Écran mobile complet de fidélité avec carte végétale holographique, grille de 5 tampons, progression vers prochain palier, liste des récompenses actives et panneau de simulation.
+* **Contrôle Qualité :**
+  - `npm run build` dans `web-react` : **2110 modules compilés avec 0 erreur**.
+  - `npm test` dans `backend-node` : **85/85 tests passés avec succès**.
 
 ### Jour 5 — 20 Novembre 2026
 * **Branche & Traçabilité Git :**
@@ -104,3 +125,7 @@
 | **Living Ticket Mobile** | `mobile-flutter/lib/features/ticket/ticket_screen.dart` | 🟢 **Prêt pour le branchement** | `GET /api/v1/orders/:id/ticket` |
 | **Catalogue & Recherche** | `web-react/src/features/explore/BrowsePage.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/offers` |
 | **Fiche Détail d'Offre** | `web-react/src/features/explore/OfferDetailPage.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/offers/:id` et `POST /api/v1/orders` |
+| **Paniers Surprise & Unboxing** | `web-react/src/features/surprise/UnboxingReveal.jsx` | 🟢 **Prêt pour le branchement** | `POST /api/v1/tickets/scan` (déclenchement à la validation) |
+| **Carte de Fidélité Éco** | `web-react/src/features/loyalty/LoyaltyCardPage.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/loyalty/me` et `POST /api/v1/orders` (application des coupons) |
+| **Unboxing Mobile** | `mobile-flutter/lib/features/surprise/unboxing_overlay.dart` | 🟢 **Prêt pour le branchement** | Déclenchement automatique sur écran ticket |
+| **Fidélité Mobile** | `mobile-flutter/lib/features/loyalty/loyalty_card_screen.dart` | 🟢 **Prêt pour le branchement** | `GET /api/v1/loyalty/me` |

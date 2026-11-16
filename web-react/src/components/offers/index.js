@@ -6,3 +6,4 @@ export { default as PriceTicker } from './PriceTicker.jsx';
 export { default as CountdownChip } from './CountdownChip.jsx';
 export { default as RarityBadge } from './RarityBadge.jsx';
 export { default as OfferCard } from './OfferCard.jsx';
+export { default as MysteryBoxCard } from './MysteryBoxCard.jsx';
