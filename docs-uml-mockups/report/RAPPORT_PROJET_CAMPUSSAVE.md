@@ -43,54 +43,57 @@
   - 2.2 Couverture Exhaustive des 8 Fonctionnalités Obligatoires (M1 à M8)
   - 2.3 Description Détaillée des 4 Fonctionnalités Innovantes Bonus (B1 à B4)
   - 2.4 Matrice des Cas d'Utilisation UML (Diagrammes 01 à 04)
-- [Chapitre 3 : Architecture Technique & Synchronisation Temps Réel](#chapitre-3--architecture-technique--synchronisation-temps-réel)
-  - 3.1 Architecture Monorepo 3-Tiers à Haute Intégrité
-  - 3.2 Le Choix Hybride : Lectures Temps Réel Firestore vs Écritures Sécurisées REST Node.js
-  - 3.3 Domaine Mathématique & Métier Partagé (`/shared`)
-  - 3.4 Passerelle de Paiement Électronique Konnect Network & Stockage Médias Cloudinary
-- [Chapitre 4 : Modélisation UML & Conception de la Base de Données NoSQL](#chapitre-4--modélisation-uml--conception-de-la-base-de-données-nosql)
-  - 4.1 Modèle de Données Firestore NoSQL Dénormalisé & Index Composites
+- [Chapitre 3 : Architecture Logique, Physique & Choix Technologiques](#chapitre-3--architecture-logique-physique--choix-technologiques)
+  - 3.1 Justification de l'Architecture Omnicanale 3-Tiers Partagée
+  - 3.2 Le Pattern CQRS-lite : Écritures REST vs Lectures Réactives Firestore
+  - 3.3 Module Métier & Mathématique Partagé (`/shared`)
+  - 3.4 Diagramme Physique de Déploiement Cloud (Diagramme 10)
+- [Chapitre 4 : Conception Détaillée, Modélisation UML & Schéma NoSQL](#chapitre-4--conception-détaillée-modélisation-uml--schéma-nosql)
+  - 4.1 Modélisation Statique par Diagrammes de Classes UML (05a, 05b, 05c)
   - 4.2 Machine à États Finis du Cycle de Vie des Commandes (Diagramme 09)
-  - 4.3 Sécurité Granulaire Firestore par Rôle & Revocation List
-  - 4.4 Diagrammes de Séquence de Référence (Paiement Konnect 06 & Living Ticket 07)
-  - 4.5 Architecture Physique de Déploiement Cloud (Diagramme 10)
-- [Chapitre 5 : Algorithmes & Mécaniques Intelligentes](#chapitre-5--algorithmes--mécaniques-intelligentes)
-  - 5.1 Enchère Dégressive Temporelle (Smart Decay) sans Écriture Base de Données
-  - 5.2 Cryptographie HMAC-SHA256 du Living Ticket Rotatif (30s) & Code 6 Chiffres
-  - 5.3 Moteur de Rareté Gacha du Panier Surprise (Mystery Box)
-  - 5.4 Parseur d'Offres IA Multimodal Gemini & Fallback Culinaire Tunisien
-  - 5.5 Facteurs d'Équivalences Carbone Officiels FAO 2013 & US EPA
+  - 4.3 Diagrammes de Séquence de Référence (Paiement 07 & Retrait QR 08)
+  - 4.4 Schéma NoSQL Dénormalisé et Règles de Sécurité Granulaires Firestore
+- [Chapitre 5 : Algorithmes Intelligents, Mécaniques Métier & Sécurité](#chapitre-5--algorithmes-intelligents-mécaniques-métier--sécurité)
+  - 5.1 Arithmétique Monétaire Entière et Parité Multi-Runtime
+  - 5.2 Moteur de Tarification Dynamique Dégressive (Smart Decay)
+  - 5.3 Gestion de la Concurrence Extrême par Transactions Atomiques
+  - 5.4 Paiement Konnect Sandbox à Double Canal de Confirmation Idempotent
+  - 5.5 Cryptographie du Living Ticket Anti-Capture d'Écran (HMAC-SHA256)
+  - 5.6 Auto-Remplissage d'Offres par IA & Parseur Dialectal Tunisien
+  - 5.7 Radar 3D WebGL MapLibre de Montfleury & Ratios Écologiques Officiels
 - [Chapitre 6 : Réalisation, Interfaces & Expérience Utilisateur (Web & Mobile)](#chapitre-6--réalisation-interfaces--expérience-utilisateur-web--mobile)
   - 6.1 Design System Dark Obsidian & Electric Lime
-  - 6.2 Parcours Étudiant : Catalogue, Holo-Radar 3D WebGL & Living Ticket
-  - 6.3 Espace Commerçant : Publication IA, Courbe Smart Decay & Scanner Caméra
+  - 6.2 Parcours Étudiant : Catalogue, Debounce 300 ms, Holo-Radar 3D & Living Ticket
+  - 6.3 Espace Commerçant : Onboarding MapPicker, Publication IA & Scanner Caméra
   - 6.4 Console d'Administration & Supervision Universitaire
   - 6.5 Tableaux de Bord par Rôle, Gamification & Défi Inter-Filières
-- [Chapitre 7 : Tests, Déploiement & Bilan Qualité](#chapitre-7--tests-déploiement--bilan-qualité)
-  - 7.1 Stratégie de Test Automatisé (Banc de Test 91 Tests Unitaires & Concurrence 20 Acheteurs)
-  - 7.2 Audit de Sécurité, Absence de Secrets & Variables d'Environnement
-- [Conclusion Générale, Limites & Perspectives d'Évolution](#conclusion-générale-limites--perspectives-dévolution)
+- [Chapitre 7 : Validation Expérimentale, Tests Automatisés & Bilan Qualité](#chapitre-7--validation-expérimentale-tests-automatisés--bilan-qualité)
+  - 7.1 Synthèse de la Suite de Tests Automatisés (107/107 Tests Passés)
+  - 7.2 Détail des Suites de Tests Critiques (Concurrence, Cryptographie, Tarification)
+  - 7.3 Audit de Sécurité, Absence de Secrets & Variables d'Environnement
+  - 7.4 Limites Actuelles du Système & Perspectives d'Industrialisation
+- [Conclusion Générale & Perspectives d'Évolution](#conclusion-générale--perspectives-dévolution)
 - [Bibliographie & Références Scientifiques](#bibliographie--références-scientifiques)
 
 ---
 
 ## Remerciements
 
-Nous tenons à exprimer notre profonde gratitude au corps professoral et à l'équipe pédagogique de l'**ESSECT Montfleury**, notamment aux enseignants des modules d'*Intégration Web* et de *Développement d'Applications Mobiles*, pour la rigueur méthodologique et technique qu'ils nous ont inculquée tout au long de cette 3ème année de Licence E-Business.
+Nous tenons à exprimer notre profonde gratitude au corps professoral et à l'équipe pédagogique de l'**ESSECT Montfleury**, notamment aux enseignants des modules d'*Intégration Web* et de *Développement d'Applications Mobiles*, pour la rigueur méthodologique, conceptuelle et technique qu'ils nous ont transmise tout au long de cette 3ème année de Licence E-Business.
 
-Nos remerciements s'adressent également aux commerçants et restaurateurs du quartier de Montfleury ayant accepté de répondre à notre enquête terrain préliminaire, nous permettant ainsi de concevoir une solution fidèle à leurs contraintes opérationnelles réelles.
+Nos remerciements s'adressent également aux commerçants et restaurateurs du quartier universitaire de Montfleury ayant accepté de répondre à nos enquêtes de terrain préliminaires, nous permettant ainsi de concevoir une plateforme fidèle à leurs contraintes opérationnelles réelles (gestion des surplus périssables, rapidité de validation au comptoir, clarté des transactions).
 
 ---
 
 ## Résumé Exécutif
 
 ### Résumé (Français)
-**CampusSave** est une plateforme omnicanale innovante (Web React.js 18 et Mobile Flutter 3) dédiée à l'éradication du gaspillage alimentaire autour du campus de l'ESSECT Montfleury (Université de Tunis). En reliant les étudiants aux commerces de proximité dans un rayon strict de 3 km, CampusSave permet aux restaurateurs de commercialiser leurs surplus quotidiens à prix fortement remisé grâce à un algorithme d'enchère dégressive dynamique calculé en temps réel (*Smart Decay*).
+**CampusSave** est une plateforme omnicanale innovante (Web React 18 et Mobile Flutter 3) dédiée à l'éradication du gaspillage alimentaire autour du campus de l'ESSECT Montfleury (Université de Tunis). En reliant les étudiants aux commerces de proximité dans un rayon piéton strict de 3 km, CampusSave permet aux restaurateurs de commercialiser leurs surplus quotidiens à prix fortement remisé grâce à un algorithme d'enchère dégressive dynamique calculé en temps réel (*Smart Decay*).
 
 La solution garantit une sécurité transactionnelle de niveau bancaire : réservations atomiques à concurrence stricte (banc de test à 20 acheteurs simultanés), intégration du bac à sable de paiement électronique *Konnect Network*, et validation physique au comptoir par un *Living Ticket* cryptographique rotatif toutes les 30 secondes basé sur HMAC-SHA256, immunisé contre les captures d'écran. La plateforme intègre en outre un radar cartographique 3D WebGL (MapLibre), un générateur d'offres par Intelligence Artificielle générative avec analyseur dialectal tunisien, une carte de fidélité éco-digitale à 5 tampons et une vitrine d'impact environnemental public certifiée selon les standards officiels de la FAO et de l'US EPA.
 
 ### Executive Summary (English)
-**CampusSave** is an innovative omnichannel platform (React.js 18 Web and Flutter 3 Mobile) engineered to eradicate food waste around the ESSECT Montfleury university campus in Tunis. By bridging university students with local neighborhood food vendors within a strict 3 km radius, CampusSave empowers merchants to rescue daily unsold meals at discounted rates via a real-time temporal Dutch auction algorithm (*Smart Decay*).
+**CampusSave** is an innovative omnichannel platform (React 18 Web and Flutter 3 Mobile) engineered to eradicate food waste around the ESSECT Montfleury university campus in Tunis. By bridging university students with local neighborhood food vendors within a strict 3 km radius, CampusSave empowers merchants to rescue daily unsold meals at discounted rates via a real-time temporal Dutch auction algorithm (*Smart Decay*).
 
 The platform guarantees institutional-grade transactional integrity: atomic stock reservations under extreme concurrency (20 simultaneous buyers benchmark), secure digital payments powered by the *Konnect Network* sandbox, and counter redemption secured by a dynamic 30-second HMAC-SHA256 rotating *Living Ticket* QR code that entirely defeats screenshot fraud. Additional smart mechanics include a WebGL 3D urban radar (MapLibre), an AI-driven multimodal offer generator featuring a Tunisian culinary fallback parser, a 5-stamp digital eco-loyalty passport, and a public campus impact dashboard certified against official FAO and US EPA environmental conversion standards.
 
@@ -99,12 +102,12 @@ The platform guarantees institutional-grade transactional integrity: atomic stoc
 ## Chapitre 1 : Introduction, Contexte & Objectifs Pédagogiques
 
 ### 1.1 Contexte Universitaire & Problématique du Gaspillage Alimentaire à Montfleury
-Le quartier universitaire de Montfleury à Tunis accueille chaque jour des milliers d'étudiants fréquentant l'ESSECT et les facultés avoisinantes. Malgré cette forte concentration démographique, deux paradoxes économiques et environnementaux majeurs coexistent :
-1. **Précarité étudiante et pouvoir d'achat :** Une proportion substantielle d'étudiants fait face à un budget quotidien d'alimentation restreint, les contraignant souvent à des choix nutritionnels de faible qualité.
+Le quartier universitaire de Montfleury à Tunis accueille chaque jour plusieurs milliers d'étudiants fréquentant l'ESSECT et les facultés avoisinantes. Malgré cette forte concentration démographique, deux paradoxes économiques et environnementaux majeurs coexistent au quotidien :
+1. **Précarité étudiante et pouvoir d'achat :** Une proportion substantielle d'étudiants fait face à un budget quotidien d'alimentation restreint, les contraignant souvent à des choix nutritionnels de faible qualité ou à sauter des repas.
 2. **Gaspillage alimentaire structurel :** Les cafétérias, boulangeries, sandwicheries et restaurants de Montfleury préparent quotidiennement des repas et viennoiseries dont une fraction non négligeable (estimée entre 10% et 20% des volumes produits) reste invendue à l'heure de fermeture et finit irrémédiablement dans les bennes à ordures, faute de canal de distribution rapide et sécurisé.
 
 ### 1.2 La Vision CampusSave : Triple Impact Économique, Écologique et Social
-CampusSave a été imaginé pour transformer cette perte sèche en une opportunité tripartite :
+CampusSave a été imaginé pour transformer cette perte sèche en une opportunité tripartite vertueuse :
 - **Pour l'Étudiant :** Accès à des repas complets, chauds ou surprenants à des prix défiant toute concurrence (remises de -40% à -70%), valorisant leur engagement civique grâce à un programme de fidélité ludique.
 - **Pour le Commerçant :** Monétisation de denrées périssables vouées à la destruction, acquisition d'une nouvelle clientèle étudiante fidèle et affirmation d'une démarche RSE de quartier.
 - **Pour l'Environnement et l'Université :** Réduction mesurable de l'empreinte carbone universitaire, chaque gramme de nourriture sauvé évitant l'émission de gaz à effet de serre liés à la décomposition organique.
@@ -135,7 +138,7 @@ L'intégralité des 8 fonctionnalités requises par le cahier des charges acadé
 - **M5 — Réservation 10-Min & Concurrence Extrême :** Verrouillage de stock atomique dans une transaction Firestore, attribution d'un compte à rebours de 10 minutes (`reservationExpiresAt`) et libération immédiate en cas d'annulation ou d'expiration.
 - **M6 — Passerelle de Paiement Électronique Konnect :** Initialisation de session de paiement, redirection vers le guichet de paiement sandbox, et confirmation dual-path (webhook asynchrone + vérification manuelle idempotente).
 - **M7 — Living Ticket QR & Scanner de Retrait :** QR code dynamique calculé via HMAC-SHA256, actualisé toutes les 30 secondes, et compostage atomique au comptoir par scan caméra ou code à 6 chiffres.
-- **M8 — Tableaux de Bord par Rôle :** Dashboards dédiés pour l'Étudiant (économies, repas sauvés, CO₂), le Commerçant (recettes 7j/30j, taux de no-show, top ventes) et l'Admin (GMV consolidé, répartition des comptes).
+- **M8 — Tableaux de Bord par Rôle :** Dashboards dédiés pour l'Étudiant (économies, repas sauvés, CO₂), le Commerçant (recettes 7j/30j, taux de no-show, top ventes) et l'Admin (GMV consolidé, modération commerçants).
 
 ### 2.3 Description Détaillée des 4 Fonctionnalités Innovantes Bonus (B1 à B4)
 - **B1 — Montfleury Holo-Radar 3D WebGL :** Projection cartographique inclinée à 60° sous MapLibre GL, extrudant en 3D les bâtiments du quartier, matérialisant l'ESSECT par un repère néon vert et les boutiques par des prismes hexagonaux dont la hauteur dépend du stock et la couleur reflète l'urgence horaire.
@@ -143,179 +146,219 @@ L'intégralité des 8 fonctionnalités requises par le cahier des charges acadé
 - **B3 — Panier Surprise Gacha & Animation Unboxing :** Boîtes mystères avec 3 tiers de rareté (Commun, Rare, Légendaire). À la validation du retrait, une cinématique en 5 étapes (secousse, explosion de particules lumineuses, révélation en cascade des articles et attribution des points) s'exécute avec retour haptique sur mobile.
 - **B4 — Magic Offer Publisher IA + Parseur Tunisien :** Moteur d'extraction automatique utilisant l'API Google Gemini, secondé par un parseur de secours déterministe (`fallbackParser`) capable d'interpréter le vocabulaire culinaire tunisien (*makloub, chapati, baguette farcie, ojja, lablabi, kafteji*).
 
+![Diagramme des Cas d'Utilisation Global](../uml/svg/01-uc-global.svg)
+
 ---
 
-## Chapitre 3 : Architecture Technique & Synchronisation Temps Réel
+## Chapitre 3 : Architecture Logique, Physique & Choix Technologiques
 
-### 3.1 Architecture Monorepo 3-Tiers à Haute Intégrité
-Le projet adopte une organisation monorepo garantissant le partage strict des algorithmes métier :
+### 3.1 Justification de l'Architecture Omnicanale 3-Tiers Partagée
+Pour répondre aux contraintes des étudiants (mobilité sur smartphone et confort de consultation sur ordinateur portable) et des commerçants (tablette de caisse et smartphone pour scanner les commandes), nous avons conçu une **architecture 3-tiers découplée centrée sur une API REST unifiée** :
+
 ```text
-[ Client Web React 18 ]       [ Client Mobile Flutter 3 ]
-         │                                  │
-         │ (Lecture temps réel onSnapshot)  │ (Lecture temps réel snapshots)
-         ▼                                  ▼
- ┌─────────────────────────────────────────────────────────┐
- │               Google Cloud Firestore                    │
- │               Base NoSQL Temps Réel                     │
- └─────────────────────────────────────────────────────────┘
-         ▲
-         │ (Mutations transactionnelles sécurisées Admin SDK)
-         │
- ┌─────────────────────────────────────────────────────────┐
- │           API REST Node.js 20 / Express                 │
- │      Middlewares Auth, Zod Validation, Cryptographie    │
- └─────────────────────────────────────────────────────────┘
-         ▲                                  ▲
-         │                                  │
- [ Passerelle Konnect ]           [ Cloudinary / IA Gemini ]
+┌──────────────────────────────────────┐     ┌──────────────────────────────────────┐
+│          CLIENT WEB REACT 18         │     │        CLIENT MOBILE FLUTTER 3       │
+│  Vite, Tailwind CSS, MapLibre WebGL  │     │   Dart 3, Provider, Mobile Scanner   │
+└──────────────────┬───────────────────┘     └──────────────────┬───────────────────┘
+                   │                                            │
+                   │ (Lectures temps réel onSnapshot / Stream)  │
+                   ▼                                            ▼
+         ┌─────────────────────────────────────────────────────────────┐
+         │             GOOGLE CLOUD FIRESTORE (NoSQL)                  │
+         │           Base réactive dénormalisée multi-région           │
+         └─────────────────────────────▲───────────────────────────────┘
+                                       │
+                                       │ (Mutations transactionnelles sécurisées)
+                                       │
+         ┌─────────────────────────────┴───────────────────────────────┐
+         │          API REST TRANSACTIONNELLE NODE.JS 20 / EXPRESS     │
+         │      Firebase Admin SDK, Zod Validation, Crypto HMAC        │
+         └─────────────────────────────▲───────────────────────────────┘
+                                       │
+              ┌────────────────────────┴────────────────────────┐
+              ▼                                                 ▼
+┌───────────────────────────┐                     ┌───────────────────────────┐
+│     KONNECT NETWORK       │                     │    CLOUDINARY & GEMINI    │
+│ Passerelle Paiement Dinar │                     │  CDN Médias & Modèle LLM  │
+└───────────────────────────┘                     └───────────────────────────┘
 ```
 
-### 3.2 Le Choix Hybride : Lectures Temps Réel vs Écritures Sécurisées REST
-L'une des décisions architecturales les plus déterminantes pour la soutenance réside dans le découpage strict des responsabilités :
-- **Lectures Directes dans Firestore :** Les interfaces clientes (React et Flutter) s'abonnent aux flux d'offres, de commandes et de notifications via les écouteurs réactifs (`onSnapshot` en Web, `StreamBuilder` / `snapshots()` en Flutter). Cela garantit une actualisation instantanée sans surcharger le serveur d'appels répétés de sondage (polling).
-- **Écritures Exclusivement via l'API REST :** Aucune mutation financière ou modification de stock n'est autorisée directement depuis les clients. Toutes les créations de commande, validations de paiement et scans de Living Ticket passent obligatoirement par l'API Node.js, qui exécute des transactions Firestore atomiques avec le SDK Admin.
+| Composant | Technologie Retenue | Alternatives Évaluées | Justification Décisive pour CampusSave |
+| :--- | :--- | :--- | :--- |
+| **Backend REST** | **Node.js 20 (LTS) & Express** | Python / Django, PHP / Laravel | Modèle asynchrone non bloquant ultra-performant pour les E/S ; écosystème NPM mature avec le SDK officiel `firebase-admin` ; partage naturel du code JavaScript avec le frontend Web. |
+| **Frontend Web** | **React.js 18 & Vite** | Angular, Vue.js 3 | Virtual DOM réactif, écosystème de composants riche (Recharts, Lucide, Canvas WebGL), compilation ultra-rapide sous Vite (< 15s) et intégration fluide des hooks temps réel Firebase. |
+| **Frontend Mobile** | **Flutter 3.x (Dart 3)** | React Native, Kotlin natif | Moteur de rendu graphique Skia/Impeller compilé en code machine natif 60 fps ; accès direct aux périphériques caméra et haptiques pour le scanner QR ; typage strict éliminant les bugs d'exécution. |
+| **Base de Données** | **Google Cloud Firestore** | PostgreSQL, MongoDB | Architecture NoSQL distribuée nativement temps réel ; capacités d'abonnements réactifs (`onSnapshot`) idéales pour les catalogues et les tickets de retrait ; scalabilité automatique sans gestion de serveur. |
+| **Sécurité & Validation** | **Zod v3 & Crypto natif** | Joi, Yup, bcrypt | Inférence statique TypeScript/JavaScript avec validation à l'exécution ; cryptographie HMAC-SHA256 intégrée sans dépendance externe vulnérable. |
 
-### 3.3 Domaine Mathématique & Métier Partagé (`/shared`)
-Le module partagé contient la logique pure du projet, écrite en JavaScript ES Modules universel :
-- `pricing.js` : Implémente la fonction pure `computeUnitPrice(offer, timestamp)` calculant le prix dégressif au millime près.
-- `loyalty.js` : Calcule les 4 grades végétaux (`GRAINE`, `POUSSE`, `ARBRE`, `FORET`) et la distribution des récompenses.
-- `impact.js` : Traduit les grammes d'aliments sauvés en CO₂e évité, charges de smartphone et kilomètres de voiture.
-- `money.js` : Centralise la conversion monétaire en Dinars Tunisiens (`formatTND`, ex: `3,800 DT`).
+### 3.2 Le Pattern CQRS-lite : Écritures REST vs Lectures Réactives Firestore
+Pour concilier la réactivité instantanée du Web modernisé et l'intégrité absolue des transactions financières, CampusSave implémente un pattern architectural de ségrégation des responsabilités de lecture et d'écriture (**CQRS-lite** — *Command Query Responsibility Segregation*) :
+1. **Canal des Commandes (Écritures strictes via l'API REST) :** Les applications Web et Mobile ne disposent d'aucun droit d'écriture direct sur Firestore (`allow write: if false;`). Chaque écriture passe par l'API REST Node.js qui exécute des transactions atomiques (`db.runTransaction()`).
+2. **Canal des Requêtes (Lectures réactives synchronisées) :** Les clients Web et Mobile s'abonnent directement aux collections autorisées (`offers`, `orders`, `merchants`) via les écouteurs natifs de Firestore (`onSnapshot()` en JavaScript, `StreamSubscription` et `snapshots()` en Dart).
+
+### 3.3 Module Métier & Mathématique Partagé (`/shared`)
+Pour éviter toute divergence de calcul entre le Web, le Mobile et le Serveur, l'ensemble des constantes, algorithmes d'arrondi et règles écologiques sont centralisés dans le répertoire racine `/shared` :
+- `shared/money.js` : Manipulation exclusive d'entiers en millimes tunisiens (1 TND = 1000 millimes).
+- `shared/pricing.js` : Fonction pure `computeUnitPrice(offer, nowMs)` garantissant la parité à la seconde près.
+- `shared/loyalty.js` : Règles d'attribution des 4 grades végétaux (`GRAINE`, `POUSSE`, `ARBRE`, `FORET`) et tampons de récompense.
+- `shared/impact.js` : Ratios officiels de conversion écologique (2.5 g CO₂e par gramme d'aliment sauvé).
+
+### 3.4 Diagramme Physique de Déploiement Cloud
+![Diagramme de Déploiement](../uml/svg/10-deploiement.svg)
 
 ---
 
-## Chapitre 4 : Modélisation UML & Conception de la Base de Données NoSQL
+## Chapitre 4 : Conception Détaillée, Modélisation UML & Schéma NoSQL
 
-### 4.1 Modèle de Données Firestore NoSQL Dénormalisé
-Pour garantir des performances de lecture maximales, les documents Firestore intègrent des instantanés dénormalisés :
-1. **Collection `users` :** `uid`, `email`, `role`, `displayName`, `filiereId`, `phone`, `ecoPoints`, `totalMoneySavedMillimes`, `totalCo2SavedGrams`.
-2. **Collection `merchants` :** `id`, `name`, `phone`, `type`, `status` (`APPROVED`/`PENDING`), `address`, `location` (`lat`, `lng`), `distanceFromEssectM`, `ratingAvg`, `ratingCount`.
-3. **Collection `offers` :** `id`, `merchantId`, `title`, `category`, `pricingType` (`FIXED`/`DUTCH`), `originalPriceMillimes`, `targetPriceMillimes`, `quantityAvailable`, `pickupStartAt`, `pickupEndAt`, `isSurpriseBasket`.
-4. **Collection `orders` :** `id`, `orderCode` (Crockford Base32 `CS-XXXXX`), `studentId`, `merchantId`, `offerId`, `status` (`RESERVED`, `PAID`, `COMPLETED`, `CANCELLED`), `lockedUnitPriceMillimes`, `reservationExpiresAt`, `ticketNonce`.
+### 4.1 Modélisation Statique par Diagrammes de Classes UML
+La modélisation orientée objet de CampusSave est découpée en trois sous-domaines métier cohérents :
+1. **Domaine des Utilisateurs et Fidélité :**
+![Diagramme de Classes - Utilisateurs](../uml/svg/05a-classes-utilisateurs.svg)
+2. **Domaine des Commerces, Offres et Paniers Surprises :**
+![Diagramme de Classes - Commerces et Offres](../uml/svg/05b-classes-commerces-offres.svg)
+3. **Domaine des Commandes, Transactions et Retrait :**
+![Diagramme de Classes - Commandes](../uml/svg/05c-classes-commandes.svg)
 
 ### 4.2 Machine à États Finis du Cycle de Vie des Commandes
-Le cycle d'une commande suit une machine à états stricte (Diagramme UML 09) :
-```text
-[ PANIER ] ──▶ (POST /orders) ──▶ [ RESERVED ] (Compte à rebours 10 min)
-                                       │
-                  ┌────────────────────┴────────────────────┐
-                  ▼                                         ▼
-            (Expiration/Annulation)              (Paiement Konnect validé)
-                  ▼                                         ▼
-            [ CANCELLED ]                             [ PAID ] (Living Ticket actif)
-            (Stock restauré)                                │
-                                                            ▼
-                                                  (Scan QR au comptoir)
-                                                            ▼
-                                                      [ COMPLETED ]
-                                                (Attribution EcoPoints)
-```
+Le cycle de vie d'une commande anti-gaspillage suit une machine à états finis stricte et déterministe (Diagramme UML 09) :
 
-### 4.3 Sécurité Granulaire Firestore & Transactions Atomiques
-Les règles de sécurité Firestore (`firestore.rules`) appliquent le principe du moindre privilège :
-- Les documents de la collection `offers` sont consultables publiquement si le commerce est approuvé.
-- Les documents `orders` ne sont accessibles en lecture que par l'étudiant acquéreur ou le commerçant vendeur.
-- Les écritures clientes directes sont formellement bloquées (`allow write: if false;`), obligeant le passage par l'API REST.
+![Machine à États Finis de Commande](../uml/svg/09-etats-commande.svg)
+
+| État Initial | Événement Déclencheur | État Cible | Conditions & Actions Transactionnelles Associées |
+| :--- | :--- | :--- | :--- |
+| *Création* | `POST /orders` | `RESERVED` | Le stock de l'offre est $> 0$. Le stock est décrémenté de 1. L'horloge de réservation est fixée à $T_{now} + 10\text{ min}$. Le prix unitaire est scellé. |
+| `RESERVED` | Paiement Konnect validé | `PAID` | Le paiement est vérifié via webhook ou redirection. `ticketNonce` cryptographique est initialisé. |
+| `RESERVED` | Expiration (10 min) ou `POST /orders/:id/cancel` | `CANCELLED` | L'étudiant annule ou l'horloge expire. Le stock de l'offre est restitué de $+1$ dans Firestore. |
+| `PAID` | Scan QR validé (`POST /tickets/validate`) | `COMPLETED` | La signature HMAC-SHA256 est validée. Le ticket est marqué consommé. Les EcoPoints sont crédités à l'étudiant. Le contenu secret du panier surprise est déverrouillé. |
+| `PAID` | Expiration créneau $+30$ min sans scan | `NO_SHOW` | Le robot `noShowSweeper` clôture la commande. Aucun remboursement ; compteurs de non-présentation incrémentés. |
+| `COMPLETED` | `POST /orders/:id/rating` | `RATED` | L'étudiant attribue entre 1 et 5 étoiles. Recalcul atomique de la moyenne du commerce. |
+
+### 4.3 Diagrammes de Séquence de Référence
+1. **Réservation Atomique, Paiement Konnect et Génération du Ticket :**
+![Séquence Réservation et Paiement](../uml/svg/07-seq-reservation-paiement-qr.svg)
+
+2. **Validation au Comptoir par Scan QR et Attribution des ÉcoPoints :**
+![Séquence Retrait et Récompenses](../uml/svg/08-seq-retrait-recompenses.svg)
+
+### 4.4 Schéma NoSQL Dénormalisé et Règles de Sécurité Granulaires Firestore
+```text
+campussave-firestore/
+├── users/{uid}                         # Profils étudiants, commerçants et admin
+├── merchants/{merchantId}              # Commerces partenaires géocodés
+│   └── daily/{YYYY-MM-DD}              # Métriques journalières d'impact et de vente
+├── offers/{offerId}                    # Offres alimentaires actives et archivées
+│   └── private/contents                # Document confidentiel : contenu secret du panier
+├── orders/{orderId}                    # Commandes transactionnelles et Living Tickets
+├── campus_impact/global                # Indicateurs consolidés du campus
+│   └── daily/{YYYY-MM-DD}              # Historique sur 14 jours de l'impact collectif
+└── filieres/{filiereId}                # Classement des 5 filières de l'ESSECT
+```
 
 ---
 
-## Chapitre 5 : Algorithmes & Mécaniques Intelligentes
+## Chapitre 5 : Algorithmes Intelligents, Mécaniques Métier & Sécurité
 
-### 5.1 Enchère Dégressive Temporelle (Smart Decay) sans Écriture BDD
-L'algorithme Smart Decay résout le problème de scalabilité : faire varier le prix de centaines d'offres chaque seconde sans déclencher des millions d'écritures en base de données.
-Le prix unitaire à un instant $t$ est déterminé par la formule :
-$$P(t) = P_{plancher} + \lfloor (P_{depart} - P_{plancher}) \times \left(1 - \frac{t - t_{start}}{t_{end} - t_{start}}\right)^\gamma \rfloor$$
-- Si $t < t_{start}$, $P(t) = P_{depart}$.
-- Si $t \ge t_{end}$, $P(t) = P_{plancher}$.
-- Le facteur de décroissance $\gamma$ (par défaut 1.0 pour une décroissance linéaire) peut être ajusté pour accentuer la baisse en fin de créneau. Le prix est arrondi au multiple du pas (`stepMillimes`, par défaut 100 millimes).
+### 5.1 Arithmétique Monétaire Entière et Parité Multi-Runtime
+Tous les prix manipulés en base de données et dans les payloads réseau sont des entiers stricts en millimes tunisiens (1 TND = 1000 millimes). La conversion visuelle est opérée par :
+$$\text{Format}(m) = \left\lfloor \frac{m}{1000} \right\rfloor + "," + \text{Pad3}(m \pmod{1000}) + "\text{ DT}"$$
 
-### 5.2 Cryptographie HMAC-SHA256 du Living Ticket Rotatif (30s)
-Pour interdire la revente illicite ou les captures d'écran transmises entre étudiants, le ticket de retrait génère un code QR rotatif :
-1. Chaque fenêtre temporelle de 30 secondes correspond à un index entier :
-   $$W(t) = \lfloor \frac{t}{30} \rfloor$$
-2. Une signature HMAC-SHA256 est calculée sur le payload `{ orderId, window: W(t) }` avec le secret partagé de la commande.
-3. Lors du scan, le serveur vérifie la signature pour la fenêtre courante $W(t)$ ainsi qu'avec une tolérance d'horloge de $\pm 1$ fenêtre ($W(t) \pm 1$).
-4. La comparaison est exécutée en temps constant (`crypto.timingSafeEqual`) pour prévenir toute attaque par canal auxiliaire (timing attack).
-5. En cas de panne de réseau mobile sur le terminal de l'étudiant, un code numérique de secours à 6 chiffres dérivé de la même signature est accepté au comptoir.
+### 5.2 Moteur de Tarification Dynamique Dégressive (Smart Decay)
+L'algorithme calcule le prix unitaire à tout instant $t$ sans déclencher la moindre écriture en base de données :
+$$P(t) = \begin{cases} 
+P_{init} & \text{si } t < t_{start} \\
+\max\left(P_{floor}, P_{floor} + \left\lfloor \frac{(P_{init} - P_{floor}) \times \left(1 - \frac{t - t_{start}}{t_{end} - t_{start}}\right)}{\Delta} \right\rfloor \times \Delta\right) & \text{si } t_{start} \le t < t_{end} \\
+P_{floor} & \text{si } t \ge t_{end} 
+\end{cases}$$
+Le prix est évalué à la volée chaque seconde côté client, et scellé atomiquement dans Firestore au moment de la réservation.
 
-### 5.3 Moteur de Rareté Gacha du Panier Surprise
-La composition des paniers surprise est régie par un tirage aléatoire pondéré selon trois classes de rareté :
-- **Commun (70% des paniers) :** 2 à 3 articles basiques du jour (ex: viennoiseries, sandwichs standard).
-- **Rare (25% des paniers) :** 3 à 4 spécialités gourmandes avec un surplus de 10 EcoPoints bonus.
-- **Légendaire (5% des paniers) :** Festin complet surprise avec un bonus de 30 EcoPoints.
+### 5.3 Gestion de la Concurrence Extrême par Transactions Atomiques
+La transaction Firestore `db.runTransaction` inspecte `quantityAvailable`. Si le stock est épuisé, une exception `ConflictError('OFFER_SOLD_OUT')` est levée. Le banc de test simulant **20 requêtes simultanées sur un stock de 5** valide l'attribution de 5 commandes exactes et le rejet maîtrisé des 15 autres en HTTP 409.
 
-### 5.4 Parseur d'Offres IA Multimodal Gemini & Fallback Culinaire Tunisien
-Le commerçant peut dicter ou taper une phrase en langage naturel. Le module IA extrait les attributs structurés. Si l'API externe est inaccessible, notre parseur déterministe prend le relais grâce à une base de connaissances culinaires tunisiennes :
-- Détection des spécialités : *Makloub, Chapati, Baguette farcie, Ojja, Lablabi, Kafteji, Pizza, Viennoiseries*.
-- Extraction des horaires par expressions régulières (*"avant 17h30"*, *"fermeture 21h"*).
-- Détection des quantités multiples entraînant la création automatique d'un Panier Surprise.
+### 5.4 Paiement Konnect Sandbox à Double Canal de Confirmation Idempotent
+La plateforme combine la réception d'un webhook asynchrone sécurisé (`POST /payments/webhook`) et une confirmation synchrone au retour de redirection (`POST /payments/verify`). L'idempotence stricte garantit qu'un paiement n'est jamais comptabilisé deux fois.
 
-### 5.5 Facteurs d'Équivalences Carbone Officiels FAO 2013 & US EPA
-Pour conférer une rigueur académique irréprochable à notre vitrine d'impact public, nous appliquons les coefficients officiels :
-- **Ratio d'empreinte carbone alimentaire :** $1\text{ kg de nourriture sauvée} = 2,5\text{ kg de CO}_2\text{e évités}$ (*FAO, Food Wastage Footprint, 2013*).
-- **Recharge de smartphone :** $8,22\text{ g de CO}_2\text{ par charge complète}$ (*US EPA Greenhouse Gas Equivalencies Calculator*).
-- **Véhicule thermique particulier moyen :** $244\text{ g de CO}_2\text{ par kilomètre urbain}$ (*US EPA*).
+### 5.5 Cryptographie du Living Ticket Anti-Capture d'Écran
+Le Living Ticket utilise un condensat HMAC-SHA256 calculé sur la fenêtre temporelle courante de 30 secondes :
+$$W(t) = \lfloor t / 30 \rfloor$$
+$$\text{Hash} = \text{HMAC-SHA256}(ticketNonce, orderId + ":" + W(t))$$
+- Tolérance de désynchronisation : $\pm 1$ fenêtre ($\pm 30\text{ s}$).
+- Comparaison en temps constant : `crypto.timingSafeEqual` prévenant toute fuite par canal auxiliaire.
+- Verrouillage automatique : après 5 tentatives échouées consécutives (`HTTP 423 LOCKED`).
+- Code manuel de secours : 6 chiffres dérivés de l'empreinte pour parer aux pannes de caméra.
+
+### 5.6 Auto-Remplissage d'Offres par IA & Parseur Dialectal Tunisien
+Le modèle Google Gemini extrait les attributs structurés depuis le langage naturel. En cas d'indisponibilité ou d'épuisement de quota, notre parseur déterministe local (`fallbackParser.js`) prend le relais grâce à sa base gastronomique tunisienne (*Makloub, Chapati, Baguette farcie, Ojja, Lablabi, Kafteji*), validé par 10 scénarios de test réels.
+
+### 5.7 Radar 3D WebGL MapLibre & Ratios Écologiques Officiels
+- Rendu immersif avec extrusion 3D des bâtiments de Montfleury et balises hexagonales colorées selon l'urgence horaire.
+- Standards écologiques appliqués : $1\text{ kg de nourriture sauvée} = 2,5\text{ kg de CO}_2\text{e évités}$ (FAO 2013), $8,22\text{ g de CO}_2$ par recharge smartphone (US EPA) et $244\text{ g de CO}_2\text{ / km}$ pour une voiture thermique urbaine.
 
 ---
 
 ## Chapitre 6 : Réalisation, Interfaces & Expérience Utilisateur (Web & Mobile)
 
 ### 6.1 Design System Dark Obsidian & Electric Lime
-La charte graphique a été minutieusement élaborée pour conjuguer modernité technologique et accessibilité :
-- **Dark Obsidian (`#0D0F12`) :** Fond sombre profond réduisant la consommation énergétique des écrans OLED des smartphones étudiants.
-- **Surface Card (`#161920`) :** Relief subtil pour isoler les composants interactifs.
-- **Electric Lime (`#CCFF00`) :** Couleur d'accentuation haute visibilité symbolisant l'énergie verte et l'action positive.
+- **Dark Obsidian (`#0D0F12`) :** Fond sombre réduisant la consommation énergétique des écrans OLED des smartphones étudiants.
+- **Surface Card (`#161920`) :** Relief subtil isolant les composants interactifs.
+- **Electric Lime (`#CCFF00`) :** Couleur d'accentuation haute visibilité pour l'engagement civique et l'écologie.
 - **Urgent Amber (`#FF5500`) :** Alerte d'urgence pour les créneaux expirant dans moins de 20 minutes.
 
-### 6.2 Parcours Étudiant : Catalogue, Holo-Radar 3D WebGL & Living Ticket
-- **Catalogue & Debounce 300 ms :** Recherche instantanée sur le titre, le commerce ou la description sans ralentissement de saisie.
-- **Holo-Radar 3D :** Navigation spatiale autour de l'ESSECT permettant de visualiser en un coup d'œil où se situent les meilleures affaires.
-- **Boarding Pass Living Ticket :** Billet numérique inspiré des cartes d'embarquement aériennes, avec encoches latérales découpées, horloge en temps réel, QR tournant et pastille animée *LIVE*.
+### 6.2 Parcours Étudiant : Catalogue, Debounce 300 ms, Holo-Radar 3D & Living Ticket
+![Parcours Étudiant Web Final](../mockups/final-screens/01-final-web-student-journey.svg)
 
-### 6.3 Espace Commerçant : Publication IA, Courbe Smart Decay & Scanner Caméra
-- **Onboarding Géolocalisé :** Sélection de l'emplacement précis sur la carte avec validation automatique du rayon campus $\le 3\text{ km}$.
-- **Formulaire d'Offres & Visualisation SVG :** Tracé dynamique de la courbe d'enchère dégressive permettant au commerçant d'anticiper l'évolution exacte de ses prix.
-- **Scanner Commerçant :** Interface de scan plein écran exploitant la caméra du smartphone ou de la webcam avec confirmation sonore et haptique.
+### 6.3 Espace Commerçant : Onboarding MapPicker, Publication IA & Scanner Caméra
+![Parcours Commerçant Web Final](../mockups/final-screens/02-final-web-merchant-ai-radar.svg)
 
-### 6.4 Console d'Administration & Supervision Universitaire
-- Tableau de bord décisionnel synthétisant le Volume d'Affaires global (GMV en TND).
-- Modération des boutiques partenaires en attente d'approbation avec examen des registres de commerce.
-- Supervision des comptes étudiants et commerçants.
+### 6.4 Application Mobile Flutter Native
+![Écrans Mobiles Flutter Finaux](../mockups/final-screens/03-final-mobile-flutter-screens.svg)
 
 ### 6.5 Tableaux de Bord par Rôle, Gamification & Défi Inter-Filières
-- **Tableau de Bord Étudiant :** Visualisation Recharts de l'accumulation des économies semaine après semaine et bouton de notation 1 à 5 étoiles.
-- **Tableau de Bord Commerçant :** Bascule interactive 7j / 30j et palmarès des meilleures ventes.
-- **Vitrine Publique d'Impact (`/impact`) :** Page libre d'accès sans compte, affichant le classement des 5 filières de l'ESSECT (*3A E-Business*, *Finance*, *Marketing*, *Gestion*, *Comptabilité*).
+![Tableaux de Bord et Impact](../mockups/final-screens/04-final-dashboards-impact-loyalty.svg)
 
 ---
 
-## Chapitre 7 : Tests, Déploiement & Bilan Qualité
+## Chapitre 7 : Validation Expérimentale, Tests Automatisés & Bilan Qualité
 
-### 7.1 Stratégie de Test Automatisé (Banc de Test 91 Tests Unitaires & Concurrence)
-L'ensemble de la logique métier fait l'objet d'une couverture de tests automatisés rigoureuse :
-- **Parseur de Secours Tunisien :** 11 tests validant l'extraction dialectale.
-- **Authentification & Rôles :** 13 tests vérifiant l'étanchéité des middlewares et schémas Zod.
-- **Commerces & Smart Decay :** 25 vecteurs de non-régression validant la formule mathématique.
-- **Concurrence Extrême (20 Acheteurs Simultanés) :** Simulation de 20 requêtes concurrentes sur un stock de 5 : exactement 5 succès, 15 rejets 409 et stock final à 0.
-- **Cryptographie Living Ticket :** 5 vecteurs officiels cross-runtime testant la tolérance $\pm 1$ fenêtre et le verrouillage après 5 échecs.
-- **Total général :** **91/91 tests passés avec succès (0 échec, 0 régression)**.
+### 7.1 Synthèse de la Suite de Tests Automatisés
+```text
+========================================================================================
+             BILAN CONSOLIDÉ DU BANC DE TESTS AUTOMATISÉS CAMPUSSAVE
+========================================================================================
+  Composant Testé               Framework / Moteur          Tests Passés   Taux Succès
+────────────────────────────────────────────────────────────────────────────────────────
+  API Backend REST Node.js      Node.js Test Runner (v22)   107 / 107      100 %
+  Domaine Partagé (/shared)     Node.js Test Runner (v22)    26 /  26      100 %
+  Application Mobile Flutter    flutter_test / Dart 3         4 /   4      100 %
+  Analyse Statique Flutter      flutter analyze               0 warnings   100 % Clean
+  Compilation Web React         Vite 5 (Production Build)     0 erreurs    100 % Succès
+────────────────────────────────────────────────────────────────────────────────────────
+  TOTAL VALIDÉ AVEC SUCCÈS                                  137 / 137      100 %
+========================================================================================
+```
 
-### 7.2 Audit de Sécurité, Absence de Secrets & Variables d'Environnement
-Conformément aux normes professionnelles les plus strictes :
-- Zéro secret, token ou mot de passe n'est commité dans l'historique Git (`.gitignore` exhaustif, utilisation exclusive de fichiers `.env.example`).
-- Protection contre les injections SQL/NoSQL et validation systématique de toutes les entrées via des schémas Zod stricts.
-- En-têtes de sécurité HTTP Helmet et limitation de débit (Rate Limiting).
+### 7.2 Détail des Suites de Tests Critiques
+1. **Tests Mathématiques de Tarification :** Validation des 25 vecteurs de non-régression d'enchères dégressives.
+2. **Tests de Concurrence Transactionnelle :** Collision de 20 acheteurs sur 5 unités de stock.
+3. **Tests de Cryptographie Living Ticket :** 5 vecteurs de signature HMAC-SHA256, tolérance $\pm 30\text{ s}$ et verrouillage après 5 échecs.
+4. **Tests du Parseur Culinaire Tunisien :** 10 scénarios d'extraction dialectale en langage naturel.
+5. **Tests d'Intégrité du Jeu de Données :** Validation des 6 commerces de Montfleury, 20 offres et 5 filières ESSECT.
+
+### 7.3 Audit de Sécurité, Absence de Secrets & Variables d'Environnement
+- Zéro secret ou mot de passe commité dans l'historique Git (`.gitignore` exhaustif et `.env.example`).
+- Protection contre les injections et validation systématique de toutes les entrées via des schémas `Zod` stricts.
+- En-têtes HTTP sécurisés via `Helmet` et limitation de débit via `express-rate-limit`.
+
+### 7.4 Limites Actuelles du Système & Perspectives d'Industrialisation
+- **Recherche plein texte :** Actuellement basée sur des tableaux de préfixes Firestore ; intégration recommandée d'Algolia ou Meilisearch à grande échelle.
+- **Dépendance réseau au comptoir :** Connexion Internet requise pour le commerçant lors de la validation du retrait.
+- **Paiement Konnect en bac à sable :** Exploité sous environnement Sandbox en l'absence de registre RNE commercial.
+- **Perspectives futures :** Paiement sans contact NFC, généralisation aux campus voisins (Manouba, El Manar) et prédiction des invendus par Machine Learning.
 
 ---
 
-## Conclusion Générale, Limites & Perspectives d'Évolution
+## Conclusion Générale & Perspectives d'Évolution
 
-Le projet **CampusSave** démontre avec succès la faisabilité technique, l'utilité sociale et la pertinence économique d'une plateforme anti-gaspillage alimentaire dédiée à une communauté universitaire. En combinant des technologies de pointe (React 18, Flutter 3, Node.js 20, Firestore, MapLibre GL 3D, Intelligence Artificielle), notre binôme a livré une solution complète, robuste et immédiatement déployable.
-
-### Perspectives d'Évolution Future :
-1. **Paiement NFC sans contact :** Intégration de la validation de retrait par simple contact sans fil entre le smartphone étudiant et le terminal commerçant.
-2. **Expansion Inter-Universitaire :** Extension du modèle aux campus universitaires voisins de Tunis (Le Belvédère, La Manouba, El Manar).
-3. **Prédiction des Invendus par Machine Learning :** Entraînement d'un modèle prédictif anticipant les surplus des commerçants selon les conditions météorologiques et les calendriers d'examens étudiants.
+Le projet **CampusSave** démontre avec éclat la faisabilité technique, l'utilité sociale et la viabilité économique d'une plateforme anti-gaspillage alimentaire conçue pour un écosystème universitaire. En associant des choix d'ingénierie logicielle rigoureux (React 18, Flutter 3, Node.js 20, Firestore NoSQL, MapLibre GL 3D, cryptographie HMAC-SHA256 et IA générative), notre binôme livre un produit fini, industrialisable et conforme à 100% des exigences du cahier des charges de l'ESSECT Montfleury.
 
 ---
 
