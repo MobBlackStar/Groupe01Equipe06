@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0D0F12; }
+      .nav-bg { fill: #161920; stroke: #262A33; stroke-width: 1; }
+      .ticket-bg { fill: #161920; stroke: #CCFF00; stroke-width: 2; rx: 24px; }
+      .ticket-header { fill: #CCFF00; rx: 22px; }
+      .txt-title { font-family: 'Inter', system-ui, sans-serif; font-size: 26px; font-weight: 900; fill: #FFFFFF; }
+      .txt-body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #8A92A6; }
+      .txt-lime { font-family: 'Inter', system-ui, sans-serif; font-size: 24px; font-weight: 900; fill: #CCFF00; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" class="bg"/>
+
+  <!-- Top Nav -->
+  <rect width="1440" height="72" class="nav-bg"/>
+  <g transform="translate(48, 22)">
+    <text x="0" y="20" font-family="Inter" font-size="14" fill="#8A92A6">← Retour à mes commandes actives</text>
+  </g>
+
+  <!-- Title & Status Banner -->
+  <g transform="translate(48, 100)">
+    <text x="0" y="24" class="txt-title">Billet de Retrait Sécurisé (Living Ticket) 🎫</text>
+    <text x="0" y="50" class="txt-body" font-size="14">
+      Présentez ce billet directement au comptoir chez Baguette &amp; Baguette Montfleury.
+    </text>
+  </g>
+
+  <!-- LIVING TICKET BOARDING PASS -->
+  <g transform="translate(420, 150)">
+    <rect width="600" height="700" class="ticket-bg"/>
+
+    <!-- Top Stub Banner (Boarding Pass Style) -->
+    <rect x="0" y="0" width="600" height="75" rx="22" fill="#CCFF00"/>
+    <g transform="translate(32, 24)">
+      <text x="0" y="20" font-family="Inter" font-size="18" font-weight="900" fill="#000000">TICKET DE RETRAIT SÉCURISÉ</text>
+      <text x="0" y="38" font-family="Inter" font-size="11" font-weight="bold" fill="#000000">COMMANDE N° CS-2026-8841 • ESSECT MONTFLEURY</text>
+      <text x="536" y="28" font-family="Inter" font-size="20" text-anchor="end">✈️</text>
+    </g>
+
+    <!-- Merchant & Item Header -->
+    <g transform="translate(36, 105)">
+      <text x="0" y="16" class="txt-title" font-size="20">Baguette Farcie Escalope Panée</text>
+      <text x="0" y="38" font-family="Inter" font-size="14" font-weight="bold" fill="#CCFF00">
+        Baguette &amp; Baguette Montfleury
+      </text>
+      <text x="0" y="58" class="txt-body">Avenue Habib Bourguiba • 210m de l'ESSECT (~3 min à pied)</text>
+      <text x="0" y="78" font-family="Inter" font-size="12" fill="#FFFFFF">
+        Heure limite de retrait : <tspan fill="#FF5500" font-weight="bold">Aujourd'hui à 20h00</tspan>
+      </text>
+    </g>
+
+    <!-- Perforated Cut-Out Circles on Ticket Sides -->
+    <circle cx="0" cy="225" r="18" fill="#0D0F12"/>
+    <circle cx="600" cy="225" r="18" fill="#0D0F12"/>
+    <line x1="28" y1="225" x2="572" y2="225" stroke="#262A33" stroke-width="2" stroke-dasharray="8,8"/>
+
+    <!-- Central HMAC Dynamic QR Code Box -->
+    <g transform="translate(160, 255)">
+      <rect width="280" height="280" rx="20" fill="#FFFFFF" stroke="#262A33"/>
+      
+      <!-- Simulated High-Density QR Pattern -->
+      <rect x="25" y="25" width="230" height="230" fill="#0D0F12" rx="12"/>
+      
+      <!-- QR Position Detection Patterns -->
+      <rect x="40" y="40" width="55" height="55" fill="#CCFF00" rx="8"/>
+      <rect x="48" y="48" width="39" height="39" fill="#0D0F12" rx="4"/>
+      <rect x="56" y="56" width="23" height="23" fill="#CCFF00" rx="2"/>
+
+      <rect x="185" y="40" width="55" height="55" fill="#CCFF00" rx="8"/>
+      <rect x="193" y="48" width="39" height="39" fill="#0D0F12" rx="4"/>
+      <rect x="201" y="56" width="23" height="23" fill="#CCFF00" rx="2"/>
+
+      <rect x="40" y="185" width="55" height="55" fill="#CCFF00" rx="8"/>
+      <rect x="48" y="193" width="39" height="39" fill="#0D0F12" rx="4"/>
+      <rect x="56" y="201" width="23" height="23" fill="#CCFF00" rx="2"/>
+
+      <text x="140" y="150" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF" text-anchor="middle">HMAC SHA-256</text>
+      <text x="140" y="168" font-family="Inter" font-size="10" fill="#CCFF00" text-anchor="middle">TOURNANT 30S</text>
+    </g>
+
+    <!-- 30-Second Countdown Dial -->
+    <g transform="translate(160, 555)">
+      <rect width="280" height="36" rx="18" fill="#0D0F12" stroke="#262A33"/>
+      <circle cx="25" cy="18" r="7" fill="#CCFF00"/>
+      <text x="45" y="22" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF">
+        Renouvellement automatique : <tspan fill="#CCFF00">18 secondes</tspan>
+      </text>
+    </g>
+
+    <!-- 6-Digit Manual Fallback Code -->
+    <g transform="translate(36, 610)">
+      <rect width="528" height="65" rx="16" fill="#0D0F12" stroke="#262A33"/>
+      <g transform="translate(24, 18)">
+        <text x="0" y="16" class="txt-body" font-size="11">Code de secours manuel (si caméra indisponible) :</text>
+        <text x="0" y="38" font-family="Inter" font-size="20" font-weight="900" letter-spacing="4" fill="#38BDF8">
+          8 4 9 — 1 0 3
+        </text>
+        <text x="480" y="28" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="end">Fenêtre ±30s</text>
+      </g>
+    </g>
+  </g>
+</svg>

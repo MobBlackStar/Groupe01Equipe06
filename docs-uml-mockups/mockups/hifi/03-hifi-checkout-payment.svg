@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0D0F12; }
+      .nav-bg { fill: #161920; stroke: #262A33; stroke-width: 1; }
+      .surface { fill: #161920; stroke: #262A33; stroke-width: 1.5; rx: 18px; }
+      .surface-accent { fill: #161920; stroke: #CCFF00; stroke-width: 1.5; rx: 18px; }
+      .txt-title { font-family: 'Inter', system-ui, sans-serif; font-size: 24px; font-weight: 800; fill: #FFFFFF; }
+      .txt-body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #8A92A6; }
+      .txt-lime { font-family: 'Inter', system-ui, sans-serif; font-size: 28px; font-weight: 900; fill: #CCFF00; }
+    </style>
+    <linearGradient id="limeBtn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#CCFF00"/>
+      <stop offset="100%" stop-color="#A6D900"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1440" height="900" class="bg"/>
+
+  <!-- Top Nav -->
+  <rect width="1440" height="72" class="nav-bg"/>
+  <g transform="translate(48, 22)">
+    <text x="0" y="20" font-family="Inter" font-size="14" fill="#8A92A6">← Annuler et libérer la réservation</text>
+  </g>
+
+  <!-- Reservation Hold Bar -->
+  <g transform="translate(48, 92)">
+    <rect width="1344" height="48" rx="12" fill="#1C1812" stroke="#FF5500"/>
+    <g transform="translate(24, 15)">
+      <circle cx="10" cy="9" r="6" fill="#FF5500"/>
+      <text x="26" y="14" font-family="Inter" font-size="13" font-weight="bold" fill="#FFFFFF">
+        RÉSERVATION ACTIVE : Votre panier est bloqué pendant encore <tspan fill="#FF5500">09 minutes 14 secondes</tspan>
+      </text>
+      <text x="1296" y="14" font-family="Inter" font-size="12" fill="#8A92A6" text-anchor="end">
+        Stock garanti dans Firestore
+      </text>
+    </g>
+  </g>
+
+  <!-- Two-Column Layout -->
+  <g transform="translate(48, 160)">
+    <!-- LEFT COLUMN: Payment Method & Konnect Integration -->
+    <g transform="translate(0, 0)">
+      <rect width="780" height="680" class="surface"/>
+      <g transform="translate(36, 36)">
+        <text x="0" y="20" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00">MOYEN DE PAIEMENT SÉCURISÉ</text>
+        <text x="0" y="48" class="txt-title">Règlement en Ligne (Passerelle Konnect)</text>
+        <text x="0" y="72" class="txt-body">Toutes les transactions sont traitées par la sandbox certifiée Konnect Tunisie.</text>
+
+        <!-- Payment Option 1: Konnect Wallet & Cards (Selected) -->
+        <g transform="translate(0, 95)">
+          <rect width="708" height="120" rx="16" fill="rgba(204,255,0,0.06)" stroke="#CCFF00" stroke-width="1.5"/>
+          <g transform="translate(24, 28)">
+            <circle cx="12" cy="12" r="10" fill="#CCFF00"/>
+            <circle cx="12" cy="12" r="4" fill="#000000"/>
+            <text x="36" y="18" font-family="Inter" font-size="16" font-weight="bold" fill="#FFFFFF">Konnect Sandbox Tunisie</text>
+            <text x="36" y="38" class="txt-body">Cartes Bancaires (GIM-UEMOA/CIB), Portefeuille Flouci, e-Dinar La Poste Tunisienne</text>
+            <rect x="530" y="0" width="130" height="30" rx="8" fill="#0D0F12" stroke="#262A33"/>
+            <text x="595" y="19" font-family="Inter" font-size="11" font-weight="bold" fill="#CCFF00" text-anchor="middle">CERTIFIÉ KONNECT</text>
+          </g>
+        </g>
+
+        <!-- Payment Option 2: EcoPoints Reward (Locked) -->
+        <g transform="translate(0, 230)">
+          <rect width="708" height="90" rx="16" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(24, 24)">
+            <circle cx="12" cy="12" r="10" fill="#262A33"/>
+            <text x="36" y="16" font-family="Inter" font-size="14" font-weight="bold" fill="#8A92A6">Utiliser mon bon fidélité ÉcoPoints (Panier Gratuit)</text>
+            <text x="36" y="36" class="txt-body">Solde actuel : 240 / 300 pts • Déblocage au palier ARBRE</text>
+            <rect x="550" y="4" width="110" height="26" rx="6" fill="#1E232B"/>
+            <text x="605" y="21" font-family="Inter" font-size="10" fill="#8A92A6" text-anchor="middle">VERROUILLÉ</text>
+          </g>
+        </g>
+
+        <!-- Student Verification Notice -->
+        <g transform="translate(0, 340)">
+          <rect width="708" height="150" rx="16" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(24, 24)">
+            <text x="0" y="16" font-family="Inter" font-size="13" font-weight="bold" fill="#FFFFFF">Coordonnées Étudiante Associées :</text>
+            <text x="0" y="40" class="txt-body">Titulaire : Ritej Bejaoui (donyesbejaoui27@gmail.com)</text>
+            <text x="0" y="62" class="txt-body">Filière : ESSECT 3ème année E-Business (Business Computing)</text>
+            <text x="0" y="84" class="txt-body">Téléphone confirmation SMS : +216 98 123 456</text>
+            <text x="0" y="106" font-family="Inter" font-size="12" fill="#CCFF00">✓ Profil certifié par l'administration universitaire</text>
+          </g>
+        </g>
+
+        <!-- Pay Action Button -->
+        <g transform="translate(0, 520)">
+          <rect width="708" height="60" rx="16" fill="url(#limeBtn)"/>
+          <text x="354" y="38" font-family="Inter" font-size="16" font-weight="900" fill="#000000" text-anchor="middle">
+            Valider &amp; Payer 4,200 DT via Konnect →
+          </text>
+          <text x="354" y="80" class="txt-body" font-size="11" text-anchor="middle">
+            Redirection chiffrée SSL 256 bits vers l'environnement Sandbox Konnect
+          </text>
+        </g>
+      </g>
+    </g>
+
+    <!-- RIGHT COLUMN: Order Summary & Exact Millimes Breakdown -->
+    <g transform="translate(820, 0)">
+      <rect width="524" height="680" class="surface-accent"/>
+      <g transform="translate(36, 36)">
+        <text x="0" y="20" font-family="Inter" font-size="12" font-weight="bold" fill="#8A92A6">RÉCAPITULATIF DE LA COMMANDE</text>
+        <text x="0" y="48" class="txt-title">Détail du Panier</text>
+
+        <!-- Item Row -->
+        <g transform="translate(0, 80)">
+          <rect width="452" height="90" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(18, 18)">
+            <text x="0" y="20" font-family="Inter" font-size="28">🥖</text>
+            <text x="44" y="18" font-family="Inter" font-size="14" font-weight="bold" fill="#FFFFFF">Baguette Farcie Escalope Panée</text>
+            <text x="44" y="36" class="txt-body">Quantité : 1 portion (400g) • Baguette &amp; Baguette</text>
+            <text x="44" y="54" font-family="Inter" font-size="11" fill="#CCFF00">Heure limite de retrait : Ce soir à 20h00</text>
+          </g>
+        </g>
+
+        <!-- Financial Breakdown in integer Millimes -->
+        <g transform="translate(0, 195)">
+          <text x="0" y="16" class="txt-body" font-size="13">Prix catalogue régulier :</text>
+          <text x="452" y="16" font-family="Inter" font-size="13" fill="#8A92A6" text-anchor="end">7,500 DT (7500 m)</text>
+
+          <text x="0" y="44" font-family="Inter" font-size="13" font-weight="bold" fill="#CCFF00">Remise solidaire anti-gaspillage :</text>
+          <text x="452" y="44" font-family="Inter" font-size="13" font-weight="bold" fill="#CCFF00" text-anchor="end">-3,300 DT (-3300 m)</text>
+
+          <text x="0" y="72" class="txt-body" font-size="13">Frais de plateforme universitaire :</text>
+          <text x="452" y="72" font-family="Inter" font-size="13" fill="#FFFFFF" text-anchor="end">0,000 DT (Gratuit)</text>
+
+          <line x1="0" y1="94" x2="452" y2="94" stroke="#262A33" stroke-width="1.5"/>
+
+          <text x="0" y="132" font-family="Inter" font-size="16" font-weight="bold" fill="#FFFFFF">Total Net à Régler :</text>
+          <text x="452" y="132" class="txt-lime" text-anchor="end">4,200 DT</text>
+          <text x="452" y="152" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="end">(Exactement 4200 millimes entiers)</text>
+        </g>
+
+        <!-- Eco Impact Badge Box -->
+        <g transform="translate(0, 390)">
+          <rect width="452" height="190" rx="16" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(24, 24)">
+            <text x="0" y="16" font-family="Inter" font-size="13" font-weight="bold" fill="#CCFF00">
+              🌱 Bilan Environnemental de cet achat :
+            </text>
+            <text x="0" y="44" font-family="Inter" font-size="13" fill="#FFFFFF">• 400 grammes de nourriture sauvée</text>
+            <text x="0" y="68" font-family="Inter" font-size="13" fill="#FFFFFF">• 1,00 kg d'émissions de CO2 évitées</text>
+            <text x="0" y="92" font-family="Inter" font-size="13" fill="#FFFFFF">• +24 ÉcoPoints crédités sur votre compte</text>
+            <text x="0" y="125" class="txt-body" font-size="11">
+              Validation automatique du tampon N°8 sur votre carte de fidélité ESSECT !
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

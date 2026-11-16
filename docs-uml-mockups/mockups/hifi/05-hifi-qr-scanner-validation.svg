@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0D0F12; }
+      .nav-bg { fill: #161920; stroke: #262A33; stroke-width: 1; }
+      .surface { fill: #161920; stroke: #262A33; stroke-width: 1.5; rx: 18px; }
+      .txt-title { font-family: 'Inter', system-ui, sans-serif; font-size: 24px; font-weight: 800; fill: #FFFFFF; }
+      .txt-body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #8A92A6; }
+      .txt-lime { font-family: 'Inter', system-ui, sans-serif; font-size: 20px; font-weight: 800; fill: #CCFF00; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" class="bg"/>
+
+  <!-- Top Nav -->
+  <rect width="1440" height="72" class="nav-bg"/>
+  <g transform="translate(48, 22)">
+    <text x="0" y="20" font-family="Inter" font-size="14" fill="#8A92A6">← Retour à l'espace commerçant</text>
+  </g>
+
+  <!-- Title Section -->
+  <g transform="translate(48, 100)">
+    <text x="0" y="24" class="txt-title">Scanner de Retrait Sécurisé (Comptoir Commerçant) 📷</text>
+    <text x="0" y="50" class="txt-body" font-size="14">
+      Scannez le Living Ticket de l'étudiant pour valider la remise du repas en temps réel.
+    </text>
+  </g>
+
+  <!-- Main Viewfinder & Fallback Keypad Grid -->
+  <g transform="translate(48, 170)">
+    <!-- LEFT: Camera Viewfinder Simulation -->
+    <g transform="translate(0, 0)">
+      <rect width="800" height="660" class="surface"/>
+      <g transform="translate(40, 40)">
+        <text x="0" y="16" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00">VISEUR CAMÉRA SÉCURISÉ</text>
+        <text x="0" y="42" class="txt-title" font-size="20">Alignement du Living Ticket</text>
+        
+        <!-- Viewfinder Box (Black Camera Feed with HUD corners) -->
+        <g transform="translate(0, 70)">
+          <rect width="720" height="420" rx="20" fill="#000000" stroke="#262A33" stroke-width="2"/>
+
+          <!-- Animated Target Corners -->
+          <path d="M 160 120 L 160 80 L 200 80" stroke="#CCFF00" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M 560 120 L 560 80 L 520 80" stroke="#CCFF00" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M 160 300 L 160 340 L 200 340" stroke="#CCFF00" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M 560 300 L 560 340 L 520 340" stroke="#CCFF00" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+          <!-- Laser Scan Line -->
+          <line x1="160" y1="210" x2="560" y2="210" stroke="#CCFF00" stroke-width="2" opacity="0.8"/>
+          <line x1="160" y1="210" x2="560" y2="210" stroke="#CCFF00" stroke-width="8" opacity="0.15"/>
+
+          <text x="360" y="270" font-family="Inter" font-size="13" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            Vérification HMAC-SHA256 en cours...
+          </text>
+        </g>
+
+        <!-- Status Bar -->
+        <g transform="translate(0, 520)">
+          <rect width="720" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(20, 20)">
+            <circle cx="10" cy="10" r="6" fill="#CCFF00"/>
+            <text x="26" y="14" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF">
+              Vérification serveur timingSafeEqual : <tspan fill="#CCFF00">Latence 42ms (Zéro contournement)</tspan>
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+
+    <!-- RIGHT: Manual 6-Digit Code Fallback Keypad -->
+    <g transform="translate(840, 0)">
+      <rect width="504" height="660" class="surface"/>
+      <g transform="translate(36, 40)">
+        <text x="0" y="16" font-family="Inter" font-size="12" font-weight="bold" fill="#38BDF8">SAISIE MANUELLE DE SECOURS</text>
+        <text x="0" y="42" class="txt-title" font-size="20">Code à 6 Chiffres</text>
+        <text x="0" y="66" class="txt-body">À utiliser si la caméra du smartphone est indisponible.</text>
+
+        <!-- Code Display Field -->
+        <g transform="translate(0, 95)">
+          <rect width="432" height="64" rx="14" fill="#0D0F12" stroke="#38BDF8" stroke-width="1.5"/>
+          <text x="216" y="40" font-family="Inter" font-size="26" font-weight="900" letter-spacing="8" fill="#FFFFFF" text-anchor="middle">
+            8 4 9 1 0 3
+          </text>
+        </g>
+
+        <!-- Numeric Keypad Grid -->
+        <g transform="translate(0, 185)">
+          <!-- Row 1 -->
+          <rect x="0" y="0" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="65" y="38" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">1</text>
+
+          <rect x="151" y="0" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="216" y="38" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">2</text>
+
+          <rect x="302" y="0" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="367" y="38" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">3</text>
+
+          <!-- Row 2 -->
+          <rect x="0" y="75" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="65" y="113" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">4</text>
+
+          <rect x="151" y="75" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="216" y="113" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">5</text>
+
+          <rect x="302" y="75" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="367" y="113" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">6</text>
+
+          <!-- Row 3 -->
+          <rect x="0" y="150" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="65" y="188" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">7</text>
+
+          <rect x="151" y="150" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="216" y="188" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">8</text>
+
+          <rect x="302" y="150" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="367" y="188" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">9</text>
+
+          <!-- Row 4 -->
+          <rect x="0" y="225" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="65" y="260" font-family="Inter" font-size="14" font-weight="bold" fill="#8A92A6" text-anchor="middle">Effacer</text>
+
+          <rect x="151" y="225" width="130" height="60" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <text x="216" y="263" font-family="Inter" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">0</text>
+
+          <rect x="302" y="225" width="130" height="60" rx="14" fill="#38BDF8"/>
+          <text x="367" y="261" font-family="Inter" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">Valider ✓</text>
+        </g>
+
+        <!-- Transaction Completed Confirmation -->
+        <g transform="translate(0, 495)">
+          <rect width="432" height="85" rx="14" fill="rgba(204,255,0,0.1)" stroke="#CCFF00"/>
+          <g transform="translate(16, 16)">
+            <text x="0" y="16" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00">
+              Dernière Commande Validée :
+            </text>
+            <text x="0" y="36" class="txt-body" font-size="12" fill="#FFFFFF">
+              Baguette Farcie Escalope • Ritej Bejaoui (ESSECT 3A)
+            </text>
+            <text x="0" y="54" class="txt-body" font-size="11">
+              Statut basculé en COMPLETED • Transaction atomique enregistrée.
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

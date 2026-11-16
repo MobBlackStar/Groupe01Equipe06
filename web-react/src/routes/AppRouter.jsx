@@ -8,6 +8,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
 import { RoleRoute } from './RoleRoute.jsx';
 import { ROLES } from '@shared/constants.js';
+import RegisterPage from '../features/auth/RegisterPage.jsx';
+import ProfilePage from '../features/auth/ProfilePage.jsx';
 
 export function AppRouter() {
   return (
@@ -26,17 +28,8 @@ export function AppRouter() {
           </div>
         }
       />
-      <Route
-        path="/register"
-        element={
-          <div className="flex h-screen items-center justify-center p-4">
-            <div className="bg-campus-card p-8 rounded-xl border border-campus-border max-w-md w-full text-center">
-              <h1 className="text-2xl font-bold text-campus-lime mb-2">Inscription</h1>
-              <p className="text-xs text-slate-400">Écran en cours d'intégration par le l'équipe UI</p>
-            </div>
-          </div>
-        }
-      />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
       <Route
         path="/impact"
         element={

@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0D0F12; }
+      .nav-bg { fill: #161920; stroke: #262A33; stroke-width: 1; }
+      .card-surface { fill: #161920; stroke: #262A33; stroke-width: 1.5; rx: 16px; }
+      .card-glow { fill: #161920; stroke: #CCFF00; stroke-width: 1.5; rx: 16px; }
+      .txt-title { font-family: 'Inter', system-ui, sans-serif; font-size: 24px; font-weight: 800; fill: #FFFFFF; }
+      .txt-heading { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 700; fill: #FFFFFF; }
+      .txt-body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #8A92A6; }
+      .txt-lime { font-family: 'Inter', system-ui, sans-serif; font-size: 18px; font-weight: 800; fill: #CCFF00; }
+      .pill-active { fill: #CCFF00; rx: 10px; }
+      .pill-inactive { fill: #1E232B; stroke: #262A33; stroke-width: 1; rx: 10px; }
+      .badge-decay { fill: rgba(255,85,0,0.15); stroke: rgba(255,85,0,0.4); stroke-width: 1; rx: 6px; }
+      .badge-rare { fill: rgba(168,85,247,0.15); stroke: rgba(168,85,247,0.4); stroke-width: 1; rx: 6px; }
+    </style>
+    <linearGradient id="limeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#CCFF00"/>
+      <stop offset="100%" stop-color="#99CC00"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1440" height="900" class="bg"/>
+
+  <!-- Top Navigation Bar -->
+  <rect width="1440" height="72" class="nav-bg"/>
+  <g transform="translate(48, 18)">
+    <rect width="36" height="36" rx="10" fill="#CCFF00"/>
+    <text x="18" y="24" font-family="Inter" font-size="18" font-weight="bold" fill="#000000" text-anchor="middle">CS</text>
+    <text x="48" y="24" class="txt-title" font-size="20">Campus<tspan fill="#CCFF00">Save</tspan></text>
+  </g>
+
+  <!-- Navigation Links -->
+  <g transform="translate(450, 26)">
+    <text x="0" y="16" font-family="Inter" font-size="14" font-weight="bold" fill="#CCFF00">Catalogue</text>
+    <circle cx="30" cy="26" r="2.5" fill="#CCFF00"/>
+    <text x="100" y="16" font-family="Inter" font-size="14" font-weight="500" fill="#8A92A6">Holo-Radar 3D</text>
+    <text x="230" y="16" font-family="Inter" font-size="14" font-weight="500" fill="#8A92A6">Mes Commandes</text>
+    <text x="370" y="16" font-family="Inter" font-size="14" font-weight="500" fill="#8A92A6">Éco-Fidélité</text>
+    <text x="480" y="16" font-family="Inter" font-size="14" font-weight="500" fill="#8A92A6">Impact ESSECT</text>
+  </g>
+
+  <!-- User Profile Chip -->
+  <g transform="translate(1220, 16)">
+    <rect width="172" height="40" rx="12" fill="#1E232B" stroke="#262A33"/>
+    <circle cx="24" cy="20" r="14" fill="#0D0F12"/>
+    <text x="24" y="24" font-family="Inter" font-size="12" fill="#CCFF00" text-anchor="middle">RB</text>
+    <text x="46" y="19" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF">Ritej Bejaoui</text>
+    <text x="46" y="32" font-family="Inter" font-size="10" fill="#CCFF00">240 ÉcoPoints</text>
+  </g>
+
+  <!-- Hero Header & Live ESSECT Badge -->
+  <g transform="translate(48, 100)">
+    <div style="display:flex;">
+      <rect width="210" height="26" rx="13" fill="rgba(204,255,0,0.12)" stroke="rgba(204,255,0,0.3)"/>
+      <circle cx="16" cy="13" r="4" fill="#CCFF00"/>
+      <text x="28" y="17" font-family="Inter" font-size="11" font-weight="bold" fill="#CCFF00">CAMPUS ESSECT MONTFLEURY</text>
+    </div>
+    <text x="0" y="60" class="txt-title" font-size="30">Sauvez les invendus du quartier à prix d'ami 🌱</text>
+    <text x="0" y="85" class="txt-body" font-size="14">6 commerces partenaires dans un rayon de 1,5 km • Récupération ce soir avant 20:00</text>
+  </g>
+
+  <!-- Realtime Search Bar (Debounce 300ms) -->
+  <g transform="translate(48, 205)">
+    <rect width="900" height="52" rx="16" fill="#161920" stroke="#262A33" stroke-width="1.5"/>
+    <text x="24" y="32" font-family="Inter" font-size="18" fill="#8A92A6">🔍</text>
+    <text x="56" y="31" font-family="Inter" font-size="14" fill="#FFFFFF">Baguette farcie escalope...</text>
+    <rect x="760" y="10" width="126" height="32" rx="10" fill="#1E232B"/>
+    <circle cx="776" cy="26" r="4" fill="#CCFF00"/>
+    <text x="788" y="30" font-family="Inter" font-size="11" font-weight="bold" fill="#8A92A6">DEBOUNCE 300MS</text>
+  </g>
+
+  <!-- Category Pills -->
+  <g transform="translate(48, 275)">
+    <rect width="70" height="34" class="pill-active"/>
+    <text x="35" y="22" font-family="Inter" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">Tout</text>
+
+    <g transform="translate(82, 0)">
+      <rect width="110" height="34" class="pill-inactive"/>
+      <text x="55" y="22" font-family="Inter" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">🥖 Sandwich</text>
+    </g>
+    <g transform="translate(204, 0)">
+      <rect width="115" height="34" class="pill-inactive"/>
+      <text x="57" y="22" font-family="Inter" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">🍲 Plat Chaud</text>
+    </g>
+    <g transform="translate(331, 0)">
+      <rect width="90" height="34" class="pill-inactive"/>
+      <text x="45" y="22" font-family="Inter" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">🍕 Pizza</text>
+    </g>
+    <g transform="translate(433, 0)">
+      <rect width="110" height="34" class="pill-inactive"/>
+      <text x="55" y="22" font-family="Inter" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">🥐 Viennoiserie</text>
+    </g>
+    <g transform="translate(555, 0)">
+      <rect width="105" height="34" class="pill-inactive"/>
+      <text x="52" y="22" font-family="Inter" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">🧁 Pâtisserie</text>
+    </g>
+    <g transform="translate(672, 0)">
+      <rect width="130" height="34" class="pill-inactive"/>
+      <text x="65" y="22" font-family="Inter" font-size="12" font-weight="600" fill="#CCFF00" text-anchor="middle">🎁 Panier Mystère</text>
+    </g>
+  </g>
+
+  <!-- OFFER CARDS GRID -->
+
+  <!-- CARD 1: Baguette Farcie (Smart Decay Active) -->
+  <g transform="translate(48, 335)">
+    <rect width="420" height="520" class="card-glow"/>
+    <!-- Product Image Placeholder -->
+    <rect x="16" y="16" width="388" height="200" rx="12" fill="#1C212B"/>
+    <text x="210" y="120" font-family="Inter" font-size="42" text-anchor="middle">🥖</text>
+    <rect x="32" y="32" width="140" height="26" class="badge-decay"/>
+    <text x="102" y="49" font-family="Inter" font-size="11" font-weight="bold" fill="#FF5500" text-anchor="middle">⚡ SMART DECAY (-44%)</text>
+
+    <!-- Details -->
+    <text x="24" y="248" class="txt-heading">Baguette Farcie Escalope Panée</text>
+    <text x="24" y="270" class="txt-body">Baguette &amp; Baguette Montfleury • 400g</text>
+    <text x="24" y="292" font-family="Inter" font-size="12" fill="#CCFF00">📍 210m de l'ESSECT (~3 min à pied)</text>
+
+    <!-- Price Section -->
+    <g transform="translate(24, 320)">
+      <rect width="372" height="70" rx="12" fill="#0D0F12" stroke="#262A33"/>
+      <text x="16" y="28" font-family="Inter" font-size="11" fill="#8A92A6">PRIX DYNAMIQUE ACTUEL</text>
+      <text x="16" y="54" class="txt-lime">4,200 DT</text>
+      <text x="110" y="54" font-family="Inter" font-size="13" text-decoration="line-through" fill="#8A92A6">7,500 DT</text>
+      <text x="356" y="42" font-family="Inter" font-size="12" font-weight="bold" fill="#FF5500" text-anchor="end">⏳ -300 millimes dans 08m</text>
+    </g>
+
+    <!-- Stock indicator & CTA -->
+    <g transform="translate(24, 410)">
+      <text x="0" y="16" font-family="Inter" font-size="12" fill="#8A92A6">Stock : <tspan fill="#FFFFFF" font-weight="bold">2 portions restantes</tspan></text>
+      <rect x="0" y="35" width="372" height="48" rx="12" fill="url(#limeGrad)"/>
+      <text x="186" y="65" font-family="Inter" font-size="14" font-weight="800" fill="#000000" text-anchor="middle">Réserver &amp; Bloquer le Prix →</text>
+    </g>
+  </g>
+
+  <!-- CARD 2: Mystery Box Masmoudi -->
+  <g transform="translate(500, 335)">
+    <rect width="420" height="520" class="card-surface"/>
+    <rect x="16" y="16" width="388" height="200" rx="12" fill="#201828"/>
+    <text x="210" y="120" font-family="Inter" font-size="42" text-anchor="middle">🎁</text>
+    <rect x="32" y="32" width="110" height="26" class="badge-rare"/>
+    <text x="87" y="49" font-family="Inter" font-size="11" font-weight="bold" fill="#C084FC" text-anchor="middle">★ RARE (350g)</text>
+
+    <text x="24" y="248" class="txt-heading">Panier Mystère Pâtisserie Fine</text>
+    <text x="24" y="270" class="txt-body">Pâtisserie Masmoudi Montfleury</text>
+    <text x="24" y="292" font-family="Inter" font-size="12" fill="#CCFF00">📍 340m de l'ESSECT (~5 min à pied)</text>
+
+    <g transform="translate(24, 320)">
+      <rect width="372" height="70" rx="12" fill="#0D0F12" stroke="#262A33"/>
+      <text x="16" y="28" font-family="Inter" font-size="11" fill="#8A92A6">PRIX ANTI-GASPI SOLIDAIRE</text>
+      <text x="16" y="54" class="txt-lime">5,500 DT</text>
+      <text x="110" y="54" font-family="Inter" font-size="13" text-decoration="line-through" fill="#8A92A6">12,000 DT</text>
+      <text x="356" y="42" font-family="Inter" font-size="12" font-weight="bold" fill="#C084FC" text-anchor="end">✨ 4 à 6 délices sucrés</text>
+    </g>
+
+    <g transform="translate(24, 410)">
+      <text x="0" y="16" font-family="Inter" font-size="12" fill="#8A92A6">Stock : <tspan fill="#FFFFFF" font-weight="bold">1 panier disponible</tspan></text>
+      <rect x="0" y="35" width="372" height="48" rx="12" fill="#1E232B" stroke="#CCFF00"/>
+      <text x="186" y="65" font-family="Inter" font-size="14" font-weight="bold" fill="#CCFF00" text-anchor="middle">Découvrir le Panier Mystère →</text>
+    </g>
+  </g>
+
+  <!-- CARD 3: Ojja Merguez Le Dôme -->
+  <g transform="translate(952, 335)">
+    <rect width="420" height="520" class="card-surface"/>
+    <rect x="16" y="16" width="388" height="200" rx="12" fill="#1C212B"/>
+    <text x="210" y="120" font-family="Inter" font-size="42" text-anchor="middle">🍳</text>
+    <rect x="32" y="32" width="130" height="26" fill="rgba(56,189,248,0.15)" stroke="rgba(56,189,248,0.4)" rx="6"/>
+    <text x="97" y="49" font-family="Inter" font-size="11" font-weight="bold" fill="#38BDF8" text-anchor="middle">🍲 PLAT CHAUD DU SOIR</text>
+
+    <text x="24" y="248" class="txt-heading">Plat Ojja Merguez &amp; Pain Tabouna</text>
+    <text x="24" y="270" class="txt-body">Restaurant Le Dôme Montfleury • 450g</text>
+    <text x="24" y="292" font-family="Inter" font-size="12" fill="#CCFF00">📍 410m de l'ESSECT (~6 min à pied)</text>
+
+    <g transform="translate(24, 320)">
+      <rect width="372" height="70" rx="12" fill="#0D0F12" stroke="#262A33"/>
+      <text x="16" y="28" font-family="Inter" font-size="11" fill="#8A92A6">PRIX FIXE SOLIDARITÉ</text>
+      <text x="16" y="54" class="txt-lime">4,500 DT</text>
+      <text x="110" y="54" font-family="Inter" font-size="13" text-decoration="line-through" fill="#8A92A6">8,500 DT</text>
+      <text x="356" y="42" font-family="Inter" font-size="12" font-weight="bold" fill="#38BDF8" text-anchor="end">(-47%)</text>
+    </g>
+
+    <g transform="translate(24, 410)">
+      <text x="0" y="16" font-family="Inter" font-size="12" fill="#8A92A6">Stock : <tspan fill="#FFFFFF" font-weight="bold">3 portions restantes</tspan></text>
+      <rect x="0" y="35" width="372" height="48" rx="12" fill="url(#limeGrad)"/>
+      <text x="186" y="65" font-family="Inter" font-size="14" font-weight="800" fill="#000000" text-anchor="middle">Commander Maintenant →</text>
+    </g>
+  </g>
+
+</svg>

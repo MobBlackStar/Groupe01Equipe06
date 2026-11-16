@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0D0F12; }
+      .nav-bg { fill: #161920; stroke: #262A33; stroke-width: 1; }
+      .surface { fill: #161920; stroke: #262A33; stroke-width: 1.5; rx: 18px; }
+      .modal-surface { fill: #161920; stroke: #CCFF00; stroke-width: 1.5; rx: 20px; }
+      .txt-title { font-family: 'Inter', system-ui, sans-serif; font-size: 24px; font-weight: 800; fill: #FFFFFF; }
+      .txt-body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #8A92A6; }
+      .txt-lime { font-family: 'Inter', system-ui, sans-serif; font-size: 18px; font-weight: 800; fill: #CCFF00; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" class="bg"/>
+
+  <!-- Top Nav -->
+  <rect width="1440" height="72" class="nav-bg"/>
+  <g transform="translate(48, 18)">
+    <rect width="36" height="36" rx="10" fill="#A855F7"/>
+    <text x="18" y="24" font-family="Inter" font-size="16" font-weight="bold" fill="#FFFFFF" text-anchor="middle">🛡️</text>
+    <text x="48" y="24" class="txt-title" font-size="20">CampusSave <tspan fill="#A855F7">Admin &amp; Régulation</tspan></text>
+  </g>
+
+  <!-- Title & Top Metrics -->
+  <g transform="translate(48, 100)">
+    <text x="0" y="24" class="txt-title">Agrément &amp; Supervision des Commerces Partenaires</text>
+    <text x="0" y="50" class="txt-body" font-size="14">
+      Contrôle d'éligibilité géographique (Rayon ≤ 3 km ESSECT) et validation des dossiers d'hygiène.
+    </text>
+  </g>
+
+  <!-- Main Table Surface -->
+  <g transform="translate(48, 170)">
+    <rect width="1344" height="680" class="surface"/>
+
+    <!-- Filter Tabs -->
+    <g transform="translate(36, 32)">
+      <rect width="140" height="36" rx="10" fill="#CCFF00"/>
+      <text x="70" y="23" font-family="Inter" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">En Attente (1)</text>
+
+      <g transform="translate(150, 0)">
+        <rect width="140" height="36" rx="10" fill="#0D0F12" stroke="#262A33"/>
+        <text x="70" y="23" font-family="Inter" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">Approuvés (6)</text>
+      </g>
+
+      <g transform="translate(300, 0)">
+        <rect width="140" height="36" rx="10" fill="#0D0F12" stroke="#262A33"/>
+        <text x="70" y="23" font-family="Inter" font-size="12" font-weight="600" fill="#8A92A6" text-anchor="middle">Rejetés (0)</text>
+      </g>
+    </g>
+
+    <!-- Table Headers -->
+    <g transform="translate(36, 85)">
+      <rect width="1272" height="42" rx="10" fill="#0D0F12" stroke="#262A33"/>
+      <text x="24" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#8A92A6">ÉTABLISSEMENT</text>
+      <text x="320" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#8A92A6">TYPE &amp; GÉRANT</text>
+      <text x="560" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#8A92A6">DISTANCE ESSECT (HAVERSINE)</text>
+      <text x="880" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#8A92A6">STATUT FIRESTORE</text>
+      <text x="1100" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#8A92A6">DÉCISION ADMIN</text>
+    </g>
+
+    <!-- Row 1: Pending Merchant (Pizzeria Bella Napoli) -->
+    <g transform="translate(36, 140)">
+      <rect width="1272" height="75" rx="12" fill="#1C1812" stroke="#FF5500"/>
+      <g transform="translate(24, 24)">
+        <text x="0" y="18" font-family="Inter" font-size="15" font-weight="bold" fill="#FFFFFF">Pizzeria Bella Napoli</text>
+        <text x="0" y="38" class="txt-body">Boulevard du 9 Avril, Montfleury, Tunis</text>
+
+        <text x="296" y="18" font-family="Inter" font-size="13" font-weight="600" fill="#FFFFFF">RESTAURANT</text>
+        <text x="296" y="38" class="txt-body">Gérant : Sofiane Cherif</text>
+
+        <g transform="translate(536, 0)">
+          <rect width="160" height="28" rx="8" fill="rgba(204,255,0,0.15)" stroke="#CCFF00"/>
+          <text x="80" y="18" font-family="Inter" font-size="11" font-weight="bold" fill="#CCFF00" text-anchor="middle">
+            📍 620 m (Éligible ≤ 3 km)
+          </text>
+          <text x="0" y="44" class="txt-body" font-size="11">Lat 36.7915, Lng 10.1710</text>
+        </g>
+
+        <g transform="translate(856, 4)">
+          <rect width="100" height="26" rx="6" fill="#FF5500"/>
+          <text x="50" y="17" font-family="Inter" font-size="11" font-weight="bold" fill="#000000" text-anchor="middle">PENDING</text>
+        </g>
+
+        <!-- Action Buttons -->
+        <g transform="translate(1076, 0)">
+          <rect width="78" height="34" rx="8" fill="#CCFF00"/>
+          <text x="39" y="21" font-family="Inter" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">Valider ✓</text>
+
+          <rect x="88" y="0" width="78" height="34" rx="8" fill="#FF1744"/>
+          <text x="127" y="21" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Rejeter ✕</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Row 2: Approved Merchant (Baguette & Baguette) -->
+    <g transform="translate(36, 230)">
+      <rect width="1272" height="70" rx="12" fill="#0D0F12" stroke="#262A33"/>
+      <g transform="translate(24, 22)">
+        <text x="0" y="18" font-family="Inter" font-size="14" font-weight="bold" fill="#FFFFFF">Baguette &amp; Baguette Montfleury</text>
+        <text x="0" y="36" class="txt-body">Avenue Habib Bourguiba, Montfleury</text>
+
+        <text x="296" y="18" font-family="Inter" font-size="13" fill="#FFFFFF">FAST_FOOD</text>
+        <text x="296" y="36" class="txt-body">Tél : +216 71 390 111</text>
+
+        <g transform="translate(536, 2)">
+          <text x="0" y="16" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00">📍 210 m (Eligible)</text>
+          <text x="0" y="34" class="txt-body" font-size="11">Temps à pied : 3 min</text>
+        </g>
+
+        <g transform="translate(856, 4)">
+          <rect width="100" height="26" rx="6" fill="rgba(204,255,0,0.15)" stroke="#CCFF00"/>
+          <text x="50" y="17" font-family="Inter" font-size="11" font-weight="bold" fill="#CCFF00" text-anchor="middle">APPROVED</text>
+        </g>
+
+        <g transform="translate(1076, 0)">
+          <rect width="166" height="32" rx="8" fill="#161920" stroke="#262A33"/>
+          <text x="83" y="20" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="middle">Consulter la fiche</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- DECISION MODAL OVERLAY (Centered Showcase) -->
+    <g transform="translate(372, 330)">
+      <rect width="600" height="315" class="modal-surface" filter="drop-shadow(0 20px 40px rgba(0,0,0,0.8))"/>
+      <g transform="translate(36, 30)">
+        <text x="0" y="20" class="txt-title" font-size="18">Décision d'Agrément Officiel ESSECT</text>
+        <text x="0" y="44" class="txt-body">
+          Commerce : <tspan fill="#FFFFFF" font-weight="bold">Pizzeria Bella Napoli (620 m)</tspan>
+        </text>
+
+        <!-- Distance & GPS Validation Check -->
+        <g transform="translate(0, 65)">
+          <rect width="528" height="65" rx="12" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(16, 16)">
+            <text x="0" y="16" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00">
+              ✓ Contrôle Géospatial Automatique Réussi
+            </text>
+            <text x="0" y="34" class="txt-body" font-size="11">
+              Coordonnées (36.7915, 10.1710) situées à 620 mètres du campus ESSECT (Seuil max : 3000 m).
+            </text>
+          </g>
+        </g>
+
+        <!-- Decision Reason Selector -->
+        <g transform="translate(0, 145)">
+          <text x="0" y="14" font-family="Inter" font-size="11" font-weight="bold" fill="#8A92A6">MOTIF D'AGRÉMENT :</text>
+          <rect x="0" y="22" width="528" height="38" rx="10" fill="#0D0F12" stroke="#262A33"/>
+          <text x="16" y="46" font-family="Inter" font-size="12" fill="#FFFFFF">
+            Dossier d'hygiène et ancrage local validés par la commission étudiante ESSECT
+          </text>
+        </g>
+
+        <!-- Actions -->
+        <g transform="translate(0, 225)">
+          <rect width="140" height="42" rx="10" fill="#0D0F12" stroke="#262A33"/>
+          <text x="70" y="26" font-family="Inter" font-size="12" fill="#8A92A6" text-anchor="middle">Annuler</text>
+
+          <rect x="155" y="0" width="165" height="42" rx="10" fill="#FF1744"/>
+          <text x="237" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Rejeter le Dossier</text>
+
+          <rect x="335" y="0" width="193" height="42" rx="10" fill="#CCFF00"/>
+          <text x="431" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">Approuver &amp; Notifier ✓</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

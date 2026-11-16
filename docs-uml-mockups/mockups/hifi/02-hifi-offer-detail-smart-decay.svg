@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0D0F12; }
+      .nav-bg { fill: #161920; stroke: #262A33; stroke-width: 1; }
+      .surface { fill: #161920; stroke: #262A33; stroke-width: 1.5; rx: 18px; }
+      .surface-highlight { fill: #161920; stroke: #CCFF00; stroke-width: 1.5; rx: 18px; }
+      .txt-title { font-family: 'Inter', system-ui, sans-serif; font-size: 26px; font-weight: 800; fill: #FFFFFF; }
+      .txt-body { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; fill: #8A92A6; }
+      .txt-lime { font-family: 'Inter', system-ui, sans-serif; font-size: 32px; font-weight: 900; fill: #CCFF00; }
+    </style>
+    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CCFF00" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#CCFF00" stop-opacity="0.0"/>
+    </linearGradient>
+    <linearGradient id="btnGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#CCFF00"/>
+      <stop offset="100%" stop-color="#B8E600"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1440" height="900" class="bg"/>
+
+  <!-- Top Nav -->
+  <rect width="1440" height="72" class="nav-bg"/>
+  <g transform="translate(48, 22)">
+    <text x="0" y="20" font-family="Inter" font-size="14" fill="#8A92A6">← Retour au catalogue</text>
+  </g>
+
+  <!-- Main Content Layout (2 Columns) -->
+  <g transform="translate(48, 105)">
+    <!-- LEFT COLUMN: Offer Details & Visuals -->
+    <g transform="translate(0, 0)">
+      <!-- Hero Image Area -->
+      <rect width="660" height="340" rx="20" fill="#1C212B" stroke="#262A33"/>
+      <text x="330" y="180" font-family="Inter" font-size="72" text-anchor="middle">🥖</text>
+      
+      <rect x="24" y="24" width="160" height="30" rx="8" fill="rgba(255,85,0,0.2)" stroke="#FF5500"/>
+      <text x="104" y="44" font-family="Inter" font-size="12" font-weight="bold" fill="#FF5500" text-anchor="middle">⚡ SMART DECAY ACTIF</text>
+
+      <rect x="520" y="24" width="116" height="30" rx="8" fill="#161920" stroke="#262A33"/>
+      <text x="578" y="44" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00" text-anchor="middle">Portions : 2/5</text>
+
+      <!-- Merchant Info Card -->
+      <g transform="translate(0, 365)">
+        <rect width="660" height="375" class="surface"/>
+        <g transform="translate(32, 32)">
+          <text x="0" y="24" class="txt-title">Baguette Farcie Escalope Panée</text>
+          <text x="0" y="52" class="txt-body" font-size="14">Baguette &amp; Baguette • Avenue Habib Bourguiba, Montfleury, Tunis</text>
+          <text x="0" y="76" font-family="Inter" font-size="13" font-weight="600" fill="#CCFF00">
+            📍 210 mètres de l'ESSECT (estimé à 3 minutes de marche à pied)
+          </text>
+
+          <line x1="0" y1="96" x2="596" y2="96" stroke="#262A33" stroke-width="1"/>
+
+          <!-- Description -->
+          <text x="0" y="125" font-family="Inter" font-size="14" font-weight="bold" fill="#FFFFFF">Description du Chef Commerçant :</text>
+          <text x="0" y="152" class="txt-body" font-size="13">
+            Baguette artisanale chaude préparée l'après-midi, garnie d'escalope panée fraîche, frites maison, fromage
+          </text>
+          <text x="0" y="174" class="txt-body" font-size="13">
+            fondant et harissa douce tunisienne. Prête à être consommée immédiatement ou réchauffée.
+          </text>
+
+          <!-- Specifications Tags -->
+          <g transform="translate(0, 205)">
+            <rect width="110" height="32" rx="8" fill="#0D0F12" stroke="#262A33"/>
+            <text x="55" y="21" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="middle">⚖️ Poids : 400g</text>
+
+            <rect x="120" y="0" width="130" height="32" rx="8" fill="#0D0F12" stroke="#262A33"/>
+            <text x="185" y="21" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="middle">⏳ Retrait : 18h30-20h</text>
+
+            <rect x="260" y="0" width="140" height="32" rx="8" fill="#0D0F12" stroke="#262A33"/>
+            <text x="330" y="21" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="middle">🌱 1,000 kg CO2 évité</text>
+          </g>
+
+          <!-- Ecological Equivalents Box -->
+          <g transform="translate(0, 255)">
+            <rect width="596" height="60" rx="12" fill="rgba(204,255,0,0.06)" stroke="rgba(204,255,0,0.2)"/>
+            <text x="20" y="26" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00">
+              🌍 Votre geste solidaire pour la planète :
+            </text>
+            <text x="20" y="46" font-family="Inter" font-size="12" fill="#8A92A6">
+              Sauver cette baguette évite l'émission de 1 kg de CO2 (soit l'équivalent de 100 recharges de smartphone).
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+
+    <!-- RIGHT COLUMN: Dynamic Smart Decay Auction Engine -->
+    <g transform="translate(700, 0)">
+      <rect width="644" height="740" class="surface-highlight"/>
+      <g transform="translate(36, 36)">
+        <text x="0" y="20" font-family="Inter" font-size="12" font-weight="bold" fill="#FF5500">MÉCANISME D'ENCHÈRE DÉGRESSIVE</text>
+        <text x="0" y="46" class="txt-title" font-size="22">Courbe d'Évolution du Prix en Direct</text>
+        <text x="0" y="70" class="txt-body">Le prix baisse automatiquement toutes les 15 minutes jusqu'au prix plancher.</text>
+
+        <!-- Current Price Hero Block -->
+        <g transform="translate(0, 95)">
+          <rect width="572" height="110" rx="16" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(24, 28)">
+            <text x="0" y="16" font-family="Inter" font-size="12" fill="#8A92A6">PRIX EN DIRECT ACTUEL</text>
+            <text x="0" y="58" class="txt-lime">4,200 DT</text>
+            <text x="170" y="54" font-family="Inter" font-size="16" text-decoration="line-through" fill="#8A92A6">7,500 DT</text>
+            <rect x="250" y="32" width="70" height="28" rx="8" fill="rgba(204,255,0,0.15)"/>
+            <text x="285" y="51" font-family="Inter" font-size="13" font-weight="bold" fill="#CCFF00" text-anchor="middle">-44%</text>
+
+            <!-- Urgent Countdown Timer -->
+            <rect x="375" y="16" width="170" height="48" rx="12" fill="#1E232B" stroke="#FF5500"/>
+            <text x="460" y="36" font-family="Inter" font-size="10" fill="#8A92A6" text-anchor="middle">PROCHAINE BAISSE DANS</text>
+            <text x="460" y="54" font-family="Inter" font-size="15" font-weight="bold" fill="#FF5500" text-anchor="middle">⏱️ 08m : 42s</text>
+          </g>
+        </g>
+
+        <!-- Interactive Chart Visualizer -->
+        <g transform="translate(0, 230)">
+          <rect width="572" height="230" rx="16" fill="#0D0F12" stroke="#262A33"/>
+          
+          <!-- Chart Grid Lines -->
+          <line x1="40" y1="40" x2="530" y2="40" stroke="#1F242D" stroke-dasharray="4,4"/>
+          <line x1="40" y1="90" x2="530" y2="90" stroke="#1F242D" stroke-dasharray="4,4"/>
+          <line x1="40" y1="140" x2="530" y2="140" stroke="#1F242D" stroke-dasharray="4,4"/>
+          <line x1="40" y1="190" x2="530" y2="190" stroke="#262A33"/>
+
+          <!-- Shaded Area -->
+          <polygon points="50,40 170,90 290,140 410,170 510,190 510,190 50,190" fill="url(#chartGrad)"/>
+
+          <!-- Decay Curve Line -->
+          <polyline points="50,40 170,90 290,140 410,170 510,190" fill="none" stroke="#CCFF00" stroke-width="3.5"/>
+
+          <!-- Current Point Pulse -->
+          <circle cx="290" cy="140" r="10" fill="none" stroke="#CCFF00" stroke-width="2" opacity="0.6"/>
+          <circle cx="290" cy="140" r="6" fill="#CCFF00"/>
+
+          <!-- Milestone Tooltips -->
+          <text x="50" y="30" font-family="Inter" font-size="11" fill="#8A92A6">18h30 (7,5 DT)</text>
+          <text x="290" y="125" font-family="Inter" font-size="12" font-weight="bold" fill="#CCFF00" text-anchor="middle">Maintenant : 4,200 DT</text>
+          <text x="510" y="180" font-family="Inter" font-size="11" fill="#8A92A6" text-anchor="end">20h00 (3,0 DT)</text>
+
+          <text x="50" y="212" font-family="Inter" font-size="10" fill="#8A92A6">Début du service</text>
+          <text x="510" y="212" font-family="Inter" font-size="10" fill="#8A92A6" text-anchor="end">Prix plancher garanti</text>
+        </g>
+
+        <!-- Reserve CTA & 10 Min Hold Mechanism -->
+        <g transform="translate(0, 485)">
+          <rect width="572" height="56" rx="14" fill="url(#btnGrad)"/>
+          <text x="286" y="35" font-family="Inter" font-size="16" font-weight="900" fill="#000000" text-anchor="middle">
+            🔒 Bloquer le Prix &amp; Réserver (10 min) →
+          </text>
+
+          <rect x="0" y="70" width="572" height="85" rx="14" fill="#0D0F12" stroke="#262A33"/>
+          <g transform="translate(20, 18)">
+            <text x="0" y="16" font-family="Inter" font-size="12" font-weight="bold" fill="#FFFFFF">Garantie de Verrouillage Atomique :</text>
+            <text x="0" y="36" class="txt-body" font-size="11">
+              En cliquant, le prix de 4,200 DT est figé pour votre compte pendant exactement 10 minutes dans Firestore.
+            </text>
+            <text x="0" y="52" class="txt-body" font-size="11">
+              Le stock est décrémenté pour vous laisser le temps de régler en toute sérénité sans être doublé.
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
