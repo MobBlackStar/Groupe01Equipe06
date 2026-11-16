@@ -11,6 +11,8 @@ class Endpoints {
   static const String merchants = '/merchants';
   static const String merchantsMe = '/merchants/me';
   static String merchantById(String id) => '/merchants/$id';
+  static const String merchantOffers = '/merchants/me/offers';
+  static const String merchantOrders = '/merchants/me/orders';
 
   static const String offers = '/offers';
   static String offerById(String id) => '/offers/$id';
@@ -30,6 +32,7 @@ class Endpoints {
 
   static const String loyaltyMe = '/loyalty/me';
   static const String impactGlobal = '/impact/global';
+  static const String impactFilieres = '/impact/filieres';
   static const String dashboardsStudent = '/dashboards/student';
   static const String dashboardsMerchant = '/dashboards/merchant';
 }

@@ -5,33 +5,89 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../services/auth_service.dart';
+import '../features/auth/login_screen.dart';
 
 class AppRouter {
+  static final AuthService authService = AuthService();
+
   static final GoRouter router = GoRouter(
     initialLocation: '/login',
+    refreshListenable: authService,
+    redirect: (BuildContext context, GoRouterState state) {
+      final isAuth = authService.isAuthenticated;
+      final isLoggingIn = state.matchedLocation == '/login';
+
+      // Redirection vers login si non connecté
+      if (!isAuth) {
+        return isLoggingIn ? null : '/login';
+      }
+
+      final role = authService.role;
+
+      // Si l'utilisateur est connecté et arrive sur login, redirection selon son rôle
+      if (isLoggingIn) {
+        if (role == 'MERCHANT') return '/merchant';
+        return '/student';
+      }
+
+      // Cloisonnement strict des espaces par rôle
+      if (state.matchedLocation.startsWith('/merchant') && role != 'MERCHANT') {
+        return '/student';
+      }
+      if (state.matchedLocation.startsWith('/student') && role == 'MERCHANT') {
+        return '/merchant';
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const Scaffold(
-          body: Center(
+        builder: (context, state) => LoginScreen(authService: authService),
+      ),
+      GoRoute(
+        path: '/student',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Espace Étudiant CampusSave'),
+            backgroundColor: const Color(0xFF16191E),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout, color: Color(0xFFCCFF00)),
+                onPressed: () => authService.signOut(),
+              ),
+            ],
+          ),
+          body: const Center(
             child: Text(
-              "Écran de Connexion Mobile (CampusSave)\nEn cours d'intégration",
+              'Bienvenue dans l Espace Étudiant\nCatalogue & Radar en cours',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFFCCFF00)),
+              style: TextStyle(color: Colors.white70),
             ),
           ),
         ),
       ),
       GoRoute(
-        path: '/student',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Espace Étudiant Mobile')),
-        ),
-      ),
-      GoRoute(
         path: '/merchant',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Espace Commerçant Mobile')),
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Espace Commerçant CampusSave'),
+            backgroundColor: const Color(0xFF16191E),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout, color: Color(0xFFCCFF00)),
+                onPressed: () => authService.signOut(),
+              ),
+            ],
+          ),
+          body: const Center(
+            child: Text(
+              'Bienvenue dans l Espace Commerçant\nOffres & Scanner en cours',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
         ),
       ),
     ],

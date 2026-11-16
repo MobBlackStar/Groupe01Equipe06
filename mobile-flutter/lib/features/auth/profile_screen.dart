@@ -160,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.between,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
                             '🌿 Palier Pousse',
@@ -245,7 +245,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           value: f['value'],
                           child: Text(f['label']!),
                         );
-                      }).toList>,
+                      }).toList(),
                       onChanged: (val) {
                         if (val != null) setState(() => _selectedFiliere = val);
                       },

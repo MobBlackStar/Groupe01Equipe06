@@ -4,4 +4,20 @@
 // Module : Logique Métier Backend
 
 import { z } from 'zod';
-export const usersSchemas = {};
+import { FILIERES } from '../../../../shared/constants.js';
+
+export const updateProfileSchema = z.object({
+  displayName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères').max(60).optional(),
+  phone: z.string().regex(/^\+216[2-9]\d{7}$/, 'Numéro tunisien invalide (+216XXXXXXXX)').optional().nullable(),
+  avatarUrl: z.string().url('URL d avatar invalide').optional().nullable(),
+  filiereId: z.nativeEnum(FILIERES).optional().nullable(),
+  notificationPrefs: z.object({
+    email: z.boolean().optional(),
+    push: z.boolean().optional(),
+    dailyDigest: z.boolean().optional(),
+  }).optional(),
+});
+
+export const fcmTokenSchema = z.object({
+  token: z.string().min(10, 'Le jeton FCM doit contenir au moins 10 caractères'),
+});

@@ -12,7 +12,7 @@
 | Jour | Thématique Principale | Statut | Responsable A | Livrables Clés |
 | :--- | :--- | :---: | :---: | :--- |
 | **Jour 1** | **Fondations, Squelette & Scaffolding** | 🟢 **100% Terminé** | Fedi | Arborescence complète, bootstrap Node.js, `GET /health`, module `shared/`, squelettes React & Flutter |
-| **Jour 2** | **Authentification, Profils & Sécurité** | ⏳ *En cours* | Fedi | Middlewares auth/rôles, `POST /auth/register-profile`, règles Firestore, `createAdmin.js` |
+| **Jour 2** | **Authentification, Profils & Sécurité** | 🟢 **100% Terminé** | Fedi | Middlewares auth/rôles, `POST /auth/register-profile`, `GET/PATCH /users/me`, règles Firestore, `createAdmin.js`, endpoints clients, mocks 6 commerces, `LoginPage.jsx` & `login_screen.dart` (boutons 1-clic démo) |
 | **Jour 3** | **Gestion des Commerces & Publication d'Offres** | ⏳ *À venir* | Fedi | API commerces, upload Cloudinary, moteur de rareté et prix dégressifs |
 | **Jour 4** | **Catalogue, Recherche & Moteur de Réservation** | ⏳ *À venir* | Fedi | Algorithme de recherche, réservation avec verrouillage 10 min |
 | **Jour 5** | **Paiement Konnect & Ticket Dynamique HMAC** | ⏳ *À venir* | Fedi | Intégration Konnect webhook, génération et vérification QR HMAC-SHA256 |
@@ -25,5 +25,17 @@
 ---
 
 ## 🤝 2. Handoffs Reçus de Ritej (Frontend)
-- `backend-node/scripts/seed-data/merchants.json` : 6 commerces réels et 24 articles types prêts pour le script d'injection `seed.js`.
-- `docs-uml-mockups/mockups/lowfi/` : Wireframes basse fidélité des 3 espaces utilisateurs.
+- `backend-node/scripts/seed-data/merchants.json` : 6 commerces réels de Montfleury et leurs articles types intégrés dans les mocks Web.
+- `docs-uml-mockups/mockups/lowfi/` : Wireframes basse fidélité validés pour les flux Étudiant, Commerçant et Admin.
+
+---
+
+## 🚀 3. Handoffs Transmis à Ritej (Frontend)
+- **Endpoints Backend Validés (`/api/v1`) :**
+  * `POST /auth/register-profile` : prêt pour l'intégration de `RegisterPage.jsx` et `register_screen.dart`.
+  * `GET /users/me` et `PATCH /users/me` : prêts pour l'intégration de `ProfilePage.jsx` et `profile_screen.dart`.
+  * `POST/DELETE /users/me/fcm-token` : gestion des notifications push.
+- **Mocks Web & Kit Démo 1-Clic :**
+  * `web-react/src/mocks/` : exporte les 6 commerces réels et les comptes démo pour un basculement instantané en soutenance.
+- **Écrans de Connexion & Redirections :**
+  * `LoginPage.jsx` (Web) et `login_screen.dart` (Flutter) sont 100% opérationnels avec validation inline et boutons démo (Étudiant, Commerçant, Admin).

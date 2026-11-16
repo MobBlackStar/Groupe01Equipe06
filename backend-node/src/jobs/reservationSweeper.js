@@ -5,7 +5,7 @@
 
 import { db } from '../config/firebase.js';
 import { logger } from '../utils/logger.js';
-import { ORDER_STATUS, REWARD_STATUS } from '../../shared/constants.js';
+import { ORDER_STATUS, REWARD_STATUS } from '../../../shared/constants.js';
 
 export async function runReservationSweeper() {
   try {

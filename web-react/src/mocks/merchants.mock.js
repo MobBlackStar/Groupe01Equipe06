@@ -1,0 +1,126 @@
+// 💡 Concept & Analogie : Données bouchonnées (mocks) représentatives du quartier réel de Montfleury entourant l'ESSECT pour le développement et la démonstration hors-ligne.
+// 🔄 Comparaison React / Flutter : Permet à React de tester le catalogue et le radar 3D avant même que la base Firestore ne soit connectée.
+// 🎯 À retenir pour la soutenance : "Ces 6 commerces réels situés à moins de 1.5 km de l'ESSECT démontrent l'ancrage territorial immédiat de CampusSave."
+
+export const mockMerchants = [
+  {
+    id: 'merchant-baguette-baguette',
+    name: 'Baguette & Baguette Montfleury',
+    type: 'FAST_FOOD',
+    description: 'Sandwicherie rapide et baguettes farcies croustillantes très appréciées des étudiants de l\'ESSECT.',
+    phone: '+21671390111',
+    address: {
+      street: 'Avenue Habib Bourguiba, Montfleury',
+      area: 'Montfleury',
+      city: 'Tunis',
+    },
+    location: {
+      lat: 36.7885,
+      lng: 10.1762,
+      geohash: 'snx0z8e12',
+    },
+    distanceFromEssectM: 210,
+    walkingMinutes: 3,
+    status: 'APPROVED',
+  },
+  {
+    id: 'merchant-etoile-savoir',
+    name: "Cafétéria L'Étoile du Savoir",
+    type: 'CAFETERIA',
+    description: "Point de rencontre incontournable des étudiants de l'ESSECT, viennoiseries fraîches, cafés et snacks.",
+    phone: '+21671390222',
+    address: {
+      street: 'Rue Ali Belhouane, face entrée ESSECT',
+      area: 'Montfleury',
+      city: 'Tunis',
+    },
+    location: {
+      lat: 36.7891,
+      lng: 10.1748,
+      geohash: 'snx0z8s45',
+    },
+    distanceFromEssectM: 120,
+    walkingMinutes: 2,
+    status: 'APPROVED',
+  },
+  {
+    id: 'merchant-patisserie-masmoudi',
+    name: 'Pâtisserie Masmoudi Montfleury',
+    type: 'PATISSERIE',
+    description: 'Pâtisserie fine traditionnelle tunisienne et gâteaux individuels du jour à sauver du gaspillage.',
+    phone: '+21671390333',
+    address: {
+      street: 'Rue Abou el Kacem Chebbi, Montfleury',
+      area: 'Montfleury',
+      city: 'Tunis',
+    },
+    location: {
+      lat: 36.7876,
+      lng: 10.1775,
+      geohash: 'snx0z8k78',
+    },
+    distanceFromEssectM: 340,
+    walkingMinutes: 5,
+    status: 'APPROVED',
+  },
+  {
+    id: 'merchant-le-dome',
+    name: 'Restaurant Le Dôme Montfleury',
+    type: 'RESTAURANT',
+    description: 'Restaurant familial servant des plats cuisinés tunisiens généreux : couscous, ojja, riz djerbien.',
+    phone: '+21671390444',
+    address: {
+      street: 'Boulevard 9 Avril, Montfleury',
+      area: 'Montfleury',
+      city: 'Tunis',
+    },
+    location: {
+      lat: 36.7865,
+      lng: 10.1735,
+      geohash: 'snx0z8m90',
+    },
+    distanceFromEssectM: 410,
+    walkingMinutes: 6,
+    status: 'APPROVED',
+  },
+  {
+    id: 'merchant-bella-napoli',
+    name: 'Pizzeria Bella Napoli',
+    type: 'RESTAURANT',
+    description: 'Pizzas artisanales cuites au feu de bois et pâtes fraîches italiennes.',
+    phone: '+21671390555',
+    address: {
+      street: 'Avenue de Madrid, Montfleury',
+      area: 'Montfleury',
+      city: 'Tunis',
+    },
+    location: {
+      lat: 36.7852,
+      lng: 10.1788,
+      geohash: 'snx0z8p23',
+    },
+    distanceFromEssectM: 620,
+    walkingMinutes: 8,
+    status: 'APPROVED',
+  },
+  {
+    id: 'merchant-fastfood-le-phare',
+    name: 'Fast Food Le Phare',
+    type: 'FAST_FOOD',
+    description: 'Spécialiste du kafteji tunisien traditionnel, chapatis chauds et escalopes grillées minute.',
+    phone: '+21671390666',
+    address: {
+      street: 'Rue Sidi El Béchir, proximité Montfleury',
+      area: 'Montfleury',
+      city: 'Tunis',
+    },
+    location: {
+      lat: 36.7905,
+      lng: 10.1782,
+      geohash: 'snx0z8r56',
+    },
+    distanceFromEssectM: 530,
+    walkingMinutes: 7,
+    status: 'APPROVED',
+  },
+];

@@ -5,7 +5,7 @@
 
 import { db } from '../config/firebase.js';
 import { logger } from '../utils/logger.js';
-import { OFFER_STATUS } from '../../shared/constants.js';
+import { OFFER_STATUS } from '../../../shared/constants.js';
 
 export async function runOfferExpirySweeper() {
   try {

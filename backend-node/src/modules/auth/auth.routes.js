@@ -4,4 +4,17 @@
 // Module : Architecture Backend
 
 import { Router } from 'express';
+import { authController } from './auth.controller.js';
+import { authenticate } from '../../middleware/authenticate.js';
+import { validate } from '../../middleware/validate.js';
+import { registerProfileSchema } from './auth.schemas.js';
+
 export const authRouter = Router();
+
+// Inscription initiale et attribution de rôle
+authRouter.post(
+  '/register-profile',
+  authenticate,
+  validate({ body: registerProfileSchema }),
+  authController.registerProfile
+);

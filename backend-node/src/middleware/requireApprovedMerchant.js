@@ -5,7 +5,7 @@
 
 import { db } from '../config/firebase.js';
 import { AppError } from '../utils/AppError.js';
-import { MERCHANT_STATUS } from '../../shared/constants.js';
+import { MERCHANT_STATUS } from '../../../shared/constants.js';
 
 export async function requireApprovedMerchant(req, _res, next) {
   try {
