@@ -102,7 +102,15 @@ export function AuthProvider({ children }) {
       return { user: fallbackProfile };
     }
 
-    return await signInWithEmailAndPassword(auth, email, password);
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      const foundDemoKey = Object.keys(demoAccounts).find((k) => demoAccounts[k].email === email);
+      if (foundDemoKey) {
+        return loginDemo(foundDemoKey);
+      }
+      throw err;
+    }
   };
 
   /**

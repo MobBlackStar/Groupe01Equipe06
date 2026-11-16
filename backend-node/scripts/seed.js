@@ -5,7 +5,11 @@
 
 import { db, auth } from '../src/config/firebase.js';
 import { ROLES, OFFER_CATEGORIES, PRICING_MODES, RARITY_TIERS, MERCHANT_STATUS, FILIERES } from '../../shared/constants.js';
-import merchantsData from './seed-data/merchants.json' assert { type: 'json' };
+import { readFileSync } from 'node:fs';
+
+const merchantsData = JSON.parse(
+  readFileSync(new URL('./seed-data/merchants.json', import.meta.url), 'utf8')
+);
 
 export async function runSeed() {
   console.log('🌱 [SEED] Démarrage du peuplement officiel CampusSave pour la soutenance...');
