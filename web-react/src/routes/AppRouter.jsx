@@ -17,6 +17,8 @@ import MerchantOffersPage from '../features/merchant/MerchantOffersPage.jsx';
 import OfferFormPage from '../features/merchant/OfferFormPage.jsx';
 import AdminMerchantsPage from '../features/admin/AdminMerchantsPage.jsx';
 import AdminUsersPage from '../features/admin/AdminUsersPage.jsx';
+import BrowsePage from '../features/explore/BrowsePage.jsx';
+import OfferDetailPage from '../features/explore/OfferDetailPage.jsx';
 
 export function AppRouter() {
   return (
@@ -40,12 +42,28 @@ export function AppRouter() {
       <Route element={<ProtectedRoute />}>
         {/* Espace Étudiant (/app/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.STUDENT]} />}>
+          <Route path="/app" element={<BrowsePage />} />
+          <Route path="/app/explore" element={<BrowsePage />} />
+          <Route path="/app/offers/:id" element={<OfferDetailPage />} />
           <Route
-            path="/app/*"
+            path="/app/checkout/:orderId"
             element={
-              <div className="p-6">
-                <h2 className="text-xl font-bold text-campus-lime">Espace Étudiant</h2>
-                <p className="text-sm text-slate-400">Catalogue des offres, réservation et radar 3D.</p>
+              <div className="min-h-screen bg-[#0D0F12] flex items-center justify-center p-6">
+                <div className="p-8 max-w-md w-full bg-[#161920] border border-[#CCFF00]/30 rounded-3xl text-center space-y-4 text-white shadow-2xl">
+                  <span className="text-5xl block animate-bounce">🔒</span>
+                  <h2 className="text-xl font-black text-[#CCFF00]">Réservation Bloquée (10 min)</h2>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Votre commande a été verrouillée au prix de la seconde exacte. Vous disposez de 10 minutes pour régler via Konnect.
+                  </p>
+                  <div className="pt-4 flex flex-col gap-2">
+                    <a
+                      href="/app/explore"
+                      className="w-full py-3 rounded-2xl bg-[#CCFF00] text-black font-bold text-xs hover:bg-[#b8e600] transition-colors"
+                    >
+                      Retour au catalogue
+                    </a>
+                  </div>
+                </div>
               </div>
             }
           />

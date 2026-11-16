@@ -1,0 +1,58 @@
+// 💡 Concept & Analogie : Comme le feu tricolore d'un carrefour ou l'alarme d'un compte à rebours, cette puce alerte l'étudiant sur l'imminence de la clôture du retrait selon trois paliers psychologiques de couleur.
+// 🔄 Comparaison React / Flutter : En React, Tailwind conditionne les classes d'animation `animate-pulse` selon le temps restant ; en Flutter, `CountdownChip` modifie l'animation du conteneur avec un `AnimatedContainer`.
+// 🎯 À retenir pour la soutenance : "Trois seuils stricts : >60 min (vert lime serein), 20-60 min (orange attention), <20 min (rouge clignotant urgence absolue) pour stimuler l'achat anti-gaspillage rapide."
+
+import React, { useState, useEffect } from 'react';
+import { computeUrgencyColor, computeMinutesLeft } from '@shared/pricing.js';
+
+export default function CountdownChip({ pickupEndAt, className = '' }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!pickupEndAt) return null;
+
+  const minutesLeft = computeMinutesLeft(pickupEndAt, now);
+  const colorHex = computeUrgencyColor(pickupEndAt, now);
+  const isCritical = minutesLeft < 20 && minutesLeft > 0;
+  const isExpired = minutesLeft <= 0;
+
+  // Formatage texte
+  let timeText = '';
+  if (isExpired) {
+    timeText = 'Clôturé';
+  } else if (minutesLeft >= 60) {
+    const h = Math.floor(minutesLeft / 60);
+    const m = minutesLeft % 60;
+    timeText = `${h}h${m > 0 ? String(m).padStart(2, '0') : ''} restant`;
+  } else {
+    timeText = `${minutesLeft} min restantes`;
+  }
+
+  // Styles selon urgence
+  let badgeStyle = {
+    color: colorHex,
+    borderColor: `${colorHex}55`,
+    backgroundColor: `${colorHex}15`,
+  };
+
+  return (
+    <div
+      style={badgeStyle}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${
+        isCritical ? 'animate-pulse' : ''
+      } ${className}`}
+    >
+      <span
+        style={{ backgroundColor: colorHex }}
+        className={`w-2 h-2 rounded-full ${isCritical ? 'animate-ping' : ''}`}
+      />
+      <span>{timeText}</span>
+    </div>
+  );
+}

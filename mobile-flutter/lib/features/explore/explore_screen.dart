@@ -1,0 +1,309 @@
+// 💡 Concept & Analogie : Comme le hall d'accueil de la cafétéria de l'ESSECT affichant les offres de sauvetage disponibles à la sortie des amphis.
+// 🔄 Comparaison React / Flutter : En Flutter, cet écran utilise un `RefreshIndicator` et une `ListView` ou `GridView` avec slivers ; en React, il correspond à `BrowsePage.jsx`.
+// 🎯 À retenir pour la soutenance : "L'écran d'exploration mobile offre une fluidité native avec actualisation au tirage (pull-to-refresh) et synchronisation des prix à la seconde."
+
+import 'package:flutter/material.dart';
+import '../../app/theme.dart';
+import '../../core/models/offer_model.dart';
+import '../../widgets/offer_card.dart';
+import 'filter_bottom_sheet.dart';
+import 'offer_detail_screen.dart';
+
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
+
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends State<ExploreScreen> {
+  final _searchController = TextEditingController();
+
+  String _selectedCategory = 'ALL';
+  int _maxPriceMillimes = 15000;
+  bool _surpriseOnly = false;
+  String _sortBy = 'distance';
+
+  // Offres de démonstration Montfleury
+  final List<OfferModel> _allOffers = [
+    OfferModel(
+      id: 'off-1',
+      merchantId: 'm1',
+      merchantName: 'Baguette & Baguette Montfleury',
+      title: 'Baguette Farcie Escalope Panée & Fromage',
+      description: 'Baguette chaude garnie d escalope panée croustillante, frites et fromage fondant.',
+      category: 'SANDWICH',
+      pricingType: 'DUTCH',
+      originalPriceMillimes: 7800,
+      targetPriceMillimes: 3800,
+      quantity: 4,
+      remainingQuantity: 4,
+      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 20)),
+      pickupEndAt: DateTime.now().add(const Duration(minutes: 40)),
+      photoUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
+    ),
+    OfferModel(
+      id: 'off-2',
+      merchantId: 'm2',
+      merchantName: "Cafétéria L'Étoile du Savoir",
+      title: 'Panier Surprise Viennoiseries du Matin',
+      description: '4 croissants au beurre et pains au chocolat cuits ce matin sur place.',
+      category: 'MIXTE',
+      pricingType: 'FIXED',
+      originalPriceMillimes: 6000,
+      targetPriceMillimes: 2500,
+      quantity: 5,
+      remainingQuantity: 5,
+      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 60)),
+      pickupEndAt: DateTime.now().add(const Duration(minutes: 90)),
+      isSurpriseBasket: true,
+      photoUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
+    ),
+    OfferModel(
+      id: 'off-3',
+      merchantId: 'm3',
+      merchantName: 'Restaurant Le Dôme Montfleury',
+      title: 'Ojja Royale aux Merguez & Œuf',
+      description: 'Plat tunisien mijoté à base de tomates fraîches, merguez et œuf coulant.',
+      category: 'PLAT_CHAUD',
+      pricingType: 'DUTCH',
+      originalPriceMillimes: 8500,
+      targetPriceMillimes: 4500,
+      quantity: 3,
+      remainingQuantity: 3,
+      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 15)),
+      pickupEndAt: DateTime.now().add(const Duration(minutes: 25)),
+      photoUrl: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=600&q=80',
+    ),
+    OfferModel(
+      id: 'off-4',
+      merchantId: 'm4',
+      merchantName: 'Pâtisserie Masmoudi',
+      title: 'Assortiment Pâtisserie Traditionnelle',
+      description: 'Sélection artisanale de douceurs tunisiennes (makroudh, baklawa).',
+      category: 'PATISSERIE',
+      pricingType: 'FIXED',
+      originalPriceMillimes: 12000,
+      targetPriceMillimes: 5500,
+      quantity: 2,
+      remainingQuantity: 2,
+      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 30)),
+      pickupEndAt: DateTime.now().add(const Duration(minutes: 120)),
+      isSurpriseBasket: true,
+      photoUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
+    ),
+    OfferModel(
+      id: 'off-5',
+      merchantId: 'm5',
+      merchantName: 'Pizzeria Bella Napoli Montfleury',
+      title: 'Pizza Calzone Soufflée au Thon',
+      description: 'Calzone garnie de thon, mozzarella et olives noires.',
+      category: 'PIZZA',
+      pricingType: 'DUTCH',
+      originalPriceMillimes: 9000,
+      targetPriceMillimes: 4500,
+      quantity: 4,
+      remainingQuantity: 4,
+      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 10)),
+      pickupEndAt: DateTime.now().add(const Duration(minutes: 15)),
+      photoUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
+    ),
+  ];
+
+  void _openFilters() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FilterBottomSheet(
+        selectedCategory: _selectedCategory,
+        maxPriceMillimes: _maxPriceMillimes,
+        surpriseOnly: _surpriseOnly,
+        sortBy: _sortBy,
+        onApply: ({required category, required maxPriceMillimes, required surpriseOnly, required sortBy}) {
+          setState(() {
+            _selectedCategory = category;
+            _maxPriceMillimes = maxPriceMillimes;
+            _surpriseOnly = surpriseOnly;
+            _sortBy = sortBy;
+          });
+        },
+      ),
+    );
+  }
+
+  List<OfferModel> get _filteredOffers {
+    final q = _searchController.text.trim().toLowerCase();
+    return _allOffers.where((offer) {
+      if (q.isNotEmpty) {
+        final matchTitle = offer.title.toLowerCase().contains(q);
+        final matchMerchant = (offer.merchantName ?? '').toLowerCase().contains(q);
+        if (!matchTitle && !matchMerchant) return false;
+      }
+      if (_selectedCategory != 'ALL' && offer.category != _selectedCategory) {
+        return false;
+      }
+      if (_surpriseOnly && !offer.isSurpriseBasket) {
+        return false;
+      }
+      if (offer.targetPriceMillimes > _maxPriceMillimes) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final offers = _filteredOffers;
+
+    return Scaffold(
+      backgroundColor: AppTheme.darkBackground,
+      appBar: AppBar(
+        title: const Text('CampusSave • ESSECT', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune, color: AppTheme.limeAccent),
+            onPressed: _openFilters,
+            tooltip: 'Filtres de recherche',
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 1. Barre de recherche avec icône filtres
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) => setState(() {}),
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher un plat, sandwich, commerce...',
+                        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 20),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, color: Colors.white38, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: AppTheme.surfaceCard,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.white10),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.white10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.limeAccent),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // 2. Bannière Campus
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.limeAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.limeAccent.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Text('📍', style: TextStyle(fontSize: 14)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Autour de l ESSECT Montfleury • ${offers.length} offre(s) en ligne',
+                        style: const TextStyle(color: AppTheme.limeAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 3. Grille des offres
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await Future.delayed(const Duration(milliseconds: 500));
+                  setState(() {});
+                },
+                color: AppTheme.limeAccent,
+                backgroundColor: AppTheme.surfaceCard,
+                child: offers.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text('🔍', style: TextStyle(fontSize: 48)),
+                            SizedBox(height: 12),
+                            Text(
+                              'Aucune offre ne correspond à votre recherche',
+                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: offers.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          final offer = offers[index];
+                          final distances = [180, 120, 350, 420, 520];
+                          final dist = distances[index % distances.length];
+
+                          return OfferCard(
+                            offer: offer,
+                            distanceFromEssectM: dist,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => OfferDetailScreen(
+                                    offer: offer,
+                                    distanceFromEssectM: dist,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
