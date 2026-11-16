@@ -1,53 +1,112 @@
-// 💡 Concept & Analogie : Test unitaire cryptographique pour la dérivation HMAC et la validation de rotation temporelle du ticket de retrait.
-// 🔄 Comparaison React / Flutter : Vérifie la tolérance de dérive d'horloge de ± 30 secondes.
-// 🎯 À retenir pour la soutenance : "Nos tests cryptographiques valident le rejet immédiat des signatures altérées ou des fenêtres temporelles périmées."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Comme le laboratoire d'authentification des billets de banque qui teste la résistance aux contrefaçons et la conformité des filigranes, ces tests valident la sécurité cryptographique du Living Ticket.
+// 🔄 Comparaison React / Flutter : Valide que la dérivation HMAC-SHA256 sous Node.js correspond au millimètre près aux sorties Dart et WebCrypto sur les 5 vecteurs de référence.
+// 🎯 À retenir pour la soutenance : "Nos tests cryptographiques démontrent la parité stricte inter-plateformes, la tolérance d'une fenêtre de ± 30 secondes pour compenser la dérive d'horloge, et le rejet infaillible des altérations ou des codes expirés."
+// Module : Tests Cryptographiques Backend
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   deriveTicketKey,
-  getWindowIndex,
-  generateTicketData,
+  computeWindowCode,
   verifyQrPayload,
+  verifyManualCode,
 } from '../src/modules/tickets/ticket.crypto.js';
 
-describe('Cryptographie du Ticket Dynamique (ticket.crypto)', () => {
-  const orderId = 'ord_test_99';
-  const studentId = 'usr_student_01';
-  const merchantId = 'mch_bakery_01';
-  const nonce = 'k3f9L2xQ8mP0vR5t';
-  const ticketKey = deriveTicketKey({ orderId, studentId, merchantId, nonce });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  test('Génération de payload QR valide et vérification sur la même fenêtre', () => {
-    const now = Date.now();
-    const window = getWindowIndex(now);
-    const { qrPayload } = generateTicketData(ticketKey, orderId, window);
+describe('Cryptographie du Living Ticket — Vecteurs Officiels & Sécurité', () => {
+  const vectorsPath = path.resolve(__dirname, '../../shared/test-vectors/ticket.json');
+  const vectorsData = JSON.parse(fs.readFileSync(vectorsPath, 'utf8'));
 
-    const verification = verifyQrPayload(qrPayload, ticketKey, now);
-    assert.equal(verification.valid, true);
-    assert.equal(verification.orderId, orderId);
+  test('Vérification stricte des 5 vecteurs de test officiels cross-runtime', () => {
+    for (const tc of vectorsData.testCases) {
+      const generated = computeWindowCode(tc.ticketKeyHex, tc.orderId, tc.windowIndex);
+
+      assert.equal(
+        generated.qrPayload,
+        tc.expectedQrPayload,
+        `Échec qrPayload pour ${tc.id}`
+      );
+      assert.equal(
+        generated.code6,
+        tc.expectedCode6,
+        `Échec code6 pour ${tc.id}`
+      );
+      assert.equal(
+        generated.tagBase64Url,
+        tc.expectedTag,
+        `Échec tagBase64Url pour ${tc.id}`
+      );
+    }
   });
 
-  test('Acceptation dans la fenêtre tolérée ± 1 (30 secondes de battement)', () => {
-    const now = Date.now();
-    const window = getWindowIndex(now);
-    const { qrPayload } = generateTicketData(ticketKey, orderId, window);
+  test('Fenêtre courante et tolérance d horloge ± 1 fenêtre (30 secondes)', () => {
+    const tc = vectorsData.testCases[0];
+    const ticketKey = tc.ticketKeyHex;
+    const window = tc.windowIndex;
+    const nowMs = window * 30000 + 15000;
 
-    // Vérification 25 secondes plus tard (même fenêtre ou fenêtre + 1)
-    const verification = verifyQrPayload(qrPayload, ticketKey, now + 25000);
-    assert.equal(verification.valid, true);
+    const { qrPayload } = computeWindowCode(ticketKey, tc.orderId, window);
+
+    // Même fenêtre
+    const v1 = verifyQrPayload(qrPayload, ticketKey, nowMs);
+    assert.equal(v1.valid, true);
+
+    // Fenêtre suivante (+20 secondes, transition possible)
+    const v2 = verifyQrPayload(qrPayload, ticketKey, nowMs + 20000);
+    assert.equal(v2.valid, true);
+
+    // Fenêtre précédente (-20 secondes)
+    const v3 = verifyQrPayload(qrPayload, ticketKey, nowMs - 20000);
+    assert.equal(v3.valid, true);
+
+    // Dérive excessive (+65 secondes = 2 fenêtres plus tard) -> rejet TICKET_EXPIRED
+    const v4 = verifyQrPayload(qrPayload, ticketKey, nowMs + 65000);
+    assert.equal(v4.valid, false);
+    assert.equal(v4.reason, 'TICKET_EXPIRED');
   });
 
-  test('Rejet strict d une signature altérée', () => {
-    const now = Date.now();
-    const window = getWindowIndex(now);
-    const { qrPayload } = generateTicketData(ticketKey, orderId, window);
+  test('Rejet strict d un QR code altéré ou falsifié', () => {
+    const tc = vectorsData.testCases[1];
+    const ticketKey = tc.ticketKeyHex;
+    const { qrPayload } = computeWindowCode(ticketKey, tc.orderId, tc.windowIndex);
 
     // Altération du tag de signature
-    const tampered = qrPayload.slice(0, -3) + 'XYZ';
-    const verification = verifyQrPayload(tampered, ticketKey, now);
-    assert.equal(verification.valid, false);
-    assert.equal(verification.reason, 'INVALID_SIGNATURE');
+    const tampered = qrPayload.slice(0, -4) + 'AAAA';
+    const result = verifyQrPayload(tampered, ticketKey, tc.windowIndex * 30000);
+    assert.equal(result.valid, false);
+    assert.equal(result.reason, 'INVALID_SIGNATURE');
+  });
+
+  test('Rejet strict si le ticket appartient à une autre commande', () => {
+    const tc1 = vectorsData.testCases[0];
+    const tc2 = vectorsData.testCases[1];
+
+    const generated = computeWindowCode(tc1.ticketKeyHex, tc1.orderId, tc1.windowIndex);
+
+    // Vérification avec la clé d'une autre commande
+    const check = verifyQrPayload(generated.qrPayload, tc2.ticketKeyHex, tc1.windowIndex * 30000);
+    assert.equal(check.valid, false);
+  });
+
+  test('Validation du code manuel à 6 chiffres avec tolérance de synchronisation', () => {
+    const tc = vectorsData.testCases[2];
+    const ticketKey = tc.ticketKeyHex;
+    const window = tc.windowIndex;
+    const nowMs = window * 30000 + 10000;
+
+    const generated = computeWindowCode(ticketKey, tc.orderId, window);
+
+    // Code correct dans la fenêtre
+    const ok = verifyManualCode(generated.code6, ticketKey, tc.orderId, nowMs);
+    assert.equal(ok.valid, true);
+
+    // Mauvais code
+    const bad = verifyManualCode('999999', ticketKey, tc.orderId, nowMs);
+    assert.equal(bad.valid, false);
   });
 });

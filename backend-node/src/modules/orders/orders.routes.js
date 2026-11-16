@@ -44,3 +44,11 @@ ordersRouter.get(
   authenticate,
   ordersController.getOrderById
 );
+
+// Obtention des paramètres cryptographiques du Living Ticket (Étudiant propriétaire, rôle STUDENT)
+ordersRouter.get(
+  '/:id/ticket',
+  authenticate,
+  requireRole(ROLES.STUDENT),
+  ordersController.getOrderTicket
+);

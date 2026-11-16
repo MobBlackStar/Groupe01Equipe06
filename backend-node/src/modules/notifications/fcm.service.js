@@ -63,6 +63,28 @@ export class FcmService {
       data: { type: 'TICKET_READY', orderCode },
     });
   }
+
+  /**
+   * Notification étudiant : commande retirée avec succès et attribution des EcoPoints.
+   */
+  async notifyOrderCompleted(tokens, orderCode, pointsAwarded) {
+    await this.sendToTokens(tokens, {
+      title: 'Commande retirée avec succès ! 🎉',
+      body: `Votre commande ${orderCode} est validée. Vous avez gagné +${pointsAwarded} EcoPoints !`,
+      data: { type: 'ORDER_COMPLETED', orderCode, pointsAwarded: String(pointsAwarded) },
+    });
+  }
+
+  /**
+   * Notification étudiant : déblocage d'un palier de fidélité ou d'une récompense.
+   */
+  async notifyRewardUnlocked(tokens, rewardDescription) {
+    await this.sendToTokens(tokens, {
+      title: 'Nouveau cadeau débloqué ! 🎁',
+      body: `Félicitations ! Vous venez de débloquer : ${rewardDescription}.`,
+      data: { type: 'REWARD_UNLOCKED' },
+    });
+  }
 }
 
 export const fcmService = new FcmService();

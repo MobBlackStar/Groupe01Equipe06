@@ -1,15 +1,55 @@
 {
-  "description": "Vecteurs de test de validation cryptographique inter-plateformes (Node.js WebCrypto vs Dart crypto)",
+  "description": "Vecteurs officiels de test cryptographique pour le Living Ticket (HMAC-SHA256 rotatif 30s)",
   "testCases": [
     {
-      "id": "ticket_window_standard",
-      "secret": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-      "orderId": "ord_essect_test_01",
-      "studentId": "usr_student_01",
-      "merchantId": "mch_bakery_01",
-      "nonce": "k3f9L2xQ8mP0vR5t",
-      "window": 56000000,
-      "expectedTicketTag": "placeholder_for_day5_tests"
+      "id": "ticket_vector_1",
+      "description": "Vecteur de base avec clé séquentielle",
+      "ticketKeyHex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "orderId": "ord_test_01",
+      "windowIndex": 59850000,
+      "expectedTag": "YrHaAajM92Ug9X8VqPyQmw",
+      "expectedCode6": "822849",
+      "expectedQrPayload": "CS2.ord_test_01.59850000.YrHaAajM92Ug9X8VqPyQmw"
+    },
+    {
+      "id": "ticket_vector_2",
+      "description": "Clé hexadécimale répétée et identifiant CS",
+      "ticketKeyHex": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "orderId": "CS-ORDER-99",
+      "windowIndex": 60000000,
+      "expectedTag": "sCboKYc0kUDWNR7otsKfHA",
+      "expectedCode6": "339817",
+      "expectedQrPayload": "CS2.CS-ORDER-99.60000000.sCboKYc0kUDWNR7otsKfHA"
+    },
+    {
+      "id": "ticket_vector_3",
+      "description": "Clé haute et identifiant Crockford",
+      "ticketKeyHex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "orderId": "CS-7H9KZ",
+      "windowIndex": 56789012,
+      "expectedTag": "lFX9icSa_bI3kH5kHFcBeA",
+      "expectedCode6": "663433",
+      "expectedQrPayload": "CS2.CS-7H9KZ.56789012.lFX9icSa_bI3kH5kHFcBeA"
+    },
+    {
+      "id": "ticket_vector_4",
+      "description": "Clé secrète par défaut et fenêtre impaire",
+      "ticketKeyHex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "orderId": "ord_essect_montfleury",
+      "windowIndex": 59999999,
+      "expectedTag": "qRZrlJibRPP9VDaMcFeqTg",
+      "expectedCode6": "818836",
+      "expectedQrPayload": "CS2.ord_essect_montfleury.59999999.qRZrlJibRPP9VDaMcFeqTg"
+    },
+    {
+      "id": "ticket_vector_5",
+      "description": "Fenêtre temporelle arbitraire",
+      "ticketKeyHex": "102030405060708090a0b0c0d0e0f000112233445566778899aabbccddeeff00",
+      "orderId": "ord_baguette_123",
+      "windowIndex": 12345678,
+      "expectedTag": "ZatfjlUcLnU-QMC2zPf0CA",
+      "expectedCode6": "729934",
+      "expectedQrPayload": "CS2.ord_baguette_123.12345678.ZatfjlUcLnU-QMC2zPf0CA"
     }
   ]
 }

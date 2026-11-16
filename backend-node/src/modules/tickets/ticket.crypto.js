@@ -1,72 +1,74 @@
 // 💡 Concept & Analogie : Comme un pass d'accès avec un code tournant à 6 chiffres (Google Authenticator / TOTP), ce système génère un QR code dynamique renouvelé toutes les 30 secondes pour empêcher la fraude par capture d'écran.
-// 🔄 Comparaison React / Flutter : L'application React utilise l'API native `crypto.subtle` (WebCrypto) et Flutter utilise le package Dart `crypto` ; les deux produisent exactement les mêmes signatures HMAC-SHA256.
+// 🔄 Comparaison React / Flutter : L'application React utilise l'API Web standard `crypto.subtle` (WebCrypto) et Flutter utilise le package Dart `crypto` ; les deux produisent exactement les mêmes signatures HMAC-SHA256.
 // 🎯 À retenir pour la soutenance : "Le ticket dynamique anti-capture génère un code rotatif par fenêtre de 30 secondes signé par HMAC-SHA256 et vérifié en temps constant (`timingSafeEqual`) pour éliminer toute attaque par temporisation."
 // Module : Cryptographie & Sécurité
 
 import crypto from 'node:crypto';
 
-const QR_SECRET = process.env.QR_SECRET || '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const DEFAULT_SECRET = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 /**
- * Dérive une clé secrète unique propre à la commande (ticketKey).
- * Ne doit JAMAIS être stockée en base de données Firestore.
- * @param {object} params
- * @param {string} params.orderId
- * @param {string} params.studentId
- * @param {string} params.merchantId
- * @param {string} params.nonce - Chaîne aléatoire de 16 octets en base64url
- * @returns {Buffer} Clé dérivée de 32 octets
+ * Dérive la clé secrète unique du ticket (ticketKey) à partir du secret maître et des données de commande.
+ * Règle d'or : cette clé n'est JAMAIS stockée en base de données et est recalculée à la volée.
  */
-export function deriveTicketKey({ orderId, studentId, merchantId, nonce }) {
+export function deriveTicketKey({ secret, orderId, studentId, merchantId, nonce }) {
+  const masterSecret = secret || process.env.QR_SECRET || DEFAULT_SECRET;
+  const secretBuf = Buffer.from(masterSecret, 'hex').length === 32
+    ? Buffer.from(masterSecret, 'hex')
+    : Buffer.from(masterSecret, 'utf8');
+
   const message = `${orderId}|${studentId}|${merchantId}|${nonce}`;
-  return crypto.createHmac('sha256', Buffer.from(QR_SECRET, 'hex')).update(message).digest();
+  return crypto.createHmac('sha256', secretBuf).update(message).digest();
 }
 
 /**
  * Calcule l'indice de fenêtre temporelle actuelle (fenêtre de 30 secondes).
- * @param {number} [nowMs=Date.now()]
- * @returns {number}
  */
 export function getWindowIndex(nowMs = Date.now()) {
   return Math.floor(nowMs / 30000);
 }
 
 /**
- * Calcule le tag HMAC et le code de secours à 6 chiffres pour une fenêtre temporelle donnée.
- * @param {Buffer|string} ticketKey
- * @param {string} orderId
- * @param {number} windowIndex
- * @returns {{ tagBase64Url: string, code6: string, qrPayload: string }}
+ * Calcule la signature HMAC, le tag base64url, le code à 6 chiffres et le payload QR.
  */
-export function generateTicketData(ticketKey, orderId, windowIndex) {
-  const keyBuf = Buffer.isBuffer(ticketKey) ? ticketKey : Buffer.from(ticketKey, 'hex');
-  const message = `CS2|${orderId}|${windowIndex}`;
+export function computeWindowCode(ticketKey, orderId, windowIndex) {
+  const keyBuf = Buffer.isBuffer(ticketKey)
+    ? ticketKey
+    : (ticketKey.length === 64 && /^[0-9a-fA-F]+$/.test(ticketKey))
+      ? Buffer.from(ticketKey, 'hex')
+      : Buffer.from(ticketKey, 'base64url');
 
+  const message = `CS2|${orderId}|${windowIndex}`;
   const mac = crypto.createHmac('sha256', keyBuf).update(message).digest();
 
-  // Les 16 premiers octets pour le tag QR en base64url
-  const tagBase64Url = mac.subarray(0, 16).toString('base64url');
+  // Tag : 16 premiers octets en base64url (sans padding)
+  const tag = mac.subarray(0, 16).toString('base64url');
 
-  // Code de secours à 6 chiffres calculé depuis les 4 premiers octets (Big-Endian uint32 modulo 1 000 000)
+  // Code à 6 chiffres : 4 premiers octets Big-Endian modulo 1 000 000
   const codeNum = mac.readUInt32BE(0) % 1000000;
   const code6 = String(codeNum).padStart(6, '0');
 
-  const qrPayload = `CS2.${orderId}.${windowIndex}.${tagBase64Url}`;
+  const qrPayload = `CS2.${orderId}.${windowIndex}.${tag}`;
 
   return {
-    tagBase64Url,
-    code6,
     qrPayload,
+    tag,
+    tagBase64Url: tag,
+    code6,
+    windowIndex,
   };
 }
 
 /**
- * Analyse et valide une charge utile QR lors du scan commerçant.
- * Tolérance temporelle : fenêtre actuelle ± 1 fenêtre (dérive maximale de 30 s).
- * @param {string} qrPayload - Format "CS2.<orderId>.<window>.<tag>"
- * @param {Buffer} ticketKey - Clé dérivée de la commande
- * @param {number} [nowMs=Date.now()]
- * @returns {{ valid: boolean, orderId: string, reason?: string }}
+ * Alias pour computeWindowCode
+ */
+export function generateTicketData(ticketKey, orderId, windowIndex) {
+  return computeWindowCode(ticketKey, orderId, windowIndex);
+}
+
+/**
+ * Analyse et vérifie une charge utile QR scannée par le commerçant.
+ * Vérification en temps constant avec crypto.timingSafeEqual.
  */
 export function verifyQrPayload(qrPayload, ticketKey, nowMs = Date.now()) {
   if (!qrPayload || typeof qrPayload !== 'string') {
@@ -80,22 +82,47 @@ export function verifyQrPayload(qrPayload, ticketKey, nowMs = Date.now()) {
 
   const [, orderId, windowStr, scannedTag] = parts;
   const payloadWindow = parseInt(windowStr, 10);
-  const currentWindow = getWindowIndex(nowMs);
-
-  // Tolérance d'une fenêtre avant/après pour absorber la latence réseau
-  if (Math.abs(payloadWindow - currentWindow) > 1) {
-    return { valid: false, orderId, reason: 'TICKET_EXPIRED' };
+  if (isNaN(payloadWindow)) {
+    return { valid: false, orderId, reason: 'INVALID_WINDOW' };
   }
 
-  const { tagBase64Url } = generateTicketData(ticketKey, orderId, payloadWindow);
+  const currentWindow = getWindowIndex(nowMs);
 
-  // Vérification en temps constant contre les attaques par canal auxiliaire
+  // Tolérance d'une fenêtre (± 30 secondes)
+  if (Math.abs(payloadWindow - currentWindow) > 1) {
+    return { valid: false, orderId, reason: 'TICKET_EXPIRED', payloadWindow, currentWindow };
+  }
+
+  const { tag } = computeWindowCode(ticketKey, orderId, payloadWindow);
+
   const tagBufA = Buffer.from(scannedTag);
-  const tagBufB = Buffer.from(tagBase64Url);
+  const tagBufB = Buffer.from(tag);
 
   if (tagBufA.length !== tagBufB.length || !crypto.timingSafeEqual(tagBufA, tagBufB)) {
     return { valid: false, orderId, reason: 'INVALID_SIGNATURE' };
   }
 
-  return { valid: true, orderId };
+  return { valid: true, orderId, windowIndex: payloadWindow };
+}
+
+/**
+ * Vérifie un code manuel à 6 chiffres saisi par le commerçant en cas de problème de caméra.
+ * Teste la fenêtre courante et les deux fenêtres adjacentes (± 1).
+ */
+export function verifyManualCode(code6, ticketKey, orderId, nowMs = Date.now()) {
+  if (!code6 || String(code6).length !== 6) {
+    return { valid: false, reason: 'INVALID_FORMAT' };
+  }
+
+  const currentWindow = getWindowIndex(nowMs);
+  const candidateWindows = [currentWindow, currentWindow - 1, currentWindow + 1];
+
+  for (const w of candidateWindows) {
+    const computed = computeWindowCode(ticketKey, orderId, w);
+    if (computed.code6 === String(code6)) {
+      return { valid: true, windowIndex: w };
+    }
+  }
+
+  return { valid: false, reason: 'INVALID_SIGNATURE' };
 }

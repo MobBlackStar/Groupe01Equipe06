@@ -90,3 +90,41 @@ export const mockOffers = [
     status: 'ACTIVE',
   },
 ];
+
+export const mockOrders = [
+  {
+    orderId: 'ord-mock-01',
+    orderCode: 'CS-7H9KZ',
+    studentId: 'student-mock-uid',
+    merchantId: 'merchant-baguette-baguette',
+    merchantSnapshot: {
+      name: 'Baguette & Baguette Montfleury',
+      location: { lat: 36.7865, lng: 10.1752 },
+    },
+    offerId: 'off-01',
+    offerSnapshot: {
+      title: 'Baguette Farcie Escalope Panée',
+      category: 'SANDWICH',
+      isSurpriseBasket: false,
+      pickupStartAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      pickupEndAt: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
+      weightGramsPerUnit: 400,
+      co2GramsPerUnit: 1000,
+    },
+    quantity: 1,
+    pricing: {
+      lockedUnitPriceMillimes: 3500,
+      subtotalMillimes: 3500,
+      totalMillimes: 3500,
+      savedMillimes: 4000,
+    },
+    status: 'PAID',
+    ticket: {
+      version: 2,
+      nonce: 'mockNonce12345678',
+      windowSeconds: 30,
+    },
+    pickup: { failedAttempts: 0 },
+    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+  },
+];

@@ -4,7 +4,7 @@
 > **Rôle :** Lead Backend, Sécurité & Architecture (Node.js / Express / Firebase Admin)  
 > **Binôme :** Ritej Bejaoui (Lead UI/UX & Frontend)  
 > **Projet :** CampusSave — Plateforme Anti-Gaspillage & Solidarité Étudiante (ESSECT E-Business 2026)  
-> **Branche de travail actuelle :** `feat/fedi-day4-search-orders-konnect`  
+> **Branche de travail actuelle :** `feat/fedi-day5-living-ticket-scan`  
 
 ---
 
@@ -16,8 +16,8 @@
 | **Jour 2** | **Authentification, Profils & Sécurité** | 🟢 **100% Terminé** | Fedi | Middlewares auth/rôles, `POST /auth/register-profile`, `GET/PATCH /users/me`, règles Firestore, `createAdmin.js`, endpoints clients, mocks 6 commerces, `LoginPage.jsx` & `login_screen.dart` (boutons 1-clic démo) |
 | **Jour 3** | **Gestion des Commerces & Publication d'Offres** | 🟢 **100% Terminé** | Fedi | API commerces, modération admin, upload Cloudinary, CRUD offres, IA générative & fallback tunisien, sélecteurs de carte Web/Mobile |
 | **Jour 4** | **Catalogue, Recherche & Moteur de Réservation** | 🟢 **100% Terminé** | Fedi | Recherche multi-critères, hooks prix direct Web/Mobile, transaction atomique de réservation, test concurrence 20 acheteurs, paiement Konnect & confirmation idempotente |
-| **Jour 5** | **Paiement Konnect & Ticket Dynamique HMAC** | ⏳ *À venir* | Fedi | Intégration Konnect webhook, génération et vérification QR HMAC-SHA256 |
-| **Jour 6** | **Fonctionnalités Bonus : Radar, Surprise & Fidélité** | ⏳ *À venir* | Fedi | API radar géospatial, algorithme d'ouverture de boîte surprise, points fidélité |
+| **Jour 5** | **Living Ticket HMAC, Scan Atomique & Scanners** | 🟢 **100% Terminé** | Fedi | Cryptographie cross-runtime 30s HMAC-SHA256, transaction atomique de retrait, Living Ticket tournant Web/Flutter, scanners commerçants caméra et code manuel, WebView Konnect |
+| **Jour 6** | **Fonctionnalités Bonus : Radar 3D, Mystery Box & Fidélité** | ⏳ *À venir* | Fedi | API radar géospatial, MapLibre 3D WebGL, déblocage récompenses |
 | **Jour 7** | **Tableaux de Bord, Impact & Notifications FCM** | ⏳ *À venir* | Fedi | Agrégations statistiques, calculs d'empreinte carbone et notifications push |
 | **Jour 8** | **Durcissement, Tests & Déploiement Cloud** | ⏳ *À venir* | Fedi | Tests d'intégration Jest, émulateurs Firebase, déploiement Cloud Run / Functions |
 | **Jour 9** | **Rapport Technique & Démonstration** | ⏳ *À venir* | Fedi | Chapitres III, IV, V du rapport, validation globale |
@@ -27,61 +27,63 @@
 
 ## 📝 2. Journal des Livrables Réalisés par Fedi
 
-### Jour 4 — 19 Novembre 2026
+### Jour 5 — 20 Novembre 2026
 * **Branche & Traçabilité Git :**
-  - Branche : `feat/fedi-day4-search-orders-konnect`
+  - Branche : `feat/fedi-day5-living-ticket-scan`
   - Auteur : `Fedi Touati <number2.fedi@gmail.com>`
-  - Message de commit : `feat(orders): add offer search, live price hooks, atomic reservation engine, and konnect payments`
+  - Message de commit : `feat(tickets): add 30s rotating hmac qr, atomic pickup scan engine, and merchant scanners`
+* **Cryptographie du Living Ticket & Parité Tripartite (`ticket.crypto.js`, `ticketCrypto.js`, `ticket_crypto.dart`) :**
+  - Algorithme de rotation temporelle cadencé par fenêtre de 30 secondes : `window = floor(nowMs / 30000)`.
+  - Signature cryptographique HMAC-SHA256 avec clé dérivée à la volée (`deriveTicketKey`), jamais stockée en base de données (règle de sécurité stricte).
+  - Production d'un tag compact de 16 octets en base64url sans padding et d'un code de secours à 6 chiffres via les 4 premiers octets Big-Endian modulo $10^6$.
+  - Comparaison en temps constant `crypto.timingSafeEqual` pour immuniser le système contre les attaques par canal auxiliaire (timing attacks).
+  - Validation exhaustive sur **5 vecteurs de test officiels** (`shared/test-vectors/ticket.json`) avec concordance stricte entre Node.js, WebCrypto (`crypto.subtle`) et Dart (`package:crypto`).
+* **Endpoints Sécurisés du Cycle de Retrait (`backend-node/src/modules/tickets/`, `orders/`) :**
+  - `GET /api/v1/orders/:id/ticket` : délivrance de la clé temporaire au seul étudiant propriétaire (`studentId == uid`) avec en-tête `Cache-Control: no-store`.
+  - `POST /api/v1/tickets/scan` et `POST /api/v1/tickets/redeem-code` : protégés par `authenticate`, `requireRole(MERCHANT)`, `requireApprovedMerchant` et `scanLimiter` (20 requêtes/min).
+* **Cœur Transactionnel Atomique de Retrait (Diagramme de Séquence 08) :**
+  - Transaction Firestore `runTransaction` garantissant l'ordonnancement strict (toutes les lectures avant les écritures).
+  - Contrôle d'usage unique (statut `PAID` requis), appartenance à l'établissement du commerçant, et tolérance d'horloge de $\pm 1$ fenêtre temporelle (30 secondes).
+  - Règle de persistance des échecs : si le ticket est expiré ou invalide, la transaction commite `pickup.failedAttempts += 1` sans annuler les autres vérifications. Verrouillage automatique au bout de 5 tentatives infructueuses (code 423 `TICKET_LOCKED`).
+  - Validation réussie : passage de la commande à `COMPLETED`, attribution des EcoPoints (20 points par portion + bonus panier surprise + bonus 1re commande), déblocage automatique des récompenses franchies (bons -20% tous les 100 points, panier offert tous les 300 points), révélation du contenu secret de la Mystery Box, incrémentations atomiques des statistiques commerçant, impact campus global et classement de la filière ESSECT.
+  - Expédition asynchrone post-commit des notifications push FCM `ORDER_COMPLETED` et `REWARD_UNLOCKED`.
+* **Composants Graphiques & Scanners Commerçants (Web & Mobile) :**
+  - `web-react/src/features/ticket/RotatingQr.jsx` : QR code SVG rotatif haute définition avec anneau de compte à rebours 30s animé, pastille LIVE, et code de secours formaté.
+  - `web-react/src/features/merchant/MerchantScanPage.jsx` : scanner webcam intégré (`html5-qrcode`), onglet de saisie de secours à 6 chiffres, et fiche détaillée de remise avec contenu révélé.
+  - `mobile-flutter/lib/features/ticket/rotating_qr.dart` : widget Flutter avec Timer cadencé, `qr_flutter`, anneau de progression circulaire néon et code de secours.
+  - `mobile-flutter/lib/features/merchant/scanner_screen.dart` : scanner caméra natif haute vitesse (`mobile_scanner`), contrôle du flash/torche, retour haptique instantané, et boîte modale de validation.
+  - `mobile-flutter/lib/features/checkout/payment_webview_screen.dart` : WebView isolée pour la passerelle Konnect interceptant les redirections de paiement pour vérification immédiate.
+* **Écouteurs Réactifs Temps Réel (Web & Mobile) :**
+  - `web-react/src/hooks/useOrder.js`, `useMyOrders.js`, `useMerchantOrders.js` avec repli gracieux automatique.
+  - `mobile-flutter/lib/services/firestore_streams.dart` (`order`, `myOrders`, `merchantOrders`, `merchant`).
+* **Banc de Tests Unitaires :**
+  - `tests/ticket.crypto.test.js` : 5 tests validant les vecteurs, la tolérance $\pm 1$ fenêtre, le rejet des altérations et la saisie manuelle.
+  - `tests/tickets.scan.test.js` : 6 tests complets sur la machine d'état de retrait, re-scan 409, commerçant tiers 403, persistance de failedAttempts et verrouillage 423.
+  - Total tests backend : **85/85 tests passés avec succès**.
+  - Total tests Flutter : **100% au vert** (`flutter analyze` sans avertissement, `flutter test` réussi).
+
+---
+
+### Jour 4 — 19 Novembre 2026
 * **Recherche Multi-Critères & Calcul Prix en Direct (`backend-node/src/modules/offers/`) :**
-  - `GET /api/v1/offers` : catalogue public avec pagination par curseur, filtres `q` (recherche textuelle multi-mots-clés normalisée et insensible aux accents), `category`, `merchantId`, `minPrice`, `maxPrice`, `surprise`, et tri par prix, clôture ou distance.
-  - Exclusion automatique des offres expirées (`pickupEndAt <= now`) et épuisées (`quantityAvailable <= 0`).
-  - Calcul à la volée du `currentPriceMillimes` (Smart Decay) et de l'indicateur d'urgence pour chaque offre.
-  - `GET /api/v1/offers/:id` : consultation détaillée avec prix en direct et calcul d'urgence.
+  - `GET /api/v1/offers` avec pagination par curseur, filtres `q`, `category`, `merchantId`, `minPrice`, `maxPrice`, `surprise`, tri par prix, clôture ou distance.
+  - Calcul à la volée du `currentPriceMillimes` (Smart Decay) et indicateur d'urgence.
 * **Hooks Temps Réel & Horloge Compensée Web React (`web-react/src/`) :**
-  - `lib/serverClock.js` : compensation de la dérive client/serveur via `updateServerOffset(serverTime)` et exposition de `serverNow()`.
-  - `hooks/useLivePrice.js` : recalcul à la seconde du prix dégressif Smart Decay, pourcentage d'économie et niveau d'urgence.
-  - `hooks/useActiveOffers.js` : écouteur temps réel Firestore (`onSnapshot`) avec bascule transparente vers les mocks si hors ligne.
+  - `lib/serverClock.js`, `hooks/useLivePrice.js`, `hooks/useActiveOffers.js`.
 * **Mobile Flutter & 25 Vecteurs Dart (`mobile-flutter/`) :**
-  - `lib/core/domain/pricing.dart` : parité arithmétique 100% avec JavaScript (`computeFromMap`, `computeUnitPrice`, `computeMinutesLeft`, `computeUrgencyColor`).
-  - `test/pricing_vectors_test.dart` : validation des **25 vecteurs de test officiels** sous Flutter (`flutter test` 100% vert).
-  - `lib/widgets/live_price_text.dart` : widget réutilisable avec ticker 1s calé sur `ServerClock.serverNowMs`.
+  - `lib/core/domain/pricing.dart` et `test/pricing_vectors_test.dart` (25 vecteurs validés).
 * **Moteur de Réservation Atomique & Sweepers (`backend-node/src/modules/orders/`, `jobs/`) :**
-  - `POST /api/v1/orders` : transaction Firestore atomique (`runTransaction`), décrémentation sécurisée du stock, génération du code Crockford Base32 `CS-XXXXX`, verrouillage du prix unitaire, blocage 10 minutes (`reservationExpiresAt`) et verrouillage de récompense étudiante.
-  - `POST /api/v1/orders/:id/cancel` : annulation volontaire avec restitution immédiate du stock et déverrouillage de récompense.
-  - `jobs/reservationSweeper.js` et `jobs/offerExpirySweeper.js` : robots en arrière-plan non bloquants (`.unref()`) libérant les réservations non payées après 10 minutes et clôturant les offres expirées.
+  - `POST /api/v1/orders` avec blocage 10 minutes, `POST /orders/:id/cancel`, `reservationSweeper.js`, `offerExpirySweeper.js`.
 * **Monétique Konnect & Idempotence Stricte (`backend-node/src/modules/payments/`) :**
-  - `POST /api/v1/payments/konnect/init` : support des commandes gratuites réglées par récompense (`REWARD`) et passerelle Konnect Sandbox.
-  - `GET /api/v1/payments/konnect/webhook` et `POST /api/v1/payments/konnect/verify` : réconciliation à double canal.
-  - `confirmPayment(orderId, source)` : transaction atomique strictement idempotente générant le nonce cryptographique du ticket, incrémentant les statistiques commerçant, consignant `CONFIRMED` ou `ALREADY_CONFIRMED`, et déclenchant les notifications push FCM post-commit.
-* **Banc de Tests de Concurrence & Idempotence :**
-  - `tests/reservation.concurrency.test.js` : 20 requêtes simultanées sur un stock de 5 -> **exactement 5 succès, 15 rejets 409 OFFER_SOLD_OUT, stock final à 0 garanti**.
-  - `tests/payments.idempotency.test.js` : validation de la non-duplication des compteurs en cas de double confirmation simultanée.
-  - `tests/orders.search.test.js` : validation des schémas Zod et de l'alphabet Crockford.
-  - Total tests backend : **77/77 tests passés avec succès**.
+  - `POST /payments/konnect/init`, `confirmPayment` strictement idempotente.
+* **Banc de Tests Concurrence :**
+  - `tests/reservation.concurrency.test.js` (20 requêtes simultanées sur 5 portions).
 
 ---
 
 ### Jour 3 — 18 Novembre 2026
-* **Branche & Traçabilité Git :**
-  - Branche : `feat/fedi-day3-merchants-offers-ai`
-  - Auteur : `Fedi Touati <number2.fedi@gmail.com>`
-  - Message de commit : `feat(backend): add merchants, admin moderation, offers crud, ai autofill, and map pin pickers`
-* **Moteur de Calcul Partagé & Vecteurs de Test (`campussave/shared/`) :**
-  - `shared/pricing.js` : Calcul précis des prix dégressifs (Smart Decay / enchère hollandaise) avec arrondis par pas (100 millimes).
-  - `shared/rarity.js` : Moteur de rareté déterministe pour paniers surprise (Gold, Silver, Bronze).
-  - `shared/test-vectors/pricing.json` : Porté à 25 vecteurs de test exhaustifs.
-* **Module Commerces (`backend-node/src/modules/merchants/`) :**
-  - Rayon Haversine <= 3000 m de l'ESSECT, geohash 9 caractères, endpoints commerces et middleware `requireApprovedMerchant`.
-* **Module Modération Administrateur (`backend-node/src/modules/admin/`) :**
-  - Validation et rejet avec motif obligatoire, collection `admin_audit`, notification FCM.
-* **Module Upload Sécurisé d'Images (`backend-node/src/modules/uploads/`) :**
-  - Multer 5 Mo max vers Cloudinary.
-* **Module Offres & Paniers Anti-Gaspillage (`backend-node/src/modules/offers/`) :**
-  - Mots-clés de recherche, découplage contenu secret paniers surprise, règle 409 OFFER_LOCKED.
-* **Module IA Générative & Parseur de Secours Tunisien (`backend-node/src/modules/ai/`) :**
-  - Claude 3.5 Sonnet avec timeout 8s et parseur tunisien déterministe 100% hors-ligne.
-* **Composants Reutilisables Sélecteur de Carte (Web & Mobile) :**
-  - `web-react/src/components/map/MapPinPicker.jsx` et `mobile-flutter/lib/widgets/map_pin_picker.dart`.
+* Moteur de calcul partagé `pricing.js` et `rarity.js` (25 vecteurs).
+* Module commerces, modération admin, upload Cloudinary, CRUD offres, IA générative et sélecteurs de carte.
 
 ---
 
@@ -89,12 +91,14 @@
 
 | Livrable Partagé | Emplacement | Statut pour Ritej | Utilisation Recommandée pour l'Interface |
 | :--- | :--- | :---: | :--- |
-| **Hook useLivePrice** | `web-react/src/hooks/useLivePrice.js` | 🟢 **Prêt à l'emploi** | `const { currentPriceMillimes, formattedPrice, discountPercent, urgency } = useLivePrice(offer);` dans `OfferCard.jsx` et `OfferDetailPage.jsx`. |
-| **Hook useActiveOffers** | `web-react/src/hooks/useActiveOffers.js` | 🟢 **Prêt à l'emploi** | `const { offers, loading, error } = useActiveOffers();` dans `BrowsePage.jsx`. |
-| **Widget LivePriceText** | `mobile-flutter/lib/widgets/live_price_text.dart` | 🟢 **Prêt à l'emploi** | À intégrer dans `offer_card.dart` et `offer_detail_screen.dart` via `LivePriceText(...)`. |
-| **Flux Firestore Streams** | `mobile-flutter/lib/services/firestore_streams.dart` | 🟢 **Prêt à l'emploi** | `FirestoreStreams.activeOffers()` pour alimenter les listes réactives Flutter. |
-| **API Recherche Offres** | `GET /api/v1/offers` | 🟢 **Opérationnel** | Paramètres supportés : `?q=&category=&merchantId=&minPrice=&maxPrice=&surprise=&sort=price\|ending\|distance`. |
-| **API Réservation Commande** | `POST /api/v1/orders` | 🟢 **Opérationnel** | Corps : `{ offerId, quantity, rewardId? }`. Renvoie `{ order }` avec code `CS-XXXXX` et validité 10 min. |
-| **API Annulation Réservation** | `POST /api/v1/orders/:id/cancel` | 🟢 **Opérationnel** | Annule la réservation et restitue immédiatement le stock et la récompense. |
-| **API Paiement Konnect** | `POST /api/v1/payments/konnect/init` | 🟢 **Opérationnel** | Corps : `{ orderId }`. Renvoie `{ payUrl, paymentRef }` ou `{ paidWithReward: true, order }`. |
-| **API Vérification Retour** | `POST /api/v1/payments/konnect/verify` | 🟢 **Opérationnel** | Corps : `{ orderId, paymentRef? }`. Appelée par la page retour pour confirmer la transaction. |
+| **Composant RotatingQr (Web)** | `web-react/src/features/ticket/RotatingQr.jsx` | 🟢 **Prêt à l'emploi** | À intégrer directement dans `LivingTicketPage.jsx` via `<RotatingQr ticketKey={ticketKey} orderId={order.orderId} orderCode={order.orderCode} />`. |
+| **Widget RotatingQr (Mobile)** | `mobile-flutter/lib/features/ticket/rotating_qr.dart` | 🟢 **Prêt à l'emploi** | À intégrer dans `ticket_screen.dart` via `RotatingQr(ticketKeyHex: ticketKey, orderId: orderId, orderCode: orderCode)`. |
+| **Scanner Commerçant (Web)** | `web-react/src/features/merchant/MerchantScanPage.jsx` | 🟢 **Opérationnel** | Route `/merchant/scan` accessible depuis la barre latérale commerçant. |
+| **Scanner Commerçant (Mobile)** | `mobile-flutter/lib/features/merchant/scanner_screen.dart` | 🟢 **Opérationnel** | Écran avec caméra, torche et retour haptique pour la validation au comptoir. |
+| **WebView Konnect (Mobile)** | `mobile-flutter/lib/features/checkout/payment_webview_screen.dart` | 🟢 **Prêt à l'emploi** | Ouvrir via `Navigator.push(...)` après réception de l'URL `payUrl` depuis `POST /payments/konnect/init`. |
+| **Hook useOrder** | `web-react/src/hooks/useOrder.js` | 🟢 **Prêt à l'emploi** | `const { order, loading } = useOrder(orderId);` pour surveiller en direct le passage au statut `COMPLETED`. |
+| **Hook useMyOrders** | `web-react/src/hooks/useMyOrders.js` | 🟢 **Prêt à l'emploi** | Pour alimenter les onglets de `MyOrdersPage.jsx`. |
+| **Hook useMerchantOrders** | `web-react/src/hooks/useMerchantOrders.js` | 🟢 **Prêt à l'emploi** | Pour afficher les commandes entrantes en direct sur `MerchantOrdersPage.jsx`. |
+| **Flux Firestore Streams Mobile** | `mobile-flutter/lib/services/firestore_streams.dart` | 🟢 **Prêt à l'emploi** | `FirestoreStreams.order(orderId)`, `myOrders(studentId)`, `merchantOrders(merchantId)`. |
+| **API Ticket Cryptographique** | `GET /api/v1/orders/:id/ticket` | 🟢 **Opérationnel** | Renvoie `{ ticketKey, windowSeconds, orderCode, serverTime }`. |
+| **API Scan QR & Code Manuel** | `POST /api/v1/tickets/scan` et `/tickets/redeem-code` | 🟢 **Opérationnel** | Traite le retrait physique, incrémente les EcoPoints et dévoile le contenu secret. |

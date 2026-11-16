@@ -5,10 +5,12 @@
 
 import admin from 'firebase-admin';
 import { db } from '../../config/firebase.js';
+import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import { ORDER_STATUS, OFFER_STATUS, BUSINESS_RULES, REWARD_STATUS } from '../../../../shared/constants.js';
 import { computeUnitPrice } from '../../../../shared/pricing.js';
 import { generateOrderCode } from '../../utils/orderCode.js';
+import { deriveTicketKey } from '../tickets/ticket.crypto.js';
 
 export const ordersService = {
   /**
@@ -348,6 +350,53 @@ export const ordersService = {
     }
 
     return { order };
+  },
+
+  /**
+   * Obtient les paramètres cryptographiques pour afficher le Living Ticket (QR dynamique tournant).
+   * Règle de sécurité : la clé du ticket n'est jamais persistée en base et est calculée à la volée.
+   */
+  async getOrderTicket(orderId, currentUser) {
+    const orderDoc = await db.collection('orders').doc(orderId).get();
+    if (!orderDoc.exists) {
+      throw new AppError('Commande introuvable', 404, 'ORDER_NOT_FOUND');
+    }
+
+    const order = orderDoc.data();
+
+    const isOwner = currentUser.uid === order.studentId;
+    const isAdmin = currentUser.role === 'ADMIN';
+
+    if (!isOwner && !isAdmin) {
+      throw new AppError('Accès non autorisé au billet de cette commande', 403, 'FORBIDDEN_RESOURCE');
+    }
+
+    if (order.status === ORDER_STATUS.COMPLETED) {
+      throw new AppError('Ce billet a déjà été utilisé pour un retrait', 409, 'ALREADY_USED');
+    }
+
+    if (order.status !== ORDER_STATUS.PAID) {
+      throw new AppError(`Le billet n'est pas disponible pour cette commande (statut : ${order.status})`, 409, 'NOT_PAID');
+    }
+
+    if (!order.ticket?.nonce) {
+      throw new AppError('Données de sécurité du billet corrompues', 500, 'TICKET_NONCE_MISSING');
+    }
+
+    const ticketKeyBuf = deriveTicketKey({
+      secret: env.QR_SECRET,
+      orderId,
+      studentId: order.studentId,
+      merchantId: order.merchantId,
+      nonce: order.ticket.nonce,
+    });
+
+    return {
+      ticketKey: ticketKeyBuf.toString('hex'),
+      windowSeconds: order.ticket.windowSeconds || 30,
+      orderCode: order.orderCode,
+      serverTime: Date.now(),
+    };
   },
 
   /**

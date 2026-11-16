@@ -1,6 +1,23 @@
-// 💡 Concept & Analogie : Contrôleur HTTP gérant la réception des requêtes et l envoi des réponses JSON pour tickets.
-// 🔄 Comparaison React / Flutter : Renvoie des réponses standardisées avec injection automatique du temps serveur.
-// 🎯 À retenir pour la soutenance : "Le contrôleur orchestre le flux applicatif en déléguant la logique métier au service dédié."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Contrôleur gérant les scans de tickets et les saisies manuelles transmises par les commerçants.
+// 🔄 Comparaison React / Flutter : Point de terminaison appelé par `MerchantScanPage.jsx` sous React et `scanner_screen.dart` sous Flutter.
+// 🎯 À retenir pour la soutenance : "Ce contrôleur injecte le merchantId vérifié par le token Firebase et transmet la demande au service transactionnel."
+// Module : Cryptographie & Retrait de Commandes
 
-export const ticketsController = {};
+import { ticketsService } from './tickets.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+
+export const ticketsController = {
+  scanTicket: asyncHandler(async (req, res) => {
+    const result = await ticketsService.scanTicket(req.user.uid, req.body.qrPayload);
+    res.json(result);
+  }),
+
+  redeemCode: asyncHandler(async (req, res) => {
+    const result = await ticketsService.redeemCode(
+      req.user.uid,
+      req.body.orderCode,
+      req.body.code6
+    );
+    res.json(result);
+  }),
+};

@@ -15,6 +15,7 @@ import MerchantOnboardingPage from '../features/merchant/MerchantOnboardingPage.
 import MerchantStorePage from '../features/merchant/MerchantStorePage.jsx';
 import MerchantOffersPage from '../features/merchant/MerchantOffersPage.jsx';
 import OfferFormPage from '../features/merchant/OfferFormPage.jsx';
+import MerchantScanPage from '../features/merchant/MerchantScanPage.jsx';
 import AdminMerchantsPage from '../features/admin/AdminMerchantsPage.jsx';
 import AdminUsersPage from '../features/admin/AdminUsersPage.jsx';
 import BrowsePage from '../features/explore/BrowsePage.jsx';
@@ -65,6 +66,7 @@ export function AppRouter() {
           <Route path="/merchant/offers/new" element={<OfferFormPage />} />
           <Route path="/merchant/offers/:id/edit" element={<OfferFormPage />} />
           <Route path="/merchant/orders" element={<MerchantOrdersPage />} />
+          <Route path="/merchant/scan" element={<MerchantScanPage />} />
         </Route>
 
         {/* Espace Administrateur (/admin/*) */}

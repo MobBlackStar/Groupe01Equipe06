@@ -26,4 +26,10 @@ export const ordersController = {
     const result = await ordersService.getMyOrders(req.user.uid);
     res.json(result);
   }),
+
+  getOrderTicket: asyncHandler(async (req, res) => {
+    const result = await ordersService.getOrderTicket(req.params.id, req.user);
+    res.set('Cache-Control', 'no-store');
+    res.json(result);
+  }),
 };
