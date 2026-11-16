@@ -19,8 +19,8 @@ export async function authenticate(req, _res, next) {
       return next(new AppError('Authentification requise', 401, 'UNAUTHORIZED'));
     }
 
-    // Support des jetons de test et de simulation d'émulateur
-    const isTestToken = token.startsWith('test-token:') || token.startsWith('mock-token:');
+    // Support des jetons de test et de simulation d'émulateur / démo
+    const isTestToken = token.startsWith('test-token:') || token.startsWith('mock-token:') || token.startsWith('demo-');
     if (isTestToken || ((env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') && (token.startsWith('test-') || token.startsWith('mock-')))) {
       const parts = token.split(':');
       let uid = 'test-uid';

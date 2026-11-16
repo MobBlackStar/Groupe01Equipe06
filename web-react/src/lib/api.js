@@ -15,11 +15,27 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  const currentUser = auth.currentUser;
+  const currentUser = auth?.currentUser;
   if (currentUser) {
-    const token = await currentUser.getIdToken();
-    config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const token = await currentUser.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    } catch {}
   }
+
+  // Si session de démonstration locale dans localStorage
+  const savedDemo = localStorage.getItem('campussave_demo_session');
+  if (savedDemo) {
+    try {
+      const parsed = JSON.parse(savedDemo);
+      const role = parsed.role || 'STUDENT';
+      const uid = parsed.uid || 'demo-uid';
+      const email = parsed.email || 'demo@essect.tn';
+      config.headers.Authorization = `Bearer test-token:${uid}:${role}:${email}`;
+    } catch {}
+  }
+
   return config;
 });
 

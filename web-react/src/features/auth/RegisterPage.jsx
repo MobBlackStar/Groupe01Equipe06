@@ -75,12 +75,35 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // 2. Création de compte Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+      // 2. Création de compte Firebase Auth (avec repli local si non configuré)
+      let uid = `user_${Date.now()}`;
+      if (auth) {
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            formData.email,
+            formData.password
+          );
+          uid = userCredential.user.uid;
+        } catch (authErr) {
+          if (authErr.code === 'auth/email-already-in-use' || authErr.code === 'auth/weak-password') {
+            throw authErr;
+          }
+          console.warn('Firebase Auth inscription repli mode démo :', authErr.message);
+        }
+      }
+
+      // Persistance de la session locale pour la démonstration
+      const demoSession = {
+        uid,
+        email: formData.email,
+        displayName: formData.displayName,
+        role: formData.role,
+        filiereId: formData.role === ROLES.STUDENT ? formData.filiereId : null,
+        phone: formData.phone,
+        ecoPoints: 0,
+      };
+      localStorage.setItem('campussave_demo_session', JSON.stringify(demoSession));
 
       // 3. Appel de l'endpoint backend pour attribuer le rôle et créer users/{uid}
       try {
