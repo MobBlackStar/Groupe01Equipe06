@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "L'architecture garantit un fonctionnement continu : si le serveur REST est indisponible, un fallback intelligent sur les commerces réels de Montfleury assure une démonstration 100% interactive."
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import SearchBar from './SearchBar.jsx';
 import FilterPanel from './FilterPanel.jsx';
 import { OfferCard, MysteryBoxCard } from '../../components/offers/index.js';
@@ -261,9 +262,33 @@ export default function BrowsePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Link
+              to="/app/dashboard"
+              className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
+            >
+              <span>📊 Mon Dashboard</span>
+            </Link>
+            <Link
+              to="/app/orders"
+              className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
+            >
+              <span>🎟️ Mes Commandes</span>
+            </Link>
+            <Link
+              to="/app/radar"
+              className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
+            >
+              <span>🗺️ Radar 3D</span>
+            </Link>
+            <Link
+              to="/impact"
+              className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
+            >
+              <span>🌱 Impact Campus</span>
+            </Link>
             <span className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-300">
-              ⚡ <strong className="text-[#CCFF00]">{filteredOffers.length}</strong> offre{filteredOffers.length > 1 ? 's' : ''} disponible{filteredOffers.length > 1 ? 's' : ''}
+              ⚡ <strong className="text-[#CCFF00]">{filteredOffers.length}</strong> offre{filteredOffers.length > 1 ? 's' : ''}
             </span>
           </div>
         </div>

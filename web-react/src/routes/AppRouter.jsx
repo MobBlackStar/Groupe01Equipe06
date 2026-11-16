@@ -27,6 +27,10 @@ import MyOrdersPage from '../features/orders/MyOrdersPage.jsx';
 import MerchantOrdersPage from '../features/merchant/MerchantOrdersPage.jsx';
 import LoyaltyCardPage from '../features/loyalty/LoyaltyCardPage.jsx';
 import HoloRadarPage from '../features/radar/HoloRadarPage.jsx';
+import StudentDashboard from '../features/dashboards/StudentDashboard.jsx';
+import MerchantDashboard from '../features/merchant/MerchantDashboard.jsx';
+import AdminDashboard from '../features/admin/AdminDashboard.jsx';
+import ImpactDashboardPage from '../features/impact/ImpactDashboardPage.jsx';
 
 export function AppRouter() {
   return (
@@ -37,15 +41,7 @@ export function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/payment/return" element={<PaymentReturnPage />} />
-      <Route
-        path="/impact"
-        element={
-          <div className="p-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-extrabold text-campus-lime">Tableau d'Impact CampusSave 🌱</h1>
-            <p className="text-slate-400 mt-2">Indicateurs écologiques et classement des filières ESSECT.</p>
-          </div>
-        }
-      />
+      <Route path="/impact" element={<ImpactDashboardPage />} />
 
       {/* Routes protégées */}
       <Route element={<ProtectedRoute />}>
@@ -53,6 +49,7 @@ export function AppRouter() {
         <Route element={<RoleRoute allowedRoles={[ROLES.STUDENT]} />}>
           <Route path="/app" element={<BrowsePage />} />
           <Route path="/app/explore" element={<BrowsePage />} />
+          <Route path="/app/dashboard" element={<StudentDashboard />} />
           <Route path="/app/offers/:id" element={<OfferDetailPage />} />
           <Route path="/app/checkout/:orderId" element={<CheckoutPage />} />
           <Route path="/app/orders" element={<MyOrdersPage />} />
@@ -63,7 +60,8 @@ export function AppRouter() {
 
         {/* Espace Commerçant (/merchant/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.MERCHANT]} />}>
-          <Route path="/merchant" element={<Navigate to="/merchant/offers" replace />} />
+          <Route path="/merchant" element={<Navigate to="/merchant/dashboard" replace />} />
+          <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
           <Route path="/merchant/onboarding" element={<MerchantOnboardingPage />} />
           <Route path="/merchant/store" element={<MerchantStorePage />} />
           <Route path="/merchant/offers" element={<MerchantOffersPage />} />
@@ -75,7 +73,8 @@ export function AppRouter() {
 
         {/* Espace Administrateur (/admin/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
-          <Route path="/admin" element={<Navigate to="/admin/merchants" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/merchants" element={<AdminMerchantsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
         </Route>

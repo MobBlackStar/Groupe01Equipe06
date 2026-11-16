@@ -6,7 +6,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatTND } from '@shared/money.js';
 
-export default function OrderRow({ order }) {
+export default function OrderRow({ order, onRate }) {
   if (!order) return null;
 
   const id = order.id || order._id;
@@ -16,6 +16,7 @@ export default function OrderRow({ order }) {
   const merchantName = order.merchantName || 'Commerce Montfleury';
   const quantity = order.quantity || 1;
   const price = (order.lockedUnitPriceMillimes || order.totalPriceMillimes || 3500) * quantity;
+  const userRating = order.rating || order.review?.rating;
 
   // Configuration du badge de statut
   let badgeClasses = 'bg-white/10 text-slate-300 border-white/10';
@@ -80,9 +81,23 @@ export default function OrderRow({ order }) {
         )}
 
         {status === 'COMPLETED' && (
-          <span className="text-xs text-slate-400 italic">
-            Commande clôturée
-          </span>
+          <div className="flex items-center gap-2">
+            {userRating ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 font-bold text-xs">
+                <span>⭐</span>
+                <span>{userRating}/5 Noté</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onRate && onRate(order)}
+                className="px-3.5 py-1.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 hover:bg-yellow-400/20 font-bold text-xs transition-colors flex items-center gap-1.5"
+              >
+                <span>⭐</span>
+                <span>Noter le repas</span>
+              </button>
+            )}
+          </div>
         )}
 
         {['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED', 'NO_SHOW'].includes(status) && (

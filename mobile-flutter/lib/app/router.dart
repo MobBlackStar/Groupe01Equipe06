@@ -8,6 +8,9 @@ import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../features/auth/login_screen.dart';
 import '../features/radar/radar_screen.dart';
+import '../features/dashboards/student_dashboard_screen.dart';
+import '../features/dashboards/merchant_dashboard_screen.dart';
+import '../features/impact/impact_screen.dart';
 
 class AppRouter {
   static final AuthService authService = AuthService();
@@ -54,6 +57,18 @@ class AppRouter {
       GoRoute(
         path: '/student/radar',
         builder: (context, state) => const RadarScreen(),
+      ),
+      GoRoute(
+        path: '/impact',
+        builder: (context, state) => const ImpactScreen(),
+      ),
+      GoRoute(
+        path: '/student/dashboard',
+        builder: (context, state) => const StudentDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/merchant/dashboard',
+        builder: (context, state) => const MerchantDashboardScreen(),
       ),
       GoRoute(
         path: '/student',

@@ -4,7 +4,7 @@
 > **Rôle :** Lead UI/UX, Développeuse Frontend (React 18 / Tailwind CSS & Flutter 3 / Dart)  
 > **Binôme :** Fedi Touati (Lead Backend & Sécurité)  
 > **Projet :** CampusSave — Plateforme Anti-Gaspillage & Solidarité Étudiante (ESSECT E-Business 2026)  
-> **Branche de travail actuelle :** `feat/ritej-day6-loyalty-mystery-box`  
+> **Branche de travail actuelle :** `feat/ritej-day7-dashboards-impact`  
 
 ---
 
@@ -18,7 +18,7 @@
 | **Jour 4** | **Catalogue, Recherche & Moteur de Réservation** | 🟢 **100% Terminé** | Ritej | `BrowsePage`, recherche avec debounce (300 ms), panneau filtres, `PriceTicker` & `OfferCard`, `OfferDetailPage` avec impact éco et gestion 409, 6 composants/écrans Flutter |
 | **Jour 5** | **Paiement Konnect & Living Ticket QR** | 🟢 **100% Terminé** | Ritej | `CheckoutPage` (compte à rebours 10 min, prix verrouillé, récompenses fidélité), `PaymentReturnPage` (états Konnect), `BoardingPass` & `LivingTicketPage` (QR tournant 30s + code 6 chiffres), `MyOrdersPage`, `MerchantOrdersPage`, 5 écrans Flutter |
 | **Jour 6** | **Fonctionnalités Clés : Panier Mystère & Fidélité** | 🟢 **100% Terminé** | Ritej | `MysteryBoxCard` (3 raretés), animation unboxing 5 étapes Framer Motion, carte fidélité éco-digitale (5 tampons, 4 paliers végétaux, portefeuille coupons), 2 modules Flutter natifs |
-| **Jour 7** | **Tableaux de Bord, Impact Éco & Notifications** | ⏳ *À venir* | Ritej | Dashboards Étudiant / Commerçant / Admin, page publique `/impact` |
+| **Jour 7** | **Tableaux de Bord, Impact Éco & Notifications** | 🟢 **100% Terminé** | Ritej | 3 Dashboards par rôle (`Student`, `Merchant` 7d/30d, `Admin`), page publique `/impact`, tuiles EPA/FAO, `FiliereLeaderboard` (5 filières), modale notation 1-5 étoiles, 3 écrans Flutter |
 | **Jour 8** | **Tests d'Intégration, Accessibilité & Gel** | ⏳ *À venir* | Ritej | Tests responsive, audit d'accessibilité WCAG, revue d'ergonomie |
 | **Jour 9** | **Rapport Académique & Vidéo de Démonstration** | ⏳ *À venir* | Ritej | Chapitres I, II, VI du rapport, tournage des séquences UI |
 | **Jour 10** | **Kit de Soutenance & Répétition Orale** | ⏳ *À venir* | Ritej | Support de présentation, fiches Q&A soutenance, filage complet |
@@ -26,6 +26,37 @@
 ---
 
 ## 📝 2. Journal des Livrables Réalisés par Ritej
+
+### Jour 7 — 22 Novembre 2026
+* **Branche & Traçabilité Git :**
+  - Branche : `feat/ritej-day7-dashboards-impact`
+  - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
+  - Message de commit : `feat(dashboards-impact): add student, merchant, and admin analytics dashboards, public campus impact page, filiere leaderboard, and order rating dialog`
+* **Bibliothèque de Graphiques Recharts (`web-react/src/components/charts/`) :**
+  - `KpiCard.jsx` : Tuile KPI modulaire aux accents néon (`#CCFF00`, `#FF5500`, `#00E5FF`, `#A855F7`), badges d'évolution et reflets Dark Obsidian.
+  - `LineChartCard.jsx` : Courbe chronologique vectorielle Recharts (`AreaChart` + dégradé SVG semi-transparent) avec infobulle sombre personnalisée.
+  - `BarChartCard.jsx` : Diagramme en barres avec coins arrondis (`radius={[6, 6, 0, 0]}`) et cellules colorées dynamiques.
+  - `index.js` : Export barrel propre des composants graphiques.
+* **Les 3 Tableaux de Bord par Rôle Web React :**
+  - `web-react/src/features/dashboards/StudentDashboard.jsx` (`/app/dashboard`) : Vue cockpit étudiant avec 5 tuiles KPI (repas, dinars épargnés, kg sauvés, CO₂ évité, EcoPoints), bascule Dinars / CO₂, historique 14 jours, et tableau des dernières commandes avec notation 1-clic.
+  - `web-react/src/features/merchant/MerchantDashboard.jsx` (`/merchant/dashboard`) : Superviseur commerçant avec sélecteur de plage `7 jours | 30 jours`, recettes journalières en barres Recharts, taux de non-présentation et podium du Top 3 des offres sauvées.
+  - `web-react/src/features/admin/AdminDashboard.jsx` (`/admin/dashboard`) : Console d'administration universitaire centralisant le Volume d'Affaires total (GMV), la modération des boutiques partenaires en attente (`storesPending`), et la répartition des membres.
+* **Vitrine d'Impact Public & Challenge Inter-Filières (`web-react/src/features/impact/`) :**
+  - `EquivalenceTiles.jsx` : Traduction rigoureuse des données d'impact selon les standards officiels : recharges complètes de smartphones (US EPA, 8,22 g CO₂), kilomètres en voiture thermique évités (US EPA, 244 g CO₂ / km), et ratio universel FAO 2013 (2,5 kg CO₂e / kg nourriture).
+  - `FiliereLeaderboard.jsx` : Challenge en direct des 5 promotions de l'ESSECT (`3A E-Business`, `Finance`, `Marketing`, `Gestion`, `Comptabilité`) avec médailles 🥇🥈🥉, barres de progression animées et surbrillance de la filière de l'étudiant.
+  - `ImpactDashboardPage.jsx` : Page vitrine publique accessible à l'adresse `/impact` sans authentification préalable pour l'ouverture de la soutenance devant le jury.
+* **Système d'Évaluation 1 à 5 Étoiles :**
+  - `web-react/src/features/orders/RatingDialog.jsx` : Boîte de dialogue avec sélection d'étoiles interactives dorées (`#FFD700`), appréciation contextuelle, zone de commentaire (280 car.) et appel API `POST /api/v1/orders/:id/rating`.
+  - Intégration sur `MyOrdersPage.jsx` et `StudentDashboard.jsx`.
+* **Composants & Écrans Mobiles Flutter Équivalents (`mobile-flutter/lib/`) :**
+  - `widgets/kpi_tile.dart` : Tuile KPI mobile au design Dark Obsidian avec 5 teintes d'accentuation.
+  - `features/dashboards/student_dashboard_screen.dart` : Écran mobile avec `fl_chart` `LineChart`, bascule métrique TND/CO₂ et dialogue natif de notation 1-5 étoiles.
+  - `features/dashboards/merchant_dashboard_screen.dart` : Dashboard commerçant mobile avec `fl_chart` `BarChart` et bascule 7j/30j.
+  - `features/impact/impact_screen.dart` : Écran mobile d'impact écologique avec podium des filières ESSECT.
+  - Câblage des routes dans `router.dart`.
+* **Contrôle Qualité :**
+  - `npm run build` dans `web-react` : **2724 modules compilés avec 0 erreur**.
+  - `npm test` dans `backend-node` : **91/91 tests passés avec succès**.
 
 ### Jour 6 — 21 Novembre 2026
 * **Branche & Traçabilité Git :**
@@ -129,3 +160,9 @@
 | **Carte de Fidélité Éco** | `web-react/src/features/loyalty/LoyaltyCardPage.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/loyalty/me` et `POST /api/v1/orders` (application des coupons) |
 | **Unboxing Mobile** | `mobile-flutter/lib/features/surprise/unboxing_overlay.dart` | 🟢 **Prêt pour le branchement** | Déclenchement automatique sur écran ticket |
 | **Fidélité Mobile** | `mobile-flutter/lib/features/loyalty/loyalty_card_screen.dart` | 🟢 **Prêt pour le branchement** | `GET /api/v1/loyalty/me` |
+| **Dashboard Étudiant** | `web-react/src/features/dashboards/StudentDashboard.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/dashboards/student` |
+| **Dashboard Commerçant** | `web-react/src/features/merchant/MerchantDashboard.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/dashboards/merchant?range=7d\|30d` |
+| **Dashboard Admin** | `web-react/src/features/admin/AdminDashboard.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/dashboards/admin` |
+| **Impact Public & Filières** | `web-react/src/features/impact/ImpactDashboardPage.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/impact/global` et `GET /api/v1/impact/filieres` |
+| **Évaluation Commandes** | `web-react/src/features/orders/RatingDialog.jsx` | 🟢 **Prêt pour le branchement** | `POST /api/v1/orders/:id/rating` |
+| **Dashboards & Impact Mobile** | `mobile-flutter/lib/features/dashboards/` & `impact/` | 🟢 **Prêt pour le branchement** | `GET /api/v1/dashboards/*` et `GET /api/v1/impact/*` |

@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import OrderRow from './OrderRow.jsx';
 import UnboxingReveal from '../surprise/UnboxingReveal.jsx';
+import RatingDialog from './RatingDialog.jsx';
 import { EmptyState, Spinner } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 
@@ -58,6 +59,13 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ACTIVE'); // 'ACTIVE', 'COMPLETED', 'ARCHIVED'
   const [unboxingOrder, setUnboxingOrder] = useState(null);
+  const [ratingOrder, setRatingOrder] = useState(null);
+
+  const handleRatingSuccess = ({ orderId, rating }) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, rating } : o))
+    );
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -198,7 +206,11 @@ export default function MyOrdersPage() {
         ) : (
           <div className="space-y-3">
             {filteredOrders.map((order) => (
-              <OrderRow key={order.id} order={order} />
+              <OrderRow
+                key={order.id}
+                order={order}
+                onRate={(o) => setRatingOrder(o)}
+              />
             ))}
           </div>
         )}
@@ -207,6 +219,13 @@ export default function MyOrdersPage() {
           isOpen={Boolean(unboxingOrder)}
           onClose={() => setUnboxingOrder(null)}
           order={unboxingOrder}
+        />
+        {/* Modal Notation Étoiles */}
+        <RatingDialog
+          isOpen={Boolean(ratingOrder)}
+          onClose={() => setRatingOrder(null)}
+          order={ratingOrder}
+          onSuccess={handleRatingSuccess}
         />
       </div>
     </div>
