@@ -5,13 +5,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'app/app.dart';
 import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // L'initialisation complète Firebase sera finalisée avec les credentials du projet
+  // Initialisation sécurisée de Firebase avec options de campussave-dev et repli automatique
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('⚠️ Initialisation Firebase ignorée / mode démo local : $e');
+  }
+
   runApp(
     MultiProvider(
       providers: [
