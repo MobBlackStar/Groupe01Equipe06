@@ -1,0 +1,121 @@
+# CampusSave — Git Ignore Configuration
+# Projet intégrateur ESSECT 3ème année E-Business
+
+# ==============================================================================
+# SECRETS, CREDENTIALS & SENSITIVE CONFIGURATION (CRITICAL: NEVER COMMIT)
+# ==============================================================================
+.env
+.env.*
+!.env.example
+*.local
+
+# Firebase service accounts and configuration
+serviceAccount*.json
+*serviceAccount*.json
+*service-account*.json
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+.firebaserc
+!.firebaserc.example
+
+# Mobile Firebase configuration containing private app IDs
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+!firebase_options.example.dart
+
+# ==============================================================================
+# AI ASSISTANTS, AGENTS & LOCAL WORKSPACE RULES (STEALTH MODE)
+# ==============================================================================
+.agent/
+.agents/
+.antigravity/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+.copilot/
+specs-and-plans/
+
+# ==============================================================================
+# NODE.JS & JAVASCRIPT DEPENDENCIES / LOGS
+# ==============================================================================
+node_modules/
+**/node_modules/
+jspm_packages/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+.npm/
+
+# ==============================================================================
+# BUILD OUTPUTS & CACHES
+# ==============================================================================
+dist/
+**/dist/
+dist-ssr/
+build/
+**/build/
+.vite/
+**/.vite/
+.cache/
+.parcel-cache/
+coverage/
+.nyc_output/
+
+# ==============================================================================
+# FLUTTER & DART ARTIFACTS
+# ==============================================================================
+.dart_tool/
+**/.dart_tool/
+.flutter-plugins
+**/.flutter-plugins
+.flutter-plugins-dependencies
+**/.flutter-plugins-dependencies
+.packages
+**/.packages
+ios/Flutter/Generated.xcconfig
+**/ios/Flutter/Generated.xcconfig
+ios/Flutter/app.framework
+**/ios/Flutter/app.framework
+ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+**/ios/Flutter/Flutter.podspec
+ios/Pods/
+**/ios/Pods/
+android/.gradle/
+**/android/.gradle/
+android/app/build/
+**/android/app/build/
+android/local.properties
+**/android/local.properties
+android/GeneratedPluginRegistrant.java
+**/android/GeneratedPluginRegistrant.java
+**/.gradle/
+
+# ==============================================================================
+# IDE & OPERATING SYSTEM JUNK
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+.idea/
+**/.idea/
+*.iml
+**/*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~

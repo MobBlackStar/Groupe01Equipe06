@@ -1,0 +1,17 @@
+{
+  "name": "campussave-shared",
+  "version": "1.0.0",
+  "description": "Logique métier et algorithmes partagés pour le projet CampusSave",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test __tests__/*.test.js"
+  },
+  "keywords": [
+    "campussave",
+    "essect",
+    "shared-domain"
+  ],
+  "author": "CampusSave Team",
+  "license": "ISC"
+}

@@ -1,0 +1,147 @@
+---
+title: "Diagramme de classes — vue 3/3 : commandes, paiement et retrait"
+---
+classDiagram
+    direction TB
+
+    class Order {
+        +orderId : String
+        +orderCode : String
+        +quantity : Integer
+        +originalUnitPriceMillimes : Integer
+        +lockedUnitPriceMillimes : Integer
+        +priceLockedAt : Timestamp
+        +subtotalMillimes : Integer
+        +totalMillimes : Integer
+        +savedMillimes : Integer
+        +status : OrderStatus
+        +reservationExpiresAt : Timestamp
+        +markPaid(source : String) void
+        +complete(scanner : MerchantAccount, method : PickupMethod) void
+        +cancel() void
+        +expire() void
+    }
+    class Payment {
+        <<datatype>>
+        +provider : PaymentProvider
+        +status : PaymentStatus
+        +paymentRef : String [0..1]
+        +payUrl : String [0..1]
+        +amountMillimes : Integer
+        +attempts : Integer
+        +confirmedVia : String [0..1]
+        +completedAt : Timestamp [0..1]
+    }
+    class LivingTicket {
+        +version : Integer
+        +nonce : String
+        +issuedAt : Timestamp
+        +windowSeconds : Integer
+        +deriveKey(secret : String) Bytes
+        +payloadFor(window : Integer) String
+        +verify(payload : String, now : Timestamp) Boolean
+    }
+    class Pickup {
+        <<datatype>>
+        +scannedAt : Timestamp [0..1]
+        +method : PickupMethod [0..1]
+        +failedAttempts : Integer
+    }
+    class Reveal {
+        <<datatype>>
+        +note : String [0..1]
+        +revealedAt : Timestamp
+    }
+    class Item {
+        <<datatype>>
+        +name : String
+        +qty : Integer
+    }
+    class OrderRewards {
+        <<datatype>>
+        +pointsAwarded : Integer
+        +tierBefore : LoyaltyTier
+        +tierAfter : LoyaltyTier
+    }
+    class Rating {
+        <<datatype>>
+        +stars : Integer
+        +comment : String [0..1]
+        +ratedAt : Timestamp
+    }
+    class StatusChange {
+        <<datatype>>
+        +status : OrderStatus
+        +at : Timestamp
+        +by : String
+    }
+    class PaymentEvent {
+        +paymentRef : String
+        +source : String
+        +konnectStatus : String
+        +outcome : String
+        +receivedAt : Timestamp
+    }
+    class OrderStatus {
+        <<enumeration>>
+        RESERVED
+        PAID
+        COMPLETED
+        CANCELLED
+        EXPIRED
+        PAYMENT_FAILED
+        NO_SHOW
+    }
+    class PaymentStatus {
+        <<enumeration>>
+        NOT_STARTED
+        INITIATED
+        COMPLETED
+        FAILED
+        EXPIRED
+    }
+    class PaymentProvider {
+        <<enumeration>>
+        KONNECT
+        REWARD
+    }
+    class PickupMethod {
+        <<enumeration>>
+        QR
+        MANUAL_CODE
+    }
+
+    class Student {
+        <<voir 05a>>
+    }
+    class Reward {
+        <<voir 05a>>
+    }
+    class CampusImpact {
+        <<voir 05a>>
+    }
+    class Filiere {
+        <<voir 05a>>
+    }
+    class Store {
+        <<voir 05b>>
+    }
+    class Offer {
+        <<voir 05b>>
+    }
+
+    Student "1" -- "0..*" Order : passe
+    Offer "1" -- "0..*" Order : concerne
+    Store "1" -- "0..*" Order : traite
+    Order "1" *-- "1" Payment : payment
+    Order "1" *-- "0..1" LivingTicket : ticket
+    Order "1" *-- "1" Pickup : pickup
+    Order "1" *-- "0..1" Reveal : reveal
+    Reveal "1" *-- "1..10" Item : items
+    Order "1" *-- "0..1" OrderRewards : rewards
+    Order "1" *-- "0..1" Rating : rating
+    Order "1" *-- "1..12" StatusChange : statusHistory
+    Order "0..1" --> "0..1" Reward : applique
+    Order "1" -- "0..*" PaymentEvent : journalisé par
+    Order ..> CampusImpact : «incrémente»
+    Order ..> Filiere : «incrémente»

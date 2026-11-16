@@ -1,0 +1,190 @@
+@startuml 05b-classes-commerces-offres
+!include _style.iuml
+skinparam nodesep 30
+skinparam ranksep 45
+title Diagramme de classes — vue 2/3 : commerces et offres
+hide <<voir 05a>> members
+hide <<voir 05c>> members
+skinparam class {
+  BackgroundColor<<voir 05a>> #F3F4F6
+  BackgroundColor<<voir 05c>> #F3F4F6
+  BorderColor<<voir 05a>> #9CA3AF
+  BorderColor<<voir 05c>> #9CA3AF
+}
+
+package "Commerces" {
+  class Store {
+    + merchantId : String
+    + name : String
+    + type : MerchantType
+    + description : String [0..1]
+    + phone : String
+    + location : GeoPoint
+    + distanceFromEssectM : Integer
+    + status : MerchantStatus
+    + statusReason : String [0..1]
+    + ratingAvg : Real
+    + ratingCount : Integer
+    + activeOfferCount : Integer
+    + approve(admin : Administrator) : void
+    + reject(admin : Administrator, reason : String) : void
+    + addRating(stars : Integer) : void
+  }
+  class GeoPoint <<datatype>> {
+    + lat : Real
+    + lng : Real
+    + geohash : String
+  }
+  class MerchantStats <<datatype>> {
+    + offersPublished : Integer
+    + ordersPaid : Integer
+    + ordersCompleted : Integer
+    + noShows : Integer
+    + revenueMillimes : Integer
+    + mealsRescued : Integer
+    + foodSavedGrams : Integer
+  }
+  class DailyMerchantStat {
+    + date : String
+    + ordersPaid : Integer
+    + ordersCompleted : Integer
+    + revenueMillimes : Integer
+  }
+  enum MerchantStatus <<enumeration>> {
+    PENDING
+    APPROVED
+    REJECTED
+    SUSPENDED
+  }
+  enum MerchantType <<enumeration>> {
+    RESTAURANT
+    CAFETERIA
+    BOULANGERIE
+    FAST_FOOD
+    PATISSERIE
+  }
+}
+
+package "Offres" {
+  class Offer {
+    + offerId : String
+    + title : String
+    + description : String
+    + category : Category
+    + searchKeywords : String [*]
+    + photoUrl : String [0..1]
+    + originalPriceMillimes : Integer
+    + quantityTotal : Integer
+    + quantityAvailable : Integer
+    + quantitySold : Integer
+    + maxPerOrder : Integer
+    + pickupStartAt : Timestamp
+    + pickupEndAt : Timestamp
+    + isSurpriseBasket : Boolean
+    + weightGramsPerUnit : Integer
+    + co2GramsPerUnit : Integer
+    + status : OfferStatus
+    + hasOrders : Boolean
+    + currentPrice(now : Timestamp) : Integer
+    + canReserve(qty : Integer, now : Timestamp) : Boolean
+  }
+  abstract class PricingPolicy {
+    + roundingStepMillimes : Integer
+    + {abstract} unitPriceAt(now : Timestamp, pickupEnd : Timestamp) : Integer
+  }
+  class FixedPricing {
+    + discountedPriceMillimes : Integer
+    + unitPriceAt(now : Timestamp, pickupEnd : Timestamp) : Integer
+  }
+  class DutchAuctionPricing {
+    + startPriceMillimes : Integer
+    + floorPriceMillimes : Integer
+    + decayStartAt : Timestamp
+    + unitPriceAt(now : Timestamp, pickupEnd : Timestamp) : Integer
+  }
+  class SurpriseDetails <<datatype>> {
+    + rarity : Rarity
+    + rarityScore : Real
+    + teaser : String
+    + itemCountHint : Integer
+  }
+  class Item <<datatype>> {
+    + name : String
+    + qty : Integer
+  }
+  class AiProvenance <<datatype>> {
+    + generated : Boolean
+    + rawNote : String [0..1]
+    + model : String [0..1]
+    + source : AiSource
+    + editedByMerchant : Boolean
+  }
+  class AiAutoFillService <<service>> {
+    + suggest(rawNote : String, closingTime : String [0..1]) : AiSuggestion
+    - callLlm(rawNote : String) : AiSuggestion
+    - fallbackParse(rawNote : String) : AiSuggestion
+  }
+  enum Category <<enumeration>> {
+    SANDWICH
+    PLAT_CHAUD
+    PIZZA
+    PATISSERIE
+    VIENNOISERIE
+    SALADE
+    BOISSON
+    SNACK
+    MIXTE
+  }
+  enum OfferStatus <<enumeration>> {
+    ACTIVE
+    SOLD_OUT
+    EXPIRED
+    DELETED
+  }
+  enum Rarity <<enumeration>> {
+    COMMON
+    RARE
+    LEGENDARY
+  }
+  enum AiSource <<enumeration>> {
+    LLM
+    FALLBACK
+    NONE
+  }
+}
+
+class MerchantAccount <<voir 05a>>
+class Administrator <<voir 05a>>
+class Order <<voir 05c>>
+
+MerchantAccount "1" -- "0..1" Store : possède >
+Administrator "0..1" -- "0..*" Store : valide >
+Store "1" *-- "1" GeoPoint : location
+Store "1" *-- "1" MerchantStats : stats
+Store "1" *-- "0..*" DailyMerchantStat : daily
+Store "1" -- "0..*" Offer : publie >
+
+Offer "1" *-- "1" PricingPolicy : pricing
+PricingPolicy <|-- FixedPricing
+PricingPolicy <|-- DutchAuctionPricing
+Offer "1" *-- "0..1" SurpriseDetails : surprise
+SurpriseDetails "1" *-- "1..10" Item : contenu caché
+Offer "1" *-- "1" AiProvenance : ai
+AiAutoFillService ..> Offer : <<create>>
+
+Offer "1" -- "0..*" Order : concerne <
+Store "1" -- "0..*" Order : traite >
+
+note right of DutchAuctionPricing
+  Prix dégressif (Smart Decay) :
+  max(plancher, départ − (départ − plancher)
+  × progression), arrondi au pas inférieur.
+  Aucune écriture en base pendant la baisse.
+end note
+' --- mise en page verticale (liens invisibles) ---
+MerchantStatus -[hidden]down- MerchantType
+Category -[hidden]down- OfferStatus
+OfferStatus -[hidden]down- Rarity
+Rarity -[hidden]down- AiSource
+MerchantStats -[hidden]down- Offer
+@enduml

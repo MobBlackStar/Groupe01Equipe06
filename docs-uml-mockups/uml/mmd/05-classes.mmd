@@ -1,0 +1,413 @@
+---
+title: Diagramme de classes du domaine — CampusSave
+---
+classDiagram
+    direction TB
+
+    class Role {
+        <<enumeration>>
+        STUDENT
+        MERCHANT
+        ADMIN
+    }
+    class AccountStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+    }
+    class LoyaltyTier {
+        <<enumeration>>
+        GRAINE
+        POUSSE
+        ARBRE
+        FORET
+    }
+    class RewardType {
+        <<enumeration>>
+        PERCENT_OFF
+        FREE_SURPRISE
+    }
+    class RewardStatus {
+        <<enumeration>>
+        AVAILABLE
+        LOCKED
+        USED
+        EXPIRED
+    }
+    class MerchantStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+        SUSPENDED
+    }
+    class MerchantType {
+        <<enumeration>>
+        RESTAURANT
+        CAFETERIA
+        BOULANGERIE
+        FAST_FOOD
+        PATISSERIE
+    }
+    class Category {
+        <<enumeration>>
+        SANDWICH
+        PLAT_CHAUD
+        PIZZA
+        PATISSERIE
+        VIENNOISERIE
+        SALADE
+        BOISSON
+        SNACK
+        MIXTE
+    }
+    class OfferStatus {
+        <<enumeration>>
+        ACTIVE
+        SOLD_OUT
+        EXPIRED
+        DELETED
+    }
+    class Rarity {
+        <<enumeration>>
+        COMMON
+        RARE
+        LEGENDARY
+    }
+    class AiSource {
+        <<enumeration>>
+        LLM
+        FALLBACK
+        NONE
+    }
+    class OrderStatus {
+        <<enumeration>>
+        RESERVED
+        PAID
+        COMPLETED
+        CANCELLED
+        EXPIRED
+        PAYMENT_FAILED
+        NO_SHOW
+    }
+    class PaymentStatus {
+        <<enumeration>>
+        NOT_STARTED
+        INITIATED
+        COMPLETED
+        FAILED
+        EXPIRED
+    }
+    class PaymentProvider {
+        <<enumeration>>
+        KONNECT
+        REWARD
+    }
+    class PickupMethod {
+        <<enumeration>>
+        QR
+        MANUAL_CODE
+    }
+
+    class User {
+        <<abstract>>
+        +uid : String
+        +email : String
+        +displayName : String
+        +phone : String [0..1]
+        +avatarUrl : String [0..1]
+        +role : Role
+        +status : AccountStatus
+        +fcmTokens : String [0..10]
+        +createdAt : Timestamp
+        +updateProfile(data : ProfileData) void
+        +registerFcmToken(token : String) void
+    }
+    class Student {
+        +filiereId : String [0..1]
+        +ecoPoints : Integer
+        +loyaltyTier : LoyaltyTier
+        +nextRewardAt : Integer
+        +totalMealsRescued : Integer
+        +reserve(offer : Offer, qty : Integer, reward : Reward) Order
+        +cancel(order : Order) void
+        +rate(order : Order, stars : Integer, comment : String) void
+    }
+    class MerchantAccount {
+        +merchantId : String
+        +registerStore(data : StoreData) Store
+        +publishOffer(data : OfferData) Offer
+        +validatePickup(qrPayload : String) Order
+    }
+    class Administrator {
+        +approveStore(store : Store) void
+        +rejectStore(store : Store, reason : String) void
+        +suspendUser(user : User, reason : String) void
+    }
+    class StudentStats {
+        <<datatype>>
+        +ordersCompleted : Integer
+        +totalSpentMillimes : Integer
+        +totalSavedMillimes : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +noShows : Integer
+    }
+    class Reward {
+        +rewardId : String
+        +milestone : Integer
+        +type : RewardType
+        +percentOff : Integer [0..1]
+        +maxDiscountMillimes : Integer
+        +status : RewardStatus
+        +unlockedAt : Timestamp
+        +expiresAt : Timestamp
+        +discountFor(subtotal : Integer) Integer
+        +isUsable(now : Timestamp) Boolean
+    }
+    class LoyaltyEngine {
+        <<service>>
+        +pointsFor(order : Order, firstOrder : Boolean)$ Integer
+        +tierFor(points : Integer)$ LoyaltyTier
+        +milestonesCrossed(before : Integer, after : Integer)$ Integer[]
+    }
+    class Filiere {
+        +filiereId : String
+        +label : String
+        +studentsCount : Integer
+        +mealsRescued : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +ecoPointsTotal : Integer
+    }
+    class CampusImpact {
+        +ordersCompleted : Integer
+        +mealsRescued : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +moneySavedMillimes : Integer
+        +studentsParticipating : Integer
+        +merchantsParticipating : Integer
+        +equivalences() Equivalences
+    }
+    class DailyImpact {
+        +date : String
+        +ordersCompleted : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +moneySavedMillimes : Integer
+    }
+    class GeoPoint {
+        <<datatype>>
+        +lat : Real
+        +lng : Real
+        +geohash : String
+    }
+    class Store {
+        +merchantId : String
+        +name : String
+        +type : MerchantType
+        +description : String [0..1]
+        +phone : String
+        +location : GeoPoint
+        +distanceFromEssectM : Integer
+        +status : MerchantStatus
+        +statusReason : String [0..1]
+        +ratingAvg : Real
+        +ratingCount : Integer
+        +activeOfferCount : Integer
+        +approve(admin : Administrator) void
+        +reject(admin : Administrator, reason : String) void
+        +addRating(stars : Integer) void
+    }
+    class MerchantStats {
+        <<datatype>>
+        +offersPublished : Integer
+        +ordersPaid : Integer
+        +ordersCompleted : Integer
+        +noShows : Integer
+        +revenueMillimes : Integer
+        +mealsRescued : Integer
+        +foodSavedGrams : Integer
+    }
+    class DailyMerchantStat {
+        +date : String
+        +ordersPaid : Integer
+        +ordersCompleted : Integer
+        +revenueMillimes : Integer
+    }
+    class Offer {
+        +offerId : String
+        +title : String
+        +description : String
+        +category : Category
+        +searchKeywords : String[]
+        +photoUrl : String [0..1]
+        +originalPriceMillimes : Integer
+        +quantityTotal : Integer
+        +quantityAvailable : Integer
+        +quantitySold : Integer
+        +maxPerOrder : Integer
+        +pickupStartAt : Timestamp
+        +pickupEndAt : Timestamp
+        +isSurpriseBasket : Boolean
+        +weightGramsPerUnit : Integer
+        +co2GramsPerUnit : Integer
+        +status : OfferStatus
+        +hasOrders : Boolean
+        +currentPrice(now : Timestamp) Integer
+        +canReserve(qty : Integer, now : Timestamp) Boolean
+    }
+    class PricingPolicy {
+        <<abstract>>
+        +roundingStepMillimes : Integer
+        +unitPriceAt(now : Timestamp, pickupEnd : Timestamp)* Integer
+    }
+    class FixedPricing {
+        +discountedPriceMillimes : Integer
+        +unitPriceAt(now : Timestamp, pickupEnd : Timestamp) Integer
+    }
+    class DutchAuctionPricing {
+        +startPriceMillimes : Integer
+        +floorPriceMillimes : Integer
+        +decayStartAt : Timestamp
+        +unitPriceAt(now : Timestamp, pickupEnd : Timestamp) Integer
+    }
+    class SurpriseDetails {
+        <<datatype>>
+        +rarity : Rarity
+        +rarityScore : Real
+        +teaser : String
+        +itemCountHint : Integer
+    }
+    class Item {
+        <<datatype>>
+        +name : String
+        +qty : Integer
+    }
+    class AiProvenance {
+        <<datatype>>
+        +generated : Boolean
+        +rawNote : String [0..1]
+        +model : String [0..1]
+        +source : AiSource
+        +editedByMerchant : Boolean
+    }
+    class AiAutoFillService {
+        <<service>>
+        +suggest(rawNote : String, closingTime : String) AiSuggestion
+        -callLlm(rawNote : String) AiSuggestion
+        -fallbackParse(rawNote : String) AiSuggestion
+    }
+    class Order {
+        +orderId : String
+        +orderCode : String
+        +quantity : Integer
+        +originalUnitPriceMillimes : Integer
+        +lockedUnitPriceMillimes : Integer
+        +priceLockedAt : Timestamp
+        +subtotalMillimes : Integer
+        +totalMillimes : Integer
+        +savedMillimes : Integer
+        +status : OrderStatus
+        +reservationExpiresAt : Timestamp
+        +markPaid(source : String) void
+        +complete(scanner : MerchantAccount, method : PickupMethod) void
+        +cancel() void
+        +expire() void
+    }
+    class Payment {
+        <<datatype>>
+        +provider : PaymentProvider
+        +status : PaymentStatus
+        +paymentRef : String [0..1]
+        +payUrl : String [0..1]
+        +amountMillimes : Integer
+        +attempts : Integer
+        +confirmedVia : String [0..1]
+        +completedAt : Timestamp [0..1]
+    }
+    class LivingTicket {
+        +version : Integer
+        +nonce : String
+        +issuedAt : Timestamp
+        +windowSeconds : Integer
+        +deriveKey(secret : String) Bytes
+        +payloadFor(window : Integer) String
+        +verify(payload : String, now : Timestamp) Boolean
+    }
+    class Pickup {
+        <<datatype>>
+        +scannedAt : Timestamp [0..1]
+        +method : PickupMethod [0..1]
+        +failedAttempts : Integer
+    }
+    class Reveal {
+        <<datatype>>
+        +note : String [0..1]
+        +revealedAt : Timestamp
+    }
+    class OrderRewards {
+        <<datatype>>
+        +pointsAwarded : Integer
+        +tierBefore : LoyaltyTier
+        +tierAfter : LoyaltyTier
+    }
+    class Rating {
+        <<datatype>>
+        +stars : Integer
+        +comment : String [0..1]
+        +ratedAt : Timestamp
+    }
+    class StatusChange {
+        <<datatype>>
+        +status : OrderStatus
+        +at : Timestamp
+        +by : String
+    }
+    class PaymentEvent {
+        +paymentRef : String
+        +source : String
+        +konnectStatus : String
+        +outcome : String
+        +receivedAt : Timestamp
+    }
+
+    User <|-- Student
+    User <|-- MerchantAccount
+    User <|-- Administrator
+    PricingPolicy <|-- FixedPricing
+    PricingPolicy <|-- DutchAuctionPricing
+
+    Student "1" *-- "1" StudentStats : stats
+    Student "1" *-- "0..20" Reward : unlockedRewards
+    Student "0..*" --> "0..1" Filiere : appartient à
+    LoyaltyEngine ..> Student : «use»
+
+    MerchantAccount "1" -- "0..1" Store : possède
+    Administrator "0..1" -- "0..*" Store : valide
+    Store "1" *-- "1" MerchantStats : stats
+    Store "1" *-- "0..*" DailyMerchantStat : daily
+    Store "1" -- "0..*" Offer : publie
+    Offer "1" *-- "1" PricingPolicy : pricing
+    Offer "1" *-- "0..1" SurpriseDetails : surprise
+    SurpriseDetails "1" *-- "1..10" Item : contenu caché
+    Offer "1" *-- "1" AiProvenance : ai
+    AiAutoFillService ..> Offer : «create»
+
+    Student "1" -- "0..*" Order : passe
+    Offer "1" -- "0..*" Order : concerne
+    Store "1" -- "0..*" Order : traite
+    Order "1" *-- "1" Payment : payment
+    Order "1" *-- "0..1" LivingTicket : ticket
+    Order "1" *-- "1" Pickup : pickup
+    Order "1" *-- "0..1" Reveal : reveal
+    Reveal "1" *-- "1..10" Item : items
+    Order "1" *-- "0..1" OrderRewards : rewards
+    Order "1" *-- "0..1" Rating : rating
+    Order "1" *-- "1..12" StatusChange : statusHistory
+    Order "0..1" --> "0..1" Reward : applique
+    Order "1" -- "0..*" PaymentEvent : journalisé par
+    Order ..> CampusImpact : «incrémente»
+    Order ..> Filiere : «incrémente»
+    CampusImpact "1" *-- "0..*" DailyImpact : daily

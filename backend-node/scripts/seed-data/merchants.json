@@ -1,0 +1,88 @@
+{
+  "_guide_demonstration": {
+    "concept": "🧠 Concept : Ce fichier est le garde-manger de notre démonstration. Il contient les commerces réels du quartier de Montfleury entourant l'ESSECT, avec leurs spécialités et leurs prix réels en Dinars Tunisiens.",
+    "react_vs_flutter": "🔄 React vs Flutter : Ces données alimentent le radar 3D Web, la carte mobile Flutter et le catalogue initial partagé.",
+    "pour_la_soutenance": "🎯 Pour la soutenance : 'Nous avons cartographié 6 établissements réels situés dans un rayon piéton de 1.5 km autour de l'ESSECT pour démontrer l'ancrage local immédiat de la solution.'",
+    "instructions_demonstration": "l'équipe UI : Tu peux ajuster les plats, photos ou descriptions de ces 6 commerces. Veille simplement à ce que les coordonnées GPS restent à moins de 1500 m de l'ESSECT (lat: 36.7871, lng: 10.1748)."
+  },
+  "merchants": [
+    {
+      "name": "Baguette & Baguette Montfleury",
+      "type": "FAST_FOOD",
+      "description": "Sandwicherie rapide et baguettes farcies croustillantes appréciées des étudiants de l'ESSECT.",
+      "phone": "+21671390111",
+      "address": { "street": "Avenue Habib Bourguiba, Montfleury", "area": "Montfleury", "city": "Tunis" },
+      "location": { "lat": 36.7885, "lng": 10.1762, "geohash": "snx0z8e12" },
+      "distanceFromEssectM": 210,
+      "items": [
+        { "name": "Baguette Farcie Escalope", "originalTND": 7.5, "weightGrams": 400 },
+        { "name": "Makloub Chawarma", "originalTND": 6.8, "weightGrams": 350 }
+      ]
+    },
+    {
+      "name": "Cafétéria L'Étoile du Savoir",
+      "type": "CAFETERIA",
+      "description": "Le spot café incontournable des révisions avec viennoiseries du matin et jus frais.",
+      "phone": "+21671390222",
+      "address": { "street": "Rue de l'ESSECT", "area": "Montfleury", "city": "Tunis" },
+      "location": { "lat": 36.7865, "lng": 10.1739, "geohash": "snx0z8c45" },
+      "distanceFromEssectM": 120,
+      "items": [
+        { "name": "Croissant Beurre & Café Express", "originalTND": 3.2, "weightGrams": 150 },
+        { "name": "Pain au chocolat artisanal", "originalTND": 1.8, "weightGrams": 90 }
+      ]
+    },
+    {
+      "name": "Pâtisserie Masmoudi Montfleury",
+      "type": "PATISSERIE",
+      "description": "Finesse des pâtisseries traditionnelles tunisiennes et douceurs modernes.",
+      "phone": "+21671390333",
+      "address": { "street": "Rue de la République", "area": "Montfleury", "city": "Tunis" },
+      "location": { "lat": 36.7892, "lng": 10.1725, "geohash": "snx0z8b99" },
+      "distanceFromEssectM": 340,
+      "items": [
+        { "name": "Boîte Assortiment Makroudh & Kaak Warka", "originalTND": 12.0, "weightGrams": 300 },
+        { "name": "Mignardises Sucrées du Soir", "originalTND": 9.5, "weightGrams": 250 }
+      ]
+    },
+    {
+      "name": "Restaurant Le Dôme Montfleury",
+      "type": "RESTAURANT",
+      "description": "Plats chauds traditionnels tunisiens et menus complets du midi.",
+      "phone": "+21671390444",
+      "address": { "street": "Avenue Taha Hussein", "area": "Montfleury", "city": "Tunis" },
+      "location": { "lat": 36.7848, "lng": 10.1771, "geohash": "snx0z8f77" },
+      "distanceFromEssectM": 410,
+      "items": [
+        { "name": "Plat Ojja Merguez Vapeur", "originalTND": 8.5, "weightGrams": 450 },
+        { "name": "Couscous Poisson du Jour", "originalTND": 11.0, "weightGrams": 500 }
+      ]
+    },
+    {
+      "name": "Pizzeria Bella Napoli",
+      "type": "RESTAURANT",
+      "description": "Pizzas au feu de bois avec pâte maison et garnitures généreuses.",
+      "phone": "+21671390555",
+      "address": { "street": "Boulevard du 9 Avril", "area": "Montfleury", "city": "Tunis" },
+      "location": { "lat": 36.7915, "lng": 10.1710, "geohash": "snx0z8988" },
+      "distanceFromEssectM": 620,
+      "items": [
+        { "name": "Pizza Quatre Saisons", "originalTND": 9.0, "weightGrams": 550 },
+        { "name": "Pizza Thon & Fromage", "originalTND": 8.0, "weightGrams": 500 }
+      ]
+    },
+    {
+      "name": "Fast Food Le Phare",
+      "type": "FAST_FOOD",
+      "description": "Chapatis el Mahdia et Mlewis chauds préparés à la minute.",
+      "phone": "+21671390666",
+      "address": { "street": "Rue Ibn Jazzar", "area": "Montfleury", "city": "Tunis" },
+      "location": { "lat": 36.7831, "lng": 10.1722, "geohash": "snx0z8733" },
+      "distanceFromEssectM": 530,
+      "items": [
+        { "name": "Chapati Spécial Mahdia", "originalTND": 5.5, "weightGrams": 320 },
+        { "name": "Mlewi Thon & Fromage", "originalTND": 4.2, "weightGrams": 220 }
+      ]
+    }
+  ]
+}

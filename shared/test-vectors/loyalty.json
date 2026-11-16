@@ -1,0 +1,41 @@
+{
+  "description": "Vecteurs de test pour les calculs de points de fidélité, paliers et tampons (Calcul de fidélité EcoPoints)",
+  "testCases": [
+    {
+      "id": "single_order_standard",
+      "params": { "quantity": 1, "isSurpriseBasket": false },
+      "expectedPoints": 20,
+      "expectedTier": "GRAINE"
+    },
+    {
+      "id": "first_order_welcome_bonus",
+      "params": { "quantity": 1, "isSurpriseBasket": false, "isFirstCompletedOrder": true },
+      "expectedPoints": 50,
+      "expectedTier": "GRAINE"
+    },
+    {
+      "id": "surprise_legendary_bonus",
+      "params": { "quantity": 1, "isSurpriseBasket": true, "rarity": "LEGENDARY" },
+      "expectedPoints": 70,
+      "expectedTier": "GRAINE"
+    },
+    {
+      "id": "tier_pousse_threshold",
+      "ecoPoints": 100,
+      "expectedTier": "POUSSE",
+      "expectedStamps": 0
+    },
+    {
+      "id": "tier_arbre_threshold",
+      "ecoPoints": 300,
+      "expectedTier": "ARBRE",
+      "expectedStamps": 0
+    },
+    {
+      "id": "tier_foret_threshold",
+      "ecoPoints": 600,
+      "expectedTier": "FORET",
+      "expectedStamps": 0
+    }
+  ]
+}

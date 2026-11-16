@@ -1,0 +1,48 @@
+' Shared visual style for every CampusSave UML diagram (UML 2.5 notation, StarUML-like look)
+!theme plain
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundCorner 8
+skinparam ArrowColor #1F2937
+skinparam ArrowFontSize 11
+skinparam ArrowFontColor #374151
+skinparam TitleFontSize 18
+skinparam TitleFontStyle bold
+skinparam TitleFontColor #111827
+skinparam FooterFontSize 10
+skinparam FooterFontColor #6B7280
+skinparam actorBorderColor #111827
+skinparam actorBackgroundColor #FFFFFF
+skinparam actorFontStyle bold
+skinparam usecaseBorderColor #1E3A8A
+skinparam usecaseBackgroundColor #EFF6FF
+skinparam rectangleBorderColor #111827
+skinparam rectangleBorderThickness 1.5
+skinparam rectangleFontStyle bold
+skinparam packageBorderColor #6B7280
+skinparam packageFontStyle bold
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #1F2937
+skinparam classHeaderBackgroundColor #EEF2FF
+skinparam stereotypeCBackgroundColor #FDE68A
+skinparam stereotypeEBackgroundColor #BBF7D0
+skinparam stereotypeABackgroundColor #E9D5FF
+skinparam enumBackgroundColor #F0FDF4
+skinparam sequenceLifeLineBorderColor #9CA3AF
+skinparam sequenceParticipantBackgroundColor #F3F4F6
+skinparam sequenceParticipantBorderColor #1F2937
+skinparam sequenceGroupBorderColor #6B7280
+skinparam sequenceGroupHeaderFontStyle bold
+skinparam sequenceDividerBackgroundColor #E5E7EB
+skinparam sequenceReferenceBackgroundColor #F9FAFB
+skinparam sequenceBoxBorderColor #D1D5DB
+skinparam stateBackgroundColor #F9FAFB
+skinparam stateBorderColor #1F2937
+skinparam nodeBackgroundColor #F9FAFB
+skinparam databaseBackgroundColor #FEF3C7
+skinparam noteBackgroundColor #FFFBEB
+skinparam noteBorderColor #D97706
+skinparam noteFontSize 11
+footer CampusSave · ESSECT 3A E-Business · 2026

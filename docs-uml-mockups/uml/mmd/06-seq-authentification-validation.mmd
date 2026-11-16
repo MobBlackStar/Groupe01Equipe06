@@ -1,0 +1,87 @@
+---
+title: Diagramme de séquence 1 — Inscription, authentification et validation d'un commerce (M1, M2)
+---
+sequenceDiagram
+    autonumber
+    actor M as Commerçant
+    participant APP as Application React / Flutter
+    participant FA as Firebase Authentication
+    participant API as API Node.js / Express
+    participant FS as Cloud Firestore
+    participant FCM as Firebase Cloud Messaging
+    participant ADM as Console admin React
+    actor A as Administrateur
+
+    rect rgb(243, 244, 246)
+    Note over M,FCM: Inscription (M1)
+    M->>+APP: remplir le formulaire (e-mail, mot de passe, rôle Commerçant, nom, téléphone)
+    APP->>APP: valider les champs (Zod / validators)
+    APP->>+FA: createUserWithEmailAndPassword(email, mdp)
+    FA-->>-APP: UserCredential (uid, idToken sans rôle)
+    APP->>+API: POST /auth/register-profile {role: MERCHANT} + Bearer idToken
+    API->>+FA: verifyIdToken(idToken, checkRevoked)
+    FA-->>-API: uid, email
+    API->>API: valider le corps (Zod), rôle dans {STUDENT, MERCHANT}
+    alt profil déjà existant
+        API-->>APP: 409 PROFILE_EXISTS
+    else nouveau profil
+        API->>FS: créer users/{uid} (role MERCHANT, status ACTIVE)
+        API->>FA: setCustomUserClaims(uid, {role: MERCHANT})
+        API-->>APP: 201 utilisateur créé
+    end
+    deactivate API
+    APP->>+FA: getIdToken(forceRefresh = true)
+    FA-->>-APP: idToken avec la revendication role = MERCHANT
+    APP-->>-M: redirection vers l'inscription du commerce
+    end
+
+    rect rgb(243, 244, 246)
+    Note over M,FS: Inscription du commerce (M2)
+    M->>+APP: saisir les informations et placer le repère sur la carte
+    APP->>+API: POST /merchants {name, type, phone, address, location}
+    API->>API: authenticate · requireRole(MERCHANT) · validate
+    API->>API: distance à l'ESSECT ≤ 3 km, calcul du geohash
+    API->>FS: créer merchants/{uid} (status PENDING)
+    API-->>-APP: 201 commerce PENDING
+    APP->>FS: écouter merchants/{uid} (onSnapshot)
+    FS-->>APP: status = PENDING
+    APP-->>-M: bannière « en attente de validation »
+    end
+
+    rect rgb(243, 244, 246)
+    Note over FA,A: Validation par l'administrateur (M2)
+    Note over A,ADM: ref : S'authentifier (rôle ADMIN, compte créé par scripts/createAdmin.js)
+    A->>+ADM: ouvrir les demandes en attente
+    ADM->>+API: GET /admin/merchants?status=PENDING
+    API->>API: authenticate · requireRole(ADMIN)
+    API->>FS: requête merchants où status == PENDING
+    FS-->>API: liste des commerces
+    API-->>-ADM: 200 liste
+    A->>ADM: approuver ou rejeter (motif obligatoire si rejet)
+    ADM->>+API: PATCH /admin/merchants/{id}/status
+    alt APPROVED
+        API->>FS: transaction : status APPROVED, reviewedBy, reviewedAt + admin_audit
+    else REJECTED
+        API->>FS: transaction : status REJECTED, statusReason + admin_audit
+    end
+    API->>FCM: envoyer MERCHANT_STATUS aux jetons du commerçant
+    FCM-->>M: notification push
+    API-->>-ADM: 200 commerce mis à jour
+    deactivate ADM
+    FS-->>APP: snapshot temps réel : statut modifié
+    APP-->>M: bannière retirée, publication d'offres débloquée
+    end
+
+    rect rgb(243, 244, 246)
+    Note over M,API: Connexion et déconnexion (M1)
+    M->>+APP: se connecter
+    APP->>+FA: signInWithEmailAndPassword
+    FA-->>-APP: idToken (role)
+    APP->>+API: GET /users/me
+    API-->>-APP: profil + commerce
+    APP->>APP: routage selon le rôle
+    M->>APP: se déconnecter
+    APP->>API: DELETE /users/me/fcm-token
+    APP->>FA: signOut()
+    APP-->>-M: retour à l'écran de connexion
+    end

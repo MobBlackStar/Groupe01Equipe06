@@ -1,0 +1,157 @@
+@startuml 05a-classes-utilisateurs
+!include _style.iuml
+skinparam nodesep 30
+skinparam ranksep 45
+title Diagramme de classes — vue 1/3 : utilisateurs, fidélité et impact
+hide <<voir 05b>> members
+hide <<voir 05c>> members
+skinparam class {
+  BackgroundColor<<voir 05b>> #F3F4F6
+  BackgroundColor<<voir 05c>> #F3F4F6
+  BorderColor<<voir 05b>> #9CA3AF
+  BorderColor<<voir 05c>> #9CA3AF
+}
+
+package "Utilisateurs" {
+  abstract class User {
+    + uid : String
+    + email : String
+    + displayName : String
+    + phone : String [0..1]
+    + avatarUrl : String [0..1]
+    + role : Role
+    + status : AccountStatus
+    + fcmTokens : String [0..10]
+    + createdAt : Timestamp
+    + updateProfile(data : ProfileData) : void
+    + registerFcmToken(token : String) : void
+  }
+  class Student {
+    + filiereId : String [0..1]
+    + ecoPoints : Integer
+    + loyaltyTier : LoyaltyTier
+    + nextRewardAt : Integer
+    + totalMealsRescued : Integer
+    + reserve(offer : Offer, qty : Integer, reward : Reward [0..1]) : Order
+    + cancel(order : Order) : void
+    + rate(order : Order, stars : Integer, comment : String) : void
+  }
+  class MerchantAccount {
+    + merchantId : String
+    + registerStore(data : StoreData) : Store
+    + publishOffer(data : OfferData) : Offer
+    + validatePickup(qrPayload : String) : Order
+  }
+  class Administrator {
+    + approveStore(store : Store) : void
+    + rejectStore(store : Store, reason : String) : void
+    + suspendUser(user : User, reason : String) : void
+  }
+  class StudentStats <<datatype>> {
+    + ordersCompleted : Integer
+    + totalSpentMillimes : Integer
+    + totalSavedMillimes : Integer
+    + foodSavedGrams : Integer
+    + co2SavedGrams : Integer
+    + noShows : Integer
+  }
+  enum Role <<enumeration>> {
+    STUDENT
+    MERCHANT
+    ADMIN
+  }
+  enum AccountStatus <<enumeration>> {
+    ACTIVE
+    SUSPENDED
+  }
+}
+
+package "Fidélité et impact" {
+  class Reward {
+    + rewardId : String
+    + milestone : Integer
+    + type : RewardType
+    + percentOff : Integer [0..1]
+    + maxDiscountMillimes : Integer
+    + status : RewardStatus
+    + unlockedAt : Timestamp
+    + expiresAt : Timestamp
+    + discountFor(subtotal : Integer) : Integer
+    + isUsable(now : Timestamp) : Boolean
+  }
+  class LoyaltyEngine <<service>> {
+    + {static} pointsFor(order : Order, firstOrder : Boolean) : Integer
+    + {static} tierFor(points : Integer) : LoyaltyTier
+    + {static} milestonesCrossed(before : Integer, after : Integer) : Integer [*]
+  }
+  class Filiere {
+    + filiereId : String
+    + label : String
+    + studentsCount : Integer
+    + mealsRescued : Integer
+    + foodSavedGrams : Integer
+    + co2SavedGrams : Integer
+    + ecoPointsTotal : Integer
+  }
+  class CampusImpact {
+    + ordersCompleted : Integer
+    + mealsRescued : Integer
+    + foodSavedGrams : Integer
+    + co2SavedGrams : Integer
+    + moneySavedMillimes : Integer
+    + studentsParticipating : Integer
+    + merchantsParticipating : Integer
+    + equivalences() : Equivalences
+  }
+  class DailyImpact {
+    + date : String
+    + ordersCompleted : Integer
+    + foodSavedGrams : Integer
+    + co2SavedGrams : Integer
+    + moneySavedMillimes : Integer
+  }
+  enum LoyaltyTier <<enumeration>> {
+    GRAINE
+    POUSSE
+    ARBRE
+    FORET
+  }
+  enum RewardType <<enumeration>> {
+    PERCENT_OFF
+    FREE_SURPRISE
+  }
+  enum RewardStatus <<enumeration>> {
+    AVAILABLE
+    LOCKED
+    USED
+    EXPIRED
+  }
+}
+
+class Store <<voir 05b>>
+class Order <<voir 05c>>
+
+User <|-- Student
+User <|-- MerchantAccount
+User <|-- Administrator
+
+Student "1" *-- "1" StudentStats : stats
+Student "1" *-- "0..20" Reward : unlockedRewards
+Student "0..*" --> "0..1" Filiere : appartient à
+LoyaltyEngine ..> Student : <<use>>
+
+MerchantAccount "1" -- "0..1" Store : possède >
+Administrator "0..1" -- "0..*" Store : valide >
+Student "1" -- "0..*" Order : passe >
+Order "0..1" --> "0..1" Reward : applique
+Order ..> CampusImpact : <<incrémente>>
+Order ..> Filiere : <<incrémente>>
+CampusImpact "1" *-- "0..*" DailyImpact : daily
+
+' --- mise en page verticale (liens invisibles) ---
+Role -[hidden]down- AccountStatus
+LoyaltyTier -[hidden]down- RewardType
+RewardType -[hidden]down- RewardStatus
+StudentStats -[hidden]down- Reward
+Administrator -[hidden]down- Store
+@enduml

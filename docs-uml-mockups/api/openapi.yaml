@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: CampusSave API REST
+  description: >
+    API REST de la plateforme intelligente de lutte contre le gaspillage alimentaire
+    autour du campus de l'ESSECT (Montfleury, Tunis). Projet pédagogique intégrateur 2026.
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Serveur de développement local
+  - url: https://campussave-api.onrender.com/api/v1
+    description: Serveur de production Cloud (Render)
+
+paths:
+  /health:
+    get:
+      summary: État de santé du système
+      responses:
+        '200':
+          description: Serveur et base de données opérationnels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  firestore:
+                    type: string
+                    example: up
+                  time:
+                    type: string
+                    format: date-time
+                  serverTime:
+                    type: integer
+                    example: 1700000000000
+
+  /offers:
+    get:
+      summary: Consultation et recherche d'offres alimentaires
+      parameters:
+        - name: q
+          in: query
+          description: Mot-clé de recherche textuelle
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Catégorie de plat
+          schema:
+            type: string
+            enum: [SANDWICH, PLAT_CHAUD, PIZZA, PATISSERIE, VIENNOISERIE, SALADE, BOISSON, SNACK, MIXTE]
+        - name: minPrice
+          in: query
+          schema:
+            type: integer
+        - name: maxPrice
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des offres avec prix temps réel calculé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  offers:
+                    type: array
+                    items:
+                      type: object
+                  serverTime:
+                    type: integer

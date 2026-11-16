@@ -1,0 +1,59 @@
+---
+title: Architecture et synchronisation temps réel (équivalent Mermaid du diagramme de déploiement 10)
+---
+flowchart TB
+    subgraph DEVICES["Appareils clients"]
+        direction LR
+        subgraph PC["«device» Poste client"]
+            SPA["SPA React (Vite)<br/>Étudiant, Commerçant, Admin<br/>Campus Radar 3D MapLibre"]
+        end
+        subgraph PHONE["«device» Smartphone Android"]
+            APK["campussave.apk (Flutter)<br/>Étudiant, Commerçant<br/>scanner QR mobile_scanner"]
+        end
+    end
+
+    subgraph VERCEL["«cloud» Vercel"]
+        WEBBUILD["build statique web-react"]
+    end
+
+    subgraph RENDER["«cloud» Render — Node.js 20"]
+        BACK["backend-node<br/>Express, API REST"]
+        JOBS["balayeurs setInterval<br/>expiration 60 s, no-show 5 min"]
+        SHARED["shared/<br/>pricing, loyalty, rarity"]
+    end
+
+    subgraph FIREBASE["Google Cloud — projet Firebase"]
+        AUTH["Firebase Authentication<br/>custom claim role"]
+        FS[("Cloud Firestore<br/>+ règles de sécurité")]
+        FCM["Firebase Cloud Messaging"]
+    end
+
+    subgraph EXT["Services externes"]
+        KON["Konnect (sandbox)"]
+        LLM["API Anthropic (Claude)"]
+        CLD["Cloudinary (photos)"]
+        TILES["OpenFreeMap (tuiles vectorielles)"]
+    end
+
+    WEBBUILD -. "«deploy»" .-> SPA
+    SPA -->|"1 HTTPS / REST, Bearer idToken"| BACK
+    APK -->|"1 HTTPS / REST, Bearer idToken"| BACK
+    SPA -->|"connexion"| AUTH
+    APK -->|"connexion"| AUTH
+    BACK -->|"2 Admin SDK, seul rédacteur, transactions"| FS
+    JOBS -->|"expiration, restauration du stock"| FS
+    FS -. "3 onSnapshot, lecture temps réel" .-> SPA
+    FS -. "3 snapshots(), lecture temps réel" .-> APK
+    BACK -->|"verifyIdToken, custom claims"| AUTH
+    BACK -->|"4 envoi après commit"| FCM
+    FCM -. "notification push" .-> SPA
+    FCM -. "notification push" .-> APK
+    BACK <-->|"init et vérification du paiement"| KON
+    KON -->|"webhook GET ?payment_ref"| BACK
+    BACK -->|"auto-remplissage, sortie structurée"| LLM
+    BACK -->|"téléversement signé"| CLD
+    SPA -->|"style + tuiles 3D"| TILES
+    APK -->|"style + tuiles"| TILES
+    SHARED -. "«import»" .-> BACK
+    SHARED -. "«import»" .-> SPA
+    SHARED -. "porté en Dart" .-> APK

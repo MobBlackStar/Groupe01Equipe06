@@ -1,0 +1,15 @@
+{
+  "description": "Vecteurs de test de validation cryptographique inter-plateformes (Node.js WebCrypto vs Dart crypto)",
+  "testCases": [
+    {
+      "id": "ticket_window_standard",
+      "secret": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "orderId": "ord_essect_test_01",
+      "studentId": "usr_student_01",
+      "merchantId": "mch_bakery_01",
+      "nonce": "k3f9L2xQ8mP0vR5t",
+      "window": 56000000,
+      "expectedTicketTag": "placeholder_for_day5_tests"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+@startuml 09-etats-commande
+!include _style.iuml
+title Diagramme d'états-transitions — Cycle de vie d'une commande
+
+[*] --> RESERVED : POST /orders\n[stock suffisant] / verrouiller le prix,\nquantityAvailable −= qté
+
+state RESERVED : entry / reservationExpiresAt = maintenant + 10 min
+state RESERVED : do / attendre le paiement
+state PAID : entry / émettre le Living Ticket (nonce)
+state PAID : do / afficher le QR rotatif
+state COMPLETED : entry / attribuer EcoPoints,\nmettre à jour l'impact et les statistiques
+state CANCELLED : entry / restaurer le stock,\nlibérer la récompense
+state EXPIRED : entry / restaurer le stock,\nlibérer la récompense
+state PAYMENT_FAILED : entry / restaurer le stock,\nlibérer la récompense
+state NO_SHOW : entry / noShows += 1
+
+RESERVED --> PAID : paiement confirmé\n[webhook ou vérification ou récompense]
+RESERVED --> CANCELLED : annulation par l'étudiant
+RESERVED --> EXPIRED : after(10 min)\n[aucun paiement]
+RESERVED --> PAYMENT_FAILED : échec signalé par Konnect
+PAID --> COMPLETED : scan du QR\n[signature valide, fenêtre ±1,\nbon commerçant]
+PAID --> NO_SHOW : after(pickupEnd + 30 min)\n[non retirée]
+PAID --> PAID : scan refusé /\nfailedAttempts += 1
+COMPLETED --> [*]
+CANCELLED --> [*]
+EXPIRED --> [*]
+PAYMENT_FAILED --> [*]
+NO_SHOW --> [*]
+
+note right of COMPLETED
+  État final unique pour le QR :
+  un second scan renvoie 409 ALREADY_USED.
+  L'étudiant peut ensuite noter la commande.
+end note
+@enduml

@@ -1,0 +1,76 @@
+@startuml 03-uc-commercant
+!include _style.iuml
+left to right direction
+title Cas d'utilisation détaillés — Commerçant
+
+actor "Commerçant" as C
+actor "Service IA\n(LLM)" as IA <<système externe>>
+actor "Firebase Cloud\nMessaging" as FCM <<système externe>>
+
+rectangle "Système CampusSave — espace Commerçant" {
+  usecase "S'authentifier" as AUTH
+  usecase "S'inscrire\n(rôle Commerçant)" as REG
+  usecase "Inscrire son commerce" as STORE_REG
+  usecase "Localiser le commerce\nsur la carte" as PIN
+  usecase "Modifier les informations\ndu commerce" as STORE_EDIT
+
+  usecase "Publier une offre" as PUB
+  usecase "Téléverser une photo" as PHOTO
+  usecase "Auto-remplir l'offre par IA" as AI
+  usecase "Activer le Smart Decay\n(prix dégressif)" as DECAY
+  usecase "Créer un panier surprise" as SURPRISE
+  usecase "Modifier une offre" as EDIT
+  usecase "Supprimer une offre" as DEL
+
+  usecase "Consulter les commandes" as ORD
+  usecase "Valider un retrait" as PICK
+  usecase "Scanner le QR code" as SCAN
+  usecase "Saisir le code manuel\nà 6 chiffres" as MANUAL
+  usecase "Vérifier la signature\net le créneau" as VERIFY
+  usecase "Attribuer les EcoPoints et\nmettre à jour l'impact" as AWARD
+  usecase "Recevoir une notification" as NOTIF
+
+  usecase "Consulter son tableau de bord" as DASH
+}
+
+C -- REG
+C -- STORE_REG
+C -- STORE_EDIT
+C -- PUB
+C -- EDIT
+C -- DEL
+C -- ORD
+C -- PICK
+C -- DASH
+AI -- IA
+NOTIF -- FCM
+
+STORE_REG ..> AUTH : <<include>>
+STORE_REG ..> PIN : <<include>>
+STORE_EDIT ..> AUTH : <<include>>
+
+PUB ..> AUTH : <<include>>
+PUB ..> PHOTO : <<include>>
+AI .> PUB : <<extend>>
+DECAY .> PUB : <<extend>>
+SURPRISE .> PUB : <<extend>>
+EDIT ..> AUTH : <<include>>
+DEL ..> AUTH : <<include>>
+
+ORD ..> AUTH : <<include>>
+ORD ..> NOTIF : <<include>>
+PICK ..> AUTH : <<include>>
+PICK ..> SCAN : <<include>>
+MANUAL .> PICK : <<extend>>\n[caméra indisponible]
+PICK ..> VERIFY : <<include>>
+PICK ..> AWARD : <<include>>
+DASH ..> AUTH : <<include>>
+
+note right of PUB
+  Pré-condition : commerce au statut
+  APPROUVÉ par l'administrateur.
+  Champs obligatoires (cahier des charges) :
+  prix initial, prix réduit, quantité,
+  photo, horaires de récupération.
+end note
+@enduml

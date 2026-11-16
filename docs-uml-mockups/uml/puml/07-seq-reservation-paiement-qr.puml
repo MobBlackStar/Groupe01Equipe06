@@ -1,0 +1,138 @@
+@startuml 07-seq-reservation-paiement-qr
+!include _style.iuml
+autonumber "<b>00"
+title Diagramme de séquence 2 — Recherche, prix dynamique, réservation, paiement Konnect et QR code (M4, M5, M6, M7)
+
+actor "Étudiant" as S
+boundary "Application\nReact / Flutter" as APP
+control "API Node.js\n/ Express" as API
+database "Cloud\nFirestore" as FS
+participant "Konnect\n(sandbox)" as K <<système externe>>
+participant "Firebase Cloud\nMessaging" as FCM <<système externe>>
+boundary "Application\ncommerçant" as MC
+
+ref over S, APP, API : S'authentifier (voir diagramme de séquence 1)
+
+== Recherche et prix dynamique (M4, Smart Decay) ==
+S -> APP : rechercher « makloub », filtrer catégorie et prix
+activate APP
+APP -> API : GET /offers?q=makloub&category=…&minPrice=…&maxPrice=…
+activate API
+API -> FS : offres où status == ACTIVE et pickupEndAt > maintenant
+activate FS
+FS --> API : offres candidates
+deactivate FS
+API -> API : calculer le prix courant de chaque offre,\nfiltrer, trier, paginer
+API --> APP : offres + currentPriceMillimes + serverTime
+deactivate API
+APP -> APP : décalage d'horloge = serverTime − Date.now()
+APP -> FS : écouter les offres actives (stock en temps réel)
+loop chaque seconde
+  APP -> APP : prix = computeUnitPrice(offre, maintenant + décalage)
+end
+APP --> S : liste avec prix qui baissent en direct
+deactivate APP
+
+== Réservation atomique (M5) ==
+S -> APP : choisir la quantité (et éventuellement une récompense),\nappuyer sur « Réserver »
+activate APP
+APP -> API : POST /orders {offerId, quantity, rewardId?}
+activate API
+API -> API : authenticate · requireRole(STUDENT) · validate
+group Transaction Firestore (lectures avant écritures, rejouée en cas de conflit)
+  API -> FS : lire offers/{offerId} et users/{uid}
+  activate FS
+  FS --> API : offre, profil
+  API -> API : vérifier : ACTIVE, avant pickupEnd,\nqty ≤ maxPerOrder et ≤ quantityAvailable
+  API -> API : prix verrouillé = computeUnitPrice(offre, heure serveur)\ntotal = max(0, sous-total − remise)
+  API -> FS : offre : quantityAvailable −= qty (SOLD_OUT si 0), hasOrders = true
+  API -> FS : récompense : status LOCKED
+  API -> FS : créer orders/{id} : RESERVED,\nreservationExpiresAt = maintenant + 10 min
+  FS --> API : commit
+  deactivate FS
+end
+alt stock insuffisant ou données invalides
+  API --> APP : 409 OFFER_SOLD_OUT / 422 erreurs de validation
+else réservation créée
+  API --> APP : 201 commande RESERVED, prix verrouillé, échéance
+end
+deactivate API
+APP --> S : récapitulatif + compte à rebours de 10 min
+deactivate APP
+
+== Paiement électronique (M6) ==
+S -> APP : appuyer sur « Payer »
+activate APP
+APP -> API : POST /payments/konnect/init {orderId}
+activate API
+alt total = 0 (récompense « panier offert »)
+  API -> API : confirmPayment(orderId, REWARD)
+  API --> APP : paidWithReward = true
+else total > 0
+  API -> K : POST /payments/init-payment\n{receiverWalletId, token: TND, amount (millimes),\norderId, webhook, successUrl, failUrl, lifespan: 10}
+  activate K
+  K --> API : {payUrl, paymentRef}
+  deactivate K
+  API -> FS : commande : payment INITIATED, paymentRef, attempts + 1
+  API --> APP : payUrl
+  deactivate API
+  APP -> K : ouvrir payUrl (redirection web / WebView Flutter)
+  activate K
+  S -> K : payer avec la carte de test sandbox
+  par chemin A : webhook
+    K -> API : GET /payments/konnect/webhook?payment_ref=…
+    activate API
+    API -> K : GET /payments/{paymentRef}
+    K --> API : status = completed
+    API -> API : confirmPayment(orderId, WEBHOOK)
+    deactivate API
+  else chemin B : vérification au retour
+    K --> APP : redirection vers successUrl?payment_ref=…
+    deactivate K
+    APP -> API : POST /payments/konnect/verify {orderId}
+    activate API
+    API -> K : GET /payments/{paymentRef}
+    K --> API : status = completed
+    API -> API : confirmPayment(orderId, RETURN_VERIFY)
+    deactivate API
+  end
+end
+
+group confirmPayment — transaction idempotente
+  API -> FS : lire orders/{id}
+  activate FS
+  alt déjà PAID ou au-delà
+    API -> FS : payment_events : ALREADY_CONFIRMED
+  else statut RESERVED
+    API -> API : nonce = 16 octets aléatoires (base64url)
+    API -> FS : commande PAID, payment COMPLETED, confirmedVia,\nticket {nonce, issuedAt, windowSeconds: 30}
+    API -> FS : offre quantitySold += qty, récompense USED,\nstatistiques commerçant (+ journalier)
+    API -> FS : payment_events : CONFIRMED
+  end
+  FS --> API : commit
+end
+API -> FCM : TICKET_READY à l'étudiant, ORDER_PAID au commerçant
+FS --> APP : snapshot : commande PAID
+FS --> MC : snapshot : nouvelle commande payée
+deactivate FS
+
+== Génération du Living Ticket (M7) ==
+APP -> API : GET /orders/{id}/ticket
+activate API
+API -> API : vérifier propriétaire et statut PAID
+API -> API : ticketKey = HMAC-SHA256(QR_SECRET,\norderId | studentId | merchantId | nonce)
+API --> APP : ticketKey, windowSeconds = 30, orderCode
+deactivate API
+loop chaque seconde tant que le ticket est affiché
+  APP -> APP : fenêtre = floor(heure serveur / 30 s)\ntag = HMAC-SHA256(ticketKey, "CS2|orderId|fenêtre")
+  APP --> S : QR « CS2.orderId.fenêtre.tag » + code à 6 chiffres
+end
+deactivate APP
+
+== Échecs et expiration ==
+alt Konnect signale un échec
+  API -> FS : transaction : PAYMENT_FAILED, stock restauré,\nrécompense de nouveau AVAILABLE
+else aucun paiement en 10 min
+  API -> FS : balayeur (60 s) : EXPIRED, stock restauré,\nrécompense de nouveau AVAILABLE
+end
+@enduml

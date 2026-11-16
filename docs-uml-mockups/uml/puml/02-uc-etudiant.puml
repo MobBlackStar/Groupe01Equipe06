@@ -1,0 +1,95 @@
+@startuml 02-uc-etudiant
+!include _style.iuml
+left to right direction
+title Cas d'utilisation détaillés — Étudiant
+
+actor "Étudiant" as E
+actor "Konnect\n(passerelle de paiement)" as K <<système externe>>
+actor "Firebase Cloud\nMessaging" as FCM <<système externe>>
+
+rectangle "Système CampusSave — espace Étudiant" {
+  usecase "S'authentifier" as AUTH
+  usecase "S'inscrire\n(rôle Étudiant, filière)" as REG
+  usecase "Gérer son profil" as PROF
+
+  usecase "Rechercher des offres" as SRCH
+  usecase "Filtrer par catégorie" as F_CAT
+  usecase "Filtrer par prix" as F_PRICE
+  usecase "Filtrer par commerce" as F_SHOP
+  usecase "Consulter le détail\nd'une offre" as DET
+  usecase "Suivre le prix dynamique\n(Smart Decay)" as LIVE
+  usecase "Explorer le Campus Radar 3D" as RADAR
+  usecase "Calculer la distance\ndepuis l'ESSECT" as DIST
+
+  usecase "Réserver une offre" as RES
+  usecase "Choisir la quantité" as QTY
+  usecase "Verrouiller le prix" as LOCK
+  usecase "Appliquer une\nrécompense fidélité" as RWD
+  usecase "Payer la commande" as PAY
+  usecase "Annuler une réservation" as CANCEL
+
+  usecase "Présenter le QR code\n(Living Ticket)" as QR
+  usecase "Générer le QR rotatif\n(toutes les 30 s)" as ROT
+  usecase "Suivre ses commandes" as ORD
+  usecase "Découvrir le contenu\ndu panier surprise" as REVEAL
+  usecase "Noter une commande" as RATE
+  usecase "Recevoir une notification" as NOTIF
+
+  usecase "Consulter sa carte de\nfidélité EcoPoints" as LOY
+  usecase "Consulter son tableau de bord" as DASH
+  usecase "Consulter l'Impact Dashboard\net le défi des filières" as IMP
+}
+
+E -- REG
+E -- PROF
+E -- SRCH
+E -- DET
+E -- RADAR
+E -- RES
+E -- PAY
+E -- QR
+E -- ORD
+E -- LOY
+E -- DASH
+E -- IMP
+PAY -- K
+NOTIF -- FCM
+
+F_CAT .> SRCH : <<extend>>
+F_PRICE .> SRCH : <<extend>>
+F_SHOP .> SRCH : <<extend>>
+DET ..> LIVE : <<include>>
+RADAR ..> DIST : <<include>>
+
+RES ..> AUTH : <<include>>
+RES ..> QTY : <<include>>
+RES ..> LOCK : <<include>>
+RWD .> RES : <<extend>>\n[récompense disponible]
+PAY ..> AUTH : <<include>>
+PAY ..> NOTIF : <<include>>
+CANCEL .> ORD : <<extend>>\n[statut RÉSERVÉE]
+
+QR ..> AUTH : <<include>>
+QR ..> ROT : <<include>>
+ORD ..> AUTH : <<include>>
+REVEAL .> ORD : <<extend>>\n[panier surprise récupéré]
+RATE .> ORD : <<extend>>\n[commande terminée]
+
+PROF ..> AUTH : <<include>>
+LOY ..> AUTH : <<include>>
+DASH ..> AUTH : <<include>>
+
+note right of PAY
+  Pré-condition : commande au statut RÉSERVÉE
+  et délai de 10 min non écoulé.
+  Post-condition : commande PAYÉE,
+  QR code de retrait émis.
+end note
+
+note right of QR
+  Pré-condition : commande PAYÉE.
+  Le QR est signé (HMAC-SHA256),
+  change toutes les 30 s
+  et n'est valable qu'une seule fois.
+end note
+@enduml

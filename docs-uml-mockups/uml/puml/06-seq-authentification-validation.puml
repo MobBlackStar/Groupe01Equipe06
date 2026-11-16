@@ -1,0 +1,119 @@
+@startuml 06-seq-authentification-validation
+!include _style.iuml
+autonumber "<b>00"
+title Diagramme de séquence 1 — Inscription, authentification et validation d'un commerce (M1, M2)
+
+actor "Commerçant" as M
+boundary "Application\nReact / Flutter" as APP
+participant "Firebase\nAuthentication" as FA <<système externe>>
+control "API Node.js\n/ Express" as API
+database "Cloud\nFirestore" as FS
+participant "Firebase Cloud\nMessaging" as FCM <<système externe>>
+boundary "Console admin\nReact" as ADM
+actor "Administrateur" as A
+
+== Inscription (M1) ==
+M -> APP : remplir le formulaire (e-mail, mot de passe,\nrôle Commerçant, nom, téléphone)
+activate APP
+APP -> APP : valider les champs (Zod / validators)
+APP -> FA : createUserWithEmailAndPassword(email, mdp)
+activate FA
+FA --> APP : UserCredential (uid, idToken sans rôle)
+deactivate FA
+APP -> API : POST /auth/register-profile {role: MERCHANT, ...}\nAuthorization: Bearer idToken
+activate API
+API -> FA : verifyIdToken(idToken, checkRevoked)
+activate FA
+FA --> API : uid, email
+deactivate FA
+API -> API : valider le corps (Zod), rôle dans {STUDENT, MERCHANT}
+alt profil déjà existant
+  API --> APP : 409 PROFILE_EXISTS
+else nouveau profil
+  API -> FS : créer users/{uid} (role MERCHANT, status ACTIVE)
+  activate FS
+  FS --> API : ok
+  deactivate FS
+  API -> FA : setCustomUserClaims(uid, {role: MERCHANT})
+  API --> APP : 201 utilisateur créé
+end
+deactivate API
+APP -> FA : getIdToken(forceRefresh = true)
+activate FA
+FA --> APP : idToken avec la revendication role = MERCHANT
+deactivate FA
+APP --> M : redirection vers l'inscription du commerce
+deactivate APP
+
+== Inscription du commerce (M2) ==
+M -> APP : saisir les informations et placer le repère sur la carte
+activate APP
+APP -> API : POST /merchants {name, type, phone, address, location}
+activate API
+API -> API : authenticate · requireRole(MERCHANT) · validate
+API -> API : distance à l'ESSECT ≤ 3 km, calcul du geohash
+API -> FS : créer merchants/{uid} (status PENDING)
+activate FS
+FS --> API : ok
+deactivate FS
+API --> APP : 201 commerce PENDING
+deactivate API
+APP -> FS : écouter merchants/{uid} (onSnapshot)
+FS --> APP : status = PENDING
+APP --> M : bannière « en attente de validation »
+deactivate APP
+
+== Validation par l'administrateur (M2) ==
+ref over A, ADM, FA : S'authentifier (rôle ADMIN, compte créé par scripts/createAdmin.js)
+A -> ADM : ouvrir les demandes en attente
+activate ADM
+ADM -> API : GET /admin/merchants?status=PENDING
+activate API
+API -> API : authenticate · requireRole(ADMIN)
+API -> FS : requête merchants où status == PENDING
+activate FS
+FS --> API : liste des commerces
+deactivate FS
+API --> ADM : 200 liste
+deactivate API
+A -> ADM : approuver ou rejeter (motif obligatoire si rejet)
+ADM -> API : PATCH /admin/merchants/{id}/status
+activate API
+alt APPROVED
+  API -> FS : transaction : status APPROVED, reviewedBy,\nreviewedAt + entrée admin_audit
+else REJECTED
+  API -> FS : transaction : status REJECTED, statusReason\n+ entrée admin_audit
+end
+activate FS
+FS --> API : commit
+API -> FCM : envoyer MERCHANT_STATUS aux jetons du commerçant
+activate FCM
+FCM --> M : notification push
+deactivate FCM
+API --> ADM : 200 commerce mis à jour
+deactivate API
+deactivate ADM
+FS --> APP : snapshot temps réel : statut modifié
+deactivate FS
+activate APP
+APP --> M : bannière retirée, publication d'offres débloquée
+deactivate APP
+
+== Connexion et déconnexion (M1) ==
+M -> APP : se connecter
+activate APP
+APP -> FA : signInWithEmailAndPassword
+activate FA
+FA --> APP : idToken (role)
+deactivate FA
+APP -> API : GET /users/me
+activate API
+API --> APP : profil + commerce
+deactivate API
+APP -> APP : routage selon le rôle
+M -> APP : se déconnecter
+APP -> API : DELETE /users/me/fcm-token
+APP -> FA : signOut()
+APP --> M : retour à l'écran de connexion
+deactivate APP
+@enduml

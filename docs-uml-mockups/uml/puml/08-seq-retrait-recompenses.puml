@@ -1,0 +1,82 @@
+@startuml 08-seq-retrait-recompenses
+!include _style.iuml
+autonumber "<b>00"
+title Diagramme de séquence 3 — Scan du QR, retrait atomique, Mystery Box, EcoPoints et impact (M7, M8, B2, B3, B4)
+
+actor "Étudiant" as S
+boundary "Application\nétudiant" as SA
+actor "Commerçant" as M
+boundary "Scanner\nFlutter / React" as SC
+control "API Node.js\n/ Express" as API
+database "Cloud\nFirestore" as FS
+participant "Firebase Cloud\nMessaging" as FCM <<système externe>>
+boundary "Impact\nDashboard" as IMP
+
+ref over S, SA, SC, API : S'authentifier (étudiant et commerçant, voir diagramme de séquence 1)
+
+S -> SA : ouvrir le Living Ticket
+activate SA
+SA --> M : QR rotatif (change toutes les 30 s)
+M -> SC : viser le QR avec la caméra
+activate SC
+alt QR lisible
+  SC -> SC : décoder « CS2.orderId.fenêtre.tag »
+  SC -> API : POST /tickets/scan {qrPayload}
+else caméra indisponible
+  M -> SC : saisir orderCode + code à 6 chiffres
+  SC -> API : POST /tickets/redeem-code {orderCode, code6}
+end
+activate API
+API -> API : authenticate · requireRole(MERCHANT) ·\nrequireApprovedMerchant · limite 20 req/min
+
+group Transaction Firestore (toutes les lectures avant les écritures)
+  API -> FS : lire orders/{orderId}, users/{studentId},\nmerchants/{merchantId}, contenu caché (si panier surprise)
+  activate FS
+  FS --> API : documents
+  API -> API : merchantId == uid du scanner ?
+  API -> API : statut == PAID ? (usage unique)
+  API -> API : |fenêtre − fenêtre serveur| ≤ 1 ?
+  API -> API : recalculer ticketKey et tag,\ncomparaison en temps constant
+  API -> API : maintenant ≤ pickupEnd + 30 min ?
+  alt une vérification échoue
+    API -> FS : pickup.failedAttempts += 1
+  else toutes les vérifications réussissent
+    API -> API : points = 20 × qté + bonus de rareté + bonus 1re commande\npaliers franchis, nouveau niveau, récompenses débloquées
+    API -> FS : commande COMPLETED : pickup, reveal (articles),\nrewards, impact, statusHistory
+    API -> FS : étudiant : ecoPoints, loyaltyTier, nextRewardAt,\nunlockedRewards, totalMealsRescued, stats
+    API -> FS : commerçant : stats + compteur journalier
+    API -> FS : campus_impact/global + compteur journalier
+    API -> FS : filieres/{filiereId} : incréments
+  end
+  FS --> API : commit
+end
+
+alt refus
+  API --> SC : 401 INVALID_SIGNATURE · 409 ALREADY_USED ·\n410 TICKET_EXPIRED · 403 WRONG_MERCHANT
+  SC --> M : écran rouge avec le motif
+else retrait validé
+  API --> SC : 200 commande COMPLETED, quantité, points attribués
+  SC --> M : écran vert : remettre la commande
+  API -> FCM : ORDER_COMPLETED (+ REWARD_UNLOCKED) à l'étudiant
+  FS --> SA : snapshot : commande COMPLETED (sans rafraîchir)
+  opt panier surprise
+    SA -> SA : animation d'ouverture : secousse, ouverture,\néclat de rareté, liste des articles
+    SA --> S : contenu de la Mystery Box révélé
+  end
+  SA -> SA : tampons de la carte de fidélité animés,\nbadge de niveau mis à jour
+  SA --> S : « + N EcoPoints », récompense débloquée le cas échéant
+  FS --> IMP : snapshots campus_impact et filieres
+  activate IMP
+  IMP -> IMP : compteurs : kg sauvés, CO₂ évité,\nsmartphones rechargés, classement des filières
+  deactivate IMP
+  opt l'étudiant note la commande
+    S -> SA : donner 1 à 5 étoiles
+    SA -> API : POST /orders/{id}/rating {stars, comment}
+    API -> FS : transaction : rating de la commande,\nratingSum, ratingCount, ratingAvg du commerce
+  end
+end
+deactivate FS
+deactivate API
+deactivate SC
+deactivate SA
+@enduml

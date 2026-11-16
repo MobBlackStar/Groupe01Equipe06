@@ -1,0 +1,55 @@
+@startuml 10-deploiement
+!include _style.iuml
+title Diagramme de déploiement — architecture et synchronisation temps réel
+
+node "Smartphone Android" <<device>> as PHONE {
+  artifact "campussave.apk\n(Flutter)" as APK
+}
+node "Poste client" <<device>> as PC {
+  node "Navigateur web" <<execution environment>> {
+    artifact "SPA React\n(Vite)" as SPA
+  }
+}
+node "Vercel" <<cloud>> as VERCEL {
+  artifact "build statique\nweb-react" as WEBBUILD
+}
+node "Render" <<cloud>> as RENDER {
+  node "Node.js 20" <<execution environment>> {
+    artifact "backend-node\n(Express, API REST)" as BACK
+    artifact "balayeurs\n(setInterval)" as JOBS
+    artifact "shared/\n(pricing, loyalty, rarity)" as SHARED
+  }
+}
+cloud "Google Cloud — projet Firebase" as FIREBASE {
+  component "Firebase\nAuthentication" as AUTH
+  database "Cloud Firestore\n+ règles de sécurité" as FS
+  component "Firebase Cloud\nMessaging" as FCM
+}
+cloud "Services externes" as EXT {
+  component "Konnect\n(sandbox)" as KON
+  component "API Anthropic\n(Claude)" as LLM
+  component "Cloudinary\n(photos)" as CLD
+  component "OpenFreeMap\n(tuiles vectorielles)" as TILES
+}
+
+WEBBUILD ..> SPA : <<deploy>>
+SPA --> BACK : HTTPS / REST\n(commandes, Bearer idToken)
+APK --> BACK : HTTPS / REST\n(commandes, Bearer idToken)
+SPA --> AUTH : connexion
+APK --> AUTH : connexion
+FS ..> SPA : onSnapshot\n(lecture temps réel)
+FS ..> APK : snapshots()\n(lecture temps réel)
+BACK --> FS : Admin SDK\n(seul rédacteur, transactions)
+JOBS --> FS : expiration,\nrestauration du stock
+BACK --> AUTH : verifyIdToken,\ncustom claims
+BACK --> FCM : envoi après commit
+FCM ..> APK : notification push
+FCM ..> SPA : notification push
+BACK --> KON : init / vérification\ndu paiement
+KON --> BACK : webhook\nGET ?payment_ref
+BACK --> LLM : auto-remplissage\n(sortie structurée)
+BACK --> CLD : téléversement signé
+SPA --> TILES : style + tuiles 3D
+APK --> TILES : style + tuiles
+SHARED ..> BACK : <<import>>
+@enduml

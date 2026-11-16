@@ -1,0 +1,161 @@
+{
+  "description": "Vecteurs de test pour l'algorithme d'enchère dégressive (Smart Decay (Enchère dégressive)) et prix fixe",
+  "testCases": [
+    {
+      "id": "fixed_price_basic",
+      "offer": {
+        "pricing": {
+          "mode": "FIXED",
+          "discountedPriceMillimes": 4500
+        }
+      },
+      "nowMs": 1700000000000,
+      "expectedPriceMillimes": 4500,
+      "notes": "Offre à prix fixe : retourne toujours le prix remisé sans altération temporelle"
+    },
+    {
+      "id": "dutch_before_decay_start",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700009000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1699999000000,
+      "expectedPriceMillimes": 5000,
+      "notes": "Avant le début de la dégressivité : prix égal au prix de départ"
+    },
+    {
+      "id": "dutch_at_decay_start",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700009000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700000000000,
+      "expectedPriceMillimes": 5000,
+      "notes": "À la seconde exacte du début de la dégressivité : prix de départ"
+    },
+    {
+      "id": "dutch_exact_halfway_16h15",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700056800000,
+          "pickupEndAt": 1700065800000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700061300000,
+      "expectedPriceMillimes": 3200,
+      "notes": "Cas spécifié §7 : Début 15:00, Fin 17:30 (150 min), à 16:15 (progress 0.5) -> (5000 - 3500*0.5)=3250 arrondi au pas de 100 inférieur -> 3200"
+    },
+    {
+      "id": "dutch_near_end_17h29",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700056800000,
+          "pickupEndAt": 1700065800000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700065740000,
+      "expectedPriceMillimes": 1500,
+      "notes": "Cas spécifié §7 : À 17:29 (149 min écoulées sur 150 min) -> raw 1523 arrondi à 1500"
+    },
+    {
+      "id": "dutch_at_pickup_end",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700009000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700009000000,
+      "expectedPriceMillimes": 1500,
+      "notes": "À la fin exacte du créneau : prix plancher"
+    },
+    {
+      "id": "dutch_after_pickup_end",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 5000,
+          "floorPriceMillimes": 1500,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700009000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700010000000,
+      "expectedPriceMillimes": 1500,
+      "notes": "Après expiration : ne descend jamais sous le prix plancher"
+    },
+    {
+      "id": "dutch_custom_step_250",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 10000,
+          "floorPriceMillimes": 2000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700010000000,
+          "roundingStepMillimes": 250
+        }
+      },
+      "nowMs": 1700003300000,
+      "expectedPriceMillimes": 7250,
+      "notes": "Pas personnalisé de 250 millimes (progress 0.33 -> 10000 - 8000*0.33 = 7360 -> floor / 250 = 7250)"
+    },
+    {
+      "id": "dutch_quarter_progress",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 8000,
+          "floorPriceMillimes": 4000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700004000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700001000000,
+      "expectedPriceMillimes": 7000,
+      "notes": "Progression à 25% (durée 4000s, écoulé 1000s) -> 8000 - 4000*0.25 = 7000"
+    },
+    {
+      "id": "dutch_three_quarter_progress",
+      "offer": {
+        "pricing": {
+          "mode": "DUTCH_AUCTION",
+          "startPriceMillimes": 8000,
+          "floorPriceMillimes": 4000,
+          "decayStartAt": 1700000000000,
+          "pickupEndAt": 1700004000000,
+          "roundingStepMillimes": 100
+        }
+      },
+      "nowMs": 1700003000000,
+      "expectedPriceMillimes": 5000,
+      "notes": "Progression à 75% -> 8000 - 4000*0.75 = 5000"
+    }
+  ]
+}

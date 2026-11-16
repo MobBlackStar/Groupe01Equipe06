@@ -1,0 +1,146 @@
+---
+title: "Diagramme de classes — vue 1/3 : utilisateurs, fidélité et impact"
+---
+classDiagram
+    direction TB
+
+    class User {
+        <<abstract>>
+        +uid : String
+        +email : String
+        +displayName : String
+        +phone : String [0..1]
+        +avatarUrl : String [0..1]
+        +role : Role
+        +status : AccountStatus
+        +fcmTokens : String [0..10]
+        +createdAt : Timestamp
+        +updateProfile(data : ProfileData) void
+        +registerFcmToken(token : String) void
+    }
+    class Student {
+        +filiereId : String [0..1]
+        +ecoPoints : Integer
+        +loyaltyTier : LoyaltyTier
+        +nextRewardAt : Integer
+        +totalMealsRescued : Integer
+        +reserve(offer : Offer, qty : Integer, reward : Reward) Order
+        +cancel(order : Order) void
+        +rate(order : Order, stars : Integer, comment : String) void
+    }
+    class MerchantAccount {
+        +merchantId : String
+        +registerStore(data : StoreData) Store
+        +publishOffer(data : OfferData) Offer
+        +validatePickup(qrPayload : String) Order
+    }
+    class Administrator {
+        +approveStore(store : Store) void
+        +rejectStore(store : Store, reason : String) void
+        +suspendUser(user : User, reason : String) void
+    }
+    class StudentStats {
+        <<datatype>>
+        +ordersCompleted : Integer
+        +totalSpentMillimes : Integer
+        +totalSavedMillimes : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +noShows : Integer
+    }
+    class Role {
+        <<enumeration>>
+        STUDENT
+        MERCHANT
+        ADMIN
+    }
+    class AccountStatus {
+        <<enumeration>>
+        ACTIVE
+        SUSPENDED
+    }
+    class Reward {
+        +rewardId : String
+        +milestone : Integer
+        +type : RewardType
+        +percentOff : Integer [0..1]
+        +maxDiscountMillimes : Integer
+        +status : RewardStatus
+        +unlockedAt : Timestamp
+        +expiresAt : Timestamp
+        +discountFor(subtotal : Integer) Integer
+        +isUsable(now : Timestamp) Boolean
+    }
+    class LoyaltyEngine {
+        <<service>>
+        +pointsFor(order : Order, firstOrder : Boolean)$ Integer
+        +tierFor(points : Integer)$ LoyaltyTier
+        +milestonesCrossed(before : Integer, after : Integer)$ Integer[]
+    }
+    class Filiere {
+        +filiereId : String
+        +label : String
+        +studentsCount : Integer
+        +mealsRescued : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +ecoPointsTotal : Integer
+    }
+    class CampusImpact {
+        +ordersCompleted : Integer
+        +mealsRescued : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +moneySavedMillimes : Integer
+        +studentsParticipating : Integer
+        +merchantsParticipating : Integer
+        +equivalences() Equivalences
+    }
+    class DailyImpact {
+        +date : String
+        +ordersCompleted : Integer
+        +foodSavedGrams : Integer
+        +co2SavedGrams : Integer
+        +moneySavedMillimes : Integer
+    }
+    class LoyaltyTier {
+        <<enumeration>>
+        GRAINE
+        POUSSE
+        ARBRE
+        FORET
+    }
+    class RewardType {
+        <<enumeration>>
+        PERCENT_OFF
+        FREE_SURPRISE
+    }
+    class RewardStatus {
+        <<enumeration>>
+        AVAILABLE
+        LOCKED
+        USED
+        EXPIRED
+    }
+
+    class Store {
+        <<voir 05b>>
+    }
+    class Order {
+        <<voir 05c>>
+    }
+
+    User <|-- Student
+    User <|-- MerchantAccount
+    User <|-- Administrator
+    Student "1" *-- "1" StudentStats : stats
+    Student "1" *-- "0..20" Reward : unlockedRewards
+    Student "0..*" --> "0..1" Filiere : appartient à
+    LoyaltyEngine ..> Student : «use»
+    MerchantAccount "1" -- "0..1" Store : possède
+    Administrator "0..1" -- "0..*" Store : valide
+    Student "1" -- "0..*" Order : passe
+    Order "0..1" --> "0..1" Reward : applique
+    Order ..> CampusImpact : «incrémente»
+    Order ..> Filiere : «incrémente»
+    CampusImpact "1" *-- "0..*" DailyImpact : daily

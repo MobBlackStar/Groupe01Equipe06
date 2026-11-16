@@ -1,0 +1,40 @@
+---
+title: Diagramme d'états-transitions — Cycle de vie d'une commande
+---
+stateDiagram-v2
+    direction TB
+    RESERVED : RESERVED
+    RESERVED : entry / reservationExpiresAt = maintenant + 10 min
+    RESERVED : do / attendre le paiement
+    PAID : PAID
+    PAID : entry / émettre le Living Ticket (nonce)
+    PAID : do / afficher le QR rotatif
+    COMPLETED : COMPLETED
+    COMPLETED : entry / attribuer EcoPoints, mettre à jour l'impact et les statistiques
+    CANCELLED : CANCELLED
+    CANCELLED : entry / restaurer le stock, libérer la récompense
+    EXPIRED : EXPIRED
+    EXPIRED : entry / restaurer le stock, libérer la récompense
+    PAYMENT_FAILED : PAYMENT_FAILED
+    PAYMENT_FAILED : entry / restaurer le stock, libérer la récompense
+    NO_SHOW : NO_SHOW
+    NO_SHOW : entry / noShows += 1
+
+    [*] --> RESERVED : POST /orders [stock suffisant] / verrouiller le prix
+    RESERVED --> PAID : paiement confirmé [webhook, vérification ou récompense]
+    RESERVED --> CANCELLED : annulation par l'étudiant
+    RESERVED --> EXPIRED : after(10 min) [aucun paiement]
+    RESERVED --> PAYMENT_FAILED : échec signalé par Konnect
+    PAID --> COMPLETED : scan du QR [signature valide, fenêtre ±1, bon commerçant]
+    PAID --> NO_SHOW : after(pickupEnd + 30 min) [non retirée]
+    PAID --> PAID : scan refusé / failedAttempts += 1
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+    EXPIRED --> [*]
+    PAYMENT_FAILED --> [*]
+    NO_SHOW --> [*]
+
+    note right of COMPLETED
+        Un second scan renvoie 409 ALREADY_USED.
+        L'étudiant peut ensuite noter la commande.
+    end note

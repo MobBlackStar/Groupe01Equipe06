@@ -1,0 +1,103 @@
+rules_version = '2';
+
+// 💡 Concept & Analogie : Comme un coffre-fort de banque où les clients peuvent regarder à travers une vitre blindée mais ne peuvent jamais toucher les billets directement, les clients ont des droits de lecture stricts mais zéro droit d'écriture directe.
+// 🔄 Comparaison React / Flutter : Ces règles s'appliquent de manière universelle et identique aux requêtes provenant du SDK JavaScript Web et du SDK Dart Mobile.
+// 🎯 À retenir pour la soutenance : "Nos règles de sécurité Firestore appliquent le principe du moindre privilège : chaque utilisateur ne lit que ses propres données, et toute écriture cliente est formellement bloquée car les mutations sont réservées à l'API REST Node.js via le SDK Admin."
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions pour l'authentification et les rôles (Custom Claims)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('ADMIN');
+    }
+
+    function isStudent() {
+      return hasRole('STUDENT');
+    }
+
+    function isMerchant() {
+      return hasRole('MERCHANT');
+    }
+
+    // Profils utilisateurs
+    match /users/{uid} {
+      allow read: if isUser(uid) || isAdmin();
+      allow write: if false; // Blocage écriture directe client
+    }
+
+    // Commerces et statistiques journalières
+    match /merchants/{merchantId} {
+      allow read: if resource.data.status == 'APPROVED' || isUser(merchantId) || isAdmin();
+      allow write: if false;
+
+      match /daily/{dateDoc} {
+        allow read: if isUser(merchantId) || isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // Catalogue d'offres
+    match /offers/{offerId} {
+      allow read: if resource.data.status in ['ACTIVE', 'SOLD_OUT'] 
+                  || (isMerchant() && resource.data.merchantId == request.auth.uid) 
+                  || isAdmin();
+      allow write: if false;
+
+      // Sous-collection privée des contenus surprises (masquée aux étudiants jusqu'au scan)
+      match /private/{docId} {
+        allow read: if isAdmin() 
+                    || (isMerchant() && get(/databases/$(database)/documents/offers/$(offerId)).data.merchantId == request.auth.uid);
+        allow write: if false;
+      }
+    }
+
+    // Commandes et réservations
+    match /orders/{orderId} {
+      allow read: if isAdmin() 
+                  || (isStudent() && resource.data.studentId == request.auth.uid) 
+                  || (isMerchant() && resource.data.merchantId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // Statistiques d'impact global et filières (Données publiques)
+    match /campus_impact/{docPath=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /filieres/{filiereId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Journaux de paiement et audits administrateur
+    match /payment_events/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /admin_audit/{auditId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Règle de sécurité par défaut : rejet de toute écriture directe cliente
+    match /{document=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}

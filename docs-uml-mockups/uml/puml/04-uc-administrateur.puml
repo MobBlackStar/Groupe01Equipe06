@@ -1,0 +1,53 @@
+@startuml 04-uc-administrateur
+!include _style.iuml
+left to right direction
+title Cas d'utilisation détaillés — Administrateur
+
+actor "Administrateur" as A
+actor "Firebase Cloud\nMessaging" as FCM <<système externe>>
+
+rectangle "Système CampusSave — console d'administration" {
+  usecase "S'authentifier" as AUTH
+  usecase "Traiter les demandes\nd'inscription des commerces" as VAL
+  usecase "Approuver un commerce" as APPROVE
+  usecase "Rejeter un commerce" as REJECT
+  usecase "Saisir le motif" as REASON
+  usecase "Suspendre un commerce" as SUSP_STORE
+  usecase "Consulter les utilisateurs" as USERS
+  usecase "Suspendre un utilisateur" as SUSP_USER
+  usecase "Révoquer les sessions" as REVOKE
+  usecase "Superviser la plateforme\n(tableau de bord admin)" as SUP
+  usecase "Consulter le journal\ndes paiements" as PAYLOG
+  usecase "Supprimer une offre\nnon conforme" as DEL_OFFER
+  usecase "Notifier le commerçant" as NOTIF
+}
+
+A -- VAL
+A -- SUSP_STORE
+A -- USERS
+A -- SUP
+A -- PAYLOG
+A -- DEL_OFFER
+NOTIF -- FCM
+
+VAL ..> AUTH : <<include>>
+APPROVE .> VAL : <<extend>>
+REJECT .> VAL : <<extend>>
+REJECT ..> REASON : <<include>>
+APPROVE ..> NOTIF : <<include>>
+REJECT ..> NOTIF : <<include>>
+SUSP_STORE ..> AUTH : <<include>>
+SUSP_STORE ..> REASON : <<include>>
+USERS ..> AUTH : <<include>>
+SUSP_USER .> USERS : <<extend>>
+SUSP_USER ..> REVOKE : <<include>>
+SUP ..> AUTH : <<include>>
+PAYLOG ..> AUTH : <<include>>
+DEL_OFFER ..> AUTH : <<include>>
+
+note right of A
+  Le compte administrateur n'est jamais créé
+  par inscription : il est créé par le script
+  scripts/createAdmin.js (rôle ADMIN).
+end note
+@enduml

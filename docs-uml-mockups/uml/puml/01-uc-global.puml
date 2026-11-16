@@ -1,0 +1,93 @@
+@startuml 01-uc-global
+!include _style.iuml
+left to right direction
+title Diagramme de cas d'utilisation global — CampusSave
+
+actor "Visiteur" as V
+actor "Utilisateur\nauthentifié" as U
+actor "Étudiant" as E
+actor "Commerçant" as C
+actor "Administrateur" as A
+actor "Konnect\n(passerelle de paiement)" as K <<système externe>>
+actor "Service IA\n(LLM)" as IA <<système externe>>
+
+U --|> V
+E --|> U
+C --|> U
+A --|> U
+
+rectangle "Système CampusSave" {
+  usecase "S'authentifier" as AUTH
+  usecase "S'inscrire" as UC_REG
+  usecase "Consulter les offres" as UC_OFF
+  usecase "Rechercher des offres\n(produit, commerce,\ncatégorie, prix)" as UC_SRCH
+  usecase "Explorer le\nCampus Radar 3D" as UC_RADAR
+  usecase "Consulter l'Impact\nDashboard" as UC_IMP
+
+  usecase "Gérer son profil" as UC_PROF
+  usecase "Se déconnecter" as UC_OUT
+  usecase "Consulter son\ntableau de bord" as UC_DASH
+
+  usecase "Réserver une offre" as UC_RES
+  usecase "Payer une commande" as UC_PAY
+  usecase "Présenter le\nQR code de retrait" as UC_QR
+  usecase "Suivre ses commandes" as UC_ORD
+  usecase "Consulter sa carte\nde fidélité EcoPoints" as UC_LOY
+
+  usecase "Gérer son commerce" as UC_STORE
+  usecase "Gérer les offres" as UC_OFFM
+  usecase "Traiter les commandes" as UC_ORDM
+  usecase "Valider un retrait\n(scanner le QR)" as UC_SCAN
+
+  usecase "Valider les commerces" as UC_VAL
+  usecase "Gérer les utilisateurs" as UC_USERS
+  usecase "Superviser la plateforme" as UC_SUP
+}
+
+V -- UC_REG
+V -- UC_OFF
+V -- UC_SRCH
+V -- UC_RADAR
+V -- UC_IMP
+
+U -- UC_PROF
+U -- UC_OUT
+U -- UC_DASH
+
+E -- UC_RES
+E -- UC_PAY
+E -- UC_QR
+E -- UC_ORD
+E -- UC_LOY
+
+C -- UC_STORE
+C -- UC_OFFM
+C -- UC_ORDM
+C -- UC_SCAN
+
+A -- UC_VAL
+A -- UC_USERS
+A -- UC_SUP
+
+UC_PAY -- K
+UC_OFFM -- IA
+
+UC_PROF ..> AUTH : <<include>>
+UC_OUT ..> AUTH : <<include>>
+UC_DASH ..> AUTH : <<include>>
+UC_RES ..> AUTH : <<include>>
+UC_PAY ..> AUTH : <<include>>
+UC_QR ..> AUTH : <<include>>
+UC_ORD ..> AUTH : <<include>>
+UC_LOY ..> AUTH : <<include>>
+UC_STORE ..> AUTH : <<include>>
+UC_OFFM ..> AUTH : <<include>>
+UC_ORDM ..> AUTH : <<include>>
+UC_SCAN ..> AUTH : <<include>>
+UC_VAL ..> AUTH : <<include>>
+UC_USERS ..> AUTH : <<include>>
+UC_SUP ..> AUTH : <<include>>
+
+
+note "Les cas d'utilisation détaillés de chaque acteur\nsont décrits dans les diagrammes 02, 03 et 04." as N1
+@enduml
