@@ -26,6 +26,7 @@ import LivingTicketPage from '../features/ticket/LivingTicketPage.jsx';
 import MyOrdersPage from '../features/orders/MyOrdersPage.jsx';
 import MerchantOrdersPage from '../features/merchant/MerchantOrdersPage.jsx';
 import LoyaltyCardPage from '../features/loyalty/LoyaltyCardPage.jsx';
+import HoloRadarPage from '../features/radar/HoloRadarPage.jsx';
 
 export function AppRouter() {
   return (
@@ -57,6 +58,7 @@ export function AppRouter() {
           <Route path="/app/orders" element={<MyOrdersPage />} />
           <Route path="/app/orders/:id/ticket" element={<LivingTicketPage />} />
           <Route path="/app/loyalty" element={<LoyaltyCardPage />} />
+          <Route path="/app/radar" element={<HoloRadarPage />} />
         </Route>
 
         {/* Espace Commerçant (/merchant/*) */}

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../features/auth/login_screen.dart';
+import '../features/radar/radar_screen.dart';
 
 class AppRouter {
   static final AuthService authService = AuthService();
@@ -45,6 +46,14 @@ class AppRouter {
       GoRoute(
         path: '/login',
         builder: (context, state) => LoginScreen(authService: authService),
+      ),
+      GoRoute(
+        path: '/radar',
+        builder: (context, state) => const RadarScreen(),
+      ),
+      GoRoute(
+        path: '/student/radar',
+        builder: (context, state) => const RadarScreen(),
       ),
       GoRoute(
         path: '/student',

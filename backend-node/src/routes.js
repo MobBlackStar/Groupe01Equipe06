@@ -14,6 +14,8 @@ import { aiRouter } from './modules/ai/ai.routes.js';
 import { ordersRouter } from './modules/orders/orders.routes.js';
 import { paymentsRouter } from './modules/payments/payments.routes.js';
 import { ticketsRouter } from './modules/tickets/tickets.routes.js';
+import { radarRouter } from './modules/radar/radar.routes.js';
+import { loyaltyRouter } from './modules/loyalty/loyalty.routes.js';
 
 export const apiRouter = Router();
 
@@ -45,8 +47,10 @@ apiRouter.use('/payments', paymentsRouter);
 // Retrait de commandes & Living Ticket (Jour 5)
 apiRouter.use('/tickets', ticketsRouter);
 
+// Radar Géospatial & Programme de Fidélité (Jour 6)
+apiRouter.use('/radar', radarRouter);
+apiRouter.use('/loyalty', loyaltyRouter);
+
 // Les sous-routeurs suivants seront branchés lors des étapes dédiées :
-// apiRouter.use('/loyalty', loyaltyRouter);
 // apiRouter.use('/impact', impactRouter);
 // apiRouter.use('/dashboards', dashboardsRouter);
-// apiRouter.use('/radar', radarRouter);
