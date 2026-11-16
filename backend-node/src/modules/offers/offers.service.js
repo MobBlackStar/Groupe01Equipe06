@@ -189,21 +189,14 @@ export const offersService = {
 
     const nowMs = Date.now();
 
-    // 1. Requête de base sur Firestore : uniquement les offres actives
-    let queryRef = db.collection('offers').where('status', '==', OFFER_STATUS.ACTIVE);
-
-    if (category) {
-      queryRef = queryRef.where('category', '==', category);
-    }
-    if (merchantId) {
-      queryRef = queryRef.where('merchantId', '==', merchantId);
-    }
-
-    const snapshot = await queryRef.get();
+    // 1. Requête sur champ unique d'égalité Firestore (évite 9 FAILED_PRECONDITION)
+    const snapshot = await db.collection('offers').where('status', '==', OFFER_STATUS.ACTIVE).get();
     let offersList = [];
 
     snapshot.forEach((doc) => {
       const data = doc.data();
+      if (category && data.category !== category) return;
+      if (merchantId && data.merchantId !== merchantId) return;
       offersList.push({ id: doc.id, ...data });
     });
 

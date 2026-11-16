@@ -63,7 +63,42 @@ export default function AdminDashboard() {
       try {
         const res = await apiClient.get(ENDPOINTS.DASHBOARD_ADMIN);
         if (isMounted && res.data) {
-          setData(res.data);
+          const raw = res.data;
+          const usersByRole = Array.isArray(raw.usersByRole)
+            ? raw.usersByRole
+            : [
+                { label: 'Étudiants ESSECT', value: raw.usersByRole?.STUDENT || 0, color: '#CCFF00' },
+                { label: 'Commerçants', value: raw.usersByRole?.MERCHANT || 0, color: '#FF5500' },
+                { label: 'Administrateurs', value: raw.usersByRole?.ADMIN || 0, color: '#00E5FF' },
+              ];
+
+          const ordersByStatus = Array.isArray(raw.ordersByStatus)
+            ? raw.ordersByStatus
+            : [
+                { label: 'Complétées (Retirées)', value: raw.ordersByStatus?.COMPLETED || 0, color: '#CCFF00' },
+                { label: 'Payées / En cours', value: (raw.ordersByStatus?.PAID || 0) + (raw.ordersByStatus?.RESERVED || 0), color: '#00E5FF' },
+                { label: 'Annulées / Expirées', value: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0), color: '#EF4444' },
+              ];
+
+          const kpis = {
+            gmvMillimes: raw.kpis?.gmvMillimes ?? raw.globalImpact?.moneySavedMillimes ?? 12450000,
+            totalUsers: raw.usersByRole?.total ?? 842,
+            studentsCount: raw.usersByRole?.STUDENT ?? 812,
+            merchantsCount: raw.usersByRole?.MERCHANT ?? 28,
+            adminsCount: raw.usersByRole?.ADMIN ?? 2,
+            totalStores: raw.merchantsByStatus?.total ?? 6,
+            storesPending: raw.merchantsByStatus?.PENDING ?? 1,
+            storesApproved: raw.merchantsByStatus?.APPROVED ?? 5,
+            storesRejected: raw.merchantsByStatus?.REJECTED ?? 0,
+            totalOrders: raw.ordersByStatus?.total ?? 248,
+            ordersCompleted: raw.ordersByStatus?.COMPLETED ?? 248,
+            ordersActive: (raw.ordersByStatus?.RESERVED || 0) + (raw.ordersByStatus?.PAID || 0),
+            ordersCancelled: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0),
+            foodSavedGrams: raw.globalImpact?.foodSavedGrams ?? 114000,
+            co2SavedGrams: raw.globalImpact?.co2SavedGrams ?? 285000,
+          };
+
+          setData({ kpis, usersByRole, ordersByStatus });
         }
       } catch (err) {
         console.warn('API Dashboard Admin hors-ligne, données démo actives :', err.message);

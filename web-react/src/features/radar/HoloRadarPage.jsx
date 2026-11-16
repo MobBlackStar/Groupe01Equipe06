@@ -72,9 +72,33 @@ export default function HoloRadarPage() {
     };
   }, [radiusM]);
 
+  // Gestion de la sélection d'un commerçant
+  const handleSelectMerchant = useCallback((merchant) => {
+    setSelectedMerchant(merchant);
+
+    if (mapRef.current && merchant?.location) {
+      const coords = [merchant.location.lng, merchant.location.lat];
+      // Effet cinématique Drone Swoop
+      droneSwoopToMerchant(mapRef.current, coords);
+      // Tracé piétonnier néon
+      updateWalkingPath(mapRef.current, coords);
+    }
+  }, []);
+
+  // Désélection et retour à l'ESSECT
+  const handleCloseDrawer = useCallback(() => {
+    setSelectedMerchant(null);
+    if (mapRef.current) {
+      resetToCampusHome(mapRef.current);
+      updateWalkingPath(mapRef.current, null);
+    }
+  }, []);
+
   // Initialisation de la carte MapLibre 3D WebGL
   useEffect(() => {
     if (viewMode !== '3D' || !mapContainerRef.current) return;
+
+    const merchants = radarData?.merchants || [];
 
     if (!mapRef.current) {
       try {
@@ -96,8 +120,8 @@ export default function HoloRadarPage() {
           add3DBuildingsLayer(map);
 
           // Si des commerces sont déjà chargés, injecter les balises 3D
-          if (radarData?.merchants) {
-            setupBeaconLayers(map, radarData.merchants, handleSelectMerchant);
+          if (merchants.length > 0) {
+            setupBeaconLayers(map, merchants, handleSelectMerchant);
           }
         });
 
@@ -112,37 +136,15 @@ export default function HoloRadarPage() {
       }
     } else {
       // Carte déjà existante : mise à jour des balises selon le rayon
-      if (mapRef.current.isStyleLoaded() && radarData?.merchants) {
-        setupBeaconLayers(mapRef.current, radarData.merchants, handleSelectMerchant);
+      if (mapRef.current.isStyleLoaded() && merchants.length > 0) {
+        setupBeaconLayers(mapRef.current, merchants, handleSelectMerchant);
       }
     }
 
     return () => {
       // Ne détruit pas la carte immédiatement pour éviter les scintillements
     };
-  }, [viewMode, radarData]);
-
-  // Gestion de la sélection d'un commerçant
-  function handleSelectMerchant(merchant) {
-    setSelectedMerchant(merchant);
-
-    if (mapRef.current && merchant?.location) {
-      const coords = [merchant.location.lng, merchant.location.lat];
-      // Effet cinématique Drone Swoop
-      droneSwoopToMerchant(mapRef.current, coords);
-      // Tracé piétonnier néon
-      updateWalkingPath(mapRef.current, coords);
-    }
-  }
-
-  // Désélection et retour à l'ESSECT
-  function handleCloseDrawer() {
-    setSelectedMerchant(null);
-    if (mapRef.current) {
-      resetToCampusHome(mapRef.current);
-      updateWalkingPath(mapRef.current, null);
-    }
-  }
+  }, [viewMode, radarData?.merchants, handleSelectMerchant]);
 
   return (
     <div className="relative w-full h-[calc(100vh-64px)] bg-[#0D0F12] overflow-hidden flex flex-col">

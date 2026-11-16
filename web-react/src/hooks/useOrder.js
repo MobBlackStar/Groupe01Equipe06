@@ -1,71 +1,68 @@
-// 💡 Concept & Analogie : Comme une liaison talkie-walkie en continu qui prévient l'étudiant à la milliseconde près dès que le commerçant a bipé son billet pour valider le retrait.
-// 🔄 Comparaison React / Flutter : Utilise `onSnapshot` de Firestore JS SDK sous React ; sous Flutter, `FirestoreStreams.order(orderId)` produit un `Stream<OrderModel>`.
-// 🎯 À retenir pour la soutenance : "Ce listener réactif élimine tout rechargement manuel de la page : dès que le QR code est scanné, l'état de la commande bascule instantanément vers COMPLETED."
+// 💡 Concept & Analogie : Comme une liaison directe qui informe l'étudiant dès que le commerçant a bipé son billet pour valider le retrait.
+// 🔄 Comparaison React / Flutter : Utilise l'API REST sous React avec rafraîchissement périodique ; sous Flutter, `FirestoreStreams.order(orderId)` produit un `Stream<OrderModel>`.
+// 🎯 À retenir pour la soutenance : "Ce hook assure la synchronisation de l'état d'une commande unique avec tolérance de panne et repli gracieux."
 // Module : Hooks Temps Réel React
 
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase.js';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { apiClient } from '../lib/api.js';
+import { ENDPOINTS } from '../lib/endpoints.js';
 import { mockOrders } from '../mocks/index.js';
 
 /**
- * Hook personnalisé d'écoute temps réel sur une commande unique.
- * @param {string} orderId - Identifiant du document commande Firestore
- * @returns {{ order: object|null, loading: boolean, error: Error|null }}
+ * Hook personnalisé récupérant les détails d'une commande unique.
+ * @param {string} orderId - Identifiant de la commande
+ * @returns {{ order: object|null, loading: boolean, error: Error|null, refresh: Function }}
  */
 export function useOrder(orderId) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isMountedRef = useRef(true);
 
-  useEffect(() => {
+  const fetchOrder = useCallback(async () => {
     if (!orderId) {
-      setOrder(null);
-      setLoading(false);
-      return;
-    }
-
-    const useMocks = import.meta.env.VITE_USE_MOCKS === 'true';
-
-    // Repli de démonstration hors ligne ou sans Firebase initialisé
-    if (useMocks || !db) {
-      const found = mockOrders.find((o) => o.orderId === orderId) || mockOrders[0] || null;
-      setOrder(found);
-      setLoading(false);
+      if (isMountedRef.current) {
+        setOrder(null);
+        setLoading(false);
+      }
       return;
     }
 
     try {
-      const orderRef = doc(db, 'orders', orderId);
-      const unsubscribe = onSnapshot(
-        orderRef,
-        (snapshot) => {
-          if (snapshot.exists()) {
-            setOrder({ id: snapshot.id, orderId: snapshot.id, ...snapshot.data() });
-          } else {
-            // Document inexistant
-            setOrder(null);
-          }
-          setLoading(false);
-        },
-        (err) => {
-          console.warn('Erreur listener Firestore useOrder :', err.message);
-          setError(err);
-          // Repli sur mock
-          const found = mockOrders.find((o) => o.orderId === orderId) || mockOrders[0];
-          setOrder(found);
-          setLoading(false);
-        }
-      );
-
-      return () => unsubscribe();
+      const res = await apiClient.get(ENDPOINTS.ORDER_BY_ID(orderId));
+      const ord = res.data?.order || res.data;
+      if (isMountedRef.current) {
+        setOrder(ord || mockOrders.find((o) => o.id === orderId || o.orderCode === orderId) || mockOrders[0]);
+        setError(null);
+      }
     } catch (err) {
-      console.warn('Initialisation useOrder échouée :', err.message);
-      setError(err);
-      setOrder(mockOrders[0] || null);
-      setLoading(false);
+      if (isMountedRef.current) {
+        console.warn('API useOrder indisponible, repli sur mockOrders :', err.message);
+        const found = mockOrders.find((o) => o.id === orderId || o.orderId === orderId || o.orderCode === orderId) || mockOrders[0];
+        setOrder(found);
+        setError(err);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [orderId]);
 
-  return { order, loading, error };
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchOrder();
+
+    // Polling doux toutes les 10 secondes
+    const interval = setInterval(() => {
+      fetchOrder();
+    }, 10000);
+
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
+  }, [fetchOrder]);
+
+  return { order, loading, error, refresh: fetchOrder };
 }

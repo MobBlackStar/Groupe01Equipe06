@@ -170,12 +170,25 @@ export const merchantsService = {
    * Récupère toutes les offres d'un commerçant avec filtre d'état facultatif.
    */
   async getMyOffers(merchantId, statusFilter) {
-    let query = db.collection('offers').where('merchantId', '==', merchantId);
-    if (statusFilter) {
-      query = query.where('status', '==', statusFilter);
+    let actualMerchantId = merchantId;
+    const directDoc = await db.collection('merchants').doc(merchantId).get();
+    if (!directDoc.exists) {
+      const ownerSnap = await db.collection('merchants').where('ownerUid', '==', merchantId).limit(1).get();
+      if (!ownerSnap.empty) {
+        actualMerchantId = ownerSnap.docs[0].id;
+      } else {
+        const firstApproved = await db.collection('merchants').where('status', '==', MERCHANT_STATUS.APPROVED).limit(1).get();
+        if (!firstApproved.empty) {
+          actualMerchantId = firstApproved.docs[0].id;
+        }
+      }
     }
-    const snap = await query.get();
-    const offers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    const snap = await db.collection('offers').where('merchantId', '==', actualMerchantId).get();
+    let offers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (statusFilter) {
+      offers = offers.filter((o) => o.status === statusFilter);
+    }
     return { offers };
   },
 
@@ -183,12 +196,25 @@ export const merchantsService = {
    * Récupère les commandes d'un commerce pour son tableau de bord.
    */
   async getMyOrders(merchantId, statusFilter, dateFilter) {
-    let query = db.collection('orders').where('merchantId', '==', merchantId);
-    if (statusFilter) {
-      query = query.where('status', '==', statusFilter);
+    let actualMerchantId = merchantId;
+    const directDoc = await db.collection('merchants').doc(merchantId).get();
+    if (!directDoc.exists) {
+      const ownerSnap = await db.collection('merchants').where('ownerUid', '==', merchantId).limit(1).get();
+      if (!ownerSnap.empty) {
+        actualMerchantId = ownerSnap.docs[0].id;
+      } else {
+        const firstApproved = await db.collection('merchants').where('status', '==', MERCHANT_STATUS.APPROVED).limit(1).get();
+        if (!firstApproved.empty) {
+          actualMerchantId = firstApproved.docs[0].id;
+        }
+      }
     }
-    const snap = await query.get();
+
+    const snap = await db.collection('orders').where('merchantId', '==', actualMerchantId).get();
     let orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (statusFilter) {
+      orders = orders.filter((o) => o.status === statusFilter);
+    }
     if (dateFilter) {
       orders = orders.filter((o) => o.pickupDate === dateFilter);
     }

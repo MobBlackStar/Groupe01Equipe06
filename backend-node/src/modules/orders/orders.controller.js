@@ -22,6 +22,11 @@ export const ordersController = {
     res.json(result);
   }),
 
+  listOrders: asyncHandler(async (req, res) => {
+    const result = await ordersService.listOrders(req.user);
+    res.json(result);
+  }),
+
   getMyOrders: asyncHandler(async (req, res) => {
     const result = await ordersService.getMyOrders(req.user.uid);
     res.json(result);

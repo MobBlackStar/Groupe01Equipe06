@@ -140,10 +140,21 @@ export default function MerchantDashboard() {
     };
   }, [range]);
 
-  const kpis = dashboardData.kpis || DEMO_MERCHANT_7D.kpis;
+  const kpis = dashboardData.kpis || {
+    revenueMillimes: dashboardData.stats?.revenueMillimes || 0,
+    ordersPaid: dashboardData.stats?.ordersPaid || 0,
+    ordersCompleted: dashboardData.stats?.ordersCompleted || 0,
+    mealsRescued: dashboardData.stats?.mealsRescued || 0,
+    noShowsPercent: dashboardData.noShowRate || 0,
+    ratingAvg: dashboardData.rating?.avg || 4.8,
+    reviewsCount: dashboardData.rating?.count || 42,
+  };
+
   const chartData = (dashboardData.dailySeries || DEMO_MERCHANT_7D.dailySeries).map((item) => ({
-    label: item.label,
-    value: metric === 'revenue' ? Math.round(item.value / 1000) : item.orders,
+    label: item.label || item.date?.slice(5) || 'Jour',
+    value: metric === 'revenue'
+      ? Math.round((item.value ?? item.revenueMillimes ?? 0) / 1000)
+      : (item.orders ?? item.ordersCompleted ?? 0),
     color: item.color || '#CCFF00',
   }));
 

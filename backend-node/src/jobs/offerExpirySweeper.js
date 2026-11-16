@@ -18,22 +18,38 @@ export async function runOfferExpirySweeper() {
 
   try {
     const now = new Date();
-    const expiredOffersQuery = await db
+    const nowMs = now.getTime();
+
+    // Requête sur champ unique d'égalité (évite 9 FAILED_PRECONDITION)
+    const activeOffersQuery = await db
       .collection('offers')
       .where('status', '==', OFFER_STATUS.ACTIVE)
-      .where('pickupEndAt', '<=', now)
-      .limit(50)
+      .limit(100)
       .get();
 
-    if (expiredOffersQuery.empty) {
+    if (activeOffersQuery.empty) {
       isOfferExpirySweeperRunning = false;
       return;
     }
 
-    logger.info(`Sweeper: ${expiredOffersQuery.size} offre(s) expirée(s) trouvée(s)`);
+    // Filtrage temporel en mémoire
+    const expiredDocs = activeOffersQuery.docs.filter((doc) => {
+      const data = doc.data();
+      const endMs = data.pickupEndAt?.toDate
+        ? data.pickupEndAt.toDate().getTime()
+        : new Date(data.pickupEndAt).getTime();
+      return endMs <= nowMs;
+    });
+
+    if (expiredDocs.length === 0) {
+      isOfferExpirySweeperRunning = false;
+      return;
+    }
+
+    logger.info(`Sweeper: ${expiredDocs.length} offre(s) expirée(s) trouvée(s)`);
 
     const batch = db.batch();
-    expiredOffersQuery.docs.forEach((doc) => {
+    expiredDocs.forEach((doc) => {
       batch.update(doc.ref, {
         status: OFFER_STATUS.EXPIRED,
         updatedAt: now,

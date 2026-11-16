@@ -150,7 +150,7 @@ export default function StudentDashboard() {
 
   const chartSeries = (data.savingsHistory || DEMO_STUDENT_DASHBOARD.savingsHistory).map((item) => ({
     label: item.label,
-    value: metricMode === 'money' ? Math.round(item.value / 1000) : item.co2,
+    value: metricMode === 'money' ? Math.round(Number(item.value || 0) / 1000) : Number(item.co2 || 0),
   }));
 
   return (

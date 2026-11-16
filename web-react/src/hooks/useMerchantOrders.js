@@ -1,71 +1,66 @@
-// 💡 Concept & Analogie : Comme l'écran de caisse d'un restaurant où s'affichent les commandes qui arrivent en direct de la cuisine, ce hook écoute toutes les commandes destinées à l'établissement.
-// 🔄 Comparaison React / Flutter : Alimente en temps réel `MerchantOrdersPage.jsx` sous React et l'écran des commandes commerçant sous Flutter.
-// 🎯 À retenir pour la soutenance : "Ce hook applique la clause d'égalité merchantId == uid exigée par firestore.rules pour isoler strictement les données de chaque commerce."
+// 💡 Concept & Analogie : Comme l'écran de caisse d'un restaurant où s'affichent les commandes qui arrivent en direct de la cuisine, ce hook récupère les commandes destinées à l'établissement.
+// 🔄 Comparaison React / Flutter : Alimente `MerchantOrdersPage.jsx` sous React et l'écran des commandes commerçant sous Flutter.
+// 🎯 À retenir pour la soutenance : "Ce hook interroge l'API sécurisée `/merchants/me/orders` avec rafraîchissement périodique et repli de secours."
 // Module : Hooks Temps Réel React
 
-import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase.js';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { apiClient } from '../lib/api.js';
+import { ENDPOINTS } from '../lib/endpoints.js';
 import { mockOrders } from '../mocks/index.js';
 
 /**
- * Hook personnalisé d'écoute sur les commandes destinées au commerçant connecté.
+ * Hook personnalisé récupérant les commandes destinées au commerçant connecté.
  * @param {string} merchantId - Identifiant de l'établissement commerçant (uid)
- * @returns {{ orders: Array<object>, loading: boolean, error: Error|null }}
+ * @returns {{ orders: Array<object>, loading: boolean, error: Error|null, refresh: Function }}
  */
 export function useMerchantOrders(merchantId) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isMountedRef = useRef(true);
 
-  useEffect(() => {
+  const fetchMerchantOrders = useCallback(async () => {
     if (!merchantId) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
-
-    const useMocks = import.meta.env.VITE_USE_MOCKS === 'true';
-
-    if (useMocks || !db) {
-      setOrders(mockOrders);
-      setLoading(false);
+      if (isMountedRef.current) {
+        setOrders([]);
+        setLoading(false);
+      }
       return;
     }
 
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('merchantId', '==', merchantId),
-        orderBy('createdAt', 'desc')
-      );
-
-      const unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-          const list = [];
-          snapshot.forEach((doc) => {
-            list.push({ id: doc.id, orderId: doc.id, ...doc.data() });
-          });
-          setOrders(list.length > 0 ? list : mockOrders);
-          setLoading(false);
-        },
-        (err) => {
-          console.warn('Erreur Firestore useMerchantOrders, bascule sur mockOrders :', err.message);
-          setError(err);
-          setOrders(mockOrders);
-          setLoading(false);
-        }
-      );
-
-      return () => unsubscribe();
+      const res = await apiClient.get(ENDPOINTS.MERCHANT_ORDERS);
+      const list = res.data?.orders || res.data || [];
+      if (isMountedRef.current) {
+        setOrders(Array.isArray(list) && list.length > 0 ? list : mockOrders);
+        setError(null);
+      }
     } catch (err) {
-      console.warn('Initialisation useMerchantOrders échouée :', err.message);
-      setError(err);
-      setOrders(mockOrders);
-      setLoading(false);
+      if (isMountedRef.current) {
+        console.warn('API useMerchantOrders indisponible, repli sur mockOrders :', err.message);
+        setOrders(mockOrders);
+        setError(err);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [merchantId]);
 
-  return { orders, loading, error };
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchMerchantOrders();
+
+    const interval = setInterval(() => {
+      fetchMerchantOrders();
+    }, 15000);
+
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
+  }, [fetchMerchantOrders]);
+
+  return { orders, loading, error, refresh: fetchMerchantOrders };
 }

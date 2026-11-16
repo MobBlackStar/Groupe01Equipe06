@@ -64,6 +64,22 @@ export default function LineChartCard({
   headerAction,
   height = 260,
 }) {
+  // Normalisation résiliente de la prop data (Array ou Objet clé-valeur)
+  const normalizedData = React.useMemo(() => {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') {
+      return Object.entries(data)
+        .filter(([key]) => key !== 'total')
+        .map(([key, val]) => ({
+          label: key,
+          name: key,
+          value: typeof val === 'number' ? val : Number(val?.count ?? val?.value ?? 0),
+          count: typeof val === 'number' ? val : (val?.count ?? 0),
+        }));
+    }
+    return [];
+  }, [data]);
+
   return (
     <div className="p-6 rounded-2xl bg-[#161920] border border-white/10 flex flex-col justify-between">
       {/* En-tête */}
@@ -78,7 +94,7 @@ export default function LineChartCard({
       {/* Graphique SVG */}
       <div style={{ width: '100%', height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={strokeColor} stopOpacity={0.35} />

@@ -63,6 +63,22 @@ export default function BarChartCard({
   headerAction,
   height = 260,
 }) {
+  // Normalisation résiliente de la prop data (Array ou Objet clé-valeur)
+  const normalizedData = React.useMemo(() => {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') {
+      return Object.entries(data)
+        .filter(([key]) => key !== 'total')
+        .map(([key, val]) => ({
+          label: key,
+          name: key,
+          value: typeof val === 'number' ? val : Number(val?.count ?? val?.value ?? 0),
+          count: typeof val === 'number' ? val : (val?.count ?? 0),
+        }));
+    }
+    return [];
+  }, [data]);
+
   return (
     <div className="p-6 rounded-2xl bg-[#161920] border border-white/10 flex flex-col justify-between">
       {/* En-tête */}
@@ -77,7 +93,7 @@ export default function BarChartCard({
       {/* Graphique SVG */}
       <div style={{ width: '100%', height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#252A36" vertical={false} />
             <XAxis
               dataKey={xKey}
@@ -107,7 +123,7 @@ export default function BarChartCard({
               radius={[6, 6, 0, 0]}
               maxBarSize={45}
             >
-              {data.map((entry, index) => (
+              {normalizedData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.color || barColor}

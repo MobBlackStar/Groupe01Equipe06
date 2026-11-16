@@ -3,7 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Ce hook assure une résilience totale : il interroge l'API REST `/impact/global` et `/impact/filieres`, tout en fournissant des données de secours complètes si le réseau est indisponible."
 // Module : Impact Écologique & Responsabilité Sociétale
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../lib/api.js';
 import { ENDPOINTS } from '../lib/endpoints.js';
 
@@ -83,39 +83,48 @@ export function useCampusImpact(days = 14) {
   const [filieres, setFilieres] = useState(FALLBACK_FILIERES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isMountedRef = useRef(true);
 
   const fetchImpactData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
     try {
       const [globalRes, filieresRes] = await Promise.all([
         apiClient.get(`${ENDPOINTS.IMPACT_GLOBAL || '/impact/global'}?days=${days}`),
         apiClient.get(ENDPOINTS.IMPACT_FILIERES || '/impact/filieres'),
       ]);
 
-      if (globalRes.data?.global) {
-        setGlobalImpact(globalRes.data.global);
-      }
-      if (globalRes.data?.equivalences) {
-        setEquivalences(globalRes.data.equivalences);
-      }
-      if (globalRes.data?.dailySeries) {
-        setDailySeries(globalRes.data.dailySeries);
-      }
-      if (filieresRes.data?.filieres) {
-        setFilieres(filieresRes.data.filieres);
+      if (isMountedRef.current) {
+        if (globalRes.data?.global) {
+          setGlobalImpact(globalRes.data.global);
+        }
+        if (globalRes.data?.equivalences) {
+          setEquivalences(globalRes.data.equivalences);
+        }
+        if (globalRes.data?.dailySeries) {
+          setDailySeries(globalRes.data.dailySeries);
+        }
+        if (filieresRes.data?.filieres) {
+          setFilieres(filieresRes.data.filieres);
+        }
+        setError(null);
       }
     } catch (err) {
-      // Repli silencieux et élégant sur les données de démonstration
-      setError(err.message);
+      if (isMountedRef.current) {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [days]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchImpactData();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [fetchImpactData]);
 
   return {

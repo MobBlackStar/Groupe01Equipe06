@@ -15,24 +15,25 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
+  // 1. Priorité aux jetons de session locale / démo 1-clic pour fluidifier la soutenance
+  const savedToken = localStorage.getItem('campussave_token');
+  const savedDemo = localStorage.getItem('campussave_demo_session');
+  if (savedToken || savedDemo) {
+    try {
+      const parsed = savedDemo ? JSON.parse(savedDemo) : {};
+      const token = savedToken || parsed.token || `test-token:${parsed.uid || 'student-demo-uid'}:${parsed.role || 'STUDENT'}:${parsed.email || 'etudiant@essect.u-tunis.tn'}`;
+      config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    } catch {}
+  }
+
+  // 2. Si utilisateur Firebase réel connecté
   const currentUser = auth?.currentUser;
   if (currentUser) {
     try {
       const token = await currentUser.getIdToken();
       config.headers.Authorization = `Bearer ${token}`;
       return config;
-    } catch {}
-  }
-
-  // Si session de démonstration locale dans localStorage
-  const savedDemo = localStorage.getItem('campussave_demo_session');
-  if (savedDemo) {
-    try {
-      const parsed = JSON.parse(savedDemo);
-      const role = parsed.role || 'STUDENT';
-      const uid = parsed.uid || 'demo-uid';
-      const email = parsed.email || 'demo@essect.tn';
-      config.headers.Authorization = `Bearer test-token:${uid}:${role}:${email}`;
     } catch {}
   }
 

@@ -120,11 +120,19 @@ export function AuthProvider({ children }) {
     const demo = demoAccounts[type];
     if (!demo) return;
 
+    let token = 'test-token:student-yassine:STUDENT:etudiant@essect.u-tunis.tn';
+    if (demo.role === 'MERCHANT') {
+      token = 'test-token:m-baguette:MERCHANT:commercant@baguette.tn';
+    } else if (demo.role === 'ADMIN') {
+      token = 'test-token:admin-uid:ADMIN:admin@campussave.tn';
+    }
+
     const simulatedProfile = {
-      uid: demo.uid || `demo-${type}-id`,
+      uid: demo.uid || (demo.role === 'ADMIN' ? 'admin-uid' : (demo.role === 'MERCHANT' ? 'm-baguette' : 'student-demo-uid')),
       email: demo.email,
       displayName: demo.displayName,
       role: demo.role,
+      token,
       filiereId: demo.filiereId || null,
       phone: demo.phone || '+21698000000',
       ecoPoints: demo.ecoPoints || 0,
@@ -134,6 +142,7 @@ export function AuthProvider({ children }) {
     };
 
     localStorage.setItem('campussave_demo_session', JSON.stringify(simulatedProfile));
+    localStorage.setItem('campussave_token', token);
     setUser({ uid: simulatedProfile.uid, email: simulatedProfile.email, displayName: simulatedProfile.displayName });
     setProfile(simulatedProfile);
     setRole(demo.role);
@@ -159,6 +168,9 @@ export function AuthProvider({ children }) {
         setRole(userRole);
         const res = await apiClient.get(ENDPOINTS.ME);
         setProfile(res.data.user);
+        if (!userRole && res.data.user?.role) {
+          setRole(res.data.user.role);
+        }
         return res.data;
       } catch (err) {
         console.error('Erreur rafraîchissement profil', err);
@@ -171,6 +183,7 @@ export function AuthProvider({ children }) {
    */
   const logout = async () => {
     localStorage.removeItem('campussave_demo_session');
+    localStorage.removeItem('campussave_token');
     if (auth) {
       try {
         await fbSignOut(auth);

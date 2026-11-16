@@ -1,12 +1,9 @@
-// 💡 Concept & Analogie : Comme le fil d'Ariane lumineux d'un GPS piéton en réalité augmentée, cette ligne en pointillés animés relie l'ESSECT directement à l'établissement sélectionné pour guider l'étudiant.
+// 💡 Concept & Analogie : Comme le fil d'Ariane lumineux d'un GPS piéton en réalité augmentée, cette ligne en pointillés relie l'ESSECT directement à l'établissement sélectionné pour guider l'étudiant.
 // 🔄 Comparaison React / Flutter : En React, la ligne est tracée dynamiquement via un calque `line` MapLibre ; en Flutter, `PolylineLayer` de `flutter_map` assure le même guidage.
-// 🎯 À retenir pour la soutenance : "Le tracé piéton direct relie le campus à la balise ciblée avec animation de défilement des pointillés néon."
+// 🎯 À retenir pour la soutenance : "Le tracé piéton direct relie le campus à la balise ciblée avec tracé néon net sans surcharge GPU."
 // Module : Holo-Radar 3D WebGL
 
 import { MAP_CONFIG } from './mapStyle.js';
-
-let animationFrameId = null;
-let dashOffset = 0;
 
 /**
  * Met à jour ou efface le tracé piéton reliant l'ESSECT au commerce ciblé.
@@ -20,10 +17,6 @@ export function updateWalkingPath(map, merchantCoords) {
   const layerId = 'walking-path-layer';
 
   if (!merchantCoords) {
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
     if (map.getLayer(layerId)) map.removeLayer(layerId);
     if (map.getSource(sourceId)) map.removeSource(sourceId);
     return;
@@ -62,21 +55,8 @@ export function updateWalkingPath(map, merchantCoords) {
         'line-color': '#CCFF00',
         'line-width': 4,
         'line-dasharray': [2, 2],
-        'line-opacity': 0.9,
+        'line-opacity': 0.95,
       },
     });
-  }
-
-  // Animation cyclique du motif pointillé
-  function animateDash() {
-    dashOffset = (dashOffset + 0.1) % 4;
-    if (map.getLayer(layerId)) {
-      // MapLibre supporte l'animation fluide via setData ou requestAnimationFrame
-      animationFrameId = requestAnimationFrame(animateDash);
-    }
-  }
-
-  if (!animationFrameId) {
-    animateDash();
   }
 }

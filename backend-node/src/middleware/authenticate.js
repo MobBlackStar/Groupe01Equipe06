@@ -3,7 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Nous vérifions systématiquement la validité et la non-révocation des jetons ID Firebase avec `verifyIdToken(token, true)` pour bloquer immédiatement tout utilisateur suspendu."
 // Module : Architecture & Sécurité
 
-import { auth } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
 import { AppError } from '../utils/AppError.js';
 import { env } from '../config/env.js';
 
@@ -31,12 +31,24 @@ export async function authenticate(req, _res, next) {
         uid = parts[1];
         role = parts[2];
         email = parts[3] || `${uid}@essect.u-tunis.tn`;
+      } else if (parts.length === 2) {
+        uid = parts[1];
+        role = parts[1].toUpperCase().includes('ADMIN') ? 'ADMIN' : (parts[1].toUpperCase().includes('MERCHANT') ? 'MERCHANT' : 'STUDENT');
+        email = `${uid}@essect.u-tunis.tn`;
       } else {
-        const dashParts = token.split('-');
-        if (dashParts.length >= 3) {
-          uid = dashParts[1];
-          role = dashParts[2].toUpperCase();
-          email = `${uid}@essect.u-tunis.tn`;
+        const lower = token.toLowerCase();
+        if (lower.includes('admin')) {
+          uid = 'admin-uid';
+          role = 'ADMIN';
+          email = 'admin@campussave.tn';
+        } else if (lower.includes('merchant') || lower.includes('baguette')) {
+          uid = 'm-baguette';
+          role = 'MERCHANT';
+          email = 'commercant@baguette.tn';
+        } else {
+          uid = 'student-demo-uid';
+          role = 'STUDENT';
+          email = 'etudiant@essect.u-tunis.tn';
         }
       }
 
@@ -52,10 +64,26 @@ export async function authenticate(req, _res, next) {
     // Le second paramètre true force la vérification de révocation
     const decodedToken = await auth.verifyIdToken(token, true);
 
+    let role = decodedToken.role;
+    if (!role && db) {
+      try {
+        const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+        if (userDoc.exists) {
+          role = userDoc.data()?.role;
+        }
+      } catch (err) {
+        // Ignorer l'erreur de lecture Firestore
+      }
+    }
+
+    if (!role) {
+      role = 'STUDENT';
+    }
+
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email,
-      role: decodedToken.role || null,
+      role,
       ...decodedToken,
     };
 

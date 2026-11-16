@@ -29,17 +29,19 @@ export async function runNoShowSweeper() {
     // =========================================================================
     // 1. RAPPEL DE RETRAIT (PICKUP_REMINDER) : Fin de créneau dans moins de 30 min
     // =========================================================================
+    let paidOrdersSnap = null;
     try {
-      const pendingRemindersSnap = await db
+      paidOrdersSnap = await db
         .collection('orders')
         .where('status', '==', ORDER_STATUS.PAID)
-        .where('reminderSent', '!=', true)
-        .limit(30)
+        .limit(50)
         .get();
 
-      if (!pendingRemindersSnap.empty) {
-        for (const doc of pendingRemindersSnap.docs) {
+      if (paidOrdersSnap && !paidOrdersSnap.empty) {
+        for (const doc of paidOrdersSnap.docs) {
           const order = doc.data();
+          if (order.reminderSent) continue;
+
           const pickupEnd = order.offerSnapshot?.pickupEndAt?.toDate
             ? order.offerSnapshot.pickupEndAt.toDate()
             : new Date(order.offerSnapshot?.pickupEndAt);
@@ -70,21 +72,31 @@ export async function runNoShowSweeper() {
     // =========================================================================
     // 2. CONVERSION EN NO_SHOW : Commandes payées non réclamées 30 min après la fin
     // =========================================================================
-    const expiredPaidQuery = await db
-      .collection('orders')
-      .where('status', '==', ORDER_STATUS.PAID)
-      .where('offerSnapshot.pickupEndAt', '<=', thirtyMinutesAgo)
-      .limit(50)
-      .get();
+    if (!paidOrdersSnap) {
+      paidOrdersSnap = await db
+        .collection('orders')
+        .where('status', '==', ORDER_STATUS.PAID)
+        .limit(50)
+        .get();
+    }
 
-    if (expiredPaidQuery.empty) {
+    const thirtyMinutesAgoMs = thirtyMinutesAgo.getTime();
+    const expiredPaidDocs = paidOrdersSnap.docs.filter((doc) => {
+      const order = doc.data();
+      const pickupEndMs = order.offerSnapshot?.pickupEndAt?.toDate
+        ? order.offerSnapshot.pickupEndAt.toDate().getTime()
+        : new Date(order.offerSnapshot?.pickupEndAt).getTime();
+      return pickupEndMs <= thirtyMinutesAgoMs;
+    });
+
+    if (expiredPaidDocs.length === 0) {
       isNoShowSweeperRunning = false;
       return;
     }
 
-    logger.info(`Sweeper: ${expiredPaidQuery.size} commande(s) non réclamée(s) basculée(s) en NO_SHOW`);
+    logger.info(`Sweeper: ${expiredPaidDocs.length} commande(s) non réclamée(s) basculée(s) en NO_SHOW`);
 
-    for (const doc of expiredPaidQuery.docs) {
+    for (const doc of expiredPaidDocs) {
       const order = doc.data();
       const orderRef = doc.ref;
       const studentRef = db.collection('users').doc(order.studentId);

@@ -30,6 +30,19 @@ ordersRouter.post(
   ordersController.cancelOrder
 );
 
+// Consultation des commandes de l'utilisateur connecté (alias universel pour le web et mobile)
+ordersRouter.get(
+  '/',
+  authenticate,
+  ordersController.listOrders
+);
+
+ordersRouter.get(
+  '/my-orders',
+  authenticate,
+  ordersController.listOrders
+);
+
 // Liste des commandes de l'étudiant connecté
 ordersRouter.get(
   '/me',

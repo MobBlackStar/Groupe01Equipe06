@@ -400,13 +400,40 @@ export const ordersService = {
   },
 
   /**
+   * Consultation universelle des commandes pour l'utilisateur connecté (Étudiant, Commerçant ou Admin).
+   */
+  async listOrders(currentUser) {
+    let queryRef = db.collection('orders');
+
+    if (currentUser.role === 'STUDENT') {
+      queryRef = queryRef.where('studentId', '==', currentUser.uid);
+    } else if (currentUser.role === 'MERCHANT') {
+      queryRef = queryRef.where('merchantId', '==', currentUser.uid);
+    }
+
+    const snapshot = await queryRef.get();
+    const orders = [];
+    snapshot.forEach((doc) => {
+      orders.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Tri chronologique en mémoire (évite 9 FAILED_PRECONDITION)
+    orders.sort((a, b) => {
+      const timeA = new Date(a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt || 0).getTime();
+      const timeB = new Date(b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    return { orders, serverTime: Date.now() };
+  },
+
+  /**
    * Liste des commandes passées par l'étudiant connecté.
    */
   async getMyOrders(studentId) {
     const snapshot = await db
       .collection('orders')
       .where('studentId', '==', studentId)
-      .orderBy('createdAt', 'desc')
       .get();
 
     const orders = [];
@@ -414,7 +441,14 @@ export const ordersService = {
       orders.push({ id: doc.id, ...doc.data() });
     });
 
-    return { orders };
+    // Tri en mémoire
+    orders.sort((a, b) => {
+      const timeA = new Date(a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt || 0).getTime();
+      const timeB = new Date(b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    return { orders, serverTime: Date.now() };
   },
 
   /**

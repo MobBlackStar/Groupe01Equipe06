@@ -18,21 +18,37 @@ export async function runReservationSweeper() {
 
   try {
     const now = new Date();
-    const expiredOrdersQuery = await db
+    const nowMs = now.getTime();
+
+    // Requête sur champ unique d'égalité (évite 9 FAILED_PRECONDITION)
+    const ordersQuery = await db
       .collection('orders')
       .where('status', '==', ORDER_STATUS.RESERVED)
-      .where('reservationExpiresAt', '<=', now)
-      .limit(50)
+      .limit(100)
       .get();
 
-    if (expiredOrdersQuery.empty) {
+    if (ordersQuery.empty) {
       isReservationSweeperRunning = false;
       return;
     }
 
-    logger.info(`Sweeper: ${expiredOrdersQuery.size} réservation(s) expirée(s) trouvée(s)`);
+    // Filtrage temporel en mémoire
+    const expiredDocs = ordersQuery.docs.filter((doc) => {
+      const data = doc.data();
+      const expiresMs = data.reservationExpiresAt?.toDate
+        ? data.reservationExpiresAt.toDate().getTime()
+        : new Date(data.reservationExpiresAt).getTime();
+      return expiresMs <= nowMs;
+    });
 
-    for (const orderSnap of expiredOrdersQuery.docs) {
+    if (expiredDocs.length === 0) {
+      isReservationSweeperRunning = false;
+      return;
+    }
+
+    logger.info(`Sweeper: ${expiredDocs.length} réservation(s) expirée(s) trouvée(s)`);
+
+    for (const orderSnap of expiredDocs) {
       const order = orderSnap.data();
       const orderRef = orderSnap.ref;
       const offerRef = db.collection('offers').doc(order.offerId);
