@@ -4,7 +4,7 @@
 > **Rôle :** Lead UI/UX, Développeuse Frontend (React 18 / Tailwind CSS & Flutter 3 / Dart)  
 > **Binôme :** Fedi Touati (Lead Backend & Sécurité)  
 > **Projet :** CampusSave — Plateforme Anti-Gaspillage & Solidarité Étudiante (ESSECT E-Business 2026)  
-> **Branche de travail actuelle :** `feat/ritej-day7-dashboards-impact`  
+> **Branche de travail actuelle :** `feat/ritej-day8-day9-polish-report-docs`  
 
 ---
 
@@ -19,13 +19,52 @@
 | **Jour 5** | **Paiement Konnect & Living Ticket QR** | 🟢 **100% Terminé** | Ritej | `CheckoutPage` (compte à rebours 10 min, prix verrouillé, récompenses fidélité), `PaymentReturnPage` (états Konnect), `BoardingPass` & `LivingTicketPage` (QR tournant 30s + code 6 chiffres), `MyOrdersPage`, `MerchantOrdersPage`, 5 écrans Flutter |
 | **Jour 6** | **Fonctionnalités Clés : Panier Mystère & Fidélité** | 🟢 **100% Terminé** | Ritej | `MysteryBoxCard` (3 raretés), animation unboxing 5 étapes Framer Motion, carte fidélité éco-digitale (5 tampons, 4 paliers végétaux, portefeuille coupons), 2 modules Flutter natifs |
 | **Jour 7** | **Tableaux de Bord, Impact Éco & Notifications** | 🟢 **100% Terminé** | Ritej | 3 Dashboards par rôle (`Student`, `Merchant` 7d/30d, `Admin`), page publique `/impact`, tuiles EPA/FAO, `FiliereLeaderboard` (5 filières), modale notation 1-5 étoiles, 3 écrans Flutter |
-| **Jour 8** | **Tests d'Intégration, Accessibilité & Gel** | ⏳ *À venir* | Ritej | Tests responsive, audit d'accessibilité WCAG, revue d'ergonomie |
-| **Jour 9** | **Rapport Académique & Vidéo de Démonstration** | ⏳ *À venir* | Ritej | Chapitres I, II, VI du rapport, tournage des séquences UI |
+| **Jour 8** | **Layouts Responsifs, Dictionnaire d'Erreurs & Galeries D1** | 🟢 **100% Terminé** | Ritej | Navigation unifiée Web/Flutter (360/768/1440px), switcher de rôle 1-clic demo, dictionnaire erreurs FR (§6), 4 planches SVG finales haute résolution |
+| **Jour 9** | **Rapport Académique ESSECT, READMEs & Kit Soutenance** | 🟢 **100% Terminé** | Ritej | Rapport académique 6 chapitres aux normes ESSECT, 3 READMEs officiels (Root, Web, Mobile), script de démo 7 min et 25 questions/réponses jury |
 | **Jour 10** | **Kit de Soutenance & Répétition Orale** | ⏳ *À venir* | Ritej | Support de présentation, fiches Q&A soutenance, filage complet |
 
 ---
 
 ## 📝 2. Journal des Livrables Réalisés par Ritej
+
+### Jours 8 & 9 — 23 & 24 Novembre 2026
+* **Branche & Traçabilité Git :**
+  - Branche : `feat/ritej-day8-day9-polish-report-docs`
+  - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
+  - Message de commit : `docs(release): add unified responsive layouts, french error messages, official readmes, full academic report, and defense kit`
+* **Navigation Unifiée & Layouts Responsifs (`web-react/src/components/layout/`) :**
+  - `Navbar.jsx` : Barre de navigation universelle avec logo néon, menus adaptatifs selon le rôle, lien direct `/impact` pour le public, badge de profil étudiant avec solde EcoPoints, et sélecteur interactif de rôle 1-clic (`[Étudiant 🎓 | Commerçant 🏪 | Admin 🛡️]`) exécutant `loginDemo(role)` en 1 seconde devant le jury.
+  - `Footer.jsx` : Pied de page universitaire officiel avec mentions ESSECT Montfleury, citation FAO 2013 sur l'impact carbone, crédits d'équipe et liens institutionnels.
+  - `StudentLayout.jsx` : Layout étudiant unifié combinant Navbar, `<Outlet />`, Footer et barre de navigation mobile tactile (`BottomNavigation` fixe en bas pour `360px` - `768px`) à 5 onglets (Explorer, Radar 3D, Commandes, Fidélité, Dashboard).
+  - `MerchantLayout.jsx` : Layout commerçant avec barre mobile à 5 onglets (Stats, Offres, + Publier, Scanner, Retraits).
+  - `AdminLayout.jsx` : Layout console d'administration épuré.
+  - `index.js` : Export barrel propre de la suite de navigation.
+  - `AppRouter.jsx` : Structuration de l'arbre de routage sous `<StudentLayout>`, `<MerchantLayout>`, et `<AdminLayout>`, garantissant 0 rupture d'ergonomie et 0 débordement horizontal (`overflow-x: hidden`).
+* **Dictionnaire Centralisé des Erreurs en Français (`web-react/src/lib/errorMessages.js`) :**
+  - Traduction élégante et pédagogique de tous les codes d'erreur de la spécification §6 (`OFFER_SOLD_OUT`, `OFFER_EXPIRED`, `REWARD_UNAVAILABLE`, `TOO_FAR`, `OFFER_LOCKED`, `INVALID_SIGNATURE`, `WRONG_MERCHANT`, `ALREADY_USED`, `NOT_PAID`, `TICKET_EXPIRED`, `PICKUP_WINDOW_CLOSED`, `TICKET_LOCKED`, `MERCHANT_NOT_APPROVED`, `PROFILE_EXISTS`, etc.).
+  - Fonction helper `getErrorMessage(code, fallback)` exportée pour tout le frontend.
+* **Navigation Mobile Flutter Équivalente (`mobile-flutter/lib/app/router.dart`) :**
+  - Remplacement des stubs par des `StatefulWidget` complets : `StudentShell` (5 onglets : `ExploreScreen`, `RadarScreen`, `MyOrdersScreen`, `LoyaltyCardScreen`, `StudentDashboardScreen`) et `MerchantShell` (5 onglets : `MerchantDashboardScreen`, `MerchantOffersScreen`, `ScannerScreen`, `MerchantOrdersScreen`, `MerchantStoreScreen`).
+  - `BottomNavigationBar` sombre `#161920`, icônes `LucideIcons` adaptées et gestion de navigation fluide sans débordement `RenderFlex`.
+* **Galerie des Écrans Finaux (Livrable D1) (`docs-uml-mockups/mockups/final-screens/`) :**
+  - `01-final-web-student-journey.svg` : Planche vectorielle haute définition (Catalogue & PriceTicker, Holo-Radar 3D, Checkout décompte 10 min, Living Ticket Boarding Pass QR rotatif 30s).
+  - `02-final-web-merchant-ai-radar.svg` : Planche vectorielle haute définition (Onboarding commerçant avec MapPicker $\le$ 3 km, Magic Offer Publisher IA, aperçu courbe Smart Decay, scanner QR caméra et code 6 chiffres).
+  - `03-final-mobile-flutter-screens.svg` : Planche vectorielle haute définition (Shells 5 onglets Étudiant & Commerçant, Holo-Radar mobile, Mystery Box unboxing haptique, carte fidélité éco).
+  - `04-final-dashboards-impact-loyalty.svg` : Planche vectorielle haute définition (Dashboard Étudiant, Dashboard Commerçant 7j/30j, Dashboard Admin, Vitrine publique d'impact avec tuiles EPA/FAO, podium 5 filières ESSECT).
+  - `README.md` : Index exhaustif et rapport de conformité ergonomique (360/768/1440px).
+* **READMEs Officiels de Documentation (Livrable G4) :**
+  - `campussave/README.md` : Guide maître du monorepo avec matrice de traçabilité complète des exigences M1-M8 et B1-B4, 6 mécaniques intelligentes, architecture monorepo, guide d'installation étape par étape, tableau des variables d'environnement (zéro secret), identifiants de démonstration et répartition rigoureuse du travail binôme.
+  - `campussave/web-react/README.md` : Guide complet React 18, palette Dark Obsidian, commandes npm et arborescence.
+  - `campussave/mobile-flutter/README.md` : Guide d'exécution Flutter, commandes `--dart-define` pour émulateur et appareil physique sur port 5000, et arborescence.
+* **Rapport Académique ESSECT & Kit de Soutenance :**
+  - `docs-uml-mockups/report/RAPPORT_PROJET_CAMPUSSAVE.md` : Rapport de projet complet de 6 chapitres aux normes académiques ESSECT, prêt pour conversion PDF (page de garde officielle, résumés français et anglais, analyse du besoin, architecture 3-tiers temps réel, modélisation UML & NoSQL, algorithmes intelligents et cryptographie, réalisation Web & Mobile, stratégie de test et bibliographie officielle).
+  - `docs-uml-mockups/demo/DEMO_SCRIPT.md` : Scénario minuté de soutenance de 7 minutes exactement, équitablement réparti entre Ritej et Fedi (3 min 30 s chacun), démontrant la synchronisation temps réel React Web ↔ Flutter Mobile.
+  - `docs-uml-mockups/demo/DEFENSE_QA.md` : Guide de préparation à la soutenance comprenant 25 questions/réponses pointues du jury réparties en 5 catégories (Architecture, Sécurité, Modèle Métier, Frontend/UI, Scénarios d'urgence).
+* **Contrôle Qualité :**
+  - `npm run build` dans `web-react` : **2730 modules compilés avec 0 erreur**.
+  - `npm test` dans `backend-node` : **101/101 tests passés avec 0 échec (durée ~2.9s)**.
+
+---
 
 ### Jour 7 — 22 Novembre 2026
 * **Branche & Traçabilité Git :**
@@ -33,77 +72,33 @@
   - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
   - Message de commit : `feat(dashboards-impact): add student, merchant, and admin analytics dashboards, public campus impact page, filiere leaderboard, and order rating dialog`
 * **Bibliothèque de Graphiques Recharts (`web-react/src/components/charts/`) :**
-  - `KpiCard.jsx` : Tuile KPI modulaire aux accents néon (`#CCFF00`, `#FF5500`, `#00E5FF`, `#A855F7`), badges d'évolution et reflets Dark Obsidian.
-  - `LineChartCard.jsx` : Courbe chronologique vectorielle Recharts (`AreaChart` + dégradé SVG semi-transparent) avec infobulle sombre personnalisée.
-  - `BarChartCard.jsx` : Diagramme en barres avec coins arrondis (`radius={[6, 6, 0, 0]}`) et cellules colorées dynamiques.
-  - `index.js` : Export barrel propre des composants graphiques.
+  - `KpiCard.jsx`, `LineChartCard.jsx`, `BarChartCard.jsx`, `index.js`.
 * **Les 3 Tableaux de Bord par Rôle Web React :**
-  - `web-react/src/features/dashboards/StudentDashboard.jsx` (`/app/dashboard`) : Vue cockpit étudiant avec 5 tuiles KPI (repas, dinars épargnés, kg sauvés, CO₂ évité, EcoPoints), bascule Dinars / CO₂, historique 14 jours, et tableau des dernières commandes avec notation 1-clic.
-  - `web-react/src/features/merchant/MerchantDashboard.jsx` (`/merchant/dashboard`) : Superviseur commerçant avec sélecteur de plage `7 jours | 30 jours`, recettes journalières en barres Recharts, taux de non-présentation et podium du Top 3 des offres sauvées.
-  - `web-react/src/features/admin/AdminDashboard.jsx` (`/admin/dashboard`) : Console d'administration universitaire centralisant le Volume d'Affaires total (GMV), la modération des boutiques partenaires en attente (`storesPending`), et la répartition des membres.
+  - `web-react/src/features/dashboards/StudentDashboard.jsx` (`/app/dashboard`).
+  - `web-react/src/features/merchant/MerchantDashboard.jsx` (`/merchant/dashboard`).
+  - `web-react/src/features/admin/AdminDashboard.jsx` (`/admin/dashboard`).
 * **Vitrine d'Impact Public & Challenge Inter-Filières (`web-react/src/features/impact/`) :**
-  - `EquivalenceTiles.jsx` : Traduction rigoureuse des données d'impact selon les standards officiels : recharges complètes de smartphones (US EPA, 8,22 g CO₂), kilomètres en voiture thermique évités (US EPA, 244 g CO₂ / km), et ratio universel FAO 2013 (2,5 kg CO₂e / kg nourriture).
-  - `FiliereLeaderboard.jsx` : Challenge en direct des 5 promotions de l'ESSECT (`3A E-Business`, `Finance`, `Marketing`, `Gestion`, `Comptabilité`) avec médailles 🥇🥈🥉, barres de progression animées et surbrillance de la filière de l'étudiant.
-  - `ImpactDashboardPage.jsx` : Page vitrine publique accessible à l'adresse `/impact` sans authentification préalable pour l'ouverture de la soutenance devant le jury.
+  - `EquivalenceTiles.jsx`, `FiliereLeaderboard.jsx`, `ImpactDashboardPage.jsx` (`/impact`).
 * **Système d'Évaluation 1 à 5 Étoiles :**
-  - `web-react/src/features/orders/RatingDialog.jsx` : Boîte de dialogue avec sélection d'étoiles interactives dorées (`#FFD700`), appréciation contextuelle, zone de commentaire (280 car.) et appel API `POST /api/v1/orders/:id/rating`.
-  - Intégration sur `MyOrdersPage.jsx` et `StudentDashboard.jsx`.
+  - `web-react/src/features/orders/RatingDialog.jsx`.
 * **Composants & Écrans Mobiles Flutter Équivalents (`mobile-flutter/lib/`) :**
-  - `widgets/kpi_tile.dart` : Tuile KPI mobile au design Dark Obsidian avec 5 teintes d'accentuation.
-  - `features/dashboards/student_dashboard_screen.dart` : Écran mobile avec `fl_chart` `LineChart`, bascule métrique TND/CO₂ et dialogue natif de notation 1-5 étoiles.
-  - `features/dashboards/merchant_dashboard_screen.dart` : Dashboard commerçant mobile avec `fl_chart` `BarChart` et bascule 7j/30j.
-  - `features/impact/impact_screen.dart` : Écran mobile d'impact écologique avec podium des filières ESSECT.
-  - Câblage des routes dans `router.dart`.
-* **Contrôle Qualité :**
-  - `npm run build` dans `web-react` : **2724 modules compilés avec 0 erreur**.
-  - `npm test` dans `backend-node` : **91/91 tests passés avec succès**.
+  - `widgets/kpi_tile.dart`, `student_dashboard_screen.dart`, `merchant_dashboard_screen.dart`, `impact_screen.dart`.
+
+---
 
 ### Jour 6 — 21 Novembre 2026
 * **Branche & Traçabilité Git :**
   - Branche : `feat/ritej-day6-loyalty-mystery-box`
   - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
   - Message de commit : `feat(loyalty-surprise): add digital eco-loyalty card, 5-stamp grid, reward wallet, mystery box cards, and unboxing reveal animation`
-* **Panier Surprise & Animation d'Ouverture Web React (`web-react/src/`) :**
-  - `components/offers/MysteryBoxCard.jsx` : Carte dédiée aux paniers surprise avec boîte scellée, contours luminescents selon le tier de rareté (`COMMUN` #94A3B8, `RARE` #00E5FF, `LÉGENDAIRE` #FFD700), aperçu du commerçant, compteur de prix live (`PriceTicker`) et bouton d'action.
-  - `features/surprise/UnboxingReveal.jsx` : Expérience d'ouverture unboxing immersive en 5 séquences Framer Motion (secousse de boîte, explosion de particules lumineuses aux couleurs de rareté, jaillissement des articles secrets avec badges alimentaires, attribution des EcoPoints et annonce de palier débloqué). Respect de `prefers-reduced-motion` pour l'accessibilité.
-  - Intégration dans `BrowsePage.jsx`, `LivingTicketPage.jsx` et `MyOrdersPage.jsx` avec bouton de démonstration 1-clic pour le jury.
-* **Carte de Fidélité Éco-Digitale Web React (`web-react/src/features/loyalty/`) :**
-  - `StampGrid.jsx` : Grille dynamique de 5 tampons éco-responsables (`Math.floor((ecoPoints % 100) / 20)` sur 5) avec indicateur visuel de repas sauvés et cadeau animé au 5ème tampon.
-  - `RewardWallet.jsx` : Portefeuille de coupons débloqués (`-20%` aux paliers 100, 200, 400, 500 pts et `Panier 100% Offert` aux paliers 300, 600 pts) avec états (`AVAILABLE`, `LOCKED`, `USED`), copie de code et redirection directe vers le panier.
-  - `LoyaltyCardPage.jsx` : Pass virtuel style Apple Wallet avec gradient métallique holographique, badge de grade végétal dynamique (`GRAINE` ➔ `POUSSE` ➔ `ARBRE` ➔ `FORÊT`), jauge de progression vers le prochain palier, intégration du `StampGrid`, du `RewardWallet`, et banc de simulation interactif (+20 pts / +60 pts) pour la soutenance.
-  - Câblage de la route `/app/loyalty` dans `AppRouter.jsx`.
-* **Composants & Écrans Mobiles Flutter Équivalents (`mobile-flutter/lib/`) :**
-  - `features/surprise/unboxing_overlay.dart` : Animation d'ouverture native Flutter avec `AnimationController`, `Transform.rotate` (secousse), `ScaleTransition` (effet burst), retour haptique `HapticFeedback.heavyImpact()`, et cascade d'articles.
-  - `features/loyalty/loyalty_card_screen.dart` : Écran mobile complet de fidélité avec carte végétale holographique, grille de 5 tampons, progression vers prochain palier, liste des récompenses actives et panneau de simulation.
-* **Contrôle Qualité :**
-  - `npm run build` dans `web-react` : **2110 modules compilés avec 0 erreur**.
-  - `npm test` dans `backend-node` : **85/85 tests passés avec succès**.
+
+---
 
 ### Jour 5 — 20 Novembre 2026
 * **Branche & Traçabilité Git :**
   - Branche : `feat/ritej-day5-checkout-living-ticket`
   - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
   - Message de commit : `feat(orders-ui): add checkout countdown, konnect return states, living ticket boarding pass, and order management screens`
-* **Checkout & Passerelle Konnect Web React (`web-react/src/features/checkout/`) :**
-  - `CheckoutPage.jsx` : Récapitulatif de réservation avec prix unitaire verrouillé (`lockedUnitPriceMillimes`), compte à rebours interactif de 10 minutes (`reservationExpiresAt`), sélecteur de récompense EcoPoints (-20% ou Panier 100% Offert), bouton de paiement Konnect et bouton d'annulation libérant le stock.
-  - `PaymentReturnPage.jsx` : Gestion des 3 états de retour Konnect (`VERIFYING` avec sablier, `SUCCESS` avec accès direct au Living Ticket, `FAILED` avec compteur de tentatives et bouton de relance).
-* **Living Ticket Boarding Pass Web React (`web-react/src/features/ticket/`) :**
-  - `BoardingPass.jsx` : Carte d'embarquement style Apple Wallet avec encoches perforées latérales, reflet holographique animé CSS, en-tête de vol `ESSECT ➔ Montfleury`, badge `LIVE` avec horloge temps réel, QR Code rotatif toutes les 30 secondes (`qrcode.react` + HMAC-SHA256), barre de progression de 30s, et code de secours à 6 chiffres.
-  - `LivingTicketPage.jsx` : Page dédiée intégrant le Boarding Pass et les consignes de retrait au comptoir.
-* **Gestion des Commandes Étudiant & Commerçant Web React (`web-react/src/features/`) :**
-  - `features/orders/OrderRow.jsx` : Ligne de commande avec badge de statut et actions contextuelles (Finaliser le paiement si réservé, Ouvrir Living Ticket si payé).
-  - `features/orders/MyOrdersPage.jsx` : Portefeuille de commandes étudiant classées en 3 onglets (`En cours`, `Terminées`, `Annulées / Expirées`).
-  - `features/merchant/MerchantOrdersPage.jsx` : Vue commerçant des retraits de la journée groupés par statut (`Payées — À remettre`, `Réservées`, `Terminées`) avec lien rapide vers le scanner QR.
-  - Câblage de toutes les routes dans `AppRouter.jsx`.
-* **Écrans Mobiles Flutter Équivalents (`mobile-flutter/lib/`) :**
-  - `features/checkout/checkout_screen.dart` : Écran de paiement mobile avec décompte de 10 minutes et application des récompenses.
-  - `features/ticket/boarding_pass.dart` : Billet mobile à encoches perforées (`TicketClipper`), QR rotatif 30s (`qr_flutter`), horloge `LIVE` et code à 6 chiffres.
-  - `features/ticket/ticket_screen.dart` : Écran plein format du Living Ticket avec consignes.
-  - `features/orders/my_orders_screen.dart` : Gestion des commandes étudiant avec `DefaultTabController`.
-  - `features/merchant/merchant_orders_screen.dart` : Supervision des retraits commerçant avec bouton scanner flottant.
-* **Contrôle Qualité :**
-  - `npm run build` dans `web-react` : **177 modules compilés avec 0 erreur**.
-  - `npm test` dans `backend-node` : **77/77 tests passés avec succès**.
 
 ---
 
@@ -112,10 +107,6 @@
   - Branche : `feat/ritej-day4-explore-catalogue`
   - Auteure : `Ritej Bejaoui <donyesbejaoui27@gmail.com>`
   - Message de commit : `feat(explore-ui): add student offer catalogue, debounced search, live smart decay ticker, and offer detail screens`
-* **Composants d'Offres & Catalogue :**
-  - `PriceTicker.jsx`, `CountdownChip.jsx`, `RarityBadge.jsx`, `OfferCard.jsx`.
-  - `SearchBar.jsx` (debounce 300 ms), `FilterPanel.jsx`, `BrowsePage.jsx`, `OfferDetailPage.jsx`.
-  - 6 composants et écrans Flutter (`live_price_text.dart`, `explore_screen.dart`, etc.).
 
 ---
 
@@ -147,6 +138,14 @@
 
 | Livrable Partagé | Emplacement | Statut pour Fedi | Route API Backend Correspondante (§6) |
 | :--- | :--- | :---: | :--- |
+| **Layouts & Navigation** | `web-react/src/components/layout/` | 🟢 **100% Fonctionnel & Responsive** | `/app/*`, `/merchant/*`, `/admin/*`, `/impact` |
+| **Dictionnaire Erreurs FR** | `web-react/src/lib/errorMessages.js` | 🟢 **100% Aligné sur §6** | Tous les codes d'erreur backend (400, 401, 403, 404, 409, 423) |
+| **Navigation Flutter** | `mobile-flutter/lib/app/router.dart` | 🟢 **100% Fonctionnel** | Shells 5 onglets Étudiant & Commerçant |
+| **Galerie Écrans Finaux D1** | `docs-uml-mockups/mockups/final-screens/` | 🟢 **4 Planches SVG HD Prêtes** | Revue ergonomique 360/768/1440px |
+| **README Monorepo G4** | `campussave/README.md` | 🟢 **Documentation Maître Prête** | Matrice M1-M8 / B1-B4, env, démo, binôme |
+| **Rapport Académique ESSECT** | `docs-uml-mockups/report/RAPPORT_PROJET_CAMPUSSAVE.md` | 🟢 **6 Chapitres Rédigés** | Document académique prêt pour conversion PDF |
+| **Script Soutenance (7 min)** | `docs-uml-mockups/demo/DEMO_SCRIPT.md` | 🟢 **Filage Équilibré A / B Prêt** | Répétitions binôme minute par minute |
+| **Guide Questions Jury** | `docs-uml-mockups/demo/DEFENSE_QA.md` | 🟢 **25 Q&A Stratégiques Prêtes** | Préparation orale aux questions pièges |
 | **Checkout & Réservation** | `web-react/src/features/checkout/CheckoutPage.jsx` | 🟢 **Prêt pour le branchement** | `POST /api/v1/payments/konnect/init` et `POST /api/v1/orders/:id/cancel` |
 | **Confirmation Konnect** | `web-react/src/features/checkout/PaymentReturnPage.jsx` | 🟢 **Prêt pour le branchement** | `POST /api/v1/payments/konnect/verify` |
 | **Living Ticket QR** | `web-react/src/features/ticket/LivingTicketPage.jsx` | 🟢 **Prêt pour le branchement** | `GET /api/v1/orders/:id/ticket` |

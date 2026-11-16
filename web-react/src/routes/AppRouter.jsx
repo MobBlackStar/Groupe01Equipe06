@@ -4,7 +4,7 @@
 // Module : Structure & Routage / Intégration écrans : l'équipe UI
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
 import { RoleRoute } from './RoleRoute.jsx';
 import { ROLES } from '@shared/constants.js';
@@ -31,6 +31,7 @@ import StudentDashboard from '../features/dashboards/StudentDashboard.jsx';
 import MerchantDashboard from '../features/merchant/MerchantDashboard.jsx';
 import AdminDashboard from '../features/admin/AdminDashboard.jsx';
 import ImpactDashboardPage from '../features/impact/ImpactDashboardPage.jsx';
+import { StudentLayout, MerchantLayout, AdminLayout } from '../components/layout/index.js';
 
 export function AppRouter() {
   return (
@@ -39,44 +40,50 @@ export function AppRouter() {
       <Route path="/" element={<Navigate to="/app" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile" element={<StudentLayout><ProfilePage /></StudentLayout>} />
       <Route path="/payment/return" element={<PaymentReturnPage />} />
-      <Route path="/impact" element={<ImpactDashboardPage />} />
+      <Route path="/impact" element={<StudentLayout><ImpactDashboardPage /></StudentLayout>} />
 
       {/* Routes protégées */}
       <Route element={<ProtectedRoute />}>
         {/* Espace Étudiant (/app/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.STUDENT]} />}>
-          <Route path="/app" element={<BrowsePage />} />
-          <Route path="/app/explore" element={<BrowsePage />} />
-          <Route path="/app/dashboard" element={<StudentDashboard />} />
-          <Route path="/app/offers/:id" element={<OfferDetailPage />} />
-          <Route path="/app/checkout/:orderId" element={<CheckoutPage />} />
-          <Route path="/app/orders" element={<MyOrdersPage />} />
-          <Route path="/app/orders/:id/ticket" element={<LivingTicketPage />} />
-          <Route path="/app/loyalty" element={<LoyaltyCardPage />} />
-          <Route path="/app/radar" element={<HoloRadarPage />} />
+          <Route element={<StudentLayout><Outlet /></StudentLayout>}>
+            <Route path="/app" element={<BrowsePage />} />
+            <Route path="/app/explore" element={<BrowsePage />} />
+            <Route path="/app/dashboard" element={<StudentDashboard />} />
+            <Route path="/app/offers/:id" element={<OfferDetailPage />} />
+            <Route path="/app/checkout/:orderId" element={<CheckoutPage />} />
+            <Route path="/app/orders" element={<MyOrdersPage />} />
+            <Route path="/app/orders/:id/ticket" element={<LivingTicketPage />} />
+            <Route path="/app/loyalty" element={<LoyaltyCardPage />} />
+            <Route path="/app/radar" element={<HoloRadarPage />} />
+          </Route>
         </Route>
 
         {/* Espace Commerçant (/merchant/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.MERCHANT]} />}>
-          <Route path="/merchant" element={<Navigate to="/merchant/dashboard" replace />} />
-          <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
-          <Route path="/merchant/onboarding" element={<MerchantOnboardingPage />} />
-          <Route path="/merchant/store" element={<MerchantStorePage />} />
-          <Route path="/merchant/offers" element={<MerchantOffersPage />} />
-          <Route path="/merchant/offers/new" element={<OfferFormPage />} />
-          <Route path="/merchant/offers/:id/edit" element={<OfferFormPage />} />
-          <Route path="/merchant/orders" element={<MerchantOrdersPage />} />
-          <Route path="/merchant/scan" element={<MerchantScanPage />} />
+          <Route element={<MerchantLayout><Outlet /></MerchantLayout>}>
+            <Route path="/merchant" element={<Navigate to="/merchant/dashboard" replace />} />
+            <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
+            <Route path="/merchant/onboarding" element={<MerchantOnboardingPage />} />
+            <Route path="/merchant/store" element={<MerchantStorePage />} />
+            <Route path="/merchant/offers" element={<MerchantOffersPage />} />
+            <Route path="/merchant/offers/new" element={<OfferFormPage />} />
+            <Route path="/merchant/offers/:id/edit" element={<OfferFormPage />} />
+            <Route path="/merchant/orders" element={<MerchantOrdersPage />} />
+            <Route path="/merchant/scan" element={<MerchantScanPage />} />
+          </Route>
         </Route>
 
         {/* Espace Administrateur (/admin/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/merchants" element={<AdminMerchantsPage />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route element={<AdminLayout><Outlet /></AdminLayout>}>
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/merchants" element={<AdminMerchantsPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+          </Route>
         </Route>
       </Route>
 

@@ -11,6 +11,13 @@ import '../features/radar/radar_screen.dart';
 import '../features/dashboards/student_dashboard_screen.dart';
 import '../features/dashboards/merchant_dashboard_screen.dart';
 import '../features/impact/impact_screen.dart';
+import '../features/explore/explore_screen.dart';
+import '../features/orders/my_orders_screen.dart';
+import '../features/loyalty/loyalty_card_screen.dart';
+import '../features/merchant/merchant_offers_screen.dart';
+import '../features/merchant/scanner_screen.dart';
+import '../features/merchant/merchant_orders_screen.dart';
+import '../features/merchant/merchant_store_screen.dart';
 
 class AppRouter {
   static final AuthService authService = AuthService();
@@ -72,48 +79,106 @@ class AppRouter {
       ),
       GoRoute(
         path: '/student',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Espace Étudiant CampusSave'),
-            backgroundColor: const Color(0xFF16191E),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout, color: Color(0xFFCCFF00)),
-                onPressed: () => authService.signOut(),
-              ),
-            ],
-          ),
-          body: const Center(
-            child: Text(
-              'Bienvenue dans l Espace Étudiant\nCatalogue & Radar en cours',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-        ),
+        builder: (context, state) => StudentShell(onSignOut: () => authService.signOut()),
       ),
       GoRoute(
         path: '/merchant',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Espace Commerçant CampusSave'),
-            backgroundColor: const Color(0xFF16191E),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout, color: Color(0xFFCCFF00)),
-                onPressed: () => authService.signOut(),
-              ),
-            ],
-          ),
-          body: const Center(
-            child: Text(
-              'Bienvenue dans l Espace Commerçant\nOffres & Scanner en cours',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-        ),
+        builder: (context, state) => MerchantShell(onSignOut: () => authService.signOut()),
       ),
     ],
   );
+}
+
+class StudentShell extends StatefulWidget {
+  final VoidCallback onSignOut;
+  const StudentShell({super.key, required this.onSignOut});
+
+  @override
+  State<StudentShell> createState() => _StudentShellState();
+}
+
+class _StudentShellState extends State<StudentShell> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = const [
+    ExploreScreen(),
+    RadarScreen(),
+    MyOrdersScreen(),
+    LoyaltyCardScreen(),
+    StudentDashboardScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        backgroundColor: const Color(0xFF161920),
+        selectedItemColor: const Color(0xFFCCFF00),
+        unselectedItemColor: const Color(0xFF64748B),
+        type: BottomNavigationBarType.fixed,
+        selectedFontSize: 11,
+        unselectedFontSize: 10,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), activeIcon: Icon(Icons.shopping_bag), label: 'Explorer'),
+          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map), label: 'Radar 3D'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Commandes'),
+          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard_outlined), activeIcon: Icon(Icons.card_giftcard), label: 'Fidélité'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Dashboard'),
+        ],
+      ),
+    );
+  }
+}
+
+class MerchantShell extends StatefulWidget {
+  final VoidCallback onSignOut;
+  const MerchantShell({super.key, required this.onSignOut});
+
+  @override
+  State<MerchantShell> createState() => _MerchantShellState();
+}
+
+class _MerchantShellState extends State<MerchantShell> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = const [
+    MerchantDashboardScreen(),
+    MerchantOffersScreen(),
+    ScannerScreen(),
+    MerchantOrdersScreen(),
+    MerchantStoreScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        backgroundColor: const Color(0xFF161920),
+        selectedItemColor: const Color(0xFFFF5500),
+        unselectedItemColor: const Color(0xFF64748B),
+        type: BottomNavigationBarType.fixed,
+        selectedFontSize: 11,
+        unselectedFontSize: 10,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Stats'),
+          BottomNavigationBarItem(icon: Icon(Icons.storefront_outlined), activeIcon: Icon(Icons.storefront), label: 'Offres'),
+          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_outlined), activeIcon: Icon(Icons.qr_code_scanner), label: 'Scanner'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_outlined), activeIcon: Icon(Icons.receipt), label: 'Commandes'),
+          BottomNavigationBarItem(icon: Icon(Icons.store_outlined), activeIcon: Icon(Icons.store), label: 'Boutique'),
+        ],
+      ),
+    );
+  }
 }
