@@ -10,3 +10,8 @@ export const createOrderSchema = z.object({
   quantity: z.number().int().min(1, 'La quantité minimale est de 1 portion').max(50, 'La quantité maximale est de 50 portions'),
   rewardId: z.string().optional(),
 });
+
+export const rateOrderSchema = z.object({
+  stars: z.number().int().min(1, 'La note minimale est de 1 étoile').max(5, 'La note maximale est de 5 étoiles'),
+  comment: z.string().max(280, 'Le commentaire ne peut excéder 280 caractères').optional(),
+});

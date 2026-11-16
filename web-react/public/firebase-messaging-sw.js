@@ -22,7 +22,29 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const type = event.notification.data?.type;
+  let targetUrl = '/';
+
+  if (type === 'ORDER_PAID') {
+    targetUrl = '/merchant/orders';
+  } else if (type === 'TICKET_READY' || type === 'PICKUP_REMINDER') {
+    targetUrl = '/app/orders';
+  } else if (type === 'ORDER_COMPLETED' || type === 'REWARD_UNLOCKED') {
+    targetUrl = '/app/loyalty';
+  } else if (type === 'NEW_OFFER') {
+    targetUrl = '/app/explore';
+  }
+
   event.waitUntil(
-    clients.openWindow(event.notification.data?.url || '/')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
   );
 });

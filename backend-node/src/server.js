@@ -6,9 +6,17 @@
 import app from './app.js';
 import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
+import { startReservationSweeper } from './jobs/reservationSweeper.js';
+import { startOfferExpirySweeper } from './jobs/offerExpirySweeper.js';
+import { startNoShowSweeper } from './jobs/noShowSweeper.js';
 
 const PORT = env.PORT || 4000;
 
 app.listen(PORT, () => {
   logger.info(`Serveur CampusSave démarré sur le port ${PORT} [${env.NODE_ENV}]`);
+  if (env.NODE_ENV !== 'test') {
+    startReservationSweeper();
+    startOfferExpirySweeper();
+    startNoShowSweeper();
+  }
 });

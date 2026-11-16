@@ -1,6 +1,20 @@
-// 💡 Concept & Analogie : Contrôleur HTTP gérant la réception des requêtes et l envoi des réponses JSON pour impact.
-// 🔄 Comparaison React / Flutter : Renvoie des réponses standardisées avec injection automatique du temps serveur.
-// 🎯 À retenir pour la soutenance : "Le contrôleur orchestre le flux applicatif en déléguant la logique métier au service dédié."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Contrôleur HTTP pour la diffusion publique des indicateurs d'impact environnemental.
+// 🔄 Comparaison React / Flutter : Point de distribution unifié pour la page Web `/impact` et l'écran mobile d'impact.
+// 🎯 À retenir pour la soutenance : "Ces endpoints sont publics afin de sensibiliser l'ensemble de la communauté universitaire sans exiger de compte préalable."
+// Module : Impact Écologique & Responsabilité Sociétale
 
-export const impactController = {};
+import { impactService } from './impact.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+
+export const impactController = {
+  getGlobalImpact: asyncHandler(async (req, res) => {
+    const days = req.query.days ? parseInt(req.query.days, 10) : 14;
+    const result = await impactService.getGlobalImpact(days);
+    res.json(result);
+  }),
+
+  getFilieresImpact: asyncHandler(async (req, res) => {
+    const result = await impactService.getFilieresImpact();
+    res.json(result);
+  }),
+};

@@ -8,7 +8,7 @@ import { ordersController } from './orders.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { requireRole } from '../../middleware/requireRole.js';
 import { validate } from '../../middleware/validate.js';
-import { createOrderSchema } from './orders.schemas.js';
+import { createOrderSchema, rateOrderSchema } from './orders.schemas.js';
 import { ROLES } from '../../../../shared/constants.js';
 
 export const ordersRouter = Router();
@@ -51,4 +51,13 @@ ordersRouter.get(
   authenticate,
   requireRole(ROLES.STUDENT),
   ordersController.getOrderTicket
+);
+
+// Évaluation d'une commande terminée (Rôle Étudiant uniquement)
+ordersRouter.post(
+  '/:id/rating',
+  authenticate,
+  requireRole(ROLES.STUDENT),
+  validate({ body: rateOrderSchema }),
+  ordersController.rateOrder
 );

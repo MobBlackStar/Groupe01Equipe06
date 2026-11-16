@@ -16,6 +16,8 @@ import { paymentsRouter } from './modules/payments/payments.routes.js';
 import { ticketsRouter } from './modules/tickets/tickets.routes.js';
 import { radarRouter } from './modules/radar/radar.routes.js';
 import { loyaltyRouter } from './modules/loyalty/loyalty.routes.js';
+import { dashboardsRouter } from './modules/dashboards/dashboards.routes.js';
+import { impactRouter } from './modules/impact/impact.routes.js';
 
 export const apiRouter = Router();
 
@@ -51,6 +53,6 @@ apiRouter.use('/tickets', ticketsRouter);
 apiRouter.use('/radar', radarRouter);
 apiRouter.use('/loyalty', loyaltyRouter);
 
-// Les sous-routeurs suivants seront branchés lors des étapes dédiées :
-// apiRouter.use('/impact', impactRouter);
-// apiRouter.use('/dashboards', dashboardsRouter);
+// Tableaux de Bord & Impact Écologique (Jour 7)
+apiRouter.use('/dashboards', dashboardsRouter);
+apiRouter.use('/impact', impactRouter);

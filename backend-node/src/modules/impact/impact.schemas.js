@@ -1,7 +1,10 @@
-// 💡 Concept & Analogie : Schémas Zod validant la structure des paramètres et données pour impact.
-// 🔄 Comparaison React / Flutter : Miroir des validations clientes pour bloquer les entrées non conformes.
-// 🎯 À retenir pour la soutenance : "Nous utilisons Zod pour garantir un typage runtime strict dès l entrée de chaque endpoint."
-// Module : Logique Métier Backend
+// 💡 Concept & Analogie : Validation des paramètres de consultation de l'impact écologique campus (nombre de jours d'historique).
+// 🔄 Comparaison React / Flutter : Valide les paramètres de requête de la page publique `/impact`.
+// 🎯 À retenir pour la soutenance : "Limite la requête d'historique à un horizon raisonnable (1 à 30 jours, 14 par défaut) pour préserver les performances."
+// Module : Impact Écologique & Responsabilité Sociétale
 
 import { z } from 'zod';
-export const impactSchemas = {};
+
+export const globalImpactQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(30).default(14),
+});

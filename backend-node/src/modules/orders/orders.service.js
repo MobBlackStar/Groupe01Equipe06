@@ -416,4 +416,70 @@ export const ordersService = {
 
     return { orders };
   },
+
+  /**
+   * Évalue une commande terminée (COMPLETED) avec attribution d'étoiles (1 à 5) et mise à jour atomique de la moyenne du commerce.
+   */
+  async rateOrder(orderId, studentId, { stars, comment = '' }) {
+    const orderRef = db.collection('orders').doc(orderId);
+
+    return await db.runTransaction(async (transaction) => {
+      // 1. Lectures atomiques
+      const orderDoc = await transaction.get(orderRef);
+      if (!orderDoc.exists) {
+        throw new AppError('Commande introuvable', 404, 'ORDER_NOT_FOUND');
+      }
+
+      const order = orderDoc.data();
+      if (order.studentId !== studentId) {
+        throw new AppError('Accès non autorisé à cette commande', 403, 'FORBIDDEN');
+      }
+
+      if (order.status !== ORDER_STATUS.COMPLETED) {
+        throw new AppError('Seules les commandes terminées peuvent être évaluées', 400, 'ORDER_NOT_COMPLETED');
+      }
+
+      if (order.rating) {
+        throw new AppError('Cette commande a déjà été évaluée', 409, 'ALREADY_RATED');
+      }
+
+      const merchantRef = db.collection('merchants').doc(order.merchantId);
+      const merchantDoc = await transaction.get(merchantRef);
+
+      // 2. Écritures atomiques
+      const ratedAt = new Date().toISOString();
+      const ratingData = {
+        stars,
+        comment: comment.trim(),
+        ratedAt,
+      };
+
+      transaction.update(orderRef, {
+        rating: ratingData,
+        updatedAt: new Date(),
+      });
+
+      if (merchantDoc.exists) {
+        const merchant = merchantDoc.data() || {};
+        const currentCount = merchant.ratingCount || 0;
+        const currentSum = merchant.ratingSum ?? (merchant.ratingAvg ? merchant.ratingAvg * currentCount : 0);
+        const newCount = currentCount + 1;
+        const newSum = currentSum + stars;
+        const newAvg = Number((newSum / newCount).toFixed(1));
+
+        transaction.update(merchantRef, {
+          ratingCount: newCount,
+          ratingSum: newSum,
+          ratingAvg: newAvg,
+          updatedAt: new Date(),
+        });
+      }
+
+      return {
+        success: true,
+        orderId,
+        rating: ratingData,
+      };
+    });
+  },
 };

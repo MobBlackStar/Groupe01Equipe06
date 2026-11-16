@@ -32,4 +32,9 @@ export const ordersController = {
     res.set('Cache-Control', 'no-store');
     res.json(result);
   }),
+
+  rateOrder: asyncHandler(async (req, res) => {
+    const result = await ordersService.rateOrder(req.params.id, req.user.uid, req.body);
+    res.json(result);
+  }),
 };
