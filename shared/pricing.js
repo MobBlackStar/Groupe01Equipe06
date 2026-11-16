@@ -52,7 +52,9 @@ export function computeUnitPrice(offer, nowInput = Date.now()) {
     return Math.min(start, Math.max(floor, steppedPrice));
   }
 
-  throw new Error(`Mode de tarification inconnu : ${mode}`);
+  // Repli défensif pour éviter tout crash d'interface en cas de tarification atypique
+  const fallbackPrice = pricing.discountedPriceMillimes ?? offer?.discountedPriceMillimes ?? offer?.originalPriceMillimes ?? 0;
+  return Math.round(Number(fallbackPrice));
 }
 
 /**

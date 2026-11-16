@@ -1,8 +1,9 @@
 // 💡 Concept & Analogie : Comme un filtre anti-rebond sur un interrupteur physique qui évite d'envoyer 10 signaux électriques quand on tape vite au clavier, le debounce de 300 ms attend que l'utilisateur finisse sa frappe avant de déclencher la recherche.
-// 🔄 Comparaison React / Flutter : En React, `useEffect` combiné à `setTimeout` et `clearTimeout` crée l'effet d'attente ; en Flutter, nous utilisons un `Timer` ou un `rxdart` `debounceTime` sur le contrôleur de texte.
-// 🎯 À retenir pour la soutenance : "Le debounce de 300 ms protège le serveur contre le martèlement de requêtes inutiles à chaque touche enfoncée par l'étudiant."
+// 🔄 Comparaison React / Flutter : En React, `useRef` et `setTimeout` assurent la stabilité sans déclencher de boucle de re-rendu parent-enfant ; en Flutter, nous utilisons un `Timer` ou un `rxdart` `debounceTime` sur le contrôleur de texte.
+// 🎯 À retenir pour la soutenance : "Le composant SearchBar utilise une référence mutable useRef pour le callback parent afin de découpler le debounce des rendus parents et prévenir toute boucle infinie."
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, X } from 'lucide-react';
 
 export default function SearchBar({
   value = '',
@@ -11,45 +12,47 @@ export default function SearchBar({
   className = '',
 }) {
   const [localQuery, setLocalQuery] = useState(value);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const isFirstMount = useRef(true);
 
-  // Synchronisation avec la valeur externe si modifiée ailleurs (ex: reset)
+  // Synchronisation avec la valeur externe sans déclencher d'effet rétroactif
   useEffect(() => {
     setLocalQuery(value);
   }, [value]);
 
-  // Debounce de 300 ms
+  // Debounce de 300 ms déclenché uniquement sur saisie de l'utilisateur
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
     const handler = setTimeout(() => {
-      if (onChange) {
-        onChange(localQuery);
-      }
+      onChangeRef.current?.(localQuery);
     }, 300);
 
     return () => clearTimeout(handler);
-  }, [localQuery, onChange]);
+  }, [localQuery]);
 
   const handleClear = () => {
     setLocalQuery('');
-    if (onChange) {
-      onChange('');
-    }
+    onChangeRef.current?.('');
   };
 
   return (
     <div className={`relative w-full ${className}`}>
       <div className="relative flex items-center">
-        {/* Icône Loupe */}
-        <span className="absolute left-4 text-slate-400 text-lg pointer-events-none">
-          🔍
-        </span>
+        {/* Icône Loupe SVG */}
+        <Search className="absolute left-4 w-5 h-5 text-slate-400 pointer-events-none" />
 
-        {/* Input */}
+        {/* Input de recherche */}
         <input
           type="text"
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-11 pr-10 py-3 rounded-xl bg-[#161920] border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#CCFF00] focus:ring-1 focus:ring-[#CCFF00] transition-all shadow-inner"
+          className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-[#161920] border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#CCFF00] focus:ring-1 focus:ring-[#CCFF00] transition-all shadow-inner"
         />
 
         {/* Bouton Effacer (X) */}
@@ -57,10 +60,10 @@ export default function SearchBar({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="absolute right-3.5 p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
             title="Effacer la recherche"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>

@@ -81,6 +81,7 @@ export async function runSeed() {
       weightGrams: 400,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-02',
@@ -94,6 +95,7 @@ export async function runSeed() {
       weightGrams: 350,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-03',
@@ -108,6 +110,7 @@ export async function runSeed() {
       weightGrams: 300,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-04-mystery-rare',
@@ -122,6 +125,7 @@ export async function runSeed() {
       isSurprise: true,
       isSurpriseBasket: true,
       rarity: RARITY_TIERS.RARE,
+      imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
       privateContents: [
         { name: 'Baguette Farcie Thon & Fromage', quantity: 1, originalPriceMillimes: 6500 },
         { name: 'Makloub Jambon Fumé', quantity: 1, originalPriceMillimes: 5500 },
@@ -142,6 +146,7 @@ export async function runSeed() {
       isSurprise: true,
       isSurpriseBasket: true,
       rarity: RARITY_TIERS.COMMON,
+      imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
       privateContents: [
         { name: 'Croissants Pur Beurre', quantity: 2, originalPriceMillimes: 3000 },
         { name: 'Pains au Chocolat Croustillants', quantity: 2, originalPriceMillimes: 3000 },
@@ -159,6 +164,7 @@ export async function runSeed() {
       weightGrams: 300,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1604467715878-83e57e8bc129?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-07',
@@ -173,6 +179,7 @@ export async function runSeed() {
       weightGrams: 280,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80',
     },
 
     // Pâtisserie Masmoudi (4 offres : 1 Fixed, 2 Dutch, 1 Snack)
@@ -188,6 +195,7 @@ export async function runSeed() {
       weightGrams: 400,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-09',
@@ -202,6 +210,7 @@ export async function runSeed() {
       weightGrams: 350,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-10',
@@ -215,6 +224,7 @@ export async function runSeed() {
       weightGrams: 180,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1519915028121-7d3463d20b13?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-11',
@@ -229,6 +239,7 @@ export async function runSeed() {
       weightGrams: 300,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
     },
 
     // Le Dôme Gourmand (4 offres : 1 Mystery Box LEGENDARY, 2 Plats Chauds, 1 Dutch)
@@ -245,6 +256,7 @@ export async function runSeed() {
       isSurprise: true,
       isSurpriseBasket: true,
       rarity: RARITY_TIERS.LEGENDARY,
+      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
       privateContents: [
         { name: 'Couscous Royal Agneau & Merguez', quantity: 1, originalPriceMillimes: 14000 },
         { name: 'Ojja Royale Crevettes & Merguez', quantity: 1, originalPriceMillimes: 8000 },
@@ -264,6 +276,7 @@ export async function runSeed() {
       weightGrams: 550,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-14',
@@ -277,6 +290,7 @@ export async function runSeed() {
       weightGrams: 450,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-15',
@@ -291,6 +305,7 @@ export async function runSeed() {
       weightGrams: 450,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
     },
 
     // Pizzeria Bella Napoli (4 offres : 3 Pizzas, 1 Boisson/Snack)
@@ -307,6 +322,7 @@ export async function runSeed() {
       weightGrams: 550,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-17',
@@ -320,6 +336,7 @@ export async function runSeed() {
       weightGrams: 500,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-18',
@@ -333,6 +350,7 @@ export async function runSeed() {
       weightGrams: 550,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1573821663912-569905455b1c?auto=format&fit=crop&w=800&q=80',
     },
     {
       id: 'off-19',
@@ -347,6 +365,7 @@ export async function runSeed() {
       weightGrams: 480,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?auto=format&fit=crop&w=800&q=80',
     },
 
     // Fast-Food Le Phare (1 offre prête pour son activation post-approbation)
@@ -362,6 +381,7 @@ export async function runSeed() {
       weightGrams: 450,
       isSurprise: false,
       isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
     },
   ];
 
@@ -411,6 +431,7 @@ export async function runSeed() {
       isSurprise: off.isSurprise || false,
       isSurpriseBasket: off.isSurpriseBasket || false,
       rarity: off.rarity || RARITY_TIERS.COMMON,
+      imageUrl: off.imageUrl || null,
       status: 'ACTIVE',
       searchKeywords: off.title.toLowerCase().split(/\s+/).filter(Boolean),
       createdAt: new Date(nowMs - 2 * 3600 * 1000).toISOString(),

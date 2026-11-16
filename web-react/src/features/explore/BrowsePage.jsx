@@ -2,8 +2,19 @@
 // 🔄 Comparaison React / Flutter : En React, `BrowsePage` gère l'état global des filtres avec `useState` et un debounce personnalisé ; en Flutter, `ExploreScreen` utilise un `StatefulWidget` avec un contrôleur de défilement infini et des cartes adaptatives.
 // 🎯 À retenir pour la soutenance : "L'architecture garantit un fonctionnement continu : si le serveur REST est indisponible, un fallback intelligent sur les commerces réels de Montfleury assure une démonstration 100% interactive."
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Sparkles,
+  BarChart3,
+  Ticket,
+  MapPin,
+  Globe,
+  RefreshCw,
+  Search,
+  Filter,
+  CheckCircle2,
+} from 'lucide-react';
 import SearchBar from './SearchBar.jsx';
 import FilterPanel from './FilterPanel.jsx';
 import { OfferCard, MysteryBoxCard } from '../../components/offers/index.js';
@@ -13,7 +24,7 @@ import { ENDPOINTS } from '../../lib/endpoints.js';
 import { computeUnitPrice } from '@shared/pricing.js';
 import { OFFER_CATEGORIES } from '@shared/constants.js';
 
-// Jeu d'offres de démonstration Montfleury (Fallback résilient)
+// Jeu d'offres de démonstration Montfleury (Fallback résilient avec vraies photos appétissantes)
 const DEFAULT_MONTFLEURY_OFFERS = [
   {
     id: 'off-baguette-01',
@@ -31,7 +42,7 @@ const DEFAULT_MONTFLEURY_OFFERS = [
     pickupEndAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
     weightGramsPerUnit: 400,
-    imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'off-etoile-02',
@@ -55,7 +66,7 @@ const DEFAULT_MONTFLEURY_OFFERS = [
       itemCountHint: 4,
     },
     weightGramsPerUnit: 320,
-    imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'off-dome-03',
@@ -73,7 +84,7 @@ const DEFAULT_MONTFLEURY_OFFERS = [
     pickupEndAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
     weightGramsPerUnit: 450,
-    imageUrl: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'off-masmoudi-04',
@@ -97,7 +108,7 @@ const DEFAULT_MONTFLEURY_OFFERS = [
       itemCountHint: 6,
     },
     weightGramsPerUnit: 250,
-    imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'off-bella-05',
@@ -115,7 +126,7 @@ const DEFAULT_MONTFLEURY_OFFERS = [
     pickupEndAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
     weightGramsPerUnit: 500,
-    imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'off-phare-06',
@@ -134,7 +145,7 @@ const DEFAULT_MONTFLEURY_OFFERS = [
     pickupEndAt: new Date(Date.now() + 80 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
     weightGramsPerUnit: 350,
-    imageUrl: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1604467715878-83e57e8bc129?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
@@ -186,61 +197,68 @@ export default function BrowsePage() {
     };
   }, []);
 
-  const handleResetFilters = () => {
+  const handleResetFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedCategory('ALL');
     setMaxPriceMillimes(15000);
     setSurpriseOnly(false);
     setSortBy('distance');
-  };
+  }, []);
 
-  // Filtrage et Tri en mémoire
+  // Filtrage et Tri en mémoire ultra-robuste avec try/catch par offre
   const filteredOffers = useMemo(() => {
     const now = Date.now();
 
     return offers.filter((offer) => {
-      // 1. Recherche texte (titre, nom commerce, description)
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = (offer.title || '').toLowerCase().includes(q);
-        const matchMerchant = (offer.merchantName || offer.merchant?.name || '').toLowerCase().includes(q);
-        const matchDesc = (offer.description || '').toLowerCase().includes(q);
-        if (!matchTitle && !matchMerchant && !matchDesc) return false;
-      }
+      try {
+        // 1. Recherche texte (titre, nom commerce, description)
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const matchTitle = (offer.title || '').toLowerCase().includes(q);
+          const matchMerchant = (offer.merchantName || offer.merchantSnapshot?.name || offer.merchant?.name || '').toLowerCase().includes(q);
+          const matchDesc = (offer.description || '').toLowerCase().includes(q);
+          if (!matchTitle && !matchMerchant && !matchDesc) return false;
+        }
 
-      // 2. Filtre Catégorie
-      if (selectedCategory !== 'ALL' && offer.category !== selectedCategory) {
-        return false;
-      }
+        // 2. Filtre Catégorie
+        if (selectedCategory !== 'ALL' && offer.category !== selectedCategory) {
+          return false;
+        }
 
-      // 3. Filtre Panier Surprise
-      if (surpriseOnly && !(offer.isSurpriseBasket || offer.surprise)) {
-        return false;
-      }
+        // 3. Filtre Panier Surprise
+        if (surpriseOnly && !(offer.isSurpriseBasket || offer.surprise)) {
+          return false;
+        }
 
-      // 4. Filtre Prix Max
-      const currentPrice = computeUnitPrice(offer, now);
-      if (currentPrice > maxPriceMillimes) {
-        return false;
-      }
+        // 4. Filtre Prix Max
+        const currentPrice = computeUnitPrice(offer, now);
+        if (currentPrice > maxPriceMillimes) {
+          return false;
+        }
 
-      return true;
+        return true;
+      } catch {
+        return true; // En cas de doute, conserver l'offre
+      }
     }).sort((a, b) => {
-      // Tri
-      if (sortBy === 'price') {
-        const priceA = computeUnitPrice(a, now);
-        const priceB = computeUnitPrice(b, now);
-        return priceA - priceB;
+      try {
+        if (sortBy === 'price') {
+          const priceA = computeUnitPrice(a, now);
+          const priceB = computeUnitPrice(b, now);
+          return priceA - priceB;
+        }
+        if (sortBy === 'ending') {
+          const endA = new Date(a.pickupEndAt || a.pricing?.pickupEndAt || (now + 3600000)).getTime();
+          const endB = new Date(b.pickupEndAt || b.pricing?.pickupEndAt || (now + 3600000)).getTime();
+          return endA - endB;
+        }
+        // Par défaut : distance ESSECT
+        const distA = a.distanceFromEssectM ?? a.merchantSnapshot?.distanceFromEssectM ?? a.merchant?.distanceFromEssectM ?? 500;
+        const distB = b.distanceFromEssectM ?? b.merchantSnapshot?.distanceFromEssectM ?? b.merchant?.distanceFromEssectM ?? 500;
+        return distA - distB;
+      } catch {
+        return 0;
       }
-      if (sortBy === 'ending') {
-        const endA = new Date(a.pickupEndAt || a.pricing?.pickupEndAt).getTime();
-        const endB = new Date(b.pickupEndAt || b.pricing?.pickupEndAt).getTime();
-        return endA - endB;
-      }
-      // Par défaut : distance ESSECT
-      const distA = a.distanceFromEssectM ?? a.merchant?.distanceFromEssectM ?? 500;
-      const distB = b.distanceFromEssectM ?? b.merchant?.distanceFromEssectM ?? 500;
-      return distA - distB;
     });
   }, [offers, searchQuery, selectedCategory, maxPriceMillimes, surpriseOnly, sortBy]);
 
@@ -267,25 +285,29 @@ export default function BrowsePage() {
               to="/app/dashboard"
               className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
             >
-              <span>📊 Mon Dashboard</span>
+              <BarChart3 className="w-3.5 h-3.5 text-[#CCFF00]" />
+              <span>Mon Dashboard</span>
             </Link>
             <Link
               to="/app/orders"
               className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
             >
-              <span>🎟️ Mes Commandes</span>
+              <Ticket className="w-3.5 h-3.5 text-[#00E5FF]" />
+              <span>Mes Commandes</span>
             </Link>
             <Link
               to="/app/radar"
               className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
             >
-              <span>🗺️ Radar 3D</span>
+              <MapPin className="w-3.5 h-3.5 text-[#FF5500]" />
+              <span>Radar 3D</span>
             </Link>
             <Link
               to="/impact"
               className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-200 hover:border-[#CCFF00]/40 hover:text-[#CCFF00] font-bold transition-all flex items-center gap-1.5"
             >
-              <span>🌱 Impact Campus</span>
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Impact Campus</span>
             </Link>
             <span className="px-3.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs text-slate-300">
               ⚡ <strong className="text-[#CCFF00]">{filteredOffers.length}</strong> offre{filteredOffers.length > 1 ? 's' : ''}

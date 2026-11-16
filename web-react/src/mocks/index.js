@@ -73,6 +73,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 30 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 90 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -92,6 +93,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 45 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 75 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -113,6 +115,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 20 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 80 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -129,10 +132,11 @@ export const mockOffers = [
     quantity: 2,
     remainingQuantity: 2,
     weightGrams: 600,
-    pickupStartAt: new Date(now - 60 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(now + 120 * 60 * 1000).toISOString(),
+    pickupStartAt: new Date(now - 15 * 60 * 1000).toISOString(),
+    pickupEndAt: new Date(now + 60 * 60 * 1000).toISOString(),
     isSurpriseBasket: true,
     rarity: 'RARE',
+    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
 
@@ -155,6 +159,7 @@ export const mockOffers = [
     pickupEndAt: new Date(now + 60 * 60 * 1000).toISOString(),
     isSurpriseBasket: true,
     rarity: 'COMMON',
+    imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -174,6 +179,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 15 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 105 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1604467715878-83e57e8bc129?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -195,6 +201,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 30 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 60 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
 
@@ -216,6 +223,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 60 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 120 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -237,6 +245,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 45 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 90 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -256,6 +265,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 10 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 50 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1519915028121-7d3463d20b13?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -277,6 +287,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 30 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 75 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
 
@@ -299,6 +310,7 @@ export const mockOffers = [
     pickupEndAt: new Date(now + 120 * 60 * 1000).toISOString(),
     isSurpriseBasket: true,
     rarity: 'LEGENDARY',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -320,6 +332,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 15 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 45 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -339,6 +352,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 30 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 60 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -360,6 +374,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 20 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 70 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
 
@@ -383,6 +398,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 45 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 90 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -402,6 +418,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 30 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 60 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -421,6 +438,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 15 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 45 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1573821663912-569905455b1c?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
   {
@@ -442,6 +460,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 30 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 60 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
 
@@ -463,6 +482,7 @@ export const mockOffers = [
     pickupStartAt: new Date(now - 10 * 60 * 1000).toISOString(),
     pickupEndAt: new Date(now + 110 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
+    imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
     status: 'ACTIVE',
   },
 ];

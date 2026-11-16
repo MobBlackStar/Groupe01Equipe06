@@ -2,7 +2,7 @@
 // 🔄 Comparaison React / Flutter : En React, `Navbar` est un composant adaptatif (Desktop/Mobile) avec menu hamburger ; en Flutter, nous combinons `AppBar` et `BottomNavigationBar`.
 // 🎯 À retenir pour la soutenance : "La barre intègre un commutateur de rôle 1-clic ultra-rapide pour basculer en direct devant le jury entre Étudiant, Commerçant et Administrateur sans aucune latence."
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
@@ -20,6 +20,8 @@ import {
   User,
   LogOut,
   ChevronDown,
+  GraduationCap,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLES } from '@shared/constants.js';
@@ -30,6 +32,18 @@ export default function Navbar() {
   const [demoMenuOpen, setDemoMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const menuRef = useRef(null);
+
+  // Fermeture automatique du menu au clic extérieur
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setDemoMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleRoleSwitch = async (targetRole) => {
     setDemoMenuOpen(false);
@@ -77,11 +91,11 @@ export default function Navbar() {
   else currentNavLinks = studentLinks;
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#0D0F12]/90 backdrop-blur-md border-b border-white/10">
+    <header className="sticky top-0 z-40 w-full bg-[#0D0F12]/95 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Logo & Marque */}
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#CCFF00] to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-[#CCFF00]/10">
               <div className="w-full h-full bg-[#0D0F12] rounded-[10px] flex items-center justify-center">
                 <span className="font-black text-[#CCFF00] text-lg">CS</span>
@@ -91,7 +105,7 @@ export default function Navbar() {
               <span className="font-black tracking-tight text-white text-base leading-none">
                 Campus<span className="text-[#CCFF00]">Save</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">ESSECT Montfleury</span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-wide">ESSECT Montfleury</span>
             </div>
           </Link>
 
@@ -129,53 +143,54 @@ export default function Navbar() {
           </Link>
 
           {/* Commutateur de Rôle Démo (Jury 1-Clic) */}
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
               type="button"
               onClick={() => setDemoMenuOpen(!demoMenuOpen)}
-              className="px-2.5 py-1.5 rounded-xl bg-[#161920] border border-white/10 text-xs font-bold text-slate-200 hover:border-[#CCFF00]/40 flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-3 py-1.5 rounded-xl bg-[#161920] border border-white/15 text-xs font-bold text-slate-200 hover:border-[#CCFF00]/50 flex items-center gap-2 transition-all shadow-sm"
+              title="Changer de rôle pour la démonstration"
             >
-              <span className="w-2 h-2 rounded-full bg-[#CCFF00] animate-pulse" />
-              <span className="hidden md:inline">Rôle : </span>
-              <strong className="text-[#CCFF00]">
+              <RefreshCw className="w-3.5 h-3.5 text-[#CCFF00] animate-spin-slow" />
+              <span className="hidden sm:inline text-slate-400">Rôle :</span>
+              <span className="text-[#CCFF00] font-black">
                 {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}
-              </strong>
+              </span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
             {demoMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#161920] border border-white/10 p-1.5 shadow-2xl z-50 animate-fadeIn space-y-1">
-                <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400">
-                  Changer de rôle (Démo)
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#161920] border border-white/15 p-2 shadow-2xl z-50 animate-fadeIn space-y-1 backdrop-blur-xl">
+                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 border-b border-white/10 mb-1">
+                  Changer de rôle (Démo Jury)
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRoleSwitch(ROLES.STUDENT)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
-                    role === ROLES.STUDENT ? 'bg-[#CCFF00] text-black' : 'text-slate-300 hover:bg-white/5'
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${
+                    role === ROLES.STUDENT ? 'bg-[#CCFF00] text-black shadow-md shadow-[#CCFF00]/20' : 'text-slate-300 hover:bg-white/5'
                   }`}
                 >
-                  <span>🎓</span>
-                  <span>Étudiant (Ritej)</span>
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Étudiant (Yassine)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRoleSwitch(ROLES.MERCHANT)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
-                    role === ROLES.MERCHANT ? 'bg-[#CCFF00] text-black' : 'text-slate-300 hover:bg-white/5'
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${
+                    role === ROLES.MERCHANT ? 'bg-[#CCFF00] text-black shadow-md shadow-[#CCFF00]/20' : 'text-slate-300 hover:bg-white/5'
                   }`}
                 >
-                  <span>🏪</span>
+                  <Store className="w-4 h-4" />
                   <span>Commerçant (Baguette)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRoleSwitch(ROLES.ADMIN)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
-                    role === ROLES.ADMIN ? 'bg-[#CCFF00] text-black' : 'text-slate-300 hover:bg-white/5'
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${
+                    role === ROLES.ADMIN ? 'bg-[#CCFF00] text-black shadow-md shadow-[#CCFF00]/20' : 'text-slate-300 hover:bg-white/5'
                   }`}
                 >
-                  <span>🛡️</span>
+                  <ShieldCheck className="w-4 h-4" />
                   <span>Administrateur ESSECT</span>
                 </button>
               </div>
@@ -188,6 +203,7 @@ export default function Navbar() {
               <Link
                 to="/profile"
                 className="flex items-center gap-2 p-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
+                title="Mon Profil"
               >
                 <div className="w-7 h-7 rounded-lg bg-[#CCFF00]/10 border border-[#CCFF00]/30 flex items-center justify-center text-[#CCFF00] font-black text-xs">
                   {user.displayName ? user.displayName.charAt(0) : 'U'}
@@ -203,9 +219,10 @@ export default function Navbar() {
                 type="button"
                 onClick={logout}
                 title="Déconnexion"
-                className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                className="px-2.5 py-1.5 rounded-xl text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Sortir</span>
               </button>
             </div>
           ) : (
@@ -230,9 +247,17 @@ export default function Navbar() {
 
       {/* Menu Déroulant Mobile (Tablette & Mobile) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#0D0F12] border-b border-white/10 px-4 pt-2 pb-6 space-y-2 animate-fadeIn">
-          <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Navigation {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}
+        <div className="lg:hidden bg-[#0D0F12] border-b border-white/10 px-4 pt-2 pb-6 space-y-3 animate-fadeIn">
+          <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <span>Navigation {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}</span>
+            <button
+              type="button"
+              onClick={logout}
+              className="text-rose-400 text-xs flex items-center gap-1 font-bold"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Déconnexion</span>
+            </button>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {currentNavLinks.map((link) => (

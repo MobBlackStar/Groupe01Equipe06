@@ -2,18 +2,20 @@
 // 🔄 Comparaison React / Flutter : En React, Tailwind conditionne les classes d'animation `animate-pulse` selon le temps restant ; en Flutter, `CountdownChip` modifie l'animation du conteneur avec un `AnimatedContainer`.
 // 🎯 À retenir pour la soutenance : "Trois seuils stricts : >60 min (vert lime serein), 20-60 min (orange attention), <20 min (rouge clignotant urgence absolue) pour stimuler l'achat anti-gaspillage rapide."
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
+import { Clock } from 'lucide-react';
 import { computeUrgencyColor, computeMinutesLeft } from '@shared/pricing.js';
 
-export default function CountdownChip({ pickupEndAt, className = '' }) {
+function CountdownChipComponent({ pickupEndAt, className = '' }) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
+    if (!pickupEndAt) return;
     const timer = setInterval(() => {
       setNow(Date.now());
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [pickupEndAt]);
 
   if (!pickupEndAt) return null;
 
@@ -44,7 +46,7 @@ export default function CountdownChip({ pickupEndAt, className = '' }) {
   return (
     <div
       style={badgeStyle}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border backdrop-blur-md transition-all duration-300 ${
         isCritical ? 'animate-pulse' : ''
       } ${className}`}
     >
@@ -56,3 +58,5 @@ export default function CountdownChip({ pickupEndAt, className = '' }) {
     </div>
   );
 }
+
+export default memo(CountdownChipComponent);
