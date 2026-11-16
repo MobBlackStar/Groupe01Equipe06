@@ -4,6 +4,8 @@
 // Module : Architecture & Infrastructure
 
 import { Router } from 'express';
+import { authRouter } from './modules/auth/auth.routes.js';
+import { usersRouter } from './modules/users/users.routes.js';
 
 export const apiRouter = Router();
 
@@ -17,9 +19,11 @@ apiRouter.get('/health', (req, res) => {
   });
 });
 
-// Les sous-routeurs seront branchés lors des étapes dédiées :
-// apiRouter.use('/auth', authRouter);
-// apiRouter.use('/users', usersRouter);
+// Authentification et Profils Utilisateurs (Jour 2)
+apiRouter.use('/auth', authRouter);
+apiRouter.use('/users', usersRouter);
+
+// Les sous-routeurs suivants seront branchés lors des étapes dédiées :
 // apiRouter.use('/merchants', merchantsRouter);
 // apiRouter.use('/offers', offersRouter);
 // apiRouter.use('/orders', ordersRouter);

@@ -8,24 +8,14 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
 import { RoleRoute } from './RoleRoute.jsx';
 import { ROLES } from '@shared/constants.js';
+import { LoginPage } from '../features/auth/LoginPage.jsx';
 
 export function AppRouter() {
   return (
     <Routes>
       {/* Routes publiques */}
       <Route path="/" element={<Navigate to="/app" replace />} />
-      <Route
-        path="/login"
-        element={
-          <div className="flex h-screen items-center justify-center p-4">
-            <div className="bg-campus-card p-8 rounded-xl border border-campus-border max-w-md w-full text-center">
-              <h1 className="text-2xl font-bold text-campus-lime mb-2">CampusSave</h1>
-              <p className="text-sm text-campus-muted mb-6">Connexion à la plateforme étudiante</p>
-              <p className="text-xs text-slate-400">Écran en cours d'intégration par le l'équipe UI</p>
-            </div>
-          </div>
-        }
-      />
+      <Route path="/login" element={<LoginPage />} />
       <Route
         path="/register"
         element={

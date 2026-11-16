@@ -3,4 +3,12 @@
 // 🎯 À retenir pour la soutenance : "Ce contrôleur gère la réception de la requête d'inscription et délègue au service d'authentification."
 // Module : Architecture Backend
 
-export const authController = {};
+import { authService } from './auth.service.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+
+export const authController = {
+  registerProfile: asyncHandler(async (req, res) => {
+    const result = await authService.registerProfile(req.user, req.body);
+    res.status(201).json(result);
+  }),
+};
