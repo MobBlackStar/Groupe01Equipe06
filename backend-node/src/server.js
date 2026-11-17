@@ -12,8 +12,8 @@ import { startNoShowSweeper } from './jobs/noShowSweeper.js';
 
 const PORT = env.PORT || 4000;
 
-app.listen(PORT, () => {
-  logger.info(`Serveur CampusSave démarré sur le port ${PORT} [${env.NODE_ENV}]`);
+app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Serveur CampusSave démarré sur le port ${PORT} [0.0.0.0] [${env.NODE_ENV}]`);
   if (env.NODE_ENV !== 'test') {
     startReservationSweeper();
     startOfferExpirySweeper();
