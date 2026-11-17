@@ -60,6 +60,8 @@ dist/
 dist-ssr/
 build/
 **/build/
+*.apk
+**/*.apk
 .vite/
 **/.vite/
 .cache/
