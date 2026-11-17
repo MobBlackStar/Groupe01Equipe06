@@ -49,7 +49,7 @@ export default function Navbar() {
     setDemoMenuOpen(false);
     setMobileMenuOpen(false);
     await loginDemo(targetRole);
-    if (targetRole === ROLES.STUDENT) navigate('/app');
+    if (targetRole === ROLES.STUDENT) navigate('/app/explore');
     else if (targetRole === ROLES.MERCHANT) navigate('/merchant/dashboard');
     else if (targetRole === ROLES.ADMIN) navigate('/admin/dashboard');
   };

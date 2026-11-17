@@ -19,13 +19,17 @@ export function useLivePrice(offer) {
   useEffect(() => {
     if (!offer) return;
 
-    // Actualisation fluide chaque seconde
+    // Actualisation chaque seconde uniquement pour les enchères dégressives (Dutch Auction),
+    // et toutes les 30 secondes pour les offres à prix fixe (pour le compte à rebours d'urgence).
+    const isDutch = offer.pricing?.mode === 'DUTCH_AUCTION';
+    const intervalMs = isDutch ? 1000 : 30000;
+
     const interval = setInterval(() => {
       setNow(serverNow());
-    }, 1000);
+    }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [offer?.id, offer?.pickupEndAt]);
+  }, [offer?.id, offer?.pickupEndAt, offer?.pricing?.mode]);
 
   if (!offer) {
     return {

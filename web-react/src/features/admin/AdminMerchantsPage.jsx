@@ -117,6 +117,7 @@ export default function AdminMerchantsPage() {
     try {
       await apiClient.patch(ENDPOINTS.ADMIN_MERCHANT_STATUS(merchant.id), {
         status: MERCHANT_STATUS.APPROVED,
+        statusReason: 'Dossier validé par la commission universitaire ESSECT',
         reason: 'Dossier validé par la commission universitaire ESSECT',
       });
     } catch (err) {
@@ -148,6 +149,7 @@ export default function AdminMerchantsPage() {
     try {
       await apiClient.patch(ENDPOINTS.ADMIN_MERCHANT_STATUS(merchant.id), {
         status: newStatus || MERCHANT_STATUS.REJECTED,
+        statusReason: reason,
         reason,
       });
     } catch (err) {

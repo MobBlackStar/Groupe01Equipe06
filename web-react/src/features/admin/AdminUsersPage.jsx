@@ -118,6 +118,7 @@ export default function AdminUsersPage() {
     try {
       await apiClient.patch(ENDPOINTS.ADMIN_USER_STATUS(targetUser.uid), {
         status: nextStatus,
+        statusReason: nextStatus === USER_STATUS.SUSPENDED ? 'Suspension administrative temporaire' : 'Compte réactivé par l administration',
       });
     } catch (err) {
       console.warn('API toggle status fallback:', err.message);

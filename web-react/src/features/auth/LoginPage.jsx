@@ -22,9 +22,9 @@ export function LoginPage() {
   // Redirection automatique si déjà connecté selon le rôle
   useEffect(() => {
     if (isAuthenticated && role) {
-      if (role === ROLES.STUDENT) navigate('/app');
-      else if (role === ROLES.MERCHANT) navigate('/merchant');
-      else if (role === ROLES.ADMIN) navigate('/admin');
+      if (role === ROLES.STUDENT) navigate('/app/explore', { replace: true });
+      else if (role === ROLES.MERCHANT) navigate('/merchant/dashboard', { replace: true });
+      else if (role === ROLES.ADMIN) navigate('/admin/dashboard', { replace: true });
     }
   }, [isAuthenticated, role, navigate]);
 
@@ -76,9 +76,9 @@ export function LoginPage() {
     setServerError('');
     try {
       await loginDemo(type);
-      if (type === 'student') navigate('/app');
-      else if (type === 'merchant') navigate('/merchant');
-      else if (type === 'admin') navigate('/admin');
+      if (type === 'student') navigate('/app/explore', { replace: true });
+      else if (type === 'merchant') navigate('/merchant/dashboard', { replace: true });
+      else if (type === 'admin') navigate('/admin/dashboard', { replace: true });
     } catch {
       setServerError('Échec de la connexion démo');
     } finally {

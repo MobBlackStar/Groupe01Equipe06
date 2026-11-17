@@ -11,9 +11,10 @@ function CountdownChipComponent({ pickupEndAt, className = '' }) {
 
   useEffect(() => {
     if (!pickupEndAt) return;
+    // Mise à jour toutes les 10 secondes (suffisant et optimal pour un affichage en minutes)
     const timer = setInterval(() => {
       setNow(Date.now());
-    }, 1000);
+    }, 10000);
     return () => clearInterval(timer);
   }, [pickupEndAt]);
 

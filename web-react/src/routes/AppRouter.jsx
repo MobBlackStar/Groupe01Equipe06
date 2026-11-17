@@ -1,10 +1,11 @@
 // 💡 Concept & Analogie : Comme le plan d'étage d'un centre commercial qui sépare l'espace client, les boutiques des commerçants et la direction administrative, ce routeur organise les espaces par rôle.
 // 🔄 Comparaison React / Flutter : Définit l'arborescence des URLs web (React Router 6) pendant que GoRouter organise les piles d'écrans mobiles.
-// 🎯 À retenir pour la soutenance : "Notre routeur segmente strictement l'application en 3 espaces cloisonnés : `/app` pour les étudiants, `/merchant` pour les commerçants et `/admin` pour l'administration."
+// 🎯 À retenir pour la soutenance : "Notre routeur segmente strictement l'application en 3 espaces cloisonnés : `/app` pour les étudiants, `/merchant` pour les commerçants et `/admin` pour l'administration, avec une redirection racine immunisée contre les boucles."
 // Module : Structure & Routage / Intégration écrans : l'équipe UI
 
 import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
 import { RoleRoute } from './RoleRoute.jsx';
 import { ROLES } from '@shared/constants.js';
@@ -33,26 +34,58 @@ import AdminDashboard from '../features/admin/AdminDashboard.jsx';
 import ImpactDashboardPage from '../features/impact/ImpactDashboardPage.jsx';
 import { StudentLayout, MerchantLayout, AdminLayout } from '../components/layout/index.js';
 
+/**
+ * Aiguillage intelligent de la racine `/` selon l'état d'authentification et le rôle actif
+ */
+function RootRedirect() {
+  const { isAuthenticated, role, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0D0F12] text-[#CCFF00] font-mono text-xs">
+        Chargement de CampusSave...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role === ROLES.MERCHANT) {
+    return <Navigate to="/merchant/dashboard" replace />;
+  }
+
+  if (role === ROLES.ADMIN) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  return <Navigate to="/app/explore" replace />;
+}
+
 export function AppRouter() {
   return (
     <Routes>
-      {/* Routes publiques */}
-      <Route path="/" element={<Navigate to="/app" replace />} />
+      {/* Route Racine Intelligente */}
+      <Route path="/" element={<RootRedirect />} />
+
+      {/* Routes Publiques */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile" element={<StudentLayout><ProfilePage /></StudentLayout>} />
       <Route path="/payment/return" element={<PaymentReturnPage />} />
       <Route path="/impact" element={<StudentLayout><ImpactDashboardPage /></StudentLayout>} />
 
-      {/* Routes protégées */}
+      {/* Routes Protégées par Authentification */}
       <Route element={<ProtectedRoute />}>
         {/* Espace Étudiant (/app/*) */}
         <Route element={<RoleRoute allowedRoles={[ROLES.STUDENT]} />}>
           <Route element={<StudentLayout><Outlet /></StudentLayout>}>
-            <Route path="/app" element={<BrowsePage />} />
+            <Route path="/app" element={<Navigate to="/app/explore" replace />} />
             <Route path="/app/explore" element={<BrowsePage />} />
             <Route path="/app/dashboard" element={<StudentDashboard />} />
             <Route path="/app/offers/:id" element={<OfferDetailPage />} />
+            <Route path="/app/checkout" element={<CheckoutPage />} />
             <Route path="/app/checkout/:orderId" element={<CheckoutPage />} />
             <Route path="/app/orders" element={<MyOrdersPage />} />
             <Route path="/app/orders/:id/ticket" element={<LivingTicketPage />} />
@@ -87,7 +120,7 @@ export function AppRouter() {
         </Route>
       </Route>
 
-      {/* 404 Route */}
+      {/* Route de Secours 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

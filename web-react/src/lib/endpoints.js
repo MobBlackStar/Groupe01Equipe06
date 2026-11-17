@@ -7,6 +7,7 @@ export const ENDPOINTS = {
   // Auth & Utilisateurs
   REGISTER_PROFILE: '/auth/register-profile',
   ME: '/users/me',
+  USERS_ME: '/users/me',
   FCM_TOKEN: '/users/me/fcm-token',
 
   // Commerces

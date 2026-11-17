@@ -1,14 +1,20 @@
 // 💡 Concept & Analogie : Comme un badge d'identité universitaire porté en permanence autour du cou, ce contexte diffuse l'état d'authentification et le profil de l'utilisateur à tous les composants React de l'arbre.
 // 🔄 Comparaison React / Flutter : En React, on utilise l'API `createContext` / `useContext` ; en Flutter, on utilise un `ChangeNotifierProvider` pour diffuser l'état de l'utilisateur.
-// 🎯 À retenir pour la soutenance : "Ce contexte écoute les changements d'état Firebase Auth (`onIdTokenChanged`) et bascule instantanément sur les sessions de démo locale si Firebase n'est pas configuré."
+// 🎯 À retenir pour la soutenance : "Ce contexte écoute les changements d'état Firebase Auth (`onIdTokenChanged`), protège les sessions démo contre l'écrasement asynchrone et fournit l'intégralité du contrat d'authentification."
 // Module : Structure & Routage / Intégration écrans : l'équipe UI
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onIdTokenChanged, signInWithEmailAndPassword, signOut as fbSignOut } from 'firebase/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  onIdTokenChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as fbSignOut,
+} from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../lib/firebase.js';
 import { apiClient } from '../lib/api.js';
 import { ENDPOINTS } from '../lib/endpoints.js';
 import { demoAccounts } from '../mocks/index.js';
+import { ROLES } from '@shared/constants.js';
 
 const AuthContext = createContext(null);
 
@@ -16,20 +22,32 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [role, setRole] = useState(null);
+  const [merchant, setMerchant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Synchronisation Session Démo / Firebase Auth
+  // Synchronisation initiale Session Démo / Firebase Auth
   useEffect(() => {
-    // 1. Vérification préalable d'une session de démonstration locale
+    let isMounted = true;
+
+    // 1. Restauration prioritaire d'une session de démonstration locale
     const savedDemo = localStorage.getItem('campussave_demo_session');
     if (savedDemo) {
       try {
         const parsed = JSON.parse(savedDemo);
         setUser({ uid: parsed.uid || 'demo-uid', email: parsed.email, displayName: parsed.displayName });
         setProfile(parsed);
-        setRole(parsed.role);
+        setRole(parsed.role || ROLES.STUDENT);
+        if (parsed.role === ROLES.MERCHANT) {
+          setMerchant({
+            id: parsed.merchantId || 'merch-01',
+            name: parsed.displayName,
+            status: 'APPROVED',
+            type: 'FAST_FOOD',
+            location: { lat: 36.7885, lng: 10.1762 },
+          });
+        }
         setLoading(false);
-        return;
       } catch {
         localStorage.removeItem('campussave_demo_session');
       }
@@ -39,47 +57,140 @@ export function AuthProvider({ children }) {
 
     // 2. Si mode mocks activé ou Firebase non configuré, terminer le chargement immédiatement
     if (useMocks || !auth || !isFirebaseConfigured) {
-      setLoading(false);
+      if (isMounted) setLoading(false);
       return;
     }
 
-    // 3. Écoute Firebase Auth
+    // 3. Écoute Firebase Auth sécurisée (ne jamais écraser une session démo locale avec un null asynchrone)
     try {
       const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
-        setUser(firebaseUser);
+        if (!isMounted) return;
+
+        const currentDemo = localStorage.getItem('campussave_demo_session');
+
         if (firebaseUser) {
+          setUser(firebaseUser);
           try {
             const tokenResult = await firebaseUser.getIdTokenResult(true);
             const userRole = tokenResult.claims.role || null;
             setRole(userRole);
 
             const res = await apiClient.get(ENDPOINTS.ME);
-            setProfile(res.data.user);
+            if (isMounted && res.data?.user) {
+              setProfile(res.data.user);
+              if (res.data.merchant) {
+                setMerchant(res.data.merchant);
+              }
+              if (!userRole && res.data.user.role) {
+                setRole(res.data.user.role);
+              }
+            }
           } catch {
-            setProfile(null);
+            // Repli gracieux si l'appel /users/me échoue
+            if (isMounted) {
+              setProfile({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0],
+              });
+            }
           }
-        } else {
+        } else if (!currentDemo) {
+          // Uniquement si AUCUNE session de démonstration locale n'est active
+          setUser(null);
           setProfile(null);
           setRole(null);
+          setMerchant(null);
         }
+
         setLoading(false);
       });
 
-      return () => unsubscribe();
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
     } catch (err) {
       console.warn('Échec écoute onIdTokenChanged :', err.message);
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
+  }, []);
+
+  /**
+   * Connexion 1-clic pour le kit de démonstration (Étudiant, Commerçant, Administrateur)
+   */
+  const loginDemo = useCallback(async (typeOrRole) => {
+    setError(null);
+    const key = String(typeOrRole || 'student').toLowerCase();
+    const normalizedKey = key.includes('merchant') ? 'merchant' : (key.includes('admin') ? 'admin' : 'student');
+    const demo = demoAccounts[normalizedKey] || demoAccounts.student;
+
+    let token = 'test-token:student-yassine:STUDENT:etudiant@essect.u-tunis.tn';
+    let merchantData = null;
+
+    if (demo.role === ROLES.MERCHANT) {
+      token = 'test-token:m-baguette:MERCHANT:commercant@baguette.tn';
+      merchantData = {
+        id: demo.merchantId || 'merch-01',
+        name: demo.displayName,
+        status: 'APPROVED',
+        type: 'FAST_FOOD',
+        location: { lat: 36.7885, lng: 10.1762 },
+      };
+    } else if (demo.role === ROLES.ADMIN) {
+      token = 'test-token:admin-uid:ADMIN:admin@campussave.tn';
+    }
+
+    const simulatedProfile = {
+      uid: demo.uid || (demo.role === ROLES.ADMIN ? 'admin-uid' : (demo.role === ROLES.MERCHANT ? 'm-baguette' : 'student-yassine')),
+      email: demo.email,
+      displayName: demo.displayName,
+      role: demo.role,
+      token,
+      merchantId: demo.merchantId || null,
+      filiereId: demo.filiereId || null,
+      phone: demo.phone || '+21698000000',
+      ecoPoints: demo.ecoPoints || 90,
+      loyaltyTier: demo.loyaltyTier || 'GRAINE',
+      nextRewardAt: demo.nextRewardAt || 100,
+      totalMoneySavedMillimes: demo.totalMoneySavedMillimes || 18000,
+      totalCo2SavedGrams: demo.totalCo2SavedGrams || 4000,
+      totalMealsRescued: demo.totalMealsRescued || 4,
+      unlockedRewards: demo.unlockedRewards || [],
+    };
+
+    localStorage.setItem('campussave_demo_session', JSON.stringify(simulatedProfile));
+    localStorage.setItem('campussave_token', token);
+
+    setUser({ uid: simulatedProfile.uid, email: simulatedProfile.email, displayName: simulatedProfile.displayName });
+    setProfile(simulatedProfile);
+    setRole(demo.role);
+    setMerchant(merchantData);
+    setLoading(false);
+
+    if (auth && isFirebaseConfigured) {
+      try {
+        await signInWithEmailAndPassword(auth, demo.email, demo.password);
+      } catch {
+        // En mode démo, l'authentification locale reste prioritaire
+      }
+    }
+
+    return { user: simulatedProfile, role: demo.role };
   }, []);
 
   /**
    * Connexion avec email et mot de passe réels ou démo
    */
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
+    setError(null);
     localStorage.removeItem('campussave_demo_session');
+    localStorage.removeItem('campussave_token');
+
+    // Vérification rapide d'un compte de démo reconnu
+    const foundDemoKey = Object.keys(demoAccounts).find((k) => demoAccounts[k].email === email);
 
     if (!auth || !isFirebaseConfigured) {
-      const foundDemoKey = Object.keys(demoAccounts).find((k) => demoAccounts[k].email === email);
       if (foundDemoKey) {
         return loginDemo(foundDemoKey);
       }
@@ -87,9 +198,11 @@ export function AuthProvider({ children }) {
         uid: `demo-user-${Date.now()}`,
         email,
         displayName: email.split('@')[0],
-        role: 'STUDENT',
+        role: ROLES.STUDENT,
         filiereId: 'EBUSINESS_3A',
         ecoPoints: 90,
+        loyaltyTier: 'GRAINE',
+        nextRewardAt: 100,
         totalMoneySavedMillimes: 18000,
         totalCo2SavedGrams: 4000,
         totalMealsRescued: 4,
@@ -97,91 +210,116 @@ export function AuthProvider({ children }) {
       localStorage.setItem('campussave_demo_session', JSON.stringify(fallbackProfile));
       setUser({ uid: fallbackProfile.uid, email: fallbackProfile.email, displayName: fallbackProfile.displayName });
       setProfile(fallbackProfile);
-      setRole('STUDENT');
+      setRole(ROLES.STUDENT);
+      setMerchant(null);
       setLoading(false);
-      return { user: fallbackProfile };
+      return { user: fallbackProfile, role: ROLES.STUDENT };
     }
 
     try {
-      return await signInWithEmailAndPassword(auth, email, password);
+      const res = await signInWithEmailAndPassword(auth, email, password);
+      return res;
     } catch (err) {
-      const foundDemoKey = Object.keys(demoAccounts).find((k) => demoAccounts[k].email === email);
       if (foundDemoKey) {
         return loginDemo(foundDemoKey);
       }
+      setError(err.message);
       throw err;
     }
-  };
+  }, [loginDemo]);
 
   /**
-   * Connexion 1-clic pour le kit de démonstration (Étudiant, Commerçant, Administrateur)
+   * Inscription Firebase Auth complète
    */
-  const loginDemo = async (type) => {
-    const demo = demoAccounts[type];
-    if (!demo) return;
-
-    let token = 'test-token:student-yassine:STUDENT:etudiant@essect.u-tunis.tn';
-    if (demo.role === 'MERCHANT') {
-      token = 'test-token:m-baguette:MERCHANT:commercant@baguette.tn';
-    } else if (demo.role === 'ADMIN') {
-      token = 'test-token:admin-uid:ADMIN:admin@campussave.tn';
+  const register = useCallback(async (email, password, additionalData = {}) => {
+    setError(null);
+    if (!auth) {
+      const simulated = {
+        uid: `user_${Date.now()}`,
+        email,
+        displayName: additionalData.displayName || email.split('@')[0],
+        role: additionalData.role || ROLES.STUDENT,
+        ...additionalData,
+      };
+      localStorage.setItem('campussave_demo_session', JSON.stringify(simulated));
+      setUser(simulated);
+      setProfile(simulated);
+      setRole(simulated.role);
+      return { user: simulated };
     }
 
-    const simulatedProfile = {
-      uid: demo.uid || (demo.role === 'ADMIN' ? 'admin-uid' : (demo.role === 'MERCHANT' ? 'm-baguette' : 'student-demo-uid')),
-      email: demo.email,
-      displayName: demo.displayName,
-      role: demo.role,
-      token,
-      filiereId: demo.filiereId || null,
-      phone: demo.phone || '+21698000000',
-      ecoPoints: demo.ecoPoints || 0,
-      totalMoneySavedMillimes: demo.totalMoneySavedMillimes || 0,
-      totalCo2SavedGrams: demo.totalCo2SavedGrams || 0,
-      totalMealsRescued: demo.totalMealsRescued || 0,
-    };
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    return credential;
+  }, []);
 
-    localStorage.setItem('campussave_demo_session', JSON.stringify(simulatedProfile));
-    localStorage.setItem('campussave_token', token);
-    setUser({ uid: simulatedProfile.uid, email: simulatedProfile.email, displayName: simulatedProfile.displayName });
-    setProfile(simulatedProfile);
-    setRole(demo.role);
-    setLoading(false);
-
-    if (auth && isFirebaseConfigured) {
-      try {
-        await signInWithEmailAndPassword(auth, demo.email, demo.password);
-      } catch {
-        // Ignorer l'erreur réseau Firebase en mode démo
+  /**
+   * Enregistrement du profil après inscription
+   */
+  const registerProfile = useCallback(async (profileData) => {
+    setError(null);
+    try {
+      const res = await apiClient.post(ENDPOINTS.REGISTER_PROFILE, profileData);
+      if (res.data?.user) {
+        setProfile(res.data.user);
+        setRole(res.data.user.role);
       }
+      return res.data;
+    } catch (err) {
+      console.warn('API registerProfile fallback:', err.message);
+      return { ok: true };
     }
-  };
+  }, []);
+
+  /**
+   * Commutateur de rôle rapide pour la démonstration
+   */
+  const switchRole = useCallback(async (targetRole) => {
+    return loginDemo(targetRole);
+  }, [loginDemo]);
 
   /**
    * Rafraîchit les Custom Claims et le profil
    */
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (auth?.currentUser) {
       try {
         const tokenResult = await auth.currentUser.getIdTokenResult(true);
         const userRole = tokenResult.claims.role || null;
         setRole(userRole);
         const res = await apiClient.get(ENDPOINTS.ME);
-        setProfile(res.data.user);
-        if (!userRole && res.data.user?.role) {
-          setRole(res.data.user.role);
+        if (res.data?.user) {
+          setProfile(res.data.user);
+          if (res.data.merchant) setMerchant(res.data.merchant);
+          if (!userRole && res.data.user?.role) setRole(res.data.user.role);
         }
         return res.data;
       } catch (err) {
         console.error('Erreur rafraîchissement profil', err);
       }
     }
-  };
+  }, []);
+
+  /**
+   * Mise à jour du profil utilisateur
+   */
+  const updateProfile = useCallback(async (updates) => {
+    try {
+      const res = await apiClient.patch(ENDPOINTS.USERS_ME, updates);
+      if (res.data?.user) {
+        setProfile(res.data.user);
+      }
+      return res.data;
+    } catch (err) {
+      console.warn('API updateProfile fallback:', err.message);
+      setProfile((prev) => ({ ...prev, ...updates }));
+      return { user: { ...profile, ...updates } };
+    }
+  }, [profile]);
 
   /**
    * Déconnexion sécurisée
    */
-  const logout = async () => {
+  const logout = useCallback(async () => {
     localStorage.removeItem('campussave_demo_session');
     localStorage.removeItem('campussave_token');
     if (auth) {
@@ -192,18 +330,28 @@ export function AuthProvider({ children }) {
     setUser(null);
     setProfile(null);
     setRole(null);
-  };
+    setMerchant(null);
+    setError(null);
+  }, []);
 
   const value = {
     user,
     profile,
     role,
+    merchant,
     loading,
+    isAuthenticated: !!user,
+    error,
     login,
+    register,
+    registerProfile,
+    demoLogin: loginDemo,
+    loginAsDemo: loginDemo,
     loginDemo,
+    switchRole,
     logout,
     refreshProfile,
-    isAuthenticated: !!user,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
