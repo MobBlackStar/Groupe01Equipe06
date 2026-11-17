@@ -16,9 +16,11 @@ class Endpoints {
 
   static const String offers = '/offers';
   static String offerById(String id) => '/offers/$id';
+  static const String aiOfferAutofill = '/ai/offer-autofill';
   static const String radar = '/radar';
 
   static const String orders = '/orders';
+  static const String myOrders = '/orders/my-orders';
   static String orderById(String id) => '/orders/$id';
   static String cancelOrder(String id) => '/orders/$id/cancel';
   static String getTicket(String id) => '/orders/$id/ticket';
@@ -35,4 +37,5 @@ class Endpoints {
   static const String impactFilieres = '/impact/filieres';
   static const String dashboardsStudent = '/dashboards/student';
   static const String dashboardsMerchant = '/dashboards/merchant';
+  static const String health = '/health';
 }

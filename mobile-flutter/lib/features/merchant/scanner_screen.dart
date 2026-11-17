@@ -522,10 +522,34 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          // Vue caméra MobileScanner
+          // Vue caméra MobileScanner avec repli défensif pour le Web et Desktop
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
+            errorBuilder: (context, error, child) {
+              return Container(
+                color: const Color(0xFF0D0F12),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.all(24),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.camera_alt_outlined, size: 48, color: Colors.white38),
+                    SizedBox(height: 12),
+                    Text(
+                      'Caméra non disponible sur cet aperçu',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Utilisez la saisie manuelle ci-dessous pour valider le code à 6 chiffres.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
 
           // Viseur graphique

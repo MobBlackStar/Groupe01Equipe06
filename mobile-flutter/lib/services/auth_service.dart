@@ -1,6 +1,6 @@
 // 💡 Concept & Analogie : Service d'authentification mobile (ChangeNotifier) diffusant l'état de l'utilisateur à l'application Flutter.
 // 🔄 Comparaison React / Flutter : Équivalent de `AuthContext.jsx` sous React.
-// 🎯 À retenir pour la soutenance : "Ce service écoute les flux d'authentification Firebase et expose les informations de rôle au routeur."
+// 🎯 À retenir pour la soutenance : "Ce service écoute les flux d'authentification Firebase, gère les jetons de démonstration 1-clic et expose les informations de rôle au routeur."
 // Module : Navigation & Scaffolding Mobile
 
 import 'package:flutter/foundation.dart';
@@ -19,7 +19,7 @@ class AuthService extends ChangeNotifier {
   UserProfile? get profile => _profile;
   String? get role => _role;
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _user != null || _profile != null;
+  bool get isAuthenticated => _user != null || _profile != null || ApiClient.demoAuthToken != null;
 
   AuthService() {
     _initAuthListener();
@@ -37,7 +37,8 @@ class AuthService extends ChangeNotifier {
           } catch (e) {
             debugPrint('Avis d initialisation token : $e');
           }
-        } else {
+        } else if (ApiClient.demoAuthToken == null) {
+          // Ne pas écraser une session démo active si un null asynchrone arrive
           _role = null;
           _profile = null;
         }
@@ -74,6 +75,7 @@ class AuthService extends ChangeNotifier {
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     _isLoading = true;
     notifyListeners();
+    ApiClient.demoAuthToken = null;
     try {
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -96,25 +98,29 @@ class AuthService extends ChangeNotifier {
 
     final isStudent = roleType.toUpperCase() == 'STUDENT';
     final demoEmail = isStudent ? 'etudiant@essect.u-tunis.tn' : 'commercant@baguette.tn';
+    final uid = isStudent ? 'student-yassine' : 'm-baguette';
+    final role = isStudent ? 'STUDENT' : 'MERCHANT';
+    final token = 'test-token:$uid:$role:$demoEmail';
+
+    ApiClient.demoAuthToken = token;
+    _role = role;
+    _profile = UserProfile(
+      uid: uid,
+      email: demoEmail,
+      role: role,
+      displayName: isStudent ? 'Yassine Trabelsi' : 'Baguette & Baguette Montfleury',
+      phone: isStudent ? '+21698123456' : '+21671390111',
+      filiereId: isStudent ? 'EBUSINESS_3A' : null,
+      ecoPoints: isStudent ? 90 : 0,
+    );
 
     try {
-      // Tentative via Firebase Auth si disponible
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: demoEmail,
         password: 'CampusSave2026!',
       );
     } catch (_) {
       // Mode simulation hors-ligne garanti pour la soutenance
-      _role = isStudent ? 'STUDENT' : 'MERCHANT';
-      _profile = UserProfile(
-        uid: isStudent ? 'demo-student-mobile' : 'demo-merchant-mobile',
-        email: demoEmail,
-        role: _role!,
-        displayName: isStudent ? 'Yassine Trabelsi' : 'Baguette & Baguette Montfleury',
-        phone: isStudent ? '+21698123456' : '+21671390111',
-        filiereId: isStudent ? 'EBUS' : null,
-        ecoPoints: isStudent ? 420 : 0,
-      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -133,6 +139,7 @@ class AuthService extends ChangeNotifier {
 
   /// Déconnexion
   Future<void> signOut() async {
+    ApiClient.demoAuthToken = null;
     try {
       await FirebaseAuth.instance.signOut();
     } catch (_) {}

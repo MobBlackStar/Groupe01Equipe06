@@ -97,6 +97,7 @@ android/local.properties
 android/GeneratedPluginRegistrant.java
 **/android/GeneratedPluginRegistrant.java
 **/.gradle/
+mobile-flutter/web/
 
 # ==============================================================================
 # IDE & OPERATING SYSTEM JUNK

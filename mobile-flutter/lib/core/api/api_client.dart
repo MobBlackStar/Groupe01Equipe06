@@ -1,6 +1,6 @@
 // 💡 Concept & Analogie : Client HTTP Dio centralisé injectant le jeton Bearer Firebase et interceptant le temps serveur.
 // 🔄 Comparaison React / Flutter : Équivalent direct du client Axios `src/lib/api.js` sous React.
-// 🎯 À retenir pour la soutenance : "Ce client Dio injecte automatiquement le token Firebase de l'utilisateur connecté dans toutes les requêtes REST."
+// 🎯 À retenir pour la soutenance : "Ce client Dio injecte automatiquement le token Firebase ou le jeton de démo 1-clic dans toutes les requêtes REST."
 // Module : Infrastructure Mobile
 
 import 'package:dio/dio.dart';
@@ -9,6 +9,9 @@ import '../config/env.dart';
 import '../time/server_clock.dart';
 
 class ApiClient {
+  /// Jeton de test pour les sessions de démonstration 1-clic
+  static String? demoAuthToken;
+
   static final Dio dio = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
@@ -21,8 +24,16 @@ class ApiClient {
         onRequest: (options, handler) async {
           final user = FirebaseAuth.instance.currentUser;
           if (user != null) {
-            final token = await user.getIdToken();
-            options.headers['Authorization'] = 'Bearer $token';
+            try {
+              final token = await user.getIdToken();
+              options.headers['Authorization'] = 'Bearer $token';
+            } catch (_) {
+              if (demoAuthToken != null) {
+                options.headers['Authorization'] = 'Bearer $demoAuthToken';
+              }
+            }
+          } else if (demoAuthToken != null) {
+            options.headers['Authorization'] = 'Bearer $demoAuthToken';
           }
           return handler.next(options);
         },
