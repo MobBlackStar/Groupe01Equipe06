@@ -14,17 +14,24 @@ import { ENDPOINTS } from '../../lib/endpoints.js';
 import AiAutoFillBox from './AiAutoFillBox.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
 import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
-import {
-  Flame,
-  Sparkles,
-  Store,
-  Clock,
-  ArrowRight,
-  Package,
-  Check,
-  AlertTriangle,
-  Gift,
-} from 'lucide-react';
+import { Sparkles, Clock, ArrowRight, Gift, Leaf } from 'lucide-react';
+
+// Affichage sûr : jamais de NaN / 0,000 DT à l'écran
+function money(millimes) {
+  const n = Number(millimes);
+  return millimes != null && Number.isFinite(n) && n > 0 ? formatTND(n) : '—';
+}
+
+// En-tête de section numérotée (01, 02…)
+function StepHeading({ n, title, hint }) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-6">
+      <span className="cs-figure text-[48px] text-[#DA0711]">{n}</span>
+      <h2 className="cs-title">{title}</h2>
+      {hint && <span className="cs-label w-full sm:w-auto sm:ml-auto">{hint}</span>}
+    </div>
+  );
+}
 
 const CATEGORY_ITEMS = [
   { id: OFFER_CATEGORIES.SANDWICH, label: 'Baguette / Sandwich', icon: '🥖' },
@@ -96,7 +103,7 @@ export default function OfferFormPage() {
       originalPriceMillimes: aiData.originalPriceMillimes || prev.originalPriceMillimes,
       startPriceMillimes: aiData.startPriceMillimes || prev.startPriceMillimes,
       floorPriceMillimes: aiData.floorPriceMillimes || prev.floorPriceMillimes,
-      fixedDiscountedPriceMillimes: aiData.fixedDiscountedMillimes || prev.fixedDiscountedMillimes,
+      fixedDiscountedMillimes: aiData.fixedDiscountedMillimes || prev.fixedDiscountedMillimes,
       quantityTotal: aiData.quantityTotal || prev.quantityTotal,
       weightGramsPerUnit: aiData.weightGramsPerUnit || prev.weightGramsPerUnit,
       isSurpriseBasket: aiData.isSurpriseBasket ?? prev.isSurpriseBasket,
@@ -181,358 +188,301 @@ export default function OfferFormPage() {
   // Image d'illustration en direct déterministe
   const previewImage = getDistinctGriddleFoodImage(formData.category, 0);
 
+  const isDutch = formData.pricingMode === PRICING_MODES.DUTCH_AUCTION;
+  const previewPhoto = formData.photoUrl || previewImage;
+  const categoryLabel = CATEGORY_ITEMS.find((c) => c.id === formData.category)?.label || formData.category;
+  const quantityLabel = Number(formData.quantityTotal) > 0 ? Number(formData.quantityTotal) : '—';
+  const windowLabel =
+    formData.pickupStartAt && formData.pickupEndAt
+      ? `${formData.pickupStartAt} – ${formData.pickupEndAt}`
+      : 'Créneau à définir';
+  const co2Kg = Number.isFinite(impact?.co2SavedGrams) ? (impact.co2SavedGrams / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : null;
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        
-        {/* En-tête */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#111111]/10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD000] border border-[#111111]/15 text-[#111111] text-xs font-mono font-bold uppercase tracking-wider mb-2 shadow-sm">
-              <Store className="w-3.5 h-3.5" />
-              <span>Espace Commerçant Partenaire</span>
-            </div>
-            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#111111] leading-none">
-              BUILD YOUR <span className="text-[#DA0711]">TICKET.</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-[#666] font-sans mt-2">
-              Composez votre offre anti-gaspi en 4 étapes numérotées. Observez le ticket se générer en direct à droite.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate('/merchant/offers')}
-            className="px-4 py-2 rounded-full bg-white border border-[#111111]/15 text-[#111111] text-xs font-bold transition-all shadow-sm hover:bg-[#FAF3E6] self-start sm:self-auto"
-          >
-            ← Annuler
-          </button>
+    <div className="cs-container cs-page">
+      {/* En-tête */}
+      <header className="mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+        <div className="min-w-0">
+          <p className="cs-eyebrow mb-3">Espace commerçant</p>
+          <h1 className="cs-display">
+            {isEditing ? 'Modifier ' : 'Publier '}
+            <span className="text-[#DA0711]">l'offre.</span>
+          </h1>
+          <p className="cs-lead mt-4 max-w-2xl">
+            Composez votre offre anti-gaspi en 4 étapes. L'aperçu se met à jour en direct, exactement comme les étudiants la verront.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate('/merchant/offers')}
+          className="cs-btn cs-btn-cream shrink-0 self-start lg:self-auto"
+        >
+          ← Annuler
+        </button>
+      </header>
 
-        {/* Assistant IA Magique Zero-Typing (I5) */}
-        <AiAutoFillBox onAutoFill={handleAiAutoFill} />
+      {/* Assistant IA Magique Zero-Typing (I5) */}
+      <AiAutoFillBox onAutoFill={handleAiAutoFill} className="mb-8" />
 
-        {toastMsg && (
-          <div className="p-4 rounded-2xl bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20 text-xs font-bold flex items-center gap-2 shadow-sm">
-            <Sparkles className="w-4 h-4" />
-            <span>{toastMsg}</span>
-          </div>
-        )}
+      {toastMsg && (
+        <div role="status" className="mb-8 rounded-[1.25rem] bg-[#DDEFD9] text-[#1F7A3A] p-5 text-base font-semibold flex items-center gap-3">
+          <Sparkles className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* =========================================================================
-              COLONNE GAUCHE : 4 ÉTAPES NUMÉROTÉES DU BUILDER (image7.png)
-              ========================================================================= */}
-          <div className="lg:col-span-7 space-y-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              
-              {/* ÉTAPE 01 : CATÉGORIE (image7.png 01 NOODLES / PICK 1) */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
-                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">01</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
-                      CATÉGORIE DU PLAT
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#DA0711] font-bold">
-                    CHOIX UNIQUE
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {CATEGORY_ITEMS.map((cat) => {
-                    const isSelected = formData.category === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleChange('category', cat.id)}
-                        className={`p-3.5 rounded-2xl border text-left transition-all flex items-center gap-2.5 cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#DA0711] text-white border-[#DA0711] shadow-sm scale-[1.02]'
-                            : 'bg-white text-[#111111] border-[#111111]/10 hover:bg-[#FAF3E6]'
-                        }`}
-                      >
-                        <span className="text-xl">{cat.icon}</span>
-                        <span className="text-xs font-bold truncate">{cat.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* ÉTAPE 02 : DÉTAILS & PRIX (image7.png 02 BROTH / PICK 1) */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
-                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">02</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
-                      DÉTAILS &amp; TARIFICATION
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#666] font-bold">
-                    PRIX &amp; DESCRIPTION
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold uppercase tracking-widest text-[#666] mb-1.5">
-                      Intitulé du Plat ou Panier *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => handleChange('title', e.target.value)}
-                      placeholder="ex: Baguette Farcie Escalope & Fromage"
-                      className="w-full px-4 py-3 rounded-2xl bg-white border border-[#111111]/15 text-[#111111] text-sm outline-none font-sans font-bold shadow-sm focus:border-[#DA0711]"
-                    />
-                    {errors.title && <p className="text-xs font-bold text-[#DA0711] mt-1">{errors.title}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono font-bold uppercase tracking-widest text-[#666] mb-1.5">
-                      Description &amp; Ingrédients
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={formData.description}
-                      onChange={(e) => handleChange('description', e.target.value)}
-                      placeholder="Détaillez la fraîcheur et les accompagnements..."
-                      className="w-full px-4 py-2.5 rounded-2xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-sans shadow-sm focus:border-[#DA0711]"
-                    />
-                  </div>
-
-                  {/* Curseur Smart Decay ou Fixe */}
-                  <SmartDecayToggle
-                    pricingMode={formData.pricingMode}
-                    onModeChange={(mode) => handleChange('pricingMode', mode)}
-                    startPriceMillimes={formData.startPriceMillimes}
-                    floorPriceMillimes={formData.floorPriceMillimes}
-                    fixedPriceMillimes={formData.fixedDiscountedMillimes}
-                    originalPriceMillimes={formData.originalPriceMillimes}
-                    onPriceChange={(type, val) => {
-                      if (type === 'start') handleChange('startPriceMillimes', val);
-                      if (type === 'floor') handleChange('floorPriceMillimes', val);
-                      if (type === 'fixed') handleChange('fixedDiscountedMillimes', val);
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* ÉTAPE 03 : HORAIRES & QUANTITÉ (image7.png 03 PROTEIN) */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
-                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">03</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
-                      HORAIRES DE RETRAIT &amp; STOCKS
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#666] font-bold">
-                    CRÉNEAU DU SOIR
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-[#666] mb-1 font-bold">
-                      Portions en vente :
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.quantityTotal}
-                      onChange={(e) => handleChange('quantityTotal', Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-bold shadow-sm focus:border-[#DA0711]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-[#666] mb-1 font-bold">
-                      Début Retrait :
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.pickupStartAt}
-                      onChange={(e) => handleChange('pickupStartAt', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-bold shadow-sm focus:border-[#DA0711]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-[#666] mb-1 font-bold">
-                      Fin Retrait :
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.pickupEndAt}
-                      onChange={(e) => handleChange('pickupEndAt', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-bold shadow-sm focus:border-[#DA0711]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* ÉTAPE 04 : OPTION PANIER MYSTÈRE (image7.png 04 TOPPINGS) */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
-                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">04</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
-                      OPTION PANIER SURPRISE &amp; RARETÉ
-                    </h3>
-                  </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#DA0711] font-bold">
-                    BOÎTE MYSTÈRE
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm">
-                  <div className="flex items-center gap-2.5">
-                    <Gift className="w-5 h-5 text-[#DA0711]" />
-                    <div>
-                      <p className="text-xs font-bold text-[#111111]">Activer le mode Panier Surprise (Scellé)</p>
-                      <p className="text-[10px] text-[#666] font-sans">Le contenu sera masqué et révélé par animation Unboxing</p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.isSurpriseBasket}
-                    onChange={(e) => handleChange('isSurpriseBasket', e.target.checked)}
-                    className="w-5 h-5 accent-[#DA0711] rounded cursor-pointer"
-                  />
-                </div>
-
-                {formData.isSurpriseBasket && (
-                  <div className="p-4 rounded-2xl bg-[#FEF08A] border border-[#A16207]/30 shadow-sm space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#111111]">Rareté Calculée Automatiquement :</span>
-                      <span className="px-3 py-1 rounded-full bg-[#111111] text-[#FFD000] font-mono font-bold">
-                        {rarityResult.rarity} (Score {(rarityResult.score * 100).toFixed(0)}%)
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.surprise.teaser}
-                      onChange={(e) => setFormData((prev) => ({
-                        ...prev,
-                        surprise: { ...prev.surprise, teaser: e.target.value }
-                      }))}
-                      placeholder="Indice secret pour l'étudiant (ex: 3 viennoiseries pur beurre)"
-                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none focus:border-[#DA0711]"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Bouton de Soumission */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full btn-griddle-primary py-4 cursor-pointer text-lg font-anton"
-              >
-                <span>{loading ? 'Publication en cours...' : 'PUBLIER CETTE OFFRE SUR LE CATALOGUE →'}</span>
-              </button>
-            </form>
-          </div>
-
-          {/* =========================================================================
-              COLONNE DROITE : LIVE PREVIEW DU TICKET SUSPENDU (image7.png / image8.png)
-              ========================================================================= */}
-          <div className="lg:col-span-5 sticky top-20 space-y-4">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-mono uppercase tracking-widest text-[#DA0711] font-bold flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-[#DA0711]" />
-                <span>APERÇU EN DIRECT DU TICKET :</span>
-              </span>
-              <span className="text-[10px] font-mono font-bold text-[#666]">#CS-048</span>
+      <div className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+        {/* =========================================================================
+            COLONNE GAUCHE : 4 ÉTAPES NUMÉROTÉES
+            ========================================================================= */}
+        <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-14 min-w-0">
+          {/* ÉTAPE 01 : CATÉGORIE */}
+          <section>
+            <StepHeading n="01" title="Catégorie" hint="Un seul choix" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="group" aria-label="Catégorie du plat">
+              {CATEGORY_ITEMS.map((cat) => {
+                const isSelected = formData.category === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => handleChange('category', cat.id)}
+                    className={`min-h-[64px] rounded-2xl border-2 border-[#111111] px-4 py-3 text-left flex items-center gap-3 transition-colors cursor-pointer ${
+                      isSelected ? 'bg-[#DA0711] text-[#FAF3E6]' : 'bg-white text-[#111111] hover:bg-[#FAF3E6]'
+                    }`}
+                  >
+                    <span className="text-2xl leading-none" aria-hidden="true">{cat.icon}</span>
+                    <span className="text-[15px] font-semibold uppercase leading-tight tracking-[0.02em]">{cat.label}</span>
+                  </button>
+                );
+              })}
             </div>
+          </section>
 
-            {/* Ticket Suspendu Reçu Blanc Live Preview */}
-            <div className="relative pt-2 select-none">
-              <div className="relative rounded-3xl bg-white text-[#111111] shadow-xl border border-[#111111]/10 overflow-hidden pb-4">
-                {/* Photo de l'aliment */}
-                <div className="relative h-48 w-full overflow-hidden bg-[#EDE6D7] border-b border-[#111111]/10">
-                  <img
-                    src={previewImage}
-                    alt={formData.title}
-                    onError={(e) => { e.currentTarget.onerror = null; }}
-                    className="w-full h-full object-cover transition-all duration-300"
-                  />
-                  
-                  <div className="absolute top-2.5 right-2.5">
-                    <span className="px-3 py-1 rounded-full bg-white text-[#111111] text-[10px] font-mono font-bold border border-[#111111]/10 shadow-sm">
-                      {formData.pickupStartAt} – {formData.pickupEndAt}
-                    </span>
-                  </div>
+          {/* ÉTAPE 02 : DÉTAILS & PRIX */}
+          <section className="border-t-2 border-[#111111] pt-10">
+            <StepHeading n="02" title="Détails & prix" />
 
-                  <div className="absolute bottom-2.5 left-3">
-                    <span className="px-3 py-1 rounded-full bg-[#DA0711] text-white text-[9px] font-anton uppercase tracking-wider font-bold shadow-sm">
-                      {formData.quantityTotal} RESTANTS
-                    </span>
-                  </div>
-                </div>
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="offer-title" className="cs-field-label">
+                  Intitulé du plat ou panier <span className="text-[#DA0711]">*</span>
+                </label>
+                <input
+                  id="offer-title"
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleChange('title', e.target.value)}
+                  placeholder="ex : Baguette Farcie Escalope & Fromage"
+                  aria-invalid={errors.title ? 'true' : undefined}
+                  className="cs-input"
+                />
+                {errors.title && <p className="cs-error-text">{errors.title}</p>}
+              </div>
 
-                {/* Détails du Ticket */}
-                <div className="p-5 space-y-3 font-mono text-xs">
-                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-[#666]">
-                    <span className="text-[#DA0711] font-bold">{formData.category}</span>
-                    <span className="font-bold">ESSECT MONTFLEURY</span>
-                  </div>
+              <div>
+                <label htmlFor="offer-description" className="cs-field-label">
+                  Description &amp; ingrédients
+                </label>
+                <textarea
+                  id="offer-description"
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  placeholder="Fraîcheur, garniture, accompagnements…"
+                  className="cs-input"
+                />
+              </div>
 
-                  <h3 className="font-anton uppercase text-xl text-[#111111] leading-tight line-clamp-2">
-                    {formData.title || 'Votre Plat Anti-Gaspillage'}
-                  </h3>
+              {/* Curseur Smart Decay ou Fixe */}
+              <SmartDecayToggle
+                pricingMode={formData.pricingMode}
+                onModeChange={(mode) => handleChange('pricingMode', mode)}
+                startPriceMillimes={formData.startPriceMillimes}
+                floorPriceMillimes={formData.floorPriceMillimes}
+                fixedPriceMillimes={formData.fixedDiscountedMillimes}
+                originalPriceMillimes={formData.originalPriceMillimes}
+                onPriceChange={(type, val) => {
+                  if (type === 'start') handleChange('startPriceMillimes', val);
+                  if (type === 'floor') handleChange('floorPriceMillimes', val);
+                  if (type === 'fixed') handleChange('fixedDiscountedMillimes', val);
+                }}
+              />
+            </div>
+          </section>
 
-                  <p className="text-[11px] text-[#666] font-sans line-clamp-2">
-                    {formData.description || 'Description du plat détaillée...'}
-                  </p>
-
-                  <div className="my-2 border-t border-dashed border-[#111111]/20" />
-
-                  {/* Décomposition Prix */}
-                  <div className="space-y-1 text-[11px]">
-                    <div className="flex justify-between text-[#666]">
-                      <span>PRIX ORIGINAL :</span>
-                      <span className="line-through">{formatTND(Number(formData.originalPriceMillimes) || 0)}</span>
-                    </div>
-                    <div className="flex justify-between text-[#111111]">
-                      <span>MODE :</span>
-                      <span className="font-bold">{formData.pricingMode === PRICING_MODES.DUTCH_AUCTION ? 'SMART DECAY (ENCHÈRE)' : 'PRIX FIXE'}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#111111]/10 flex items-baseline justify-between">
-                    <span className="font-anton uppercase text-xs font-bold text-[#666]">
-                      PRIX PLANCHER :
-                    </span>
-                    <span className="font-anton text-2xl font-bold text-[#DA0711]">
-                      {formatTND(referencePrice)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Dents de scie inférieures */}
-                <div
-                  aria-hidden="true"
-                  className="w-full h-3 bg-repeat-x pointer-events-none mt-1"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23FFFFFF'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
-                    backgroundSize: '16px 10px',
-                    filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.08))',
-                  }}
+          {/* ÉTAPE 03 : HORAIRES & QUANTITÉ */}
+          <section className="border-t-2 border-[#111111] pt-10">
+            <StepHeading n="03" title="Retrait & stock" hint="Créneau du soir" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div>
+                <label htmlFor="offer-qty" className="cs-field-label">Portions</label>
+                <input
+                  id="offer-qty"
+                  type="number"
+                  min="1"
+                  value={formData.quantityTotal}
+                  onChange={(e) => handleChange('quantityTotal', Number(e.target.value))}
+                  className="cs-input"
+                />
+              </div>
+              <div>
+                <label htmlFor="offer-start" className="cs-field-label">Début du retrait</label>
+                <input
+                  id="offer-start"
+                  type="time"
+                  value={formData.pickupStartAt}
+                  onChange={(e) => handleChange('pickupStartAt', e.target.value)}
+                  className="cs-input"
+                />
+              </div>
+              <div>
+                <label htmlFor="offer-end" className="cs-field-label">Fin du retrait</label>
+                <input
+                  id="offer-end"
+                  type="time"
+                  value={formData.pickupEndAt}
+                  onChange={(e) => handleChange('pickupEndAt', e.target.value)}
+                  className="cs-input"
                 />
               </div>
             </div>
+          </section>
 
-            <p className="text-[10px] text-center font-mono text-[#666] font-medium">
-              💡 Le ticket suspendu se synchronise instantanément avec vos modifications.
-            </p>
+          {/* ÉTAPE 04 : OPTION PANIER MYSTÈRE */}
+          <section className="border-t-2 border-[#111111] pt-10">
+            <StepHeading n="04" title="Panier surprise" hint="Option" />
+
+            <label className="cs-card p-5 sm:p-6 flex items-center justify-between gap-5 cursor-pointer">
+              <span className="flex items-start gap-4 min-w-0">
+                <Gift className="w-7 h-7 text-[#DA0711] shrink-0 mt-0.5" aria-hidden="true" />
+                <span className="min-w-0">
+                  <span className="block cs-h3 !text-lg">Panier surprise scellé</span>
+                  <span className="block text-base text-[#5E5850] mt-1">
+                    Le contenu reste caché et se révèle à l'étudiant au retrait.
+                  </span>
+                </span>
+              </span>
+              <span className="relative inline-flex h-8 w-14 shrink-0">
+                <input
+                  type="checkbox"
+                  checked={formData.isSurpriseBasket}
+                  onChange={(e) => handleChange('isSurpriseBasket', e.target.checked)}
+                  className="peer sr-only"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 rounded-full border-2 border-[#111111] bg-white transition-colors peer-checked:bg-[#DA0711] peer-focus-visible:ring-4 peer-focus-visible:ring-[#FFD000]"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute left-[4px] top-[4px] h-6 w-6 rounded-full bg-[#111111] transition-transform peer-checked:translate-x-6 peer-checked:bg-white"
+                />
+              </span>
+            </label>
+
+            {formData.isSurpriseBasket && (
+              <div className="mt-5 rounded-[1.25rem] bg-[#FFD000] p-5 sm:p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-semibold uppercase text-base">Rareté calculée</span>
+                  <span className="cs-pill cs-pill-ink">
+                    {rarityResult.rarity}
+                    {Number.isFinite(rarityResult.score) ? ` · ${(rarityResult.score * 100).toFixed(0)}%` : ''}
+                  </span>
+                </div>
+                <div>
+                  <label htmlFor="offer-teaser" className="cs-field-label">Indice pour l'étudiant</label>
+                  <input
+                    id="offer-teaser"
+                    type="text"
+                    value={formData.surprise.teaser}
+                    onChange={(e) => setFormData((prev) => ({
+                      ...prev,
+                      surprise: { ...prev.surprise, teaser: e.target.value }
+                    }))}
+                    placeholder="ex : 3 viennoiseries pur beurre"
+                    className="cs-input"
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Bouton de Soumission */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
+          >
+            <span>{loading ? 'Publication en cours…' : isEditing ? 'Enregistrer l\'offre' : 'Publier l\'offre'}</span>
+            {!loading && <ArrowRight className="w-6 h-6" aria-hidden="true" />}
+          </button>
+        </form>
+
+        {/* =========================================================================
+            COLONNE DROITE : APERÇU EN DIRECT
+            ========================================================================= */}
+        <aside className="lg:col-span-5 lg:sticky lg:top-24" aria-label="Aperçu de l'offre">
+          <p className="cs-eyebrow mb-4">Aperçu en direct</p>
+
+          <div className="cs-card p-3">
+            <div className="cs-photo aspect-[4/3]">
+              <img
+                src={previewPhoto}
+                alt={formData.title || 'Aperçu du plat'}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = previewImage;
+                }}
+              />
+              <div className="absolute top-3 left-3 right-3 z-10 flex items-start justify-between gap-2">
+                <span className="cs-pill">{categoryLabel}</span>
+                {formData.isSurpriseBasket ? (
+                  <span className="cs-sticker cs-sticker-red !text-lg">Mystère</span>
+                ) : isDutch ? (
+                  <span className="cs-sticker cs-sticker-mustard !text-lg">Smart decay</span>
+                ) : null}
+              </div>
+              <div className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-2">
+                <span className="cs-pill">
+                  <Clock className="w-4 h-4" aria-hidden="true" />
+                  {windowLabel}
+                </span>
+                <span className="cs-pill cs-pill-red">{quantityLabel} restantes</span>
+              </div>
+            </div>
+
+            <div className="px-3 pt-5 pb-3">
+              <p className="cs-label mb-2">ESSECT Montfleury</p>
+              <h3 className="cs-h3 line-clamp-2">{formData.title || 'Votre plat anti-gaspi'}</h3>
+              <p className="text-base text-[#5E5850] mt-2 line-clamp-3">
+                {formData.description || 'Décrivez la fraîcheur et les accompagnements…'}
+              </p>
+
+              <div className="mt-5 flex items-end gap-3">
+                <span className="cs-figure text-[56px] text-[#DA0711]">{money(referencePrice)}</span>
+                {money(formData.originalPriceMillimes) !== '—' && (
+                  <span className="cs-figure text-[26px] text-[#5E5850] line-through mb-1.5">
+                    {money(formData.originalPriceMillimes)}
+                  </span>
+                )}
+              </div>
+              <p className="text-[15px] text-[#5E5850] mt-2">
+                {isDutch
+                  ? `Prix plancher · départ à ${money(formData.startPriceMillimes)}`
+                  : 'Prix fixe étudiant'}
+              </p>
+
+              {co2Kg && (
+                <p className="mt-4 inline-flex items-center gap-2 cs-pill cs-pill-leaf">
+                  <Leaf className="w-4 h-4" aria-hidden="true" />
+                  ≈ {co2Kg} kg CO₂ évités
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

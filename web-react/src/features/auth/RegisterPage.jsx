@@ -11,7 +11,7 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { ROLES, FILIERES } from '@shared/constants.js';
 import { registerSchema } from './auth.schemas.js';
-import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
+import { DepthCard } from '../../components/common/DepthCard.jsx';
 import {
   Flame,
   GraduationCap,
@@ -19,6 +19,9 @@ import {
   Eye,
   EyeOff,
   Check,
+  ArrowRight,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -149,264 +152,260 @@ export default function RegisterPage() {
     }
   }
 
+  // Tuiles de sélection de rôle (présentation uniquement)
+  const roleTiles = [
+    {
+      value: ROLES.STUDENT,
+      title: 'Étudiant ESSECT',
+      desc: 'Acheter & sauver des repas',
+      Icon: GraduationCap,
+    },
+    {
+      value: ROLES.MERCHANT,
+      title: 'Commerçant partenaire',
+      desc: 'Publier & scanner les tickets',
+      Icon: Store,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center relative z-10">
-        
-        {/* =========================================================================
-            COLONNE GAUCHE : POLAROID AUTHENTIQUE + REÇU THERMIQUE (IMAGE 3)
-            ========================================================================= */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center">
-          <div className="relative w-full max-w-sm">
-            
-            {/* Ticket de bienvenue thermique en arrière-plan */}
-            <div className="absolute -top-5 -right-4 w-68 rounded-xl bg-white text-[#111111] p-5 font-mono text-[11px] shadow-xl rotate-4 border border-[#111111]/8 hidden sm:block pointer-events-none select-none z-0">
-              <div className="text-center font-anton text-xs uppercase tracking-wider pb-2 border-b border-dashed border-[#111111]/25">
-                NOUVEAU MEMBRE · ESSECT
-                <div className="text-[9px] font-sans font-normal text-[#666]">COMMUNAUTÉ ANTI-GASPI 2026</div>
-              </div>
-              <div className="py-2.5 space-y-1.5 text-[10px] font-bold border-b border-dashed border-[#111111]/25">
-                <div className="flex justify-between">
-                  <span>CARTE FIDÉLITÉ :</span>
-                  <span className="text-[#DA0711] font-anton">ACTIVÉE</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>CLASSEMENT FILIÈRE :</span>
-                  <span>INCLUS</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>RADAR 3D TEMPS RÉEL :</span>
-                  <span className="text-[#15803D]">DISPONIBLE</span>
-                </div>
-              </div>
-              <div className="mt-3 text-center">
-                <span className="griddle-stamp text-[10px] py-0.5 px-2">
-                  WELCOME
-                </span>
-              </div>
-              <div className="mt-3 pt-2 border-t border-dashed border-[#111111]/25 flex flex-col items-center">
-                <div className="h-5 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_4px)] opacity-70" />
-                <span className="text-[8px] font-bold tracking-widest text-[#777] mt-1">FIRST BITE · ZERO WASTE</span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden">
+      <div className="cs-container cs-page">
+        {/* Marque */}
+        <Link
+          to="/"
+          className="inline-block font-title text-[#DA0711] text-2xl sm:text-3xl tracking-tight leading-none mb-10 lg:mb-14"
+        >
+          CAMPUSSAVE
+        </Link>
 
-            {/* Cadre Polaroid Avant-Plan Tilted -3deg */}
-            <div className="relative z-10 w-full rs-polaroid rotate-[-3deg] cursor-pointer hover:rotate-0 transition-transform duration-300">
-              <span className="rs-tape-tl" />
-              <span className="rs-tape-tr" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-16 items-start">
+          {/* =========================================================================
+              COLONNE GAUCHE : POLAROID 3D + STICKERS
+              ========================================================================= */}
+          <div className="order-2 lg:order-1 lg:col-span-5 flex justify-center lg:sticky lg:top-10">
+            <div className="relative w-full max-w-[340px] sm:max-w-[440px] px-3 sm:px-6 py-6">
+              <DepthCard maxTilt={8} scale={1.01} glare={false}>
+                <figure className="cs-polaroid rotate-[3deg]">
+                  <span className="rs-tape-tl" />
+                  <span className="rs-tape-tr" />
+                  <div className="cs-photo rounded-[4px] aspect-[4/5]">
+                    <img
+                      src="/assets/griddle/food/riz-saute-crevettes.webp"
+                      alt="Riz sauté aux crevettes, repas sauvé"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/assets/griddle/food/teriyaki-poulet-bowl.webp';
+                      }}
+                    />
+                  </div>
+                  <figcaption>rejoins le club ♥</figcaption>
+                </figure>
+              </DepthCard>
 
-              <div className="w-full aspect-[4/3] rounded overflow-hidden bg-[#EDE6D7] relative">
-                <img
-                  src="/assets/griddle/food/box-assortiment-fika.png"
-                  alt="Assortiment box"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = '/assets/griddle/food/croissant-amande.png';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-3 left-3">
-                  <span className="sticker-yellow">
-                    ZÉRO GASPILLAGE
-                  </span>
-                </div>
-              </div>
-
-              <figcaption>
-                rejoins la communauté ♥
-              </figcaption>
+              <span className="cs-sticker cs-sticker-red absolute top-2 -left-1 sm:-left-3 z-20 text-[1.5rem] sm:text-[1.9rem] px-5 py-2.5">
+                NOUVEAU
+              </span>
+              <span className="cs-sticker cs-sticker-mustard cs-sticker-tilt-r absolute bottom-24 right-0 z-20 text-[1.35rem] sm:text-[1.7rem] px-5 py-2.5">
+                ZÉRO GASPI
+              </span>
             </div>
           </div>
-        </div>
 
-        {/* =========================================================================
-            COLONNE DROITE : FORMULAIRE D'INSCRIPTION & SÉLECTEUR DE RÔLE
-            ========================================================================= */}
-        <div className="lg:col-span-7 flex flex-col justify-center space-y-5">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider mb-2 shadow-sm">
-              <Flame className="w-3.5 h-3.5" />
-              <span>Campus ESSECT Montfleury</span>
-            </div>
-            <h1 className="font-anton uppercase text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#111111] leading-none">
-              REJOINS LE <span className="text-[#DA0711]">CLUB.</span>
-            </h1>
-            <p className="mt-2 text-xs sm:text-sm text-[#555] font-medium leading-relaxed">
-              Créez votre compte en quelques secondes pour accéder aux offres anti-gaspi ou publier vos surplus.
-            </p>
-          </div>
+          {/* =========================================================================
+              COLONNE DROITE : FORMULAIRE D'INSCRIPTION & SÉLECTEUR DE RÔLE
+              ========================================================================= */}
+          <div className="order-1 lg:order-2 lg:col-span-7 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
+            <header className="mb-10">
+              <p className="cs-eyebrow mb-4 inline-flex items-center gap-2">
+                <Flame className="w-4 h-4" aria-hidden="true" />
+                Campus ESSECT Montfleury
+              </p>
+              <h1 className="cs-hero text-[clamp(4rem,8vw,8.5rem)]">
+                REJOINS LE <span className="text-[#DA0711]">CLUB.</span>
+              </h1>
+              <p className="cs-lead mt-6 max-w-xl">
+                Créez votre compte en quelques secondes pour accéder aux offres anti-gaspi ou publier vos surplus.
+              </p>
+            </header>
 
-          {serverMsg && (
-            <div
-              className={`p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2.5 ${
-                serverMsg.type === 'success'
-                  ? 'bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20'
-                  : 'bg-[#FEE2E2] text-[#DA0711] border border-[#DA0711]/20'
-              }`}
-            >
-              <span>{serverMsg.type === 'success' ? '✅' : '⚠️'}</span>
-              <span>{serverMsg.text}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            {/* Choix du rôle Étudiant vs Commerçant */}
-            <div>
-              <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-2">
-                Vous êtes :
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleChange('role', ROLES.STUDENT)}
-                  className={`p-3.5 rounded-2xl text-left transition-all flex flex-col justify-between cursor-pointer border ${
-                    formData.role === ROLES.STUDENT
-                      ? 'bg-[#FEE2E2] border-[#DA0711] shadow-sm'
-                      : 'bg-white border-[#111111]/10 hover:bg-[#EDE6D7]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <GraduationCap className={`w-5 h-5 ${formData.role === ROLES.STUDENT ? 'text-[#DA0711]' : 'text-[#777]'}`} />
-                    {formData.role === ROLES.STUDENT && <Check className="w-4 h-4 text-[#DA0711]" />}
-                  </div>
-                  <div>
-                    <span className="text-xs font-anton uppercase block text-[#111111]">Étudiant ESSECT</span>
-                    <span className="text-[10px] text-[#666] font-medium">Acheter & sauver des repas</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleChange('role', ROLES.MERCHANT)}
-                  className={`p-3.5 rounded-2xl text-left transition-all flex flex-col justify-between cursor-pointer border ${
-                    formData.role === ROLES.MERCHANT
-                      ? 'bg-[#FEF08A] border-[#A16207]/30 shadow-sm'
-                      : 'bg-white border-[#111111]/10 hover:bg-[#EDE6D7]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <Store className={`w-5 h-5 ${formData.role === ROLES.MERCHANT ? 'text-[#111111]' : 'text-[#777]'}`} />
-                    {formData.role === ROLES.MERCHANT && <Check className="w-4 h-4 text-[#111111]" />}
-                  </div>
-                  <div>
-                    <span className="text-xs font-anton uppercase block text-[#111111]">Commerçant Partenaire</span>
-                    <span className="text-[10px] text-[#666] font-medium">Publier & scanner les tickets</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Filière si étudiant */}
-            {formData.role === ROLES.STUDENT && (
-              <div>
-                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1.5">
-                  Filière Universitaire ESSECT
-                </label>
-                <select
-                  value={formData.filiereId || ''}
-                  onChange={(e) => handleChange('filiereId', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-full bg-white border border-[#111111]/15 text-[#111111] text-xs font-bold outline-none cursor-pointer focus:border-[#DA0711]"
-                >
-                  {filiereOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-white text-[#111111]">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+            {serverMsg && (
+              <div
+                role={serverMsg.type === 'success' ? 'status' : 'alert'}
+                className={`mb-8 flex items-start gap-3 rounded-2xl border-2 px-5 py-4 text-base font-semibold ${
+                  serverMsg.type === 'success'
+                    ? 'border-[#1F7A3A] bg-[#DDEFD9] text-[#1F7A3A]'
+                    : 'border-[#DA0711] bg-white text-[#DA0711]'
+                }`}
+              >
+                {serverMsg.type === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
+                )}
+                <span>{serverMsg.text}</span>
               </div>
             )}
 
-            {/* Grille des champs principaux */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
-                  Nom Complet
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ritej Bejaoui"
-                  value={formData.displayName}
-                  onChange={(e) => handleChange('displayName', e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
-                    errors.displayName ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
-                  }`}
-                />
-                {errors.displayName && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.displayName}</p>}
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
-                  Téléphone (+216)
-                </label>
-                <input
-                  type="tel"
-                  placeholder="+21698000000"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
-                    errors.phone ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
-                  }`}
-                />
-                {errors.phone && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.phone}</p>}
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
-                  Adresse Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="etudiant@essect.u-tunis.tn"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
-                    errors.email ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
-                  }`}
-                />
-                {errors.email && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
-                  Mot de passe
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Min. 6 caractères"
-                    value={formData.password}
-                    onChange={(e) => handleChange('password', e.target.value)}
-                    className={`w-full px-4 py-2.5 pr-10 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
-                      errors.password ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-2.5 text-[#777] hover:text-[#111111]"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+            <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+              {/* Choix du rôle Étudiant vs Commerçant */}
+              <fieldset>
+                <legend className="cs-field-label mb-3">Vous êtes :</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {roleTiles.map(({ value, title, desc, Icon }) => {
+                    const active = formData.role === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => handleChange('role', value)}
+                        className={`relative flex items-center gap-4 min-h-[96px] p-5 rounded-[1.25rem] border-2 border-[#111111] text-left cursor-pointer transition-all duration-200 ${
+                          active
+                            ? 'bg-[#111111] text-[#FAF3E6]'
+                            : 'bg-[#FAF3E6] text-[#111111] hover:bg-white hover:-translate-y-0.5 hover:shadow-[0_4px_0_#111111]'
+                        }`}
+                      >
+                        <span
+                          className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center ${
+                            active ? 'bg-[#DA0711] text-white' : 'bg-[#EDE6D7] text-[#111111]'
+                          }`}
+                        >
+                          <Icon className="w-6 h-6" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-bold uppercase text-xl leading-tight">{title}</span>
+                          <span className={`block text-base mt-1 ${active ? 'text-[#FAF3E6]/80' : 'text-[#5E5850]'}`}>
+                            {desc}
+                          </span>
+                        </span>
+                        {active && (
+                          <span className="w-8 h-8 shrink-0 rounded-full bg-[#FFD000] text-[#111111] flex items-center justify-center">
+                            <Check className="w-5 h-5" aria-hidden="true" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                {errors.password && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.password}</p>}
+              </fieldset>
+
+              {/* Filière si étudiant */}
+              {formData.role === ROLES.STUDENT && (
+                <div>
+                  <label htmlFor="register-filiere" className="cs-field-label">
+                    Filière universitaire ESSECT
+                  </label>
+                  <select
+                    id="register-filiere"
+                    value={formData.filiereId || ''}
+                    onChange={(e) => handleChange('filiereId', e.target.value)}
+                    aria-invalid={errors.filiereId ? 'true' : undefined}
+                    className="cs-input cursor-pointer"
+                  >
+                    {filiereOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.filiereId && <p className="cs-error-text">{errors.filiereId}</p>}
+                </div>
+              )}
+
+              {/* Grille des champs principaux */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="register-name" className="cs-field-label">
+                    Nom complet
+                  </label>
+                  <input
+                    id="register-name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Ritej Bejaoui"
+                    value={formData.displayName}
+                    onChange={(e) => handleChange('displayName', e.target.value)}
+                    aria-invalid={errors.displayName ? 'true' : undefined}
+                    className="cs-input"
+                  />
+                  {errors.displayName && <p className="cs-error-text">{errors.displayName}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="register-phone" className="cs-field-label">
+                    Téléphone (+216)
+                  </label>
+                  <input
+                    id="register-phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="+21698000000"
+                    value={formData.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    aria-invalid={errors.phone ? 'true' : undefined}
+                    className="cs-input"
+                  />
+                  {errors.phone && <p className="cs-error-text">{errors.phone}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="register-email" className="cs-field-label">
+                    Adresse email
+                  </label>
+                  <input
+                    id="register-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="etudiant@essect.u-tunis.tn"
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    aria-invalid={errors.email ? 'true' : undefined}
+                    className="cs-input"
+                  />
+                  {errors.email && <p className="cs-error-text">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="register-password" className="cs-field-label">
+                    Mot de passe
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="register-password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder="Min. 6 caractères"
+                      value={formData.password}
+                      onChange={(e) => handleChange('password', e.target.value)}
+                      aria-invalid={errors.password ? 'true' : undefined}
+                      className="cs-input pr-16"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="cs-error-text">{errors.password}</p>}
+                </div>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-griddle-primary py-3 cursor-pointer mt-2"
-            >
-              <span>{loading ? 'Création en cours...' : 'REJOINDRE CAMPUSSAVE →'}</span>
-            </button>
-          </form>
+              <button type="submit" disabled={loading} className="cs-btn cs-btn-red cs-btn-lg cs-btn-block">
+                <span>{loading ? 'Création en cours...' : 'Rejoindre CampusSave'}</span>
+                <ArrowRight className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </form>
 
-          <div className="text-center pt-2">
-            <span className="text-xs text-[#666] font-medium">Déjà inscrit ? </span>
-            <Link to="/login" className="text-xs font-bold text-[#DA0711] hover:underline">
-              Se connecter à son compte →
-            </Link>
+            <p className="mt-10 text-base text-[#5E5850]">
+              Déjà inscrit ?{' '}
+              <Link to="/login" className="cs-link text-[#DA0711]">
+                Se connecter à son compte →
+              </Link>
+            </p>
           </div>
         </div>
       </div>

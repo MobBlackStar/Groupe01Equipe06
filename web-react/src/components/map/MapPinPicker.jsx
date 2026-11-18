@@ -88,31 +88,25 @@ export function MapPinPicker({
   const pinPos = getSvgCoordinates(coords.lat, coords.lng);
 
   return (
-    <div className="bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-5 text-[#111111] shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
+    <div className="cs-card p-6 sm:p-8 text-[#111111]">
       {/* En-tête et Statut du Rayon */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div>
-          <h3 className="font-anton uppercase text-base text-[#111111] flex items-center gap-2 tracking-wide">
-            <span>📍</span> Localisation du Commerce (Montfleury)
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
+        <div className="min-w-0">
+          <h3 className="cs-h3 flex items-center gap-2">
+            <span aria-hidden="true">📍</span> Position du commerce
           </h3>
-          <p className="text-xs text-[#666] mt-0.5 font-sans">
-            Cliquez sur le radar pour ajuster le repère GPS de votre boutique.
+          <p className="text-base text-[#5E5850] mt-1">
+            Touchez le plan pour placer votre boutique autour de l'ESSECT.
           </p>
         </div>
-        <div
-          className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
-            isEligible
-              ? 'bg-[#DCFCE7] text-[#15803D] border-[#15803D]/20'
-              : 'bg-[#FEE2E2] text-[#DA0711] border-[#DA0711]/20'
-          }`}
-        >
-          <span>{isEligible ? '✓ Zone Éligible' : '✗ Trop Éloigné'}</span>
-          <span className="font-mono">({Math.round(distanceM)} m)</span>
-        </div>
+        <span className={`cs-pill !min-h-[2.25rem] !px-4 !text-[15px] ${isEligible ? 'cs-pill-leaf' : 'cs-pill-red'}`}>
+          <span>{isEligible ? '✓ Zone éligible' : '✗ Trop éloigné'}</span>
+          <span className="cs-mono normal-case">{Math.round(distanceM)} m</span>
+        </span>
       </div>
 
-      {/* Radar SVG Interactif Haute Fidélité */}
-      <div className="relative w-full aspect-[4/3] max-h-72 bg-white rounded-2xl border border-[#111111]/10 shadow-sm overflow-hidden select-none cursor-crosshair">
+      {/* Plan SVG interactif, cadre photo arrondi 2px encre */}
+      <div className="relative w-full max-w-[460px] mx-auto aspect-square bg-[#FAF3E6] rounded-[1.25rem] border-2 border-[#111111] overflow-hidden select-none cursor-crosshair">
         <svg
           viewBox="0 0 300 300"
           className="w-full h-full"
@@ -124,10 +118,10 @@ export function MapPinPicker({
             cx="150"
             cy="150"
             r={130 * (3000 / maxRangeM)}
-            fill="rgba(229, 28, 35, 0.04)"
-            stroke={isEligible ? 'rgba(21, 128, 61, 0.5)' : 'rgba(229, 28, 35, 0.6)'}
-            strokeWidth="1.5"
-            strokeDasharray="4 3"
+            fill="rgba(218, 7, 17, 0.05)"
+            stroke={isEligible ? '#1F7A3A' : '#DA0711'}
+            strokeWidth="2"
+            strokeDasharray="5 4"
           />
           {/* Cercle 2000m */}
           <circle
@@ -135,27 +129,27 @@ export function MapPinPicker({
             cy="150"
             r={130 * (2000 / maxRangeM)}
             fill="none"
-            stroke="rgba(20, 18, 16, 0.1)"
-            strokeWidth="1"
+            stroke="rgba(17, 17, 17, 0.15)"
+            strokeWidth="1.5"
           />
           {/* Cercle 1000m (Rayon piéton immédiat) */}
           <circle
             cx="150"
             cy="150"
             r={130 * (1000 / maxRangeM)}
-            fill="rgba(255, 208, 0, 0.08)"
-            stroke="rgba(20, 18, 16, 0.2)"
-            strokeWidth="1"
+            fill="rgba(255, 208, 0, 0.25)"
+            stroke="rgba(17, 17, 17, 0.25)"
+            strokeWidth="1.5"
           />
 
           {/* Axes cardinaux */}
-          <line x1="150" y1="20" x2="150" y2="280" stroke="rgba(20, 18, 16, 0.1)" strokeWidth="1" />
-          <line x1="20" y1="150" x2="280" y2="150" stroke="rgba(20, 18, 16, 0.1)" strokeWidth="1" />
+          <line x1="150" y1="16" x2="150" y2="284" stroke="rgba(17, 17, 17, 0.12)" strokeWidth="1.5" />
+          <line x1="16" y1="150" x2="284" y2="150" stroke="rgba(17, 17, 17, 0.12)" strokeWidth="1.5" />
 
           {/* Centre : Campus ESSECT Montfleury */}
-          <circle cx="150" cy="150" r="7" fill="#E51C23" stroke="#141210" strokeWidth="2" />
-          <circle cx="150" cy="150" r="14" fill="none" stroke="#E51C23" strokeWidth="1" opacity="0.6" />
-          <text x="150" y="174" fill="#141210" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+          <circle cx="150" cy="150" r="8" fill="#DA0711" stroke="#111111" strokeWidth="2.5" />
+          <circle cx="150" cy="150" r="15" fill="none" stroke="#DA0711" strokeWidth="1.5" opacity="0.6" />
+          <text x="150" y="180" fill="#111111" fontSize="13" fontWeight="700" textAnchor="middle" fontFamily="Oswald, sans-serif">
             ESSECT
           </text>
 
@@ -165,63 +159,60 @@ export function MapPinPicker({
             y1="150"
             x2={pinPos.x}
             y2={pinPos.y}
-            stroke={isEligible ? '#15803D' : '#E51C23'}
-            strokeWidth="2"
-            strokeDasharray="2 2"
+            stroke={isEligible ? '#1F7A3A' : '#DA0711'}
+            strokeWidth="2.5"
+            strokeDasharray="3 3"
           />
 
           {/* Épingle Commerce Déplaçable */}
           <g transform={`translate(${pinPos.x}, ${pinPos.y})`}>
             <circle
-              r="10"
-              fill={isEligible ? '#15803D' : '#E51C23'}
+              r="12"
+              fill={isEligible ? '#1F7A3A' : '#DA0711'}
               className="animate-pulse"
               opacity="0.3"
             />
             <circle
-              r="6"
-              fill={isEligible ? '#15803D' : '#E51C23'}
-              stroke="#141210"
-              strokeWidth="2"
+              r="7"
+              fill={isEligible ? '#1F7A3A' : '#DA0711'}
+              stroke="#111111"
+              strokeWidth="2.5"
             />
             <text
-              y="-12"
-              fill="#141210"
-              fontSize="9"
-              fontWeight="bold"
+              y="-16"
+              fill="#111111"
+              fontSize="13"
+              fontWeight="700"
               textAnchor="middle"
-              className="drop-shadow"
-              fontFamily="sans-serif"
+              fontFamily="Oswald, sans-serif"
             >
               Votre boutique
             </text>
           </g>
 
           {/* Étiquette d'échelle */}
-          <text x="245" y="145" fill="rgba(17, 17, 17, 0.6)" fontSize="7" textAnchor="middle" fontFamily="monospace">
-            Limite 3 km
+          <text x="262" y="140" fill="rgba(17, 17, 17, 0.7)" fontSize="12" fontWeight="600" textAnchor="middle" fontFamily="Oswald, sans-serif">
+            3 km
           </text>
         </svg>
 
-        {/* Badge d'aide contextuel en superposition */}
-        <div className="absolute bottom-2 left-2 px-3 py-1 rounded-full bg-white/95 border border-[#111111]/15 text-[11px] text-[#111111] font-mono font-bold shadow-sm">
-          Lat: {coords.lat.toFixed(4)} | Lng: {coords.lng.toFixed(4)}
+        {/* Coordonnées en superposition */}
+        <div className="absolute bottom-3 left-3 cs-pill cs-mono !normal-case !tracking-normal !text-[13px] bg-white pointer-events-none">
+          {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
         </div>
       </div>
 
       {/* Raccourcis Repères de Montfleury */}
-      <div className="mt-4">
-        <label className="block text-[11px] font-black text-[#111111]/70 uppercase tracking-wider mb-2 font-mono">
-          Repères rapides autour du campus :
-        </label>
-        <div className="flex flex-wrap gap-2">
+      <div className="mt-6">
+        <span className="cs-field-label">Repères rapides</span>
+        <div className="flex flex-wrap gap-2.5">
           {montfleuryLandmarks.map((lm, idx) => (
             <button
               key={idx}
               type="button"
               disabled={disabled}
               onClick={() => updateLocation(lm.lat, lm.lng)}
-              className="px-3 py-1 rounded-full text-xs bg-white border border-[#111111]/15 hover:bg-[#FFD000] text-[#111111] font-bold transition-all shadow-sm"
+              className="cs-chip !normal-case !text-[15px] !font-medium !whitespace-normal text-left disabled:opacity-50"
             >
               {lm.label}
             </button>

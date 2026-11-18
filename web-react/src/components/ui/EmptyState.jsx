@@ -12,16 +12,12 @@ export default function EmptyState({
   className = '',
 }) {
   return (
-    <div
-      className={`w-full flex flex-col items-center justify-center text-center p-8 sm:p-12 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 ${className}`}
-    >
-      <div className="w-16 h-16 rounded-2xl bg-white border border-[#111111]/10 flex items-center justify-center text-3xl mb-4 shadow-sm">
+    <div className={`cs-card w-full flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 ${className}`}>
+      <div className="w-20 h-20 rounded-full bg-[#FAF3E6] flex items-center justify-center text-4xl mb-6 -rotate-6">
         {icon}
       </div>
-      <h4 className="text-xl font-anton uppercase text-[#111111] tracking-wide mb-1.5">{title}</h4>
-      <p className="text-xs text-[#666] max-w-sm mb-6 leading-relaxed font-medium">
-        {description}
-      </p>
+      <h4 className="cs-title mb-3">{title}</h4>
+      <p className="cs-body text-[#5E5850] max-w-md mb-8">{description}</p>
       {action && <div className="inline-flex">{action}</div>}
     </div>
   );

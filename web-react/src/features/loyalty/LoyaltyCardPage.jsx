@@ -3,20 +3,32 @@
 // 🎯 À retenir pour la soutenance : "Quatre paliers végétaux vivants (GRAINE ➔ POUSSE ➔ ARBRE ➔ FORET) avec simulation interactive 1-clic pour démontrer le passage de seuils devant le jury."
 // Module : Gamification & Fidélité (B3, I4)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StampGrid from './StampGrid.jsx';
 import RewardWallet from './RewardWallet.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { DepthCard } from '../../components/common/DepthCard.jsx';
 import { getLoyaltyTier, getNextRewardMilestone, evaluateMilestones } from '@shared/loyalty.js';
 import { LOYALTY_TIERS, REWARD_TYPES, REWARD_STATUS } from '@shared/constants.js';
-import { Flame, Sparkles, Award, Plus, RotateCcw, ShieldCheck, Ticket } from 'lucide-react';
+import { Sparkles, Award, Plus, RotateCcw } from 'lucide-react';
 
 export default function LoyaltyCardPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
-  const [ecoPoints, setEcoPoints] = useState(240);
-  const [mealsRescued, setMealsRescued] = useState(12);
+  // Les points du profil vivent dans `profile.ecoPoints` (pas ecoPointsBalance) ; 240 = valeur démo.
+  const profilePoints = Number(profile?.ecoPoints);
+  const profileMeals = Number(profile?.totalMealsRescued);
+  const hasProfilePoints = Number.isFinite(profilePoints) && profilePoints >= 0;
+  const hasProfileMeals = Number.isFinite(profileMeals) && profileMeals >= 0;
+
+  const [ecoPoints, setEcoPoints] = useState(hasProfilePoints ? profilePoints : 240);
+  const [mealsRescued, setMealsRescued] = useState(hasProfileMeals ? profileMeals : 12);
+
+  // Synchronise la carte quand le profil arrive après le premier rendu
+  useEffect(() => {
+    if (hasProfilePoints) setEcoPoints(profilePoints);
+    if (hasProfileMeals) setMealsRescued(profileMeals);
+  }, [hasProfilePoints, profilePoints, hasProfileMeals, profileMeals]);
   const [rewards, setRewards] = useState([
     {
       rewardId: 'rw-100-demo',
@@ -36,37 +48,41 @@ export default function LoyaltyCardPage() {
     },
   ]);
 
-  const displayName = user?.displayName || 'Yassine Trabelsi';
-  const filiere = user?.filiereId || '3A E-Business';
+  const displayName = profile?.displayName || user?.displayName || 'Yassine Trabelsi';
+  const filiere = profile?.filiereId || user?.filiereId || '3A E-Business';
 
-  const tier = getLoyaltyTier(ecoPoints);
-  const nextMilestone = getNextRewardMilestone(ecoPoints);
+  const safePoints = Number.isFinite(ecoPoints) ? ecoPoints : 0;
+  const safeMeals = Number.isFinite(mealsRescued) ? mealsRescued : 0;
+
+  const tier = getLoyaltyTier(safePoints);
+  const nextMilestone = getNextRewardMilestone(safePoints);
   const prevMilestone = nextMilestone - 100;
-  const progressInCycle = Math.min(100, Math.max(0, ((ecoPoints - prevMilestone) / 100) * 100));
+  const progressInCycle = Math.min(100, Math.max(0, ((safePoints - prevMilestone) / 100) * 100));
+  const pointsToCoupon = Math.max(0, nextMilestone - safePoints);
 
   let tierIcon = '🌱';
   let tierLabel = 'GRAINE';
-  let tierBadgeColor = 'bg-white text-[#111111] border border-[#111111]/15';
+  let tierBadgeColor = 'cs-pill-outline';
 
   if (tier === LOYALTY_TIERS.FORET) {
     tierIcon = '🌲';
     tierLabel = 'FORÊT';
-    tierBadgeColor = 'bg-[#15803D] text-white';
+    tierBadgeColor = 'cs-pill-leaf';
   } else if (tier === LOYALTY_TIERS.ARBRE) {
     tierIcon = '🌳';
     tierLabel = 'ARBRE';
-    tierBadgeColor = 'bg-[#15803D] text-white';
+    tierBadgeColor = 'cs-pill-leaf';
   } else if (tier === LOYALTY_TIERS.POUSSE) {
     tierIcon = '🌿';
     tierLabel = 'POUSSE';
-    tierBadgeColor = 'bg-[#FFD000] text-[#111111]';
+    tierBadgeColor = 'cs-pill-mustard';
   }
 
   const handleAddPoints = (amount = 20) => {
-    const newPoints = ecoPoints + amount;
-    const newMeals = amount === 20 ? mealsRescued + 1 : mealsRescued + Math.floor(amount / 20);
+    const newPoints = safePoints + amount;
+    const newMeals = amount === 20 ? safeMeals + 1 : safeMeals + Math.floor(amount / 20);
 
-    const newUnlocked = evaluateMilestones(ecoPoints, newPoints);
+    const newUnlocked = evaluateMilestones(safePoints, newPoints);
     if (newUnlocked.length > 0) {
       setRewards((prev) => [...prev, ...newUnlocked]);
     }
@@ -81,145 +97,131 @@ export default function LoyaltyCardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        
-        {/* En-tête éditorial */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#111111]/10">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-mono font-black uppercase tracking-wider mb-2 shadow-sm">
-              <Flame className="w-3.5 h-3.5" />
-              <span>Programme de Récompenses Anti-Gaspi</span>
-            </div>
-            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#111111]">
-              CAMPUSSAVE CLUB · CARTE DE FIDÉLITÉ
-            </h1>
-            <p className="text-xs sm:text-sm text-[#111111]/70 font-sans mt-1">
-              Chaque repas sauvé alimente votre compteur de tampons et attribue des points à votre filière à l'ESSECT.
-            </p>
-          </div>
-
-          {/* Badge Profil Étudiant */}
-          <div className="p-3.5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-sm text-right">
-            <span className="text-[10px] font-mono font-bold uppercase text-[#666] block">MEMBRE OFFICIEL :</span>
-            <span className="font-bold text-[#111111] text-xs">{displayName}</span>
-            <span className="text-[10px] text-[#DA0711] font-mono font-bold block">{filiere}</span>
-          </div>
+    <div className="cs-container cs-page text-[#111111]">
+      {/* En-tête éditorial */}
+      <header className="mb-10 lg:mb-14 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+        <div className="max-w-3xl">
+          <p className="cs-eyebrow mb-3">CampusSave Club · Fidélité</p>
+          <h1 className="cs-display">Ma carte de fidélité</h1>
+          <p className="cs-lead mt-4 max-w-2xl">
+            Chaque repas sauvé tamponne votre carte et rapporte des points à votre filière à l'ESSECT.
+          </p>
         </div>
 
+        {/* Profil étudiant */}
+        <div className="flex items-center gap-4">
+          <span className="cs-dot-badge !w-14 !h-14 !text-2xl shrink-0" aria-hidden="true">
+            {tierIcon}
+          </span>
+          <div className="min-w-0">
+            <span className="cs-label block">Membre officiel</span>
+            <span className="cs-h3 block line-clamp-2">{displayName}</span>
+            <span className="cs-mono text-[14px] font-bold text-[#DA0711]">{filiere}</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid gap-10 lg:gap-14 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-start mb-16 lg:mb-24">
         {/* =========================================================================
-            CAMPUSSAVE CLUB STAMP CARD TILTED -2deg (image9.png)
+            CAMPUSSAVE CLUB STAMP CARD (carte papier tamponnée)
             ========================================================================= */}
-        <div className="relative py-2">
-          <DepthCard
-            maxTilt={8}
-            perspective={1200}
-            className="w-full relative transform -rotate-1 sm:-rotate-2 hover:rotate-0 transition-transform duration-500"
-          >
-            <StampGrid ecoPoints={ecoPoints} />
+        <div className="py-2">
+          <DepthCard maxTilt={6} perspective={1200} glare={false} className="w-full">
+            <StampGrid ecoPoints={safePoints} className="-rotate-1 sm:-rotate-[1.5deg]" />
           </DepthCard>
         </div>
 
         {/* Métriques du Palier Actuel */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#666]">Palier Végétal</span>
-              <p className="font-anton text-2xl text-[#111111] mt-0.5 flex items-center gap-1.5">
-                <span>{tierIcon}</span>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6">
+            <div className="cs-stat col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="cs-label">Palier végétal</span>
+                <span className={`cs-pill ${tierBadgeColor}`}>Niveau actif</span>
+              </div>
+              <span className="cs-stat-value flex items-center gap-3">
+                <span className="text-[0.7em]" aria-hidden="true">{tierIcon}</span>
                 <span>{tierLabel}</span>
-              </p>
+              </span>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${tierBadgeColor}`}>
-              Niveau Actif
-            </span>
+
+            <div className="cs-stat">
+              <span className="cs-label">EcoPoints</span>
+              <span className="cs-stat-value text-[#DA0711]">{safePoints}</span>
+            </div>
+
+            <div className="cs-stat">
+              <span className="cs-label">Repas sauvés</span>
+              <span className="cs-stat-value">{safeMeals}</span>
+            </div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#666]">Repas Sauvés</span>
-              <p className="font-anton text-3xl text-[#15803D] mt-0.5">
-                {mealsRescued} <span className="text-xs font-sans text-[#666] font-normal">repas</span>
-              </p>
+          {/* Barre de Progression vers le Prochain Coupon */}
+          <div className="cs-card p-6 sm:p-7">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <span className="cs-label block">Prochain coupon</span>
+                <span className="cs-figure block text-[44px] mt-1">
+                  {nextMilestone} <span className="text-[0.55em] text-[#5E5850]">pts</span>
+                </span>
+              </div>
+              <span className="cs-figure text-[44px] text-[#DA0711]">{Math.round(progressInCycle)}%</span>
             </div>
-            <span className="p-2.5 rounded-2xl bg-white border border-[#111111]/10 text-xl shadow-sm">
-              🥗
-            </span>
-          </div>
-
-          <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#666]">Prochain Palier</span>
-              <p className="font-anton text-3xl text-[#DA0711] mt-0.5">
-                {nextMilestone} <span className="text-xs font-sans text-[#666] font-normal">pts</span>
-              </p>
-            </div>
-            <span className="p-2.5 rounded-2xl bg-white border border-[#111111]/10 text-xl shadow-sm">
-              🎯
-            </span>
-          </div>
-        </div>
-
-        {/* Barre de Progression vers le Prochain Coupon */}
-        <div className="p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] space-y-2">
-          <div className="flex justify-between items-center text-xs font-mono">
-            <span className="text-[#111111] font-bold">Progression vers le prochain coupon :</span>
-            <span className="text-[#DA0711] font-bold">{Math.round(progressInCycle)}% ({ecoPoints} / {nextMilestone} pts)</span>
-          </div>
-          <div className="w-full bg-white h-2.5 rounded-full overflow-hidden border border-[#111111]/10">
             <div
-              className="bg-[#DA0711] h-full transition-all duration-700"
-              style={{ width: `${progressInCycle}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] font-mono text-[#666]">
-            <span>Palier précédent ({prevMilestone} pts)</span>
-            <span>Objectif coupon ({nextMilestone} pts)</span>
-          </div>
-        </div>
-
-        {/* Coupons et Récompenses Débloqués */}
-        <RewardWallet rewards={rewards} />
-
-        {/* Panneau de Simulation Démo pour le Jury */}
-        <div className="p-4 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#FFD000]" />
-            <span className="text-xs font-mono font-black text-[#111111]">
-              Contrôles de Simulation Démo (Jury Soutenance) :
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleAddPoints(20)}
-              className="px-3.5 py-1.5 rounded-full bg-[#DA0711] text-white font-mono text-xs font-bold shadow-sm hover:opacity-95 transition-all flex items-center gap-1 cursor-pointer"
+              className="w-full bg-[#FAF3E6] h-3.5 rounded-full overflow-hidden mt-5"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progressInCycle)}
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+1 Repas (20 pts)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleAddPoints(100)}
-              className="px-3.5 py-1.5 rounded-full bg-[#FFD000] text-[#111111] font-mono text-xs font-bold border border-[#111111]/15 shadow-sm hover:opacity-95 transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <Award className="w-3.5 h-3.5" />
-              <span>+100 pts (Palier)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResetDemo}
-              title="Réinitialiser"
-              className="p-2 rounded-full bg-white border border-[#111111]/15 shadow-sm text-[#111111] hover:bg-[#FAF3E6] transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
+              <div
+                className="bg-[#DA0711] h-full rounded-full transition-all duration-700"
+                style={{ width: `${progressInCycle}%` }}
+              />
+            </div>
+            <p className="text-base text-[#5E5850] mt-4">
+              Encore <strong className="text-[#111111]">{pointsToCoupon} pts</strong> pour débloquer votre coupon
+              ({prevMilestone} → {nextMilestone} pts).
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Coupons et Récompenses Débloqués */}
+      <RewardWallet rewards={rewards} className="mb-16 lg:mb-24" />
+
+      {/* Panneau de Simulation Démo pour le Jury */}
+      <section className="pt-8 border-t-2 border-[#111111] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <Sparkles className="w-6 h-6 text-[#DA0711] shrink-0" aria-hidden="true" />
+          <div>
+            <p className="cs-h3">Simulation démo</p>
+            <p className="text-base text-[#5E5850]">Contrôles réservés à la soutenance (jury).</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={() => handleAddPoints(20)} className="cs-btn cs-btn-red">
+            <Plus className="w-5 h-5" aria-hidden="true" />
+            <span>+1 repas (20 pts)</span>
+          </button>
+
+          <button type="button" onClick={() => handleAddPoints(100)} className="cs-btn cs-btn-mustard">
+            <Award className="w-5 h-5" aria-hidden="true" />
+            <span>+100 pts (palier)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleResetDemo}
+            title="Réinitialiser"
+            aria-label="Réinitialiser la démo"
+            className="cs-icon-btn !w-[52px] !h-[52px]"
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

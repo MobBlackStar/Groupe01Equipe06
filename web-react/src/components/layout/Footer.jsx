@@ -4,112 +4,90 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ArrowRight, Mail } from 'lucide-react';
+import { MapPin, ArrowRight } from 'lucide-react';
+
+const QUICK_LINKS = [
+  { label: 'Offres anti-gaspi', to: '/app/explore' },
+  { label: 'Holo-Radar 3D', to: '/app/radar' },
+  { label: 'Fidélité', to: '/app/loyalty' },
+  { label: 'Impact campus', to: '/impact' },
+];
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#FAF3E6] text-[#111111] pt-16 pb-6 px-4 sm:px-6 lg:px-8 mt-auto overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        {/* 4 Colonnes Épurées Griddle */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-12 border-b border-[#111111]/8">
-          
-          {/* Colonne 1 : Adresse & Contact (span 4) */}
-          <div className="md:col-span-4 space-y-3">
-            <div className="flex items-start gap-2.5">
-              <MapPin className="w-5 h-5 text-[#DA0711] shrink-0 mt-0.5" />
-              <div>
-                <p className="font-anton uppercase tracking-wider text-sm text-[#111111]">
-                  ESSECT MONTFLEURY
-                </p>
-                <p className="text-xs text-[#666] font-medium leading-relaxed">
-                  65 Rue Abdelaziz Thâalbi, Montfleury, 1089 Tunis
-                </p>
-                <p className="text-xs text-[#DA0711] font-bold mt-1">
-                  contact@campussave.tn
-                </p>
-              </div>
+    <footer className="w-full bg-[#FAF3E6] text-[#111111] mt-auto overflow-hidden">
+      <div className="cs-container pt-20 lg:pt-28">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
+          {/* Adresse */}
+          <div className="lg:col-span-4 flex items-start gap-4">
+            <MapPin className="w-7 h-7 shrink-0 mt-0.5" strokeWidth={2.5} />
+            <div>
+              <p className="font-semibold uppercase text-[1.375rem] leading-tight">
+                ESSECT Montfleury
+                <br />
+                1089 Tunis
+              </p>
+              <p className="mt-3 text-lg">contact@campussave.tn</p>
             </div>
           </div>
 
-          {/* Colonne 2 : Liens Rapides (span 2) */}
-          <div className="md:col-span-2 space-y-2">
-            <h4 className="font-anton uppercase tracking-wider text-xs text-[#111111]">
-              ACCÈS RAPIDE
-            </h4>
-            <ul className="space-y-1.5 text-xs font-bold text-[#666]">
-              <li>
-                <Link to="/app" className="hover:text-[#DA0711] transition-colors">
-                  OFFRES ANTI-GASPI
-                </Link>
-              </li>
-              <li>
-                <Link to="/app/radar" className="hover:text-[#DA0711] transition-colors">
-                  HOLO-RADAR 3D
-                </Link>
-              </li>
-              <li>
-                <Link to="/app/loyalty" className="hover:text-[#DA0711] transition-colors">
-                  FIDÉLITÉ & BADGES
-                </Link>
-              </li>
-              <li>
-                <Link to="/impact" className="hover:text-[#DA0711] transition-colors">
-                  IMPACT CARBONE
-                </Link>
-              </li>
+          {/* Liens rapides */}
+          <div className="lg:col-span-2">
+            <h4 className="font-semibold uppercase text-[1.375rem] mb-4">Accès rapide</h4>
+            <ul className="space-y-1.5">
+              {QUICK_LINKS.map((l) => (
+                <li key={l.to}>
+                  <Link to={l.to} className="uppercase text-lg hover:text-[#DA0711] transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Colonne 3 : Campus & Soutenance (span 2) */}
-          <div className="md:col-span-2 space-y-2">
-            <h4 className="font-anton uppercase tracking-wider text-xs text-[#111111]">
-              PROJET 2026
-            </h4>
-            <ul className="space-y-1.5 text-xs font-bold text-[#666]">
-              <li>LICENCE E-BUSINESS</li>
-              <li>ESSECT MONTFLEURY</li>
-              <li>RITEJ BEJAOUI</li>
-              <li>FEDI TOUATI</li>
+          {/* Projet */}
+          <div className="lg:col-span-2">
+            <h4 className="font-semibold uppercase text-[1.375rem] mb-4">Projet 2026</h4>
+            <ul className="space-y-1.5 uppercase text-lg">
+              <li>Licence E-Business</li>
+              <li>Ritej Bejaoui</li>
+              <li>Fedi Touati</li>
             </ul>
           </div>
 
-          {/* Colonne 4 : Newsletter / Alertes Anti-Gaspi (span 4) */}
-          <div className="md:col-span-4 space-y-3">
-            <h4 className="font-anton uppercase tracking-wider text-xs text-[#111111]">
-              REJOINDRE LA COMMUNAUTÉ
-            </h4>
-            <p className="text-xs text-[#666]">
-              Reçois les alertes flash 15 min avant la fin des cours à l'ESSECT.
-            </p>
-            <div className="relative flex items-center max-w-sm">
+          {/* Alertes */}
+          <div className="lg:col-span-4">
+            <h4 className="font-semibold uppercase text-[1.375rem] mb-2">Rejoins la brigade anti-gaspi</h4>
+            <p className="text-lg mb-5">Les alertes flash 15 min avant la fin des cours.</p>
+            <form className="relative max-w-md" onSubmit={(e) => e.preventDefault()}>
+              <label htmlFor="footer-email" className="sr-only">Adresse e-mail étudiante</label>
               <input
+                id="footer-email"
                 type="email"
                 placeholder="prenom.nom@essect.u-tunis.tn"
-                className="w-full pl-4 pr-12 py-2.5 rounded-full bg-[#EDE6D7] border border-[#111111]/10 text-xs text-[#111111] placeholder:text-[#888] focus:outline-none focus:ring-1 focus:ring-[#DA0711]"
+                className="cs-input !pr-16"
               />
               <button
-                type="button"
-                className="absolute right-1 w-8 h-8 rounded-full bg-[#DA0711] text-white flex items-center justify-center hover:bg-[#bd060f] transition-transform active:scale-90"
+                type="submit"
+                aria-label="S'inscrire aux alertes"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-[#DA0711] text-white flex items-center justify-center hover:bg-[#B0050D] transition-colors"
               >
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" strokeWidth={2.5} />
               </button>
-            </div>
+            </form>
           </div>
         </div>
+      </div>
 
-        {/* Le Logo Bulle Géant Monumental : CAMPUSSAVE */}
-        <div className="pt-8 pb-4">
-          <div className="griddle-bubble-logo select-none">
-            CAMPUSSAVE
-          </div>
-        </div>
+      {/* Wordmark monumental */}
+      <div className="cs-container pt-16 lg:pt-24" aria-hidden="true">
+        <div className="cs-wordmark translate-y-[0.12em]">CampusSave</div>
+      </div>
 
-        {/* Mentions Légales et Badge Bas de Page */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#888] pt-2">
-          <p>© 2026 CampusSave • Conçu avec passion pour les étudiants de l'ESSECT Montfleury</p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDE6D7] text-[#111111] font-bold text-[10px]">
-            <span>⚡ Standard Anti-Gaspillage ESSECT</span>
-          </div>
+      <div className="bg-[#DA0711] text-[#FAF3E6]">
+        <div className="cs-container py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-base">
+          <p>© 2026 CampusSave · ESSECT Montfleury</p>
+          <p className="uppercase font-semibold tracking-wide">Zéro gaspi, prix étudiant</p>
         </div>
       </div>
     </footer>

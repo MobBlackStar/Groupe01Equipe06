@@ -8,15 +8,15 @@ export default function Spinner({ size = 'md', variant = 'red', className = '' }
   const sizes = {
     sm: 'w-4 h-4 border-2',
     md: 'w-6 h-6 border-2',
-    lg: 'w-10 h-10 border-3',
+    lg: 'w-12 h-12 border-[3px]',
   };
 
   const variants = {
-    red: 'border-[#E51C23]/20 border-t-[#E51C23]',
-    lime: 'border-[#E51C23]/20 border-t-[#E51C23]', // backward-compat alias
+    red: 'border-[#DA0711]/20 border-t-[#DA0711]',
+    lime: 'border-[#DA0711]/20 border-t-[#DA0711]', // backward-compat alias
     white: 'border-white/20 border-t-white',
-    dark: 'border-[#141210]/20 border-t-[#141210]',
-    orange: 'border-[#FF5500]/20 border-t-[#FF5500]',
+    dark: 'border-[#111111]/20 border-t-[#111111]',
+    orange: 'border-[#DA0711]/20 border-t-[#DA0711]',
   };
 
   return (

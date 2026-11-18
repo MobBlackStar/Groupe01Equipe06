@@ -5,104 +5,137 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatTND } from '@shared/money.js';
-import { formatTunisDate } from '../../lib/formatters.js';
+import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
+import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
+
+// Accepte Date, ISO, millisecondes ou Timestamp Firestore sérialisé ({ _seconds } / { seconds }).
+function toDateInput(value) {
+  if (!value) return null;
+  if (typeof value === 'object' && !(value instanceof Date)) {
+    if (typeof value.toDate === 'function') return value.toDate();
+    const secs = value._seconds ?? value.seconds;
+    return Number.isFinite(secs) ? secs * 1000 : null;
+  }
+  return value;
+}
+
+// Montant affichable : jamais NaN / 0,000 DT, sinon tiret cadratin.
+function displayMoney(millimes) {
+  const n = Number(millimes);
+  return Number.isFinite(n) && n > 0 ? formatTND(Math.round(n)) : '—';
+}
+
+const STATUS_PILLS = {
+  RESERVED: { className: 'cs-pill-mustard', label: 'À payer · 10 min' },
+  PAID: { className: 'cs-pill-red', label: 'Prêt pour retrait' },
+  COMPLETED: { className: 'cs-pill-leaf', label: '✓ Récupéré' },
+  CANCELLED: { className: 'cs-pill-outline', label: 'Annulé' },
+  EXPIRED: { className: 'cs-pill-outline', label: 'Expiré' },
+  PAYMENT_FAILED: { className: 'cs-pill-outline', label: 'Paiement échoué' },
+  NO_SHOW: { className: 'cs-pill-outline', label: 'Non récupéré' },
+};
 
 export default function OrderRow({ order, onRate }) {
   if (!order) return null;
 
   const id = order.id || order._id;
   const status = order.status || 'RESERVED';
+  const snapshot = order.offerSnapshot || {};
   const orderCode = order.orderCode || 'CS-XXXXX';
-  const title = order.offerTitle || order.title || 'Repas Anti-Gaspi';
-  const merchantName = order.merchantName || 'Commerce Montfleury';
-  const quantity = order.quantity || 1;
-  const price = (order.lockedUnitPriceMillimes || order.totalPriceMillimes || 3500) * quantity;
+  const title = order.offerTitle || order.title || snapshot.title || 'Repas Anti-Gaspi';
+  const merchantName = order.merchantName || order.merchantSnapshot?.name || 'Commerce Montfleury';
+  const quantityRaw = Number(order.quantity);
+  const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+
+  const unitPrice = order.lockedUnitPriceMillimes ?? order.pricing?.lockedUnitPriceMillimes;
+  const total =
+    order.pricing?.totalMillimes ??
+    order.totalPriceMillimes ??
+    (Number.isFinite(Number(unitPrice)) ? Number(unitPrice) * quantity : null);
+  const totalLabel = displayMoney(total);
+
   const userRating = order.rating || order.review?.rating;
-  const dateStr = formatTunisDate(order.createdAt || Date.now());
+  const dateStr = formatTunisDate(toDateInput(order.createdAt) || Date.now());
+  const pickupWindow = formatTunisTimeWindow(
+    toDateInput(order.pickupStartAt || snapshot.pickupStartAt),
+    toDateInput(order.pickupEndAt || snapshot.pickupEndAt)
+  );
 
-  // Configuration du badge de statut
-  let badgeClasses = 'bg-white text-[#111111] border border-[#111111]/10';
-  let badgeText = status;
+  const category = order.category || snapshot.category || title;
+  const photo =
+    order.photoUrl || order.offerPhotoUrl || snapshot.photoUrl || getDistinctGriddleFoodImage(category, id || title);
 
-  if (status === 'RESERVED') {
-    badgeClasses = 'bg-[#FFD000]/20 text-[#854D0E] border-[#FFD000]/40 animate-pulse';
-    badgeText = '⏳ Réservé (Paiement 10 min)';
-  } else if (status === 'PAID') {
-    badgeClasses = 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    badgeText = '🎟️ Payé • Prêt pour retrait';
-  } else if (status === 'COMPLETED') {
-    badgeClasses = 'bg-white text-[#15803D] border-emerald-200';
-    badgeText = '✓ Récupéré sur place';
-  } else if (['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED', 'NO_SHOW'].includes(status)) {
-    badgeClasses = 'bg-rose-100 text-rose-800 border-rose-200';
-    badgeText = status === 'CANCELLED' ? 'Annulé' : status === 'EXPIRED' ? 'Expiré (10 min)' : 'Non récupéré';
-  }
+  const pill = STATUS_PILLS[status] || { className: 'cs-pill-outline', label: status };
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_16px_rgba(17,17,17,0.03)] hover:shadow-[0_8px_24px_rgba(17,17,17,0.06)] hover:-translate-y-0.5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[#111111]">
-      {/* Colonne Gauche : Données commande */}
-      <div className="space-y-1 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono font-bold text-xs text-[#111111] px-2.5 py-0.5 rounded-full bg-white border border-[#111111]/10">
-            {orderCode}
-          </span>
-          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badgeClasses}`}>
-            {badgeText}
-          </span>
-          <span className="text-[10px] text-[#666] font-medium">
-            {dateStr}
-          </span>
+    <article className="cs-card cs-card-hover group p-4 sm:p-6 grid grid-cols-[96px_minmax(0,1fr)] sm:grid-cols-[120px_minmax(0,1fr)] lg:grid-cols-[120px_minmax(0,1fr)_auto] gap-x-5 sm:gap-x-7 gap-y-5 items-center text-[#111111]">
+      {/* Vignette photo (couvre son cadre) */}
+      <div className="cs-photo cs-photo-zoom aspect-square w-full self-start lg:self-center">
+        <img
+          src={photo}
+          alt={title}
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = getDistinctGriddleFoodImage(category, id || title);
+          }}
+        />
+      </div>
+
+      {/* Données commande */}
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className={`cs-pill ${pill.className}`}>{pill.label}</span>
+          <span className="cs-mono text-[14px] font-bold text-[#5E5850]">#{orderCode}</span>
         </div>
 
-        <h3 className="text-base font-anton uppercase text-[#111111] tracking-wide pt-1">{title}</h3>
+        <h3 className="cs-h3 line-clamp-2">{title}</h3>
 
-        <div className="flex items-center gap-2 text-xs text-[#555] font-medium flex-wrap">
-          <span>🏪 {merchantName}</span>
-          <span>•</span>
-          <span>Qté : {quantity}</span>
-          <span>•</span>
-          <span className="font-anton text-sm text-[#DA0711]">{formatTND(price)}</span>
+        <p className="text-base sm:text-lg font-medium text-[#5E5850] mt-1.5 line-clamp-2">{merchantName}</p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] sm:text-base">
+          <span className="font-semibold">
+            <span className="cs-label !text-[13px] mr-1.5">Retrait</span>
+            {pickupWindow}
+          </span>
+          <span className="text-[#5E5850]">Commandé {dateStr}</span>
         </div>
       </div>
 
-      {/* Colonne Droite : Action contextuelle */}
-      <div className="flex items-center sm:self-center">
-        {status === 'RESERVED' && (
-          <Link
-            to={`/app/checkout/${id}`}
-            className="btn-griddle-yellow text-xs py-2 px-5 cursor-pointer shadow-sm"
-          >
-            Finaliser le paiement →
-          </Link>
-        )}
+      {/* Total & action contextuelle */}
+      <div className="col-span-2 lg:col-span-1 flex flex-wrap sm:flex-nowrap items-center lg:flex-col lg:items-end justify-between gap-4 pt-4 lg:pt-0 border-t-2 border-dashed border-[#111111]/15 lg:border-t-0 lg:min-w-[220px]">
+        <div className="lg:text-right">
+          <span className="cs-label block">Total · Qté {quantity}</span>
+          <span className="cs-figure block text-[40px] sm:text-[44px] text-[#DA0711] mt-1">{totalLabel}</span>
+        </div>
 
-        {status === 'PAID' && (
-          <Link
-            to={`/app/tickets/${id}`}
-            className="btn-griddle-primary text-xs py-2 px-5 cursor-pointer shadow-sm"
-          >
-            Voir mon Living Ticket 🎟️
-          </Link>
-        )}
+        <div className="w-full sm:w-auto">
+          {status === 'RESERVED' && (
+            <Link to={`/app/checkout/${id}`} className="cs-btn cs-btn-mustard w-full sm:w-auto">
+              Finaliser le paiement →
+            </Link>
+          )}
 
-        {status === 'COMPLETED' && (
-          <div>
-            {userRating ? (
-              <span className="text-xs font-bold text-[#15803D] bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-                ⭐ Noté {userRating}/5
-              </span>
+          {status === 'PAID' && (
+            <Link to={`/app/tickets/${id}`} className="cs-btn cs-btn-red w-full sm:w-auto">
+              Voir mon ticket 🎟️
+            </Link>
+          )}
+
+          {status === 'COMPLETED' &&
+            (userRating ? (
+              <span className="cs-pill cs-pill-leaf !min-h-[2.75rem] !px-5 !text-base">⭐ Noté {userRating}/5</span>
             ) : (
               <button
                 type="button"
                 onClick={() => onRate(order)}
-                className="btn-griddle-outline text-xs py-1.5 px-4 cursor-pointer"
+                className="cs-btn cs-btn-cream w-full sm:w-auto"
               >
                 Laisser un avis ⭐
               </button>
-            )}
-          </div>
-        )}
+            ))}
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

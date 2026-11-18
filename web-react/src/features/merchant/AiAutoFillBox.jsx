@@ -7,8 +7,6 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { OFFER_CATEGORIES, PRICING_MODES, SURPRISE_RARITY } from '@shared/constants.js';
 import { calculateImpact } from '@shared/impact.js';
-import Button from '../../components/ui/Button.jsx';
-import Badge from '../../components/ui/Badge.jsx';
 import { Sparkles } from 'lucide-react';
 
 // Lexique culinaire tunisien embarqué pour le fallback 100% client
@@ -137,56 +135,52 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
 
   return (
     <div
-      className={`p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden ${className}`}
+      className={`rounded-[1.25rem] bg-[#FFD000] text-[#111111] border-2 border-[#111111] p-6 sm:p-8 lg:p-10 relative ${className}`}
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-[#FFD000] border border-[#111111]/15 flex items-center justify-center text-lg shadow-sm">
-            ✨
-          </div>
-          <div>
-            <h3 className="font-anton uppercase text-base text-[#111111] flex items-center gap-2 tracking-wide">
-              <span>Assistant Culinaire IA &amp; Saisie Magique</span>
-              <Badge variant="yellow" size="sm">IA ZERO-TYPING</Badge>
-            </h3>
-            <p className="text-[11px] text-[#666] font-sans">
-              Tapez vos invendus en style cuisine : l'IA génère les prix, le poids et la description.
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+        <div className="flex items-start gap-4 min-w-0">
+          <span className="cs-sticker cs-sticker-ink shrink-0 !text-xl" aria-hidden="true">IA</span>
+          <div className="min-w-0">
+            <h2 className="cs-title">L'IA remplit le formulaire</h2>
+            <p className="text-base sm:text-lg mt-2 max-w-2xl leading-snug">
+              Écrivez vos invendus comme en cuisine. L'assistant génère le titre, les prix, le poids et la description à votre place.
             </p>
           </div>
         </div>
 
         {lastSource && (
-          <span className="text-[10px] text-[#111111] font-bold bg-[#FFD000] px-3 py-1 rounded-full border border-[#111111]/15 shadow-sm">
+          <span className="cs-pill cs-pill-ink !whitespace-normal !h-auto py-1.5 self-start">
             Source : {lastSource}
           </span>
         )}
       </div>
 
-      <div className="space-y-3">
-        <div className="relative">
-          <input
-            type="text"
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleGenerate())}
-            placeholder="ex: 4 makloub escalope + 3 brik, fermeture 17h"
-            className="w-full bg-white text-[#111111] placeholder-[#666]/50 text-xs sm:text-sm rounded-full pl-5 pr-32 py-3.5 border border-[#111111]/15 shadow-sm focus:border-[#DA0711] outline-none transition-all font-medium"
-          />
-          <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleGenerate()}
-              className="btn-griddle-primary px-5 py-2 rounded-full text-xs cursor-pointer disabled:opacity-50"
-            >
-              {loading ? 'Calcul...' : 'Remplir ✨'}
-            </button>
-          </div>
-        </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <label htmlFor="ai-autofill-input" className="sr-only">Décrivez vos invendus</label>
+        <input
+          id="ai-autofill-input"
+          type="text"
+          value={rawText}
+          onChange={(e) => setRawText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleGenerate())}
+          placeholder="ex : 4 makloub escalope + 3 brik, fermeture 17h"
+          className="cs-input flex-1 min-w-0 !min-h-[3.5rem] !text-lg"
+        />
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => handleGenerate()}
+          className="cs-btn cs-btn-ink !min-h-[3.5rem] shrink-0"
+        >
+          <Sparkles className="w-5 h-5" aria-hidden="true" />
+          {loading ? 'Calcul…' : 'Remplir'}
+        </button>
+      </div>
 
-        {/* Exemples rapides en 1-clic pour la démo soutenance */}
-        <div className="flex items-center gap-2 flex-wrap pt-0.5">
-          <span className="text-[10px] font-bold uppercase text-[#666]">Exemples rapides :</span>
+      {/* Exemples rapides en 1-clic pour la démo soutenance */}
+      <div className="mt-5">
+        <span className="cs-label !text-[#111111] block mb-3">Essayez un exemple</span>
+        <div className="flex flex-wrap gap-2.5">
           {examples.map((ex, i) => (
             <button
               key={i}
@@ -195,7 +189,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
                 setRawText(ex);
                 handleGenerate(ex);
               }}
-              className="text-[11px] font-bold px-3 py-1 rounded-full bg-white border border-[#111111]/15 shadow-sm text-[#111111] hover:bg-[#FFD000] transition-colors cursor-pointer"
+              className="inline-flex items-center min-h-[44px] rounded-full border-2 border-[#111111] bg-[#FAF3E6] px-4 py-2 text-left text-[15px] font-medium leading-snug hover:bg-white transition-colors cursor-pointer"
             >
               {ex}
             </button>

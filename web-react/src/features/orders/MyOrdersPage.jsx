@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import OrderRow from './OrderRow.jsx';
 import UnboxingReveal from '../surprise/UnboxingReveal.jsx';
 import RatingDialog from './RatingDialog.jsx';
-import { EmptyState, Spinner } from '../../components/ui/index.js';
+import { EmptyState, Spinner, Tabs } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 
 // Commandes de démonstration réalistes pour la soutenance
@@ -20,7 +20,10 @@ const DEMO_ORDERS = [
     quantity: 2,
     lockedUnitPriceMillimes: 3800,
     status: 'PAID',
-    createdAt: new Date().toISOString(),
+    category: 'fast-food',
+    pickupStartAt: new Date(Date.now() + 30 * 60 * 1000),
+    pickupEndAt: new Date(Date.now() + 90 * 60 * 1000),
+    createdAt: new Date(),
   },
   {
     id: 'ord-demo-02',
@@ -30,7 +33,10 @@ const DEMO_ORDERS = [
     quantity: 1,
     lockedUnitPriceMillimes: 2500,
     status: 'RESERVED',
-    createdAt: new Date().toISOString(),
+    category: 'cafeteria',
+    pickupStartAt: new Date(Date.now() + 60 * 60 * 1000),
+    pickupEndAt: new Date(Date.now() + 120 * 60 * 1000),
+    createdAt: new Date(),
   },
   {
     id: 'ord-demo-03',
@@ -40,7 +46,8 @@ const DEMO_ORDERS = [
     quantity: 1,
     lockedUnitPriceMillimes: 4500,
     status: 'COMPLETED',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    category: 'restaurant',
+    createdAt: new Date(Date.now() - 86400000),
   },
   {
     id: 'ord-demo-04',
@@ -50,7 +57,8 @@ const DEMO_ORDERS = [
     quantity: 1,
     lockedUnitPriceMillimes: 4500,
     status: 'EXPIRED',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    category: 'pizza',
+    createdAt: new Date(Date.now() - 172800000),
   },
 ];
 
@@ -113,123 +121,96 @@ export default function MyOrdersPage() {
     return ['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED', 'NO_SHOW'].includes(s);
   });
 
+  const tabs = [
+    {
+      id: 'ACTIVE',
+      label: 'En cours',
+      count: orders.filter((o) => ['RESERVED', 'PAID'].includes(o.status)).length,
+    },
+    {
+      id: 'COMPLETED',
+      label: 'Terminées',
+      count: orders.filter((o) => o.status === 'COMPLETED').length,
+    },
+    {
+      id: 'ARCHIVED',
+      label: 'Annulées / Expirées',
+      count: orders.filter((o) => ['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED', 'NO_SHOW'].includes(o.status)).length,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* En-tête */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#111111]/10">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-anton uppercase text-[#111111] tracking-wide">
-              Mes Commandes &amp; Sauvetages
-            </h1>
-            <p className="text-xs text-[#666] font-medium mt-1">
-              Retrouvez vos réservations en cours et vos Living Tickets pour retrait sur place à Montfleury.
-            </p>
-          </div>
+    <div className="cs-container cs-page text-[#111111]">
+      {/* En-tête */}
+      <header className="mb-10 lg:mb-14 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+        <div className="max-w-3xl">
+          <p className="cs-eyebrow mb-3">Espace étudiant · Commandes</p>
+          <h1 className="cs-display">Mes tickets</h1>
+          <p className="cs-lead mt-4 max-w-2xl">
+            Vos réservations en cours, vos Living Tickets de retrait et l'historique de vos repas sauvés à Montfleury.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setUnboxingOrder({ id: 'demo-unboxing', reveal: null })}
-              className="btn-griddle-yellow text-xs py-2 px-4"
-            >
-              <span>🎁</span>
-              <span>Déballer Panier</span>
-            </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setUnboxingOrder({ id: 'demo-unboxing', reveal: null })}
+            className="cs-btn cs-btn-mustard"
+          >
+            <span aria-hidden="true">🎁</span>
+            <span>Déballer un panier</span>
+          </button>
 
-            <Link
-              to="/app/explore"
-              className="btn-griddle-primary text-xs py-2 px-5"
-            >
-              + Sauver un repas
+          <Link to="/app/explore" className="cs-btn cs-btn-red">
+            + Sauver un repas
+          </Link>
+        </div>
+      </header>
+
+      {/* Filtres de statut */}
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} className="mb-8 lg:mb-10" />
+
+      {/* Liste des commandes */}
+      {loading ? (
+        <div className="py-24 flex flex-col items-center justify-center gap-5">
+          <Spinner size="lg" />
+          <p className="cs-body text-[#5E5850]">Chargement de vos commandes...</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <EmptyState
+          icon="🛍️"
+          title="Aucune commande ici"
+          description="Vous n'avez actuellement aucune commande correspondant à ce statut."
+          action={
+            <Link to="/app/explore" className="cs-btn cs-btn-red">
+              Explorer les offres actives
             </Link>
-          </div>
-        </div>
-
-        {/* Onglets Pills Griddle */}
-        <div className="flex rounded-full bg-[#EDE6D7] p-1.5 border border-[#111111]/8 text-xs font-anton uppercase tracking-wider">
-          <button
-            type="button"
-            onClick={() => setActiveTab('ACTIVE')}
-            className={`flex-1 py-2 px-3 rounded-full transition-all cursor-pointer ${
-              activeTab === 'ACTIVE'
-                ? 'bg-[#DA0711] text-white shadow-sm'
-                : 'text-[#111111] hover:bg-black/5'
-            }`}
-          >
-            ⚡ En cours ({orders.filter((o) => ['RESERVED', 'PAID'].includes(o.status)).length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('COMPLETED')}
-            className={`flex-1 py-2 px-3 rounded-full transition-all cursor-pointer ${
-              activeTab === 'COMPLETED'
-                ? 'bg-[#DA0711] text-white shadow-sm'
-                : 'text-[#111111] hover:bg-black/5'
-            }`}
-          >
-            ✓ Terminées ({orders.filter((o) => o.status === 'COMPLETED').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('ARCHIVED')}
-            className={`flex-1 py-2 px-3 rounded-full transition-all cursor-pointer ${
-              activeTab === 'ARCHIVED'
-                ? 'bg-[#DA0711] text-white shadow-sm'
-                : 'text-[#111111] hover:bg-black/5'
-            }`}
-          >
-            ✕ Annulées / Expirées
-          </button>
-        </div>
-
-        {/* Liste des commandes */}
-        {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-4">
-            <Spinner size="lg" />
-            <p className="text-xs text-[#666] font-bold">Chargement de vos commandes...</p>
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <EmptyState
-            icon="🛍️"
-            title="Aucune commande dans cet onglet"
-            description="Vous n'avez actuellement aucune commande correspondant à ce statut."
-            action={
-              <Link
-                to="/app/explore"
-                className="btn-griddle-primary text-xs"
-              >
-                Explorer les offres actives
-              </Link>
-            }
-          />
-        ) : (
-          <div className="space-y-3">
-            {filteredOrders.map((order) => (
-              <OrderRow
-                key={order.id}
-                order={order}
-                onRate={(o) => setRatingOrder(o)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Modal Unboxing Reveal */}
-        <UnboxingReveal
-          isOpen={Boolean(unboxingOrder)}
-          onClose={() => setUnboxingOrder(null)}
-          order={unboxingOrder}
+          }
         />
+      ) : (
+        <div className="grid gap-6">
+          {filteredOrders.map((order, i) => (
+            <div key={order.id} className="cs-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
+              <OrderRow order={order} onRate={(o) => setRatingOrder(o)} />
+            </div>
+          ))}
+        </div>
+      )}
 
-        {/* Modal Notation Étoiles */}
-        <RatingDialog
-          isOpen={Boolean(ratingOrder)}
-          onClose={() => setRatingOrder(null)}
-          order={ratingOrder}
-          onSuccess={handleRatingSuccess}
-        />
-      </div>
+      {/* Modal Unboxing Reveal */}
+      <UnboxingReveal
+        isOpen={Boolean(unboxingOrder)}
+        onClose={() => setUnboxingOrder(null)}
+        order={unboxingOrder}
+      />
+
+      {/* Modal Notation Étoiles */}
+      <RatingDialog
+        isOpen={Boolean(ratingOrder)}
+        onClose={() => setRatingOrder(null)}
+        order={ratingOrder}
+        onSuccess={handleRatingSuccess}
+      />
     </div>
   );
 }

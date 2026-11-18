@@ -1,21 +1,25 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: {
+    relative: true, // resolve globs from this file, whatever the cwd
+    files: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  },
   theme: {
     extend: {
       colors: {
-        // Original CampusSave theme
-        campus: {
-          dark: '#0D0F12',
-          card: '#16191E',
-          border: '#262A33',
-          lime: '#CCFF00',
-          orange: '#FF5500',
-          red: '#FF1744',
-          muted: '#8A92A6',
+        // CampusSave × Griddle canonical palette
+        cs: {
+          cream: '#FAF3E6',   // page canvas
+          biscuit: '#EDE6D7', // cards
+          sand: '#E2D8C5',    // pressed / dividers on biscuit
+          paper: '#FFFDF8',   // receipts, polaroids
+          ink: '#111111',
+          muted: '#5E5850',   // secondary text (AA on cream)
+          red: '#DA0711',
+          redDark: '#B0050D',
+          mustard: '#FFD000',
+          leaf: '#1F7A3A',    // success / eco
+          tape: 'rgba(255,236,170,0.78)',
         },
         // Framer Street Food & Paper Market Palette
         paper: '#F6F1E7',       // Warm cream paper
@@ -53,16 +57,20 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['Fraunces', 'serif'],
-        fraunces: ['Fraunces', 'serif'],
+        // Griddle type system — see src/styles/README.md
+        sans: ['Oswald', 'system-ui', 'sans-serif'],          // body + UI (Griddle uses Oswald everywhere)
+        body: ['Oswald', 'system-ui', 'sans-serif'],
+        display: ['"League Gothic"', 'Oswald', 'sans-serif'], // monumental headlines (hero, page titles)
+        title: ['"Bowlby One SC"', 'Anton', 'sans-serif'],    // chunky section titles ("OUR BESTSELLERS")
+        sticker: ['Knewave', 'cursive'],                      // die-cut sticker labels
+        marker: ['"Permanent Marker"', 'cursive'],            // polaroid captions, handwritten notes
+        mono: ['"Space Mono"', 'monospace'],                  // receipts, tickets, codes
+        // legacy aliases kept so older markup keeps rendering sensibly
+        anton: ['Oswald', 'sans-serif'],
         oswald: ['Oswald', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
-        // Griddle Fonts
-        anton: ['Anton', 'sans-serif'],
-        bebas: ['"Bebas Neue"', 'sans-serif'],
-        marker: ['"Permanent Marker"', 'cursive'],
-        caveat: ['Caveat', 'cursive'],
+        bebas: ['"League Gothic"', 'sans-serif'],
+        fraunces: ['"League Gothic"', 'sans-serif'],
+        caveat: ['"Permanent Marker"', 'cursive'],
       },
       boxShadow: {
         'paper-sm': '0 2px 4px rgba(22, 20, 18, 0.08), 0 1px 2px rgba(22, 20, 18, 0.04)',

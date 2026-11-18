@@ -59,6 +59,33 @@ const DEMO_USERS = [
   },
 ];
 
+// Libellés d'affichage (présentation uniquement)
+const ROLE_UI = {
+  [ROLES.STUDENT]: { label: 'Étudiant', pill: 'cs-pill-leaf' },
+  [ROLES.MERCHANT]: { label: 'Commerçant', pill: 'cs-pill-mustard' },
+  [ROLES.ADMIN]: { label: 'Admin', pill: 'cs-pill-ink' },
+};
+
+const FILIERE_LABELS = {
+  EBUSINESS_3A: '3A E-Business',
+  FINANCE: 'Finance',
+  MARKETING: 'Marketing',
+  GESTION: 'Gestion',
+  COMPTABILITE: 'Comptabilité',
+};
+
+// Date d'inscription : ISO / Timestamp Firestore formatés en heure de Tunis, jamais d'ISO brut
+function createdLabel(user) {
+  const v = user.createdAt;
+  if (!v) return '—';
+  if (typeof v === 'string' && !/^\d{4}-\d{2}-\d{2}T/.test(v)) return v;
+  let input = v;
+  if (typeof v?.toDate === 'function') input = v.toDate();
+  else if (typeof v?._seconds === 'number') input = v._seconds * 1000;
+  else if (typeof v?.seconds === 'number') input = v.seconds * 1000;
+  return formatTunisDate(input, { fallback: '—', includeYear: true });
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState(DEMO_USERS);
   const [activeTab, setActiveTab] = useState('ALL');
@@ -143,127 +170,100 @@ export default function AdminUsersPage() {
     setSuspendModalUser(null);
   }
 
+  const isUserActive = (u) =>
+    u?.status === USER_STATUS.ACTIVE ||
+    u?.status === 'ACTIVE' ||
+    u?.status === 'ACTIF' ||
+    u?.status === 'active' ||
+    !u?.status;
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="bg-[#FAF3E6] text-[#111111] min-h-screen">
+      <div className="cs-container cs-page">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#111111]/10">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#111111]">
-                Gestion des Comptes Utilisateurs
-              </h1>
-              <Badge variant="griddle" size="md">CONSOLE ADMIN</Badge>
-            </div>
-            <p className="text-xs text-[#666] mt-1 font-medium">
-              Supervision des rôles, filières ESSECT et contrôle d'accès au système.
-            </p>
-          </div>
-        </div>
+        <header className="mb-10 lg:mb-12">
+          <p className="cs-eyebrow mb-3">Console admin · Comptes</p>
+          <h1 className="cs-display">Utilisateurs</h1>
+          <p className="cs-lead mt-4 max-w-3xl">
+            Supervision des rôles, des filières ESSECT et contrôle d'accès au système.
+          </p>
+        </header>
 
         {/* Toolbar: Tabs & Search Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-5">
+          <div className="-mx-1 px-1 overflow-x-auto scrollbar-none">
+            <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} className="!flex-nowrap sm:!flex-wrap" />
+          </div>
 
-          <div className="relative w-full sm:w-72">
+          <div className="w-full xl:w-80 shrink-0">
+            <label htmlFor="admin-users-search" className="sr-only">Filtrer par nom ou email</label>
             <input
-              type="text"
+              id="admin-users-search"
+              type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Filtrer par nom ou email..."
-              className="w-full bg-white text-[#111111] text-xs rounded-full px-4 py-2.5 border border-[#111111]/10 shadow-sm focus:ring-1 focus:ring-[#DA0711] outline-none font-medium"
+              className="cs-input"
             />
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#111111] text-white uppercase tracking-wider font-anton text-xs">
+        {filteredUsers.length === 0 ? (
+          <div className="cs-card p-10 text-center">
+            <p className="cs-h3">Aucun compte trouvé</p>
+            <p className="cs-body text-[#5E5850] mt-2">Essayez un autre filtre ou une autre recherche.</p>
+          </div>
+        ) : (
+          <div className="cs-card p-2 overflow-x-auto">
+            <table className="cs-table min-w-[860px]">
+              <thead>
                 <tr>
-                  <th className="py-3.5 px-4">Utilisateur</th>
-                  <th className="py-3.5 px-4">Rôle Système</th>
-                  <th className="py-3.5 px-4">Filière ESSECT</th>
-                  <th className="py-3.5 px-4">Statut</th>
-                  <th className="py-3.5 px-4">Inscrit le</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th>Utilisateur</th>
+                  <th>Rôle</th>
+                  <th>Filière</th>
+                  <th>Statut</th>
+                  <th>Inscrit le</th>
+                  <th className="!text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#111111]/8">
+              <tbody>
                 {filteredUsers.map((user) => {
-                  const isActive =
-                    user.status === USER_STATUS.ACTIVE ||
-                    user.status === 'ACTIVE' ||
-                    user.status === 'ACTIF' ||
-                    user.status === 'active' ||
-                    !user.status;
+                  const isActive = isUserActive(user);
+                  const roleUi = ROLE_UI[user.role] || { label: user.role || '—', pill: 'cs-pill-outline' };
 
                   return (
-                    <tr
-                      key={user.uid}
-                      className="hover:bg-white/40 transition-colors"
-                    >
-                      <td className="py-4 px-4 font-bold text-[#111111]">
-                        <div>
-                          <span className="font-bold text-sm">{user.displayName}</span>
-                          <span className="block text-[11px] text-[#666] font-normal font-mono">
-                            {user.email}
-                          </span>
-                        </div>
+                    <tr key={user.uid}>
+                      <td className="min-w-[240px]">
+                        <span className="block text-[17px] font-semibold uppercase leading-tight line-clamp-2">
+                          {user.displayName || '—'}
+                        </span>
+                        <span className="block text-[15px] text-[#5E5850] mt-1 break-all">{user.email || '—'}</span>
                       </td>
-                      <td className="py-4 px-4">
-                        <Badge
-                          variant={
-                            user.role === ROLES.ADMIN
-                              ? 'griddle'
-                              : user.role === ROLES.MERCHANT
-                              ? 'yellow'
-                              : 'green'
-                          }
-                          size="sm"
-                        >
-                          {user.role}
-                        </Badge>
+                      <td>
+                        <span className={`cs-pill ${roleUi.pill}`}>{roleUi.label}</span>
                       </td>
-                      <td className="py-4 px-4 text-[#555]">
-                        {user.filiereId ? (
-                          <span className="font-bold text-[#111111]">
-                            {user.filiereId}
-                          </span>
-                        ) : (
-                          <span className="text-[#999] font-mono">—</span>
-                        )}
+                      <td className="whitespace-nowrap font-semibold">
+                        {user.filiereId ? FILIERE_LABELS[user.filiereId] || user.filiereId : <span className="text-[#5E5850]">—</span>}
                       </td>
-                      <td className="py-4 px-4">
-                        <Badge
-                          variant={isActive ? 'green' : 'red'}
-                          size="sm"
-                          dot={isActive}
-                        >
-                          {isActive ? 'ACTIF' : 'SUSPENDU'}
-                        </Badge>
+                      <td>
+                        <span className={`cs-pill ${isActive ? 'cs-pill-leaf' : 'cs-pill-red'}`}>
+                          {isActive && <span className="w-2 h-2 rounded-full bg-[#1F7A3A]" aria-hidden="true" />}
+                          {isActive ? 'Actif' : 'Suspendu'}
+                        </span>
                       </td>
-                      <td className="py-4 px-4 text-[#666] font-mono">
-                        {user.createdAt?.includes('T') ? formatTunisDate(user.createdAt) : user.createdAt}
-                      </td>
-                      <td className="py-4 px-4 text-right">
+                      <td className="whitespace-nowrap text-[#5E5850]">{createdLabel(user)}</td>
+                      <td className="text-right">
                         {user.role !== ROLES.ADMIN ? (
                           <button
                             type="button"
                             onClick={() => setSuspendModalUser(user)}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-anton uppercase tracking-wider transition-all shadow-sm ${
-                              isActive
-                                ? 'bg-rose-100 text-rose-800 hover:bg-rose-200'
-                                : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                            }`}
+                            className={`cs-btn cs-btn-sm ${isActive ? 'cs-btn-cream !text-[#DA0711]' : 'cs-btn-ink'}`}
                           >
                             {isActive ? 'Suspendre' : 'Réactiver'}
                           </button>
                         ) : (
-                          <span className="text-[11px] text-[#888] font-mono font-medium">
-                            Protégé
-                          </span>
+                          <span className="cs-pill cs-pill-outline">Protégé</span>
                         )}
                       </td>
                     </tr>
@@ -272,17 +272,13 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        )}
 
         {/* Modal de Confirmation Suspension / Réactivation */}
         <Modal
           isOpen={Boolean(suspendModalUser)}
           onClose={() => setSuspendModalUser(null)}
-          title={`Confirmer la ${
-            suspendModalUser?.status === USER_STATUS.ACTIVE || suspendModalUser?.status === 'ACTIVE' || suspendModalUser?.status === 'ACTIF' || suspendModalUser?.status === 'active' || !suspendModalUser?.status
-              ? 'suspension'
-              : 'réactivation'
-          } du compte`}
+          title={`Confirmer la ${isUserActive(suspendModalUser) ? 'suspension' : 'réactivation'} du compte`}
           description="Cette action modifiera immédiatement les droits d'accès de l'utilisateur."
           footer={
             <>
@@ -294,11 +290,7 @@ export default function AdminUsersPage() {
                 Annuler
               </Button>
               <Button
-                variant={
-                  suspendModalUser?.status === USER_STATUS.ACTIVE || suspendModalUser?.status === 'ACTIVE' || suspendModalUser?.status === 'ACTIF' || suspendModalUser?.status === 'active' || !suspendModalUser?.status
-                    ? 'danger'
-                    : 'primary'
-                }
+                variant={isUserActive(suspendModalUser) ? 'danger' : 'primary'}
                 size="sm"
                 onClick={() => toggleUserStatus(suspendModalUser)}
               >
@@ -308,13 +300,11 @@ export default function AdminUsersPage() {
           }
         >
           {suspendModalUser && (
-            <p className="text-xs text-[#111111] py-2 font-medium">
+            <p className="cs-body py-2">
               Êtes-vous certain de vouloir{' '}
-              {suspendModalUser.status === USER_STATUS.ACTIVE || suspendModalUser.status === 'ACTIVE' || suspendModalUser.status === 'ACTIF' || suspendModalUser.status === 'active' || !suspendModalUser.status
-                ? 'suspendre temporairement'
-                : 'réactiver'}{' '}
+              {isUserActive(suspendModalUser) ? 'suspendre temporairement' : 'réactiver'}{' '}
               le compte de{' '}
-              <strong className="text-[#DA0711]">{suspendModalUser.displayName}</strong> (
+              <strong className="font-semibold text-[#DA0711]">{suspendModalUser.displayName}</strong> (
               {suspendModalUser.email}) ?
             </p>
           )}

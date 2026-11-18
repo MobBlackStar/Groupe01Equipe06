@@ -246,33 +246,42 @@ export default function HoloRadarPage() {
     };
   }, [viewMode, sortedMerchants, handleSelectMerchant, refreshMarkers]);
 
+  // Gardes d'affichage (jamais de "0,000 DT" ni de NaN)
+  const priceOrDash = (millimes) => {
+    const n = Number(millimes);
+    return millimes === null || millimes === undefined || !Number.isFinite(n) || n <= 0 ? '—' : formatTND(n);
+  };
+  const distanceLabel = (m) => `${m.distanceM || m.distanceFromEssectM || 200} m`;
+  const ratingLabel = (m) => {
+    const r = Number(m?.ratingAvg);
+    return Number.isFinite(r) && r > 0 ? r.toFixed(1).replace('.', ',') : '4,8';
+  };
+  const FALLBACK_PHOTO =
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80';
+
   return (
-    <div className="relative w-full h-[calc(100vh-64px)] bg-[#0E0D0C] overflow-hidden flex flex-col font-sans select-none text-white">
-      {/* 1. BARRE DE COMMANDE HOLOGRAPHIQUE SUPÉRIEURE */}
-      <div className="z-30 bg-[#0E0D0C]/90 backdrop-blur-xl border-b border-white/10 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-2xl">
+    <div className="relative w-full h-[calc(100vh-82px)] min-h-[560px] bg-[#FAF3E6] overflow-hidden flex flex-col font-sans text-[#111111]">
+      {/* 1. BARRE DE COMMANDE SUPÉRIEURE */}
+      <div className="z-30 bg-[#FAF3E6] border-b-2 border-[#111111] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         {/* Titre & Statut */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#FF5500]/15 border border-[#FF5500]/40 rounded-xl text-[#FF5500] shadow-md shadow-[#FF5500]/20">
-            <Compass className="w-5 h-5 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm md:text-base font-black tracking-tight text-white flex items-center gap-2">
-                Montfleury Holo-Radar
-                <span className="text-[10px] font-black uppercase tracking-widest bg-[#FF5500] text-black px-2 py-0.5 rounded-full">
-                  3D WebGL
-                </span>
-              </h1>
-            </div>
-            <p className="text-[11px] text-gray-400 font-mono">
-              Hub Campus ESSECT • {sortedMerchants.length} relais actifs à portée
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-11 h-11 shrink-0 rounded-full bg-[#DA0711] text-[#FAF3E6] flex items-center justify-center" aria-hidden="true">
+            <Compass className="w-5 h-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="cs-figure text-[2rem] sm:text-[2.4rem] uppercase flex items-center gap-3">
+              Holo-Radar Montfleury
+              <span className="cs-pill cs-pill-ink font-sans">3D</span>
+            </h1>
+            <p className="text-[15px] text-[#5E5850]">
+              Campus ESSECT · {sortedMerchants.length} relais actifs à portée
             </p>
           </div>
         </div>
 
         {/* Sélecteur de rayon d'exploration */}
-        <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10">
-          <span className="text-[11px] font-bold text-gray-400 px-2 uppercase tracking-wider">Rayon :</span>
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none max-w-full -mx-1 px-1" role="group" aria-label="Rayon d'exploration">
+          <span className="cs-label shrink-0 mr-1">Rayon</span>
           {RADIUS_OPTIONS.map((r) => (
             <button
               key={r}
@@ -281,11 +290,8 @@ export default function HoloRadarPage() {
                 setRadiusM(r);
                 handleCloseDrawer();
               }}
-              className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-all ${
-                radiusM === r
-                  ? 'bg-[#FF5500] text-black shadow-lg shadow-[#FF5500]/30 font-black'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+              aria-pressed={radiusM === r}
+              className="cs-chip shrink-0 !px-4"
             >
               {r >= 1000 ? `${r / 1000} km` : `${r} m`}
             </button>
@@ -297,10 +303,10 @@ export default function HoloRadarPage() {
           <button
             type="button"
             onClick={() => setViewMode(viewMode === '3D' ? '2D' : '3D')}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-white/15 transition-all"
+            className="cs-btn cs-btn-ink cs-btn-sm min-h-[2.75rem]"
           >
-            <Layers className="w-3.5 h-3.5" />
-            {viewMode === '3D' ? 'Vue Liste 2D' : 'Holo-Radar 3D'}
+            <Layers className="w-4 h-4" aria-hidden="true" />
+            {viewMode === '3D' ? 'Vue liste' : 'Radar 3D'}
           </button>
 
           {viewMode === '3D' && (
@@ -310,248 +316,210 @@ export default function HoloRadarPage() {
                 if (mapRef.current) resetToCampusHome(mapRef.current);
               }}
               title="Recentrer sur le campus ESSECT"
-              className="p-1.5 bg-white/10 hover:bg-white/15 text-gray-200 hover:text-[#FF5500] rounded-xl border border-white/15 transition-all"
+              aria-label="Recentrer sur le campus ESSECT"
+              className="cs-icon-btn"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-5 h-5" />
             </button>
           )}
         </div>
       </div>
 
       {/* 2. ZONE CENTRALE : VUE 3D OU LISTE 2D */}
-      <div className="relative flex-1 w-full h-full">
+      <div className="relative flex-1 w-full min-h-0">
         {viewMode === '3D' ? (
-          <div ref={mapContainerRef} className="w-full h-full bg-[#0E0D0C]" />
+          <div ref={mapContainerRef} className="w-full h-full bg-[#E2D8C5]" />
         ) : (
           /* VUE 2D DE SECOURS */
-          <div className="w-full h-full overflow-y-auto p-6 max-w-5xl mx-auto space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div>
-                <h2 className="text-xl font-black text-white">Commerces autour de l'ESSECT</h2>
-                <p className="text-xs text-gray-400">Triés par proximité piétonne immédiate</p>
-              </div>
-              <span className="text-xs font-mono text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/30 px-2.5 py-1 rounded-full">
-                {sortedMerchants.length} établissements
-              </span>
-            </div>
+          <div className="w-full h-full overflow-y-auto">
+            <div className="cs-container cs-page">
+              <header className="mb-10">
+                <p className="cs-eyebrow mb-3">Autour de l'ESSECT</p>
+                <h2 className="cs-display">Commerces à portée</h2>
+                <p className="cs-lead mt-4 max-w-2xl">
+                  {sortedMerchants.length} établissements triés par proximité piétonne immédiate.
+                </p>
+              </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sortedMerchants.map((m, idx) => (
-                <div
-                  key={m.id || m.merchantId}
-                  onClick={() => handleSelectMerchant(m)}
-                  className="bg-[#161412] border border-white/10 hover:border-[#FF5500]/50 rounded-2xl p-4 transition-all cursor-pointer flex flex-col justify-between group shadow-xl"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-[#F5C400] text-black font-extrabold text-xs flex items-center justify-center">
-                          {idx + 1}
-                        </span>
-                        <h3 className="font-black text-white text-base group-hover:text-[#FF5500] transition-colors">
-                          {m.name}
-                        </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedMerchants.map((m, idx) => (
+                  <button
+                    type="button"
+                    key={m.id || m.merchantId}
+                    onClick={() => handleSelectMerchant(m)}
+                    className="cs-card cs-card-hover p-6 text-left flex flex-col justify-between gap-5 group"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <span className="cs-dot-badge shrink-0">{idx + 1}</span>
+                        <span className="cs-pill cs-pill-red">{m.activeOfferCount || 1} panier(s)</span>
                       </div>
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#FF5500]/20 text-[#FF5500] border border-[#FF5500]/30">
-                        {m.activeOfferCount || 1} panier(s)
+                      <h3 className="cs-h3 line-clamp-2 group-hover:text-[#DA0711] transition-colors">{m.name}</h3>
+                      <p className="text-base text-[#5E5850] mt-2 line-clamp-2">{m.description || m.type}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t-2 border-[#111111]/10">
+                      <span className="flex items-center gap-2 font-semibold uppercase text-[15px]">
+                        <Footprints className="w-5 h-5 text-[#DA0711]" aria-hidden="true" />
+                        {m.walkingMinutes || 4} min à pied
+                      </span>
+                      <span className="cs-link flex items-center gap-1">
+                        Voir <ChevronRight className="w-4 h-4" aria-hidden="true" />
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 mb-3 line-clamp-2">{m.description || m.type}</p>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-white/10">
-                    <span className="flex items-center gap-1 text-[#F5C400] font-bold">
-                      <Footprints className="w-3.5 h-3.5" />
-                      {m.walkingMinutes || 4} min à pied
-                    </span>
-                    <span className="text-white font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      Voir <ChevronRight className="w-3.5 h-3.5 text-[#FF5500]" />
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 3. HERO ÉDITORIAL OVERLAY TOP-LEFT (GRIDDLECAR image6.png) */}
-        {viewMode === '3D' && (
-          <div className="absolute top-6 left-6 z-20 pointer-events-none max-w-lg">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-mono uppercase tracking-widest text-amber-400 mb-2 shadow-xl">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500] animate-ping" />
-              Direct Montfleury • Stop 01 / 0{sortedMerchants.length || 5}
-            </div>
-
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight uppercase leading-[0.95] drop-shadow-2xl">
-              Autour de l’ESSECT,
-              <br />
-              <span className="text-[#FF5500]">heure par heure.</span>
-            </h2>
-
-            <p className="text-xs md:text-sm text-gray-300 mt-2 font-medium drop-shadow-md max-w-sm">
-              Circuits d'invendus, créneaux de collecte et trajets piétons en temps réel dans le quartier de Montfleury.
-            </p>
-          </div>
-        )}
-
-        {/* 4. CARTE GLASSMORPHIC FLOTTANTE À DROITE (SCHEDULE & ALERTES - image6.png) */}
-        {viewMode === '3D' && !selectedMerchant && (
-          <div className="absolute top-6 right-6 z-20 w-80 lg:w-96 bg-[#0E0D0C]/85 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#FF5500] font-black">
-                  Programme du Jour
-                </span>
-                <h3 className="text-base font-black text-white">Créneaux de Sauvetage</h3>
+                  </button>
+                ))}
               </div>
-              <span className="text-xs font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
-                Aujourd'hui
-              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}
+        {viewMode === '3D' && (
+          <div className="hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-md">
+            <div className="cs-card-ink p-6 lg:p-7">
+              <p className="cs-eyebrow !text-[#FFD000] mb-3 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711] animate-pulse" aria-hidden="true" />
+                Direct Montfleury · {sortedMerchants.length || 5} arrêts
+              </p>
+              <h2 className="cs-display !text-[#FAF3E6] !text-[clamp(2.75rem,4.5vw,4.25rem)]">
+                Autour de l’ESSECT, <span className="text-[#DA0711]">heure par heure.</span>
+              </h2>
+              <p className="text-lg text-[#FAF3E6]/85 mt-3 leading-snug">
+                Circuits d'invendus, créneaux de collecte et trajets piétons en temps réel.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 4. PANNEAU CRÈME À DROITE (PROGRAMME & ALERTES) */}
+        {viewMode === '3D' && !selectedMerchant && (
+          <div className="hidden lg:flex flex-col gap-4 absolute top-5 right-14 z-20 w-[360px] max-h-[calc(100%-2.5rem)] overflow-y-auto bg-[#FAF3E6] border-2 border-[#111111] rounded-[1.25rem] p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="cs-eyebrow">Programme du jour</p>
+                <h3 className="cs-h3 mt-1">Créneaux de sauvetage</h3>
+              </div>
+              <span className="cs-pill cs-pill-mustard">Aujourd'hui</span>
             </div>
 
             {/* Liste chronologique des créneaux */}
-            <div className="space-y-2">
+            <ul className="flex flex-col">
               {SCHEDULE_SLOTS.map((slot, index) => {
                 const targetM = sortedMerchants.find((m) => (m.id || m.merchantId) === slot.merchantId);
                 const isFirst = index === 0;
 
                 return (
-                  <div
-                    key={slot.time}
-                    onClick={() => {
-                      if (targetM) handleSelectMerchant(targetM);
-                    }}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between group ${
-                      isFirst
-                        ? 'bg-[#FF5500]/10 border-[#FF5500]/40 text-white'
-                        : 'bg-white/5 border-white/5 hover:border-white/20 text-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-1.5 h-7 rounded-full ${
-                          isFirst ? 'bg-[#FF5500]' : 'bg-gray-600 group-hover:bg-[#F5C400]'
-                        }`}
-                      />
-                      <div>
-                        <div className="text-[11px] font-mono text-gray-400 flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-[#FF5500]" />
-                          <span>{slot.time}</span>
-                        </div>
-                        <div className="text-xs font-extrabold text-white group-hover:text-[#FF5500] transition-colors">
-                          {targetM ? targetM.name : slot.label}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[10px] font-bold text-[#F5C400] font-mono">
+                  <li key={slot.time} className="border-b-2 border-[#111111]/10 last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (targetM) handleSelectMerchant(targetM);
+                      }}
+                      className={`w-full min-h-[3.5rem] py-3 px-2 -mx-2 rounded-xl flex items-center justify-between gap-3 text-left transition-colors hover:bg-[#EDE6D7] group ${
+                        isFirst ? 'bg-[#EDE6D7]' : ''
+                      }`}
+                    >
+                      <span className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={`w-1.5 self-stretch rounded-full ${isFirst ? 'bg-[#DA0711]' : 'bg-[#111111]/20 group-hover:bg-[#FFD000]'}`}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1.5 text-[14px] font-semibold text-[#5E5850]">
+                            <Clock className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />
+                            {slot.time}
+                          </span>
+                          <span className="block text-base font-semibold uppercase leading-tight line-clamp-2 group-hover:text-[#DA0711] transition-colors">
+                            {targetM ? targetM.name : slot.label}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="text-[14px] font-semibold whitespace-nowrap">
                         {targetM ? `${targetM.walkingMinutes || 3} min` : '5 min'}
                       </span>
-                    </div>
-                  </div>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
 
             {/* Notification de confirmation si l'alerte a été cliquée */}
             {alertSuccess && (
-              <div className="p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-xl text-xs text-emerald-300 font-bold flex items-center gap-2 animate-in fade-in duration-300">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
+              <div className="rounded-2xl bg-[#DDEFD9] text-[#1F7A3A] px-4 py-3 text-[15px] font-semibold flex items-center gap-2 animate-fadeIn" role="status">
+                <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
                 Alertes SMS & Push activées pour le prochain créneau !
               </div>
             )}
 
-            {/* Boutons CTA d'action (comme dans image6.png: Add week to calendar / Text me when parked) */}
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+            {/* Boutons CTA d'action */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => {
                   alert("Planning synchronisé avec l'agenda Google / ICS de l'ESSECT !");
                 }}
-                className="py-2.5 px-3 bg-white/10 hover:bg-white/15 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all border border-white/10"
+                className="cs-btn cs-btn-cream cs-btn-sm !px-3"
               >
-                <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                <span>+ Agenda</span>
+                <Calendar className="w-4 h-4" aria-hidden="true" />
+                <span>Agenda</span>
               </button>
 
-              <button
-                type="button"
-                onClick={handleTriggerAlert}
-                className="py-2.5 px-3 bg-[#FF5500] hover:bg-[#ff661a] text-black text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-[#FF5500]/30 hover:scale-[1.02]"
-              >
-                <Bell className="w-3.5 h-3.5" />
+              <button type="button" onClick={handleTriggerAlert} className="cs-btn cs-btn-red cs-btn-sm !px-3">
+                <Bell className="w-4 h-4" aria-hidden="true" />
                 <span>M'alerter</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* 5. TROIS FICHES NUMÉROTÉES EN BAS (1, 2, 3 AVEC "X MIN À PIED" - FIKA image3.png) */}
+        {/* 5. TROIS FICHES NUMÉROTÉES EN BAS (X MIN À PIED) */}
         {viewMode === '3D' && !selectedMerchant && (
-          <div className="absolute bottom-6 left-6 right-6 lg:right-[420px] z-20 pointer-events-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <div className="absolute bottom-4 left-0 right-0 sm:bottom-5 sm:left-5 sm:right-5 lg:right-[436px] z-20 pointer-events-none">
+            <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-none px-4 sm:px-0 pb-1">
               {topThreeMerchants.map((merchant, idx) => {
                 const num = idx + 1;
                 const cutoutUrl = getFramerFoodImage(merchant.name || merchant.type || '');
-                const photoUrl =
-                  MERCHANT_PHOTOS[merchant.id] ||
-                  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80';
+                const photoUrl = MERCHANT_PHOTOS[merchant.id] || FALLBACK_PHOTO;
                 const offersCount = merchant.activeOfferCount || merchant.activeOffers?.length || 2;
-                const minPrice = merchant.activeOffers?.[0]?.currentPriceMillimes || 3500;
+                const minPrice = merchant.activeOffers?.[0]?.currentPriceMillimes;
 
                 return (
                   <DepthCard
                     key={merchant.id || merchant.merchantId}
-                    maxTilt={12}
-                    scale={1.03}
-                    glare={true}
-                    maxGlare={0.25}
+                    maxTilt={8}
+                    scale={1.02}
+                    glare={false}
                     onClick={() => handleSelectMerchant(merchant)}
-                    className="cursor-pointer bg-[#141210]/90 backdrop-blur-xl border border-white/15 rounded-2xl p-3 shadow-2xl transition-all hover:border-[#FF5500]/60 group"
+                    className="pointer-events-auto cursor-pointer snap-start shrink-0 w-[78%] sm:w-[46%] md:w-auto bg-[#FAF3E6] border-2 border-[#111111] rounded-[1.25rem] p-3"
                   >
-                    {/* Badge Numéro Fika circulaire */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-[#F5C400] text-black font-black text-xs flex items-center justify-center border-2 border-black shadow-md">
-                          {num}
-                        </div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-extrabold">
-                          {merchant.type || 'RELAIS'}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-black uppercase text-[#FF5500] bg-[#FF5500]/15 px-2 py-0.5 rounded-full border border-[#FF5500]/30">
-                        {offersCount} panier(s)
-                      </span>
-                    </div>
-
-                    {/* Image / Miniature 3D flottante avec cutout transparent */}
-                    <DepthCard.Floating depth={30} shadow={true} className="overflow-hidden rounded-xl h-24 mb-2.5 relative bg-gradient-to-br from-white/5 to-white/0 border border-white/10 flex items-center justify-center p-2">
+                    {/* Photo pleine largeur */}
+                    <div className="cs-photo cs-photo-zoom aspect-[16/9] rounded-xl">
                       <img
-                        src={cutoutUrl}
+                        src={photoUrl}
                         alt={merchant.name}
-                        className="max-h-full max-w-full object-contain filter drop-shadow(0 8px 16px rgba(0,0,0,0.5)) transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
-                          e.currentTarget.src = photoUrl;
+                          e.currentTarget.src = cutoutUrl;
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[11px] text-white font-bold pointer-events-none">
-                        <span className="truncate">{merchant.name}</span>
-                        <span className="text-[#FF5500] font-mono font-black">{formatTND(minPrice)}</span>
-                      </div>
-                    </DepthCard.Floating>
+                      <span className="cs-dot-badge absolute top-2 left-2 z-10 border-2 border-[#FAF3E6]">{num}</span>
+                      <span className="cs-pill cs-pill-mustard absolute top-2 right-2 z-10">{offersCount} panier(s)</span>
+                    </div>
 
-                    {/* Barre de métriques : X MIN À PIED */}
-                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-white/10">
-                      <span className="flex items-center gap-1.5 text-[#F5C400] font-black tracking-wide text-[11px]">
-                        <Footprints className="w-3.5 h-3.5 text-[#F5C400]" />
-                        {merchant.walkingMinutes || 3} MIN À PIED
-                      </span>
-                      <span className="text-gray-400 text-[10px] font-mono">
-                        {merchant.distanceM || merchant.distanceFromEssectM || 200} m
-                      </span>
+                    <div className="px-1 pt-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-[17px] font-bold uppercase leading-tight line-clamp-2">{merchant.name}</h3>
+                        <span className="cs-figure text-[1.6rem] text-[#DA0711] whitespace-nowrap">{priceOrDash(minPrice)}</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-2 text-[14px] font-semibold text-[#5E5850]">
+                        <span className="flex items-center gap-1.5 uppercase text-[#111111]">
+                          <Footprints className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />
+                          {merchant.walkingMinutes || 3} min à pied
+                        </span>
+                        <span>{distanceLabel(merchant)}</span>
+                      </div>
                     </div>
                   </DepthCard>
                 );
@@ -562,116 +530,91 @@ export default function HoloRadarPage() {
 
         {/* 6. TIROIR LATÉRAL : DÉTAILS D'UN COMMERCE CIBLÉ AVEC DRONE SWOOP */}
         {selectedMerchant && (
-          <div className="absolute top-0 right-0 z-40 w-full sm:w-[420px] h-full bg-[#0E0D0C]/95 backdrop-blur-2xl border-l border-white/15 p-6 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 overflow-y-auto">
+          <div className="absolute top-0 right-0 z-40 w-full sm:w-[440px] h-full bg-[#FAF3E6] sm:border-l-2 border-[#111111] p-6 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
             {/* Bouton de fermeture */}
-            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
-              <span className="text-xs uppercase font-black tracking-widest text-[#FF5500] flex items-center gap-2">
-                <Store className="w-4 h-4" /> Relais Partenaire Ciblé
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <span className="cs-eyebrow flex items-center gap-2">
+                <Store className="w-4 h-4" aria-hidden="true" /> Relais partenaire
               </span>
               <button
                 type="button"
                 onClick={handleCloseDrawer}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                aria-label="Fermer la fiche du commerce"
+                className="cs-icon-btn"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Photographie d'en-tête */}
-            <div className="relative rounded-2xl overflow-hidden h-36 mb-4 border border-white/10 shadow-lg">
+            <div className="cs-photo aspect-[16/9] mb-5">
               <img
-                src={
-                  MERCHANT_PHOTOS[selectedMerchant.id] ||
-                  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80'
-                }
+                src={MERCHANT_PHOTOS[selectedMerchant.id] || FALLBACK_PHOTO}
                 alt={selectedMerchant.name}
-                className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0E0D0C] via-transparent to-transparent" />
-              <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-white">{selectedMerchant.name}</h2>
-                  <p className="text-xs text-gray-300">{selectedMerchant.address?.street || 'Montfleury, Tunis'}</p>
-                </div>
-                <span className="text-xs font-mono font-bold bg-[#F5C400] text-black px-2 py-0.5 rounded-md">
-                  ★ {selectedMerchant.ratingAvg?.toFixed(1) || '4.8'}
-                </span>
-              </div>
+              <span className="cs-pill cs-pill-mustard absolute top-3 right-3 z-10">★ {ratingLabel(selectedMerchant)}</span>
             </div>
 
+            <h2 className="cs-figure text-[clamp(2.5rem,6vw,3.25rem)] uppercase">{selectedMerchant.name}</h2>
+            <p className="text-base text-[#5E5850] mt-1">{selectedMerchant.address?.street || 'Montfleury, Tunis'}</p>
+
             {/* Guide piétonnier Montfleury */}
-            <div className="bg-black/60 border border-white/10 p-3 rounded-2xl flex items-center justify-between text-xs mb-5">
-              <div className="flex items-center gap-2 text-[#F5C400] font-black">
-                <Footprints className="w-4 h-4" />
-                <span>{selectedMerchant.walkingMinutes || 3} min à pied depuis l'ESSECT</span>
-              </div>
-              <span className="text-gray-400 font-mono text-[11px]">
-                {selectedMerchant.distanceM || selectedMerchant.distanceFromEssectM || 200} m
+            <div className="cs-card-ink mt-5 mb-8 px-5 py-4 flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 font-semibold uppercase text-base text-[#FFD000]">
+                <Footprints className="w-5 h-5" aria-hidden="true" />
+                {selectedMerchant.walkingMinutes || 3} min à pied
               </span>
+              <span className="text-[15px] text-[#FAF3E6]/80">{distanceLabel(selectedMerchant)} de l'ESSECT</span>
             </div>
 
             {/* Paniers d'invendus disponibles */}
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">
-                  Paniers Disponibles ({selectedMerchant.activeOffers?.length || 0})
-                </h3>
-                <span className="text-[10px] font-mono text-[#FF5500]">Collecte directe</span>
+            <div className="flex-1">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h3 className="cs-h3">Paniers disponibles ({selectedMerchant.activeOffers?.length || 0})</h3>
               </div>
 
               {(!selectedMerchant.activeOffers || selectedMerchant.activeOffers.length === 0) ? (
-                <div className="p-6 bg-white/5 rounded-2xl text-center text-xs text-gray-400 border border-white/10">
-                  Tous les paniers de ce commerce ont été sauvés pour le moment.
-                  <br />
-                  <span className="text-amber-400 font-bold mt-1 inline-block">Prochain créneau à 16:00 !</span>
+                <div className="cs-card p-6 text-center">
+                  <p className="text-base">Tous les paniers de ce commerce ont été sauvés pour le moment.</p>
+                  <p className="cs-pill cs-pill-mustard mt-3">Prochain créneau à 16:00 !</p>
                 </div>
               ) : (
-                selectedMerchant.activeOffers.map((offer) => (
-                  <div
-                    key={offer.id || offer.offerId}
-                    className="bg-[#181615] border border-white/10 hover:border-[#FF5500]/50 rounded-2xl p-4 transition-all shadow-md group"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-sm font-black text-white leading-snug group-hover:text-[#FF5500] transition-colors">
-                        {offer.title}
-                      </h4>
-                      {offer.isSurprise && (
-                        <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black uppercase px-2 py-0.5 rounded-md">
-                          Panier Mystère
+                <div className="flex flex-col gap-4">
+                  {selectedMerchant.activeOffers.map((offer) => (
+                    <article key={offer.id || offer.offerId} className="cs-card p-5">
+                      <div className="flex justify-between items-start gap-3 mb-2">
+                        <h4 className="text-lg font-bold uppercase leading-tight line-clamp-2">{offer.title}</h4>
+                        {offer.isSurprise && <span className="cs-pill cs-pill-ink shrink-0">Mystère</span>}
+                      </div>
+
+                      <div className="flex items-baseline gap-3 mb-3">
+                        <span className="cs-figure text-[2.25rem] text-[#DA0711]">
+                          {priceOrDash(offer.currentPriceMillimes || offer.currentPrice)}
                         </span>
-                      )}
-                    </div>
+                        {offer.originalPriceMillimes && (
+                          <span className="text-base text-[#5E5850] line-through">
+                            {priceOrDash(offer.originalPriceMillimes)}
+                          </span>
+                        )}
+                      </div>
 
-                    <div className="flex items-baseline gap-2 mb-3">
-                      <span className="text-xl font-black text-[#FF5500]">
-                        {formatTND(offer.currentPriceMillimes || offer.currentPrice || 0)}
-                      </span>
-                      {offer.originalPriceMillimes && (
-                        <span className="text-xs text-gray-500 line-through">
-                          {formatTND(offer.originalPriceMillimes)}
+                      <div className="flex items-center justify-between gap-3 text-[15px] font-semibold text-[#5E5850] mb-4">
+                        <span className="flex items-center gap-1.5 text-[#111111]">
+                          <Clock className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />
+                          Fin dans {offer.minutesLeft || 35} min
                         </span>
-                      )}
-                    </div>
+                        <span>Stock : {offer.quantityAvailable || 1}</span>
+                      </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-white/10 mb-3 font-mono">
-                      <span className="flex items-center gap-1 text-[#F5C400]">
-                        <Clock className="w-3 h-3" />
-                        Fin dans {offer.minutesLeft || 35} min
-                      </span>
-                      <span>Stock : {offer.quantityAvailable || 1}</span>
-                    </div>
-
-                    <Link
-                      to={`/app/offers/${offer.id || offer.offerId}`}
-                      className="w-full py-2.5 bg-[#FF5500] hover:bg-[#ff661a] text-black text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#FF5500]/20 hover:scale-[1.01]"
-                    >
-                      Réserver ce panier <ArrowUpRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                ))
+                      <Link to={`/app/offers/${offer.id || offer.offerId}`} className="cs-btn cs-btn-red cs-btn-block">
+                        Réserver ce panier <ArrowUpRight className="w-5 h-5" aria-hidden="true" />
+                      </Link>
+                    </article>
+                  ))}
+                </div>
               )}
             </div>
           </div>

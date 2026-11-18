@@ -4,6 +4,7 @@
 
 import React from 'react';
 
+/** Biscuit surface (#EDE6D7, radius 20px) — the Griddle bestseller card. */
 export default function Card({
   children,
   variant = 'default',
@@ -11,21 +12,20 @@ export default function Card({
   onClick,
   ...props
 }) {
-  const baseStyles = 'rounded-2xl transition-all duration-200 relative';
-
   const variants = {
-    default: 'bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] text-[#111111]',
-    hoverable: 'bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] text-[#111111] hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(17,17,17,0.08)]',
-    interactive: 'bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] text-[#111111] hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(17,17,17,0.08)] cursor-pointer active:translate-y-0.5 active:scale-[0.99]',
-    glow: 'bg-[#EDE6D7] border border-[#DA0711]/30 shadow-[0_4px_20px_rgba(218,7,17,0.12)] text-[#111111]',
-    glass: 'bg-[#FAF3E6]/90 backdrop-blur-md border border-[#111111]/8 shadow-[0_8px_30px_rgba(17,17,17,0.05)] text-[#111111]',
-    white: 'bg-[#FFFFFF] border border-[#111111]/6 shadow-[0_8px_30px_rgba(17,17,17,0.06)] text-[#111111]',
+    default: 'cs-card',
+    hoverable: 'cs-card cs-card-hover',
+    interactive: 'cs-card cs-card-hover cursor-pointer',
+    glow: 'cs-card ring-2 ring-[#DA0711]',
+    glass: 'cs-card',
+    white: 'cs-card-paper',
+    dark: 'cs-card-ink',
   };
 
   return (
     <div
       onClick={onClick}
-      className={`${baseStyles} ${variants[variant] || variants.default} ${className}`}
+      className={`${variants[variant] || variants.default} ${className}`}
       {...props}
     >
       {children}

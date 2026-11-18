@@ -14,20 +14,24 @@ import {
   Cell,
 } from 'recharts';
 
+// Charte Griddle partagée par les graphiques
+const AXIS_TICK = { fontFamily: 'Oswald, sans-serif', fontSize: 14, fill: '#5E5850', fontWeight: 500 };
+const GRID_STROKE = 'rgba(17,17,17,0.08)';
+
 /**
- * Tooltip Griddle raffiné pour diagramme en barres
+ * Tooltip Griddle : papier crème, contour encre 2px
  */
 function CustomBarTooltip({ active, payload, label, formatter }) {
   if (active && payload && payload.length) {
     const item = payload[0];
     const displayVal = formatter ? formatter(item.value) : item.value;
     return (
-      <div className="bg-white border border-[#111111]/10 rounded-xl p-3 shadow-lg">
-        <p className="text-xs text-[#666] font-bold mb-1">{label}</p>
-        <p className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711]" />
+      <div className="bg-[#FAF3E6] border-2 border-[#111111] rounded-2xl px-4 py-3">
+        <p className="cs-label mb-1">{label}</p>
+        <p className="text-base font-semibold text-[#111111] flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-[#DA0711]" aria-hidden="true" />
           <span>{item.name || 'Total'} :</span>
-          <span className="text-[#DA0711] font-black">{displayVal}</span>
+          <span className="cs-figure text-2xl text-[#DA0711]">{displayVal}</span>
         </p>
       </div>
     );
@@ -64,50 +68,44 @@ export default function BarChartCard({
   }, [data]);
 
   return (
-    <div className="p-6 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_16px_rgba(17,17,17,0.03)] flex flex-col justify-between">
+    <div className="cs-card p-6 sm:p-8 flex flex-col h-full">
       {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
-          <h3 className="text-lg font-anton uppercase text-[#111111] tracking-wide">{title}</h3>
-          {subtitle && <p className="text-xs text-[#666] font-medium mt-0.5">{subtitle}</p>}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <h3 className="font-sans font-bold text-[22px] leading-tight uppercase text-[#111111]">{title}</h3>
+          {subtitle && <p className="text-base text-[#5E5850] mt-1">{subtitle}</p>}
         </div>
-        {headerAction && <div className="self-start sm:self-auto">{headerAction}</div>}
+        {headerAction && <div className="self-start shrink-0">{headerAction}</div>}
       </div>
 
       {/* Graphique SVG */}
       <div style={{ width: '100%', height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#111111" strokeOpacity={0.06} vertical={false} />
+          <BarChart data={normalizedData} margin={{ top: 10, right: 8, left: -6, bottom: 0 }}>
+            <CartesianGrid stroke={GRID_STROKE} vertical={false} />
             <XAxis
               dataKey={xKey}
-              stroke="#111111"
-              fontSize={11}
-              fontWeight={600}
+              tick={AXIS_TICK}
               tickLine={false}
-              axisLine={{ stroke: '#111111', strokeWidth: 1, strokeOpacity: 0.15 }}
+              axisLine={{ stroke: '#111111', strokeWidth: 2 }}
+              tickMargin={8}
             />
             <YAxis
-              stroke="#111111"
-              fontSize={11}
-              fontWeight={600}
+              tick={AXIS_TICK}
               tickLine={false}
-              axisLine={{ stroke: '#111111', strokeWidth: 1, strokeOpacity: 0.15 }}
+              axisLine={false}
               tickFormatter={yFormatter}
+              width={56}
             />
             <Tooltip
-              content={
-                <CustomBarTooltip
-                  formatter={tooltipFormatter || yFormatter}
-                />
-              }
-              cursor={{ fill: 'rgba(218, 7, 17, 0.05)' }}
+              content={<CustomBarTooltip formatter={tooltipFormatter || yFormatter} />}
+              cursor={{ fill: 'rgba(17, 17, 17, 0.05)' }}
             />
-            <Bar dataKey={yKey} name={name} radius={[6, 6, 0, 0]} maxBarSize={48}>
+            <Bar dataKey={yKey} name={name} radius={[8, 8, 0, 0]} maxBarSize={52}>
               {normalizedData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.color || (index % 3 === 2 ? '#FFD000' : barColor)}
+                  fill={entry.color || (index % 3 === 2 ? '#111111' : barColor)}
                 />
               ))}
             </Bar>

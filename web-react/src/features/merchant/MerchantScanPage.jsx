@@ -7,7 +7,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
-import { QrCode, KeyRound, CheckCircle2, XCircle, RotateCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { QrCode, KeyRound, CheckCircle2, RotateCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
+import Spinner from '../../components/ui/Spinner.jsx';
+
+// Valeur affichable sûre (jamais NaN / undefined)
+function safeNum(v) {
+  const n = Number(v);
+  return v != null && Number.isFinite(n) ? n : null;
+}
 
 export default function MerchantScanPage() {
   const [activeTab, setActiveTab] = useState('camera'); // 'camera' | 'manual'
@@ -149,169 +156,191 @@ export default function MerchantScanPage() {
     setScanning(false);
   }
 
-  return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        {/* En-tête */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider mb-2 shadow-sm">
-            <QrCode className="w-3.5 h-3.5" />
-            <span>Contrôle &amp; Validation</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111] mb-2">
-            Validation des Retraits
-          </h1>
-          <p className="text-xs sm:text-sm text-[#666] font-sans">
-            Vérifiez le Living Ticket de l'étudiant pour lui remettre son panier anti-gaspi.
-          </p>
-        </div>
+  const quantity = safeNum(result?.order?.quantity);
+  const points = safeNum(result?.pointsAwarded);
 
+  return (
+    <div className="cs-container cs-page">
+      {/* En-tête */}
+      <header className="mb-10 lg:mb-12 max-w-3xl">
+        <p className="cs-eyebrow mb-3">Contrôle au comptoir</p>
+        <h1 className="cs-display">Valider un retrait</h1>
+        <p className="cs-lead mt-4">
+          Scannez le Living Ticket de l'étudiant, ou saisissez son code de secours, puis remettez-lui son panier.
+        </p>
+      </header>
+
+      <div className="max-w-2xl">
         {/* Onglets de mode de scan */}
         {!result && (
-          <div className="flex bg-[#EDE6D7] border border-[#111111]/8 p-1.5 rounded-full mb-6 shadow-sm">
+          <div className="flex flex-wrap gap-3 mb-8" role="group" aria-label="Mode de validation">
             <button
               type="button"
+              aria-pressed={activeTab === 'camera'}
               onClick={() => {
                 setActiveTab('camera');
                 setErrorDetails(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full font-anton uppercase text-xs sm:text-sm transition-all cursor-pointer ${
-                activeTab === 'camera'
-                  ? 'bg-[#DA0711] text-white shadow-sm'
-                  : 'text-[#666] hover:text-[#111111]'
-              }`}
+              className="cs-chip !min-h-[3rem] !px-5"
             >
-              <QrCode className="w-4 h-4" />
-              Scanner Caméra
+              <QrCode className="w-5 h-5" aria-hidden="true" />
+              Caméra
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === 'manual'}
               onClick={() => {
                 setActiveTab('manual');
                 setErrorDetails(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full font-anton uppercase text-xs sm:text-sm transition-all cursor-pointer ${
-                activeTab === 'manual'
-                  ? 'bg-[#DA0711] text-white shadow-sm'
-                  : 'text-[#666] hover:text-[#111111]'
-              }`}
+              className="cs-chip !min-h-[3rem] !px-5"
             >
-              <KeyRound className="w-4 h-4" />
-              Saisie de Secours (6 chiffres)
+              <KeyRound className="w-5 h-5" aria-hidden="true" />
+              Code de secours
             </button>
           </div>
         )}
 
         {/* AFFICHAGE DU RÉSULTAT DU RETRAIT */}
         {result ? (
-          <div className="bg-[#EDE6D7] border border-[#15803D]/20 rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] text-center animate-in fade-in zoom-in-95 duration-300">
-            <div className="w-20 h-20 bg-[#DCFCE7] text-[#15803D] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="cs-card cs-fade-up p-6 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
+              <span
+                className="cs-stamp !border-[#1F7A3A] !text-[#1F7A3A] !text-[2.5rem] !px-5 self-start"
+                aria-hidden="true"
+              >
+                Validé
+              </span>
+              <div>
+                <h2 className="cs-title-lg">Retrait validé !</h2>
+                <p className="cs-lead mt-2 text-[#1F7A3A]">Remettez la commande à l'étudiant maintenant.</p>
+              </div>
             </div>
 
-            <h2 className="font-anton uppercase text-2xl sm:text-3xl text-[#111111] mb-1">
-              Retrait Validé !
-            </h2>
-            <p className="text-[#15803D] font-bold text-sm mb-6">
-              Remettre la commande à l'étudiant dès maintenant.
-            </p>
-
-            <div className="bg-white rounded-2xl p-5 border border-[#111111]/10 shadow-sm text-left space-y-3 mb-6">
-              <div className="flex justify-between items-center text-sm border-b border-[#111111]/10 pb-2">
-                <span className="text-[#666] font-mono text-xs">N° Commande :</span>
-                <span className="font-mono font-bold text-[#111111] tracking-wider">
-                  {result.order?.orderCode}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-[#111111]/10 pb-2">
-                <span className="text-[#666] font-mono text-xs">Étudiant :</span>
-                <span className="font-bold text-[#111111]">
-                  {result.order?.studentSnapshot?.displayName || 'Étudiant ESSECT'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-[#111111]/10 pb-2">
-                <span className="text-[#666] font-mono text-xs">Quantité :</span>
-                <span className="font-bold text-[#DA0711]">
-                  {result.order?.quantity} portion(s)
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[#666] font-mono text-xs">EcoPoints attribués :</span>
-                <span className="font-bold text-[#15803D]">
-                  +{result.pointsAwarded} pts
-                </span>
-              </div>
+            <div className="cs-receipt px-6 pt-6 mb-8">
+              <dl className="space-y-3 text-base">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#5E5850]">N° commande</dt>
+                  <dd className="font-bold tracking-wider text-right">{result.order?.orderCode || '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#5E5850]">Étudiant</dt>
+                  <dd className="font-bold text-right">
+                    {result.order?.studentSnapshot?.displayName || 'Étudiant ESSECT'}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#5E5850]">Quantité</dt>
+                  <dd className="font-bold text-[#DA0711] text-right">
+                    {quantity != null ? `${quantity} portion(s)` : '—'}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#5E5850]">EcoPoints</dt>
+                  <dd className="font-bold text-[#1F7A3A] text-right">{points != null ? `+${points} pts` : '—'}</dd>
+                </div>
+              </dl>
 
               {/* Révélation du panier surprise */}
               {result.isSurprise && result.reveal && (
-                <div className="mt-4 pt-3 border-t border-dashed border-[#111111]/20">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#DA0711] block mb-2 font-mono">
-                    🎁 Contenu Mystery Box Dévoilé :
-                  </span>
-                  <ul className="space-y-1">
+                <>
+                  <hr className="cs-receipt-rule" />
+                  <p className="font-bold uppercase text-[#DA0711] mb-3">🎁 Contenu du panier surprise</p>
+                  <ul className="space-y-2 text-base">
                     {result.reveal.items?.map((item, idx) => (
-                      <li key={idx} className="text-xs text-[#111111] flex justify-between font-mono">
-                        <span>• {item.name}</span>
-                        <span className="font-bold text-[#111111]">x{item.qty}</span>
+                      <li key={idx} className="flex justify-between gap-4">
+                        <span>{item.name}</span>
+                        <span className="font-bold">x{safeNum(item.qty) ?? 1}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
+                </>
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-full btn-griddle-primary py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer font-anton uppercase text-base"
-            >
-              <RotateCcw className="w-5 h-5" />
-              Scanner la commande suivante
+            <button type="button" onClick={handleReset} className="cs-btn cs-btn-red cs-btn-lg cs-btn-block">
+              <RotateCcw className="w-5 h-5" aria-hidden="true" />
+              Commande suivante
             </button>
           </div>
         ) : (
           <>
             {/* AFFICHAGE DES ERREURS DE VALIDATION */}
             {errorDetails && (
-              <div className="bg-[#FEE2E2] border border-[#DA0711]/20 shadow-sm rounded-3xl p-6 mb-6 text-center animate-in fade-in duration-200">
-                <div className="w-12 h-12 bg-white text-[#DA0711] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-                  <XCircle className="w-6 h-6" />
-                </div>
-                <h3 className="font-anton uppercase text-lg text-[#DA0711] mb-1">Refus du Billet</h3>
-                <p className="text-[#111111] text-sm mb-4 font-sans">{errorDetails.message}</p>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="inline-flex items-center gap-2 bg-white text-[#111111] border border-[#111111]/15 shadow-sm px-5 py-2 rounded-full text-xs font-bold transition-all hover:bg-[#FAF3E6] cursor-pointer"
+              <div
+                role="alert"
+                className="cs-fade-up mb-8 rounded-[1.25rem] bg-[#DA0711] text-[#FAF3E6] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-6"
+              >
+                <span
+                  className="cs-stamp !border-[#FAF3E6] !text-[#FAF3E6] !text-[2.25rem] !px-5 self-start"
+                  aria-hidden="true"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Réessayer
-                </button>
+                  Refusé
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="cs-h3 !text-2xl">Ticket refusé</h3>
+                  <p className="text-lg mt-1">{errorDetails.message}</p>
+                  <button type="button" onClick={handleReset} className="cs-btn cs-btn-cream cs-btn-sm mt-5 min-h-[44px]">
+                    <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                    Réessayer
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* VUE SCANNER CAMÉRA */}
+            {/* VUE SCANNER CAMÉRA : guichet encadré */}
             {activeTab === 'camera' && (
-              <div className="bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] text-center">
-                <div className="relative mx-auto rounded-2xl overflow-hidden bg-white max-w-[320px] aspect-square flex items-center justify-center border border-[#111111]/10 shadow-sm">
-                  <div id="qr-reader" className="w-full h-full" />
+              <div className="cs-card-ink p-5 sm:p-8">
+                <div className="flex items-center justify-between gap-3 mb-5">
+                  <span className="font-sans font-semibold uppercase tracking-[0.08em] text-[15px] text-[#FFD000]">
+                    Guichet de retrait
+                  </span>
+                  <span className="cs-pill cs-pill-mustard">
+                    <span
+                      className={`w-2 h-2 rounded-full ${scanning ? 'bg-[#DA0711] animate-pulse' : 'bg-[#111111]/40'}`}
+                      aria-hidden="true"
+                    />
+                    {scanning ? 'Caméra active' : 'Caméra en veille'}
+                  </span>
+                </div>
+
+                <div className="relative mx-auto w-full max-w-[420px] aspect-square rounded-2xl overflow-hidden bg-[#FAF3E6]">
+                  <div
+                    id="qr-reader"
+                    className="w-full h-full [&_video]:!w-full [&_video]:!h-full [&_video]:!object-cover"
+                  />
+
+                  {/* Coins de visée */}
+                  <div className="pointer-events-none absolute inset-6" aria-hidden="true">
+                    <span className="absolute top-0 left-0 w-12 h-12 border-t-[5px] border-l-[5px] border-[#FFD000] rounded-tl-2xl" />
+                    <span className="absolute top-0 right-0 w-12 h-12 border-t-[5px] border-r-[5px] border-[#FFD000] rounded-tr-2xl" />
+                    <span className="absolute bottom-0 left-0 w-12 h-12 border-b-[5px] border-l-[5px] border-[#FFD000] rounded-bl-2xl" />
+                    <span className="absolute bottom-0 right-0 w-12 h-12 border-b-[5px] border-r-[5px] border-[#FFD000] rounded-br-2xl" />
+                  </div>
+
+                  {!scanning && !loading && !cameraError && (
+                    <div className="pointer-events-none absolute inset-0 grid place-items-center text-[#111111]/50">
+                      <QrCode className="w-20 h-20" aria-hidden="true" />
+                    </div>
+                  )}
+
                   {loading && (
-                    <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-[#111111] z-10">
-                      <div className="w-8 h-8 border-3 border-[#DA0711] border-t-transparent rounded-full animate-spin mb-2" />
-                      <span className="text-xs font-bold font-mono">Vérification cryptographique...</span>
+                    <div className="absolute inset-0 bg-[#FAF3E6]/95 flex flex-col items-center justify-center gap-3 text-[#111111] z-10">
+                      <Spinner size="lg" />
+                      <span className="text-base font-semibold">Vérification du ticket…</span>
                     </div>
                   )}
                 </div>
 
                 {cameraError ? (
-                  <div className="mt-4 flex items-center gap-2 text-[#DA0711] text-xs bg-[#FEE2E2] border border-[#DA0711]/20 p-3.5 rounded-2xl text-left shadow-sm">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#DA0711] text-[#FAF3E6] p-4 text-base">
+                    <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
                     <span>{cameraError}</span>
                   </div>
                 ) : (
-                  <p className="text-xs text-[#666] mt-4 flex items-center justify-center gap-1.5 font-sans font-medium">
-                    <ShieldCheck className="w-4 h-4 text-[#15803D]" />
-                    Cadrez le QR code dynamique de l'étudiant dans le carré
+                  <p className="mt-6 flex items-center justify-center gap-2 text-base text-[#FAF3E6]/85 text-center">
+                    <ShieldCheck className="w-5 h-5 text-[#FFD000] shrink-0" aria-hidden="true" />
+                    Cadrez le QR code de l'étudiant dans le carré
                   </p>
                 )}
               </div>
@@ -319,28 +348,32 @@ export default function MerchantScanPage() {
 
             {/* VUE SAISIE MANUELLE DE SECOURS */}
             {activeTab === 'manual' && (
-              <div className="bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.04)]">
-                <form onSubmit={handleManualSubmit} className="space-y-5">
+              <div className="cs-card p-6 sm:p-10">
+                <form onSubmit={handleManualSubmit} className="space-y-7">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#666] mb-2 font-mono">
-                      Code Commande (ex : CS-7H9KZ)
+                    <label htmlFor="scan-order-code" className="cs-field-label">
+                      Code commande
                     </label>
                     <input
+                      id="scan-order-code"
                       type="text"
                       value={orderCode}
                       onChange={(e) => setOrderCode(e.target.value.toUpperCase())}
                       placeholder="CS-XXXXX"
                       maxLength={8}
                       required
-                      className="w-full bg-white border border-[#111111]/15 shadow-sm rounded-full px-5 py-3 text-[#111111] font-mono text-base uppercase tracking-wider focus:outline-none focus:border-[#DA0711] transition-all"
+                      autoComplete="off"
+                      className="cs-input cs-mono !min-h-[4rem] !text-2xl !font-bold uppercase tracking-[0.15em] text-center"
                     />
+                    <p className="cs-help-text">Exemple : CS-7H9KZ</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#666] mb-2 font-mono">
-                      Code de Secours (6 chiffres affichés sous le QR)
+                    <label htmlFor="scan-code6" className="cs-field-label">
+                      Code de secours (6 chiffres sous le QR)
                     </label>
                     <input
+                      id="scan-code6"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -349,21 +382,25 @@ export default function MerchantScanPage() {
                       placeholder="123456"
                       maxLength={6}
                       required
-                      className="w-full bg-white border border-[#111111]/15 shadow-sm rounded-full px-5 py-3 text-[#DA0711] font-mono text-2xl tracking-widest text-center focus:outline-none focus:border-[#DA0711] font-black transition-all"
+                      autoComplete="one-time-code"
+                      className="cs-input cs-mono !min-h-[4.5rem] !text-[2.25rem] !font-bold tracking-[0.35em] text-center text-[#DA0711]"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading || orderCode.length < 5 || code6.length !== 6}
-                    className="w-full btn-griddle-primary py-4 rounded-full text-base font-anton cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                    className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
                   >
                     {loading ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <>
+                        <Spinner size="sm" variant="white" />
+                        Vérification…
+                      </>
                     ) : (
                       <>
-                        <CheckCircle2 className="w-5 h-5" />
-                        Valider le Retrait
+                        <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
+                        Valider le retrait
                       </>
                     )}
                   </button>

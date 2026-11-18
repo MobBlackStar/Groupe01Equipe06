@@ -3,10 +3,10 @@
 // 🎯 À retenir pour la soutenance : "Ce système de notation 1-5 étoiles renforce la confiance communautaire."
 
 import React, { useState } from 'react';
-import { Star, X } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
-import { Spinner } from '../../components/ui/index.js';
+import { Modal, Spinner } from '../../components/ui/index.js';
 
 const RATING_LABELS = {
   1: '😞 Très déçu',
@@ -76,96 +76,86 @@ export default function RatingDialog({ isOpen, onClose, order, onSuccess }) {
   const activeScore = hoverRating || rating;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md bg-[#FAF3E6] border border-[#111111]/10 rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(17,17,17,0.15)] text-[#111111] space-y-5">
-        {/* Bouton de fermeture */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full border border-[#111111]/15 text-[#111111] hover:bg-[#EDE6D7] transition-colors cursor-pointer"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {submitted ? (
-          <div className="py-8 text-center space-y-3">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center text-3xl font-bold shadow-sm">
-              ✓
-            </div>
-            <h3 className="text-xl font-anton uppercase text-[#111111]">Merci pour votre avis !</h3>
-            <p className="text-xs text-[#666] font-medium">
-              Votre note encourage les artisans de Montfleury dans leur démarche anti-gaspi.
-            </p>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      title={submitted ? undefined : 'Votre avis'}
+      description={submitted ? undefined : `Pour ${offerTitle} chez ${merchantName}.`}
+    >
+      {submitted ? (
+        <div className="py-6 text-center">
+          <div className="w-24 h-24 mx-auto rounded-full bg-[#1F7A3A] text-[#FAF3E6] flex items-center justify-center text-5xl font-bold -rotate-6">
+            ✓
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#DA0711] font-bold">
-                ÉVALUATION DU REPAS
-              </span>
-              <h2 className="text-2xl font-anton uppercase text-[#111111] mt-1">
-                Comment était votre commande ?
-              </h2>
-              <p className="text-xs text-[#666] mt-1 font-medium">
-                Pour <strong>{offerTitle}</strong> chez <strong>{merchantName}</strong>.
-              </p>
+          <h3 className="cs-title mt-6">Merci pour votre avis !</h3>
+          <p className="cs-body text-[#5E5850] mt-3 max-w-sm mx-auto">
+            Votre note encourage les artisans de Montfleury dans leur démarche anti-gaspi.
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-7">
+          {/* Étoiles interactives */}
+          <div className="flex flex-col items-center gap-4">
+            <p className="cs-eyebrow">Comment était votre commande ?</p>
+            <div className="flex items-center justify-center gap-1 sm:gap-2" role="radiogroup" aria-label="Note sur 5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  role="radio"
+                  aria-checked={rating === star}
+                  aria-label={`${star} étoile${star > 1 ? 's' : ''}`}
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="w-12 h-12 sm:w-16 sm:h-16 inline-flex items-center justify-center rounded-full transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#FFD000] cursor-pointer"
+                >
+                  <Star
+                    strokeWidth={2}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 ${
+                      star <= activeScore
+                        ? 'text-[#111111] fill-[#FFD000]'
+                        : 'text-[#111111]/30 fill-transparent'
+                    }`}
+                  />
+                </button>
+              ))}
             </div>
+            <span className="cs-h3 text-center min-h-[1.6rem]">
+              {RATING_LABELS[activeScore] || 'Sélectionnez une note'}
+            </span>
+          </div>
 
-            {/* Étoiles interactives */}
-            <div className="py-2 flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
-                  >
-                    <Star
-                      className={`w-9 h-9 ${
-                        star <= activeScore
-                          ? 'text-[#FFD000] fill-[#FFD000]'
-                          : 'text-[#DDD]'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              <span className="text-xs font-anton text-[#111111] mt-1">
-                {RATING_LABELS[activeScore] || 'Sélectionnez une note'}
-              </span>
-            </div>
+          {/* Commentaire optionnel */}
+          <div>
+            <label htmlFor="rating-comment" className="cs-field-label">
+              Commentaire pour le commerçant (optionnel)
+            </label>
+            <textarea
+              id="rating-comment"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+              placeholder="Qualité des portions, rapidité d'accueil, fraîcheur..."
+              className="cs-input"
+            />
+          </div>
 
-            {/* Commentaire optionnel */}
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111111] mb-1.5">
-                Commentaire pour le commerçant (optionnel) :
-              </label>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
-                placeholder="Qualité des portions, rapidité d'accueil, fraîcheur..."
-                className="w-full p-3 rounded-2xl bg-white border border-[#111111]/15 text-[#111111] text-xs font-medium placeholder-[#888] outline-none shadow-sm focus:border-[#DA0711]"
-              />
-            </div>
+          {error && <p className="cs-error-text">⚠️ {error}</p>}
 
-            {error && (
-              <p className="text-xs text-[#DA0711] font-bold">⚠️ {error}</p>
+          <button type="submit" disabled={loading} className="cs-btn cs-btn-red cs-btn-block cs-btn-lg">
+            {loading ? (
+              <>
+                <Spinner size="sm" variant="white" />
+                <span>Validation en cours...</span>
+              </>
+            ) : (
+              <span>Envoyer mon avis ⭐</span>
             )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-griddle-primary py-3 cursor-pointer"
-            >
-              <span>{loading ? 'Validation en cours...' : 'Envoyer mon avis ⭐'}</span>
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
+          </button>
+        </form>
+      )}
+    </Modal>
   );
 }

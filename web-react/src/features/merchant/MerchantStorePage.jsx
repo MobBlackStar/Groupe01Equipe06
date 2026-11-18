@@ -13,10 +13,15 @@ import {
   Button,
   Input,
   Select,
-  Card,
-  Badge,
   Toast,
 } from '../../components/ui/index.js';
+
+const STATUS_LABEL = {
+  [MERCHANT_STATUS.APPROVED]: 'Approuvé',
+  [MERCHANT_STATUS.PENDING]: 'En attente',
+  [MERCHANT_STATUS.REJECTED]: 'Rejeté',
+  [MERCHANT_STATUS.SUSPENDED]: 'Suspendu',
+};
 
 export default function MerchantStorePage() {
   const [store, setStore] = useState({
@@ -123,111 +128,129 @@ export default function MerchantStorePage() {
     });
   }
 
+  const hasDistance = Number.isFinite(Number(distanceMeters));
+  const hasWalk = Number.isFinite(Number(walkingMins));
+  const addressLine = [store.street, store.area, store.city].filter(Boolean).join(', ');
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* BANDEAU D'AGRÉMENT TEMPS RÉEL */}
-        <PendingApprovalBanner
-          status={store.status}
-          statusReason={store.statusReason}
-        />
-
-        {/* Barre d'outils & Action de démonstration */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#111111]/10">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111]">{store.name}</h1>
-            <p className="text-xs text-[#666] mt-0.5 font-sans">
-              {store.street}, {store.area} • 📍 {distanceMeters}m de l'ESSECT (~{walkingMins} min à pied)
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={toggleDemoStatus}
-              className="text-xs font-bold px-4 py-2 rounded-full bg-white border border-[#111111]/15 shadow-sm hover:bg-[#FFD000] text-[#111111] transition-colors cursor-pointer"
-              title="Tester les 3 états d'agrément pour la soutenance"
-            >
-              🎭 Démo Statut ({store.status})
-            </button>
-
-            <Link to="/merchant/offers">
-              <Button variant="secondary" size="sm" leftIcon={<span>📦</span>}>
-                Mon Catalogue d'Offres
-              </Button>
-            </Link>
-          </div>
+    <div className="cs-container cs-page">
+      {/* En-tête */}
+      <header className="mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+        <div className="min-w-0">
+          <p className="cs-eyebrow mb-3">Ma boutique</p>
+          <h1 className="cs-display break-words">{store.name || 'Mon établissement'}</h1>
+          <p className="cs-lead mt-4 max-w-2xl">
+            {addressLine || 'Adresse à compléter'}
+          </p>
         </div>
 
-        {/* Formulaire de Modification */}
-        <Card className="p-6 sm:p-8 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
-          <h3 className="font-anton uppercase text-xl text-[#111111] mb-6 flex items-center gap-2 tracking-wide">
-            <span>⚙️</span> Paramètres de l'Établissement &amp; Coordonnées
-          </h3>
+        <div className="flex flex-wrap gap-3 shrink-0">
+          <Link to="/merchant/offers" className="cs-btn cs-btn-cream">
+            <span aria-hidden="true">📦</span>
+            <span>Mes offres</span>
+          </Link>
+          <button
+            type="button"
+            onClick={toggleDemoStatus}
+            className="cs-btn cs-btn-mustard"
+            title="Tester les 3 états d'agrément pour la soutenance"
+          >
+            <span aria-hidden="true">🎭</span>
+            <span>Démo statut</span>
+          </button>
+        </div>
+      </header>
 
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input
-                label="Nom de l'Enseigne"
-                required
-                value={store.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                leftIcon={<span>🏪</span>}
-              />
+      {/* BANDEAU D'AGRÉMENT TEMPS RÉEL */}
+      <PendingApprovalBanner
+        status={store.status}
+        statusReason={store.statusReason}
+        className="mb-12"
+      />
 
-              <Select
-                label="Type d'Établissement"
-                required
-                options={merchantTypeOptions}
-                value={store.type}
-                onChange={(e) => handleChange('type', e.target.value)}
-              />
-            </div>
+      {/* Repères clés */}
+      <section className="mb-16 grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="cs-stat">
+          <span className="cs-label">Distance ESSECT</span>
+          <span className="cs-stat-value">{hasDistance ? `${Math.round(distanceMeters)} m` : '—'}</span>
+        </div>
+        <div className="cs-stat">
+          <span className="cs-label">À pied</span>
+          <span className="cs-stat-value">{hasWalk ? `~${walkingMins} min` : '—'}</span>
+        </div>
+        <div className="cs-stat col-span-2 lg:col-span-1">
+          <span className="cs-label">Statut</span>
+          <span className="cs-stat-value text-[#DA0711]">{STATUS_LABEL[store.status] || store.status || '—'}</span>
+        </div>
+      </section>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#666] font-mono">
-                Description &amp; Spécialités
-              </label>
-              <textarea
-                rows={3}
-                value={store.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                className="w-full bg-white text-[#111111] text-sm rounded-2xl p-4 border border-[#111111]/15 shadow-sm focus:border-[#DA0711] outline-none font-sans font-medium"
-              />
-            </div>
+      {/* Formulaire de Modification */}
+      <section className="max-w-4xl">
+        <h2 className="cs-title mb-8">Fiche établissement</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input
-                label="Téléphone Contact"
-                required
-                value={store.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                leftIcon={<span>📞</span>}
-              />
+        <form onSubmit={handleSave} className="cs-card p-6 sm:p-10 space-y-7">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Input
+              label="Nom de l'enseigne"
+              required
+              value={store.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              leftIcon={<span>🏪</span>}
+            />
 
-              <Input
-                label="Horaires de Service"
-                required
-                value={store.openingHours}
-                onChange={(e) => handleChange('openingHours', e.target.value)}
-                leftIcon={<span>🕒</span>}
-              />
-            </div>
+            <Select
+              label="Type d'établissement"
+              required
+              options={merchantTypeOptions}
+              value={store.type}
+              onChange={(e) => handleChange('type', e.target.value)}
+            />
+          </div>
 
-            <div className="pt-4 flex justify-end">
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                isLoading={loading}
-                leftIcon={<span>💾</span>}
-              >
-                Enregistrer les Modifications
-              </Button>
-            </div>
-          </form>
-        </Card>
-      </div>
+          <div>
+            <label htmlFor="store-description" className="cs-field-label">
+              Description &amp; spécialités
+            </label>
+            <textarea
+              id="store-description"
+              rows={4}
+              value={store.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              className="cs-input"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Input
+              label="Téléphone"
+              required
+              value={store.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              leftIcon={<span>📞</span>}
+            />
+
+            <Input
+              label="Horaires de service"
+              required
+              value={store.openingHours}
+              onChange={(e) => handleChange('openingHours', e.target.value)}
+              leftIcon={<span>🕒</span>}
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={loading}
+              className="w-full sm:w-auto"
+            >
+              Enregistrer
+            </Button>
+          </div>
+        </form>
+      </section>
 
       {toast && (
         <Toast

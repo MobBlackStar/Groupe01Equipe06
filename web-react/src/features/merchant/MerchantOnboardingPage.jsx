@@ -12,8 +12,6 @@ import {
   Button,
   Input,
   Select,
-  Card,
-  Badge,
   Toast,
 } from '../../components/ui/index.js';
 
@@ -146,30 +144,32 @@ export default function MerchantOnboardingPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto space-y-8">
-        {/* Header */}
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD000] text-[#111111] text-xs font-black uppercase tracking-wider mb-3 shadow-sm border border-[#111111]/10">
-            <span>🏪</span> ESPACE COMMERÇANT ESSECT
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111]">
-            Enregistrer votre Établissement Partenaire
-          </h1>
-          <p className="text-xs sm:text-sm text-[#111111]/70 mt-1 font-sans">
-            Rejoignez le réseau anti-gaspillage de Montfleury et vendez vos invendus du soir aux étudiants.
-          </p>
-        </div>
+  const hasDistance = Number.isFinite(Number(distanceMeters));
 
-        <Card className="p-6 sm:p-8 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nom & Type */}
+  return (
+    <div className="cs-container cs-page">
+      {/* Header */}
+      <header className="mb-10 lg:mb-14 max-w-3xl">
+        <p className="cs-eyebrow mb-3">Devenir partenaire</p>
+        <h1 className="cs-display">Inscrire mon commerce</h1>
+        <p className="cs-lead mt-4">
+          Rejoignez le réseau anti-gaspillage de Montfleury et vendez vos invendus du soir aux étudiants de l'ESSECT.
+        </p>
+      </header>
+
+      <form onSubmit={handleSubmit} className="max-w-4xl space-y-14">
+        {/* 01 — Identité */}
+        <section>
+          <div className="flex items-baseline gap-4 mb-6">
+            <span className="cs-figure text-[48px] text-[#DA0711]">01</span>
+            <h2 className="cs-title">Votre enseigne</h2>
+          </div>
+          <div className="cs-card p-6 sm:p-10 space-y-7">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Input
-                label="Nom de l'Enseigne"
+                label="Nom de l'enseigne"
                 required
-                placeholder="ex: Baguette & Baguette Montfleury"
+                placeholder="ex : Baguette & Baguette Montfleury"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 error={errors.name}
@@ -177,7 +177,7 @@ export default function MerchantOnboardingPage() {
               />
 
               <Select
-                label="Type d'Établissement"
+                label="Type d'établissement"
                 required
                 options={merchantTypeOptions}
                 value={formData.type}
@@ -185,107 +185,123 @@ export default function MerchantOnboardingPage() {
               />
             </div>
 
-            {/* Description */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-black uppercase tracking-wider text-[#111111]/70 font-mono">
-                Description &amp; Spécialités <span className="text-[#DA0711]">*</span>
+            <div>
+              <label htmlFor="onboarding-description" className="cs-field-label">
+                Description &amp; spécialités <span className="text-[#DA0711]">*</span>
               </label>
               <textarea
-                rows={3}
-                placeholder="Décrivez vos spécialités appréciées des étudiants (sandwichs, plats chauds, pâtisseries)..."
+                id="onboarding-description"
+                rows={4}
+                placeholder="Vos spécialités appréciées des étudiants (sandwichs, plats chauds, pâtisseries)…"
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
-                className={`w-full bg-[#FAF3E6] text-[#111111] placeholder-[#111111]/40 text-sm rounded-2xl p-4 border border-[#111111]/15 transition-all outline-none font-sans font-medium ${
-                  errors.description ? 'border-[#DA0711] ring-1 ring-[#DA0711]' : 'focus:border-[#111111] focus:ring-1 focus:ring-[#111111]'
-                }`}
+                aria-invalid={errors.description ? 'true' : undefined}
+                className="cs-input"
               />
-              {errors.description && (
-                <p className="text-xs text-[#DA0711] font-bold mt-1">{errors.description}</p>
-              )}
+              {errors.description && <p className="cs-error-text">{errors.description}</p>}
             </div>
+          </div>
+        </section>
 
-            {/* Téléphone & Horaires */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input
-                label="Téléphone Professionnel (Tunisie)"
-                required
-                placeholder="+21671390111"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                error={errors.phone}
-                leftIcon={<span>📞</span>}
-                helperText="Format standard : +216 suivi de 8 chiffres"
-              />
+        {/* 02 — Contact */}
+        <section>
+          <div className="flex items-baseline gap-4 mb-6">
+            <span className="cs-figure text-[48px] text-[#DA0711]">02</span>
+            <h2 className="cs-title">Contact &amp; horaires</h2>
+          </div>
+          <div className="cs-card p-6 sm:p-10 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Input
+              label="Téléphone professionnel"
+              required
+              placeholder="+21671390111"
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              error={errors.phone}
+              leftIcon={<span>📞</span>}
+              helperText="+216 suivi de 8 chiffres"
+            />
 
-              <Input
-                label="Créneau d'Ouverture Habituel"
-                required
-                placeholder="08:00 - 21:00"
-                value={formData.openingHours}
-                onChange={(e) => handleChange('openingHours', e.target.value)}
-                leftIcon={<span>🕒</span>}
-              />
-            </div>
+            <Input
+              label="Horaires d'ouverture"
+              required
+              placeholder="08:00 - 21:00"
+              value={formData.openingHours}
+              onChange={(e) => handleChange('openingHours', e.target.value)}
+              leftIcon={<span>🕒</span>}
+            />
+          </div>
+        </section>
 
-            {/* Géolocalisation Montfleury */}
-            <div className="space-y-4 pt-4 border-t border-[#111111]/10">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h4 className="font-anton uppercase text-base text-[#111111] tracking-wide">
-                    Localisation dans le Quartier de Montfleury
-                  </h4>
-                  <p className="text-xs text-[#111111]/70 font-sans">
-                    L'établissement doit être accessible à pied depuis l'ESSECT (rayon ≤ 3 000 m).
-                  </p>
-                </div>
+        {/* 03 — Géolocalisation Montfleury */}
+        <section>
+          <div className="flex items-baseline gap-4 mb-3">
+            <span className="cs-figure text-[48px] text-[#DA0711]">03</span>
+            <h2 className="cs-title">Localisation</h2>
+          </div>
+          <p className="cs-body text-[#5E5850] mb-6 max-w-2xl">
+            Votre commerce doit être accessible à pied depuis l'ESSECT (rayon de 3 000 m maximum).
+          </p>
 
-                <Badge variant={isEligible ? 'green' : 'red'} size="md" dot>
-                  {isEligible ? `Éligible (${distanceMeters} m • ~${walkingMins} min à pied)` : `Non éligible (> 3 000 m)`}
-                </Badge>
-              </div>
-
-              {/* Raccourcis d'adresses Montfleury */}
+          <div className="cs-card p-6 sm:p-10 space-y-8">
+            {/* Lecture de la distance */}
+            <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
-                <span className="text-[11px] font-black uppercase text-[#111111]/60 block mb-2 font-mono">
-                  Sélection rapide d'adresse à Montfleury :
+                <span className="cs-label block mb-2">Distance de l'ESSECT</span>
+                <span className={`cs-figure text-[64px] ${isEligible ? 'text-[#111111]' : 'text-[#DA0711]'}`}>
+                  {hasDistance ? `${Math.round(distanceMeters)} m` : '—'}
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {montfleuryPresets.map((preset, idx) => (
+                {Number.isFinite(Number(walkingMins)) && (
+                  <span className="block text-base text-[#5E5850] mt-2">~{walkingMins} min à pied</span>
+                )}
+              </div>
+              <span className={`cs-pill !min-h-[2.5rem] !px-4 !text-base ${isEligible ? 'cs-pill-leaf' : 'cs-pill-red'}`}>
+                {isEligible ? '✓ Zone éligible' : '✗ Hors zone (> 3 000 m)'}
+              </span>
+            </div>
+
+            {/* Raccourcis d'adresses Montfleury */}
+            <div>
+              <span className="cs-field-label">Choisissez votre adresse</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {montfleuryPresets.map((preset, idx) => {
+                  const selected = formData.street === preset.name;
+                  return (
                     <button
                       key={idx}
                       type="button"
+                      aria-pressed={selected}
                       onClick={() => handleSelectPreset(preset)}
-                      className={`p-3 rounded-2xl border text-left text-xs transition-all ${
-                        formData.street === preset.name
-                          ? 'bg-[#DA0711] text-white border-[#DA0711] shadow-sm'
-                          : 'bg-[#FAF3E6] text-[#111111] border-[#111111]/10 hover:border-[#111111]/30 hover:bg-white shadow-sm'
+                      className={`min-h-[64px] rounded-2xl border-2 border-[#111111] px-4 py-3 text-left transition-colors ${
+                        selected ? 'bg-[#111111] text-[#FAF3E6]' : 'bg-white text-[#111111] hover:bg-[#FAF3E6]'
                       }`}
                     >
-                      <span className="font-bold block truncate">{preset.name}</span>
-                      <span className="text-[10px] opacity-80 font-mono">
-                        {distanceFromEssect(preset.lat, preset.lng)}m ESSECT
+                      <span className="block font-semibold text-base leading-tight">{preset.name}</span>
+                      <span className={`block text-[14px] mt-1 ${selected ? 'text-[#FFD000]' : 'text-[#5E5850]'}`}>
+                        {distanceFromEssect(preset.lat, preset.lng)} m de l'ESSECT
                       </span>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Bouton de Soumission */}
-            <div className="pt-4 border-t border-[#111111]/10 flex justify-end">
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                isLoading={loading}
-                leftIcon={<span>🚀</span>}
-              >
-                Déposer mon Dossier d'Agrément
-              </Button>
-            </div>
-          </form>
-        </Card>
-      </div>
+            {errors.location && <p className="cs-error-text">{errors.location}</p>}
+          </div>
+        </section>
+
+        {/* Bouton de Soumission */}
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            isLoading={loading}
+            className="w-full sm:w-auto"
+          >
+            Déposer mon dossier
+          </Button>
+        </div>
+      </form>
 
       {toast && (
         <Toast

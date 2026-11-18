@@ -7,72 +7,59 @@ import { computeUnitPrice } from '@shared/pricing.js';
 import { formatTND } from '@shared/money.js';
 import { PRICING_MODES } from '@shared/constants.js';
 
+const SIZES = {
+  sm: { price: 'text-[2rem]', old: 'text-base', pct: 'text-sm' },
+  md: { price: 'text-[2.6rem]', old: 'text-lg', pct: 'text-base' },
+  lg: { price: 'text-[4.25rem] md:text-[5rem]', old: 'text-2xl', pct: 'text-xl' },
+};
+
 function PriceTickerComponent({ offer, size = 'md', className = '' }) {
-  const isDutch = offer && (
-    (offer.pricing?.mode || offer.pricingType || offer.pricingMode || offer.mode) === PRICING_MODES.DUTCH_AUCTION ||
-    (offer.pricing?.mode || offer.pricingType || offer.pricingMode || offer.mode) === 'DUTCH' ||
-    (offer.pricing?.mode || offer.pricingType || offer.pricingMode || offer.mode) === 'DUTCH_AUCTION'
-  );
+  const mode = offer && (offer.pricing?.mode || offer.pricingType || offer.pricingMode || offer.mode);
+  const isDutch = mode === PRICING_MODES.DUTCH_AUCTION || mode === 'DUTCH' || mode === 'DUTCH_AUCTION';
 
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     if (!isDutch) return;
-
-    const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [isDutch]);
 
   if (!offer) return null;
 
-  const currentPrice = computeUnitPrice(offer, now);
-  const originalPrice = offer.originalPriceMillimes || offer.pricing?.originalPriceMillimes || 0;
+  const rawPrice = computeUnitPrice(offer, now);
+  const currentPrice = Number.isFinite(rawPrice) ? rawPrice : null;
+  const originalPrice = Number(offer.originalPriceMillimes || offer.pricing?.originalPriceMillimes || 0);
 
-  const discountPercent = originalPrice > currentPrice && originalPrice > 0
+  const discountPercent = currentPrice !== null && originalPrice > currentPrice && originalPrice > 0
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
-  const isLarge = size === 'lg';
+  const s = SIZES[size] || SIZES.md;
 
   return (
     <div className={`flex flex-col ${className}`}>
-      <div className="flex items-baseline gap-2 flex-wrap">
-        {/* Prix actuel en gros */}
-        <span
-          className={`font-anton tracking-tight text-[#E51C23] ${
-            isLarge ? 'text-3xl md:text-4xl' : 'text-2xl'
-          }`}
-        >
-          {formatTND(currentPrice)}
+      <div className="flex items-end gap-x-3 gap-y-1 flex-wrap">
+        <span className={`font-display leading-[0.85] tabular-nums text-[#DA0711] ${s.price}`}>
+          {currentPrice !== null ? formatTND(currentPrice) : '—'}
         </span>
 
-        {/* Prix d'origine barré */}
-        {originalPrice > currentPrice && (
-          <span className={`text-[#777] line-through font-mono font-bold ${isLarge ? 'text-lg' : 'text-xs'}`}>
-            {formatTND(originalPrice)}
-          </span>
-        )}
-
-        {/* Badge réduction */}
         {discountPercent > 0 && (
-          <span
-            className={`font-anton px-2 py-0.5 rounded-full bg-[#FFD000] text-[#111111] border border-[#111111]/10 shadow-sm ${
-              isLarge ? 'text-sm' : 'text-[11px]'
-            }`}
-          >
-            -{discountPercent}%
+          <span className="flex items-center gap-2 pb-1">
+            <span className={`line-through decoration-2 text-[#5E5850] font-medium tabular-nums ${s.old}`}>
+              {formatTND(originalPrice)}
+            </span>
+            <span className={`font-sticker leading-none px-2.5 py-1 rounded-full bg-[#FFD000] text-[#111111] -rotate-6 ${s.pct}`}>
+              -{discountPercent}%
+            </span>
           </span>
         )}
       </div>
 
-      {/* Indicateur Smart Decay */}
       {isDutch && (
-        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#DA0711]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#DA0711] animate-pulse" />
-          <span className="font-bold tracking-wide uppercase font-mono">Smart Decay actif</span>
+        <div className="flex items-center gap-2 mt-2 text-[0.875rem] font-semibold uppercase tracking-wide text-[#DA0711]">
+          <span className="w-2 h-2 rounded-full bg-[#DA0711] animate-pulse" />
+          Smart Decay : le prix baisse en direct
         </div>
       )}
     </div>

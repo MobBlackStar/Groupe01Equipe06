@@ -7,18 +7,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Globe,
-  Leaf,
-  ShoppingBag,
-  Coins,
-  Users,
-  Store,
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
   Plus,
   Minus,
   HelpCircle,
-  Flame,
 } from 'lucide-react';
 import EquivalenceTiles from './EquivalenceTiles.jsx';
 import FiliereLeaderboard from './FiliereLeaderboard.jsx';
@@ -83,7 +75,8 @@ export default function ImpactDashboardPage() {
           setData((prev) => ({
             ...prev,
             ...res.data,
-            stats: { ...prev.stats, ...(res.data.stats || {}) },
+            // L'API publique renvoie { global, equivalences, dailySeries } ; `stats` reste accepté par compatibilité
+            stats: { ...prev.stats, ...(res.data.global || res.data.stats || {}) },
           }));
         }
       } catch (err) {
@@ -101,156 +94,206 @@ export default function ImpactDashboardPage() {
 
   const stats = data.stats || DEMO_GLOBAL_IMPACT.stats;
 
+  // Gardes d'affichage : jamais de NaN / undefined à l'écran
+  const num = (v) => {
+    const n = Number(v);
+    return v === null || v === undefined || v === '' || !Number.isFinite(n) ? null : n;
+  };
+  const fr = (n, digits = 0) =>
+    n === null ? '—' : n.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+  const foodG = num(stats.foodSavedGrams);
+  const co2G = num(stats.co2SavedGrams);
+  const meals = num(stats.mealsRescued ?? stats.ordersCompleted);
+  const money = num(stats.moneySavedMillimes);
+  const students = num(stats.studentsParticipating);
+  const merchants = num(stats.merchantsParticipating);
+
+  const foodKg = fr(foodG === null ? null : Math.round(foodG / 1000));
+  const co2T = fr(co2G === null ? null : co2G / 1000000, 2);
+  const mealsLabel = fr(meals);
+  const moneyLabel = money === null ? '—' : formatTND(money);
+
+  const tickerItems = [
+    `${foodKg} kg de nourriture sauvés`,
+    `${co2T} t de CO₂ évitées`,
+    `${mealsLabel} repas sauvés`,
+    `${moneyLabel} rendus aux étudiants`,
+    `${fr(students)} étudiants engagés`,
+    `${fr(merchants)} commerces partenaires`,
+  ];
+
+  const bigFigures = [
+    { label: 'Nourriture sauvée', value: foodKg, unit: 'kg', color: 'text-[#DA0711]', note: 'Détournés de la poubelle à Montfleury' },
+    { label: 'CO₂ évité', value: co2T, unit: 't', color: 'text-[#111111]', note: 'Ratio officiel FAO : 2,5 kg CO₂e / kg' },
+    { label: 'Repas sauvés', value: mealsLabel, unit: '', color: 'text-[#111111]', note: 'Paniers et plats récupérés au comptoir' },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-16">
-        
-        {/* =========================================================================
-            SECTION 1 : HÉROS ÉDITORIAL AVEC SURLIGNAGE (image2.png / image5.png)
-            ========================================================================= */}
-        <section className="text-center max-w-4xl mx-auto space-y-5 pt-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider shadow-sm">
-            <Globe className="w-3.5 h-3.5" />
-            <span>BILAN ÉCOLOGIQUE &amp; SOLIDAIRE DU CAMPUS ESSECT MONTFLEURY</span>
-          </div>
-
-          <h1 className="font-anton uppercase text-4xl sm:text-6xl lg:text-7xl tracking-wide leading-tight text-[#111111]">
-            Chaque repas sauvé est{' '}
-            <span className="relative inline-block">
-              <span className="relative z-10 text-[#111111]">une victoire pour la planète.</span>
-              {/* Surlignage jaune feutre */}
-              <span
-                aria-hidden="true"
-                className="absolute -bottom-1 left-0 right-0 h-6 sm:h-10 bg-[#FFD000] -rotate-1 rounded-sm -z-0 opacity-90"
-              />
-            </span>
+    <div className="bg-[#FAF3E6] text-[#111111] min-h-screen overflow-x-hidden">
+      {/* =========================================================================
+          SECTION 1 : HÉROS ÉDITORIAL
+          ========================================================================= */}
+      <div className="cs-container cs-page !pb-12">
+        <header className="max-w-5xl">
+          <p className="cs-eyebrow mb-4 inline-flex items-center gap-2">
+            <Globe className="w-4 h-4" aria-hidden="true" />
+            <span>Bilan écologique &amp; solidaire · ESSECT Montfleury</span>
+          </p>
+          <h1 className="cs-display">
+            Chaque repas sauvé est <span className="cs-highlight">une victoire</span> pour la planète.
           </h1>
-
-          <p className="text-sm sm:text-lg text-[#666] font-sans leading-relaxed max-w-2xl mx-auto">
-            Mesurez l'empreinte environnementale consolidée de notre communauté : aliments détournés du gaspillage, pouvoir d'achat préservé pour les étudiants et gaz à effet de serre épargnés.
+          <p className="cs-lead mt-6 max-w-3xl">
+            L'empreinte consolidée de notre communauté : aliments détournés du gaspillage, pouvoir d'achat
+            préservé pour les étudiants et gaz à effet de serre épargnés.
           </p>
 
-          <div className="flex items-center justify-center gap-4 pt-4 flex-wrap">
-            <Link
-              to="/app/explore"
-              className="btn-griddle-primary px-8 py-3.5 text-lg"
-            >
-              <span>Sauver un repas à Montfleury</span>
-              <ArrowRight className="w-5 h-5 text-white" />
+          <div className="flex flex-wrap items-center gap-4 mt-8">
+            <Link to="/app/explore" className="cs-btn cs-btn-red cs-btn-lg">
+              <span>Sauver un repas</span>
+              <ArrowRight className="w-5 h-5" aria-hidden="true" />
             </Link>
             {!user && (
-              <Link
-                to="/register"
-                className="btn-griddle-outline px-8 py-3.5 text-sm"
-              >
-                Rejoindre le Club
+              <Link to="/register" className="cs-btn cs-btn-cream cs-btn-lg">
+                Rejoindre le club
               </Link>
             )}
           </div>
+        </header>
+
+        {/* =========================================================================
+            SECTION 2 : CHIFFRES MONUMENTAUX
+            ========================================================================= */}
+        <section className="mt-16 lg:mt-20 grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8" aria-label="Chiffres clés">
+          {bigFigures.map((fig, i) => (
+            <div
+              key={fig.label}
+              className="cs-fade-up border-t-2 border-[#111111] pt-5"
+              style={{ animationDelay: `${i * 90}ms` }}
+            >
+              <p className="cs-label">{fig.label}</p>
+              <p className={`cs-figure mt-3 text-[clamp(5.5rem,13vw,11rem)] leading-[0.82] ${fig.color}`}>
+                {fig.value}
+                {fig.unit && fig.value !== '—' && (
+                  <span className="text-[0.38em] ml-2 text-[#5E5850]">{fig.unit}</span>
+                )}
+              </p>
+              <p className="text-lg text-[#5E5850] mt-3">{fig.note}</p>
+            </div>
+          ))}
+        </section>
+      </div>
+
+      {/* =========================================================================
+          RUBAN TICKER ROUGE PLEINE LARGEUR
+          ========================================================================= */}
+      <div className="cs-ticker my-6">
+        <div className="cs-ticker-track">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="cs-ticker-item" aria-hidden={copy === 1 ? 'true' : undefined}>
+              {tickerItems.map((item) => (
+                <React.Fragment key={item}>
+                  <span>{item}</span>
+                  <span className="cs-ticker-star">★</span>
+                </React.Fragment>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="cs-container pb-[clamp(3rem,6vw,6rem)]">
+        {/* Tuiles secondaires */}
+        <section className="mt-16 mb-20 grid grid-cols-1 sm:grid-cols-3 gap-6" aria-label="Communauté">
+          <div className="cs-stat">
+            <span className="cs-label">Pouvoir d'achat préservé</span>
+            <span className="cs-stat-value text-[#DA0711]">{moneyLabel}</span>
+            <span className="text-base text-[#5E5850]">Économisés directement par les étudiants</span>
+          </div>
+          <div className="cs-stat">
+            <span className="cs-label">Étudiants engagés</span>
+            <span className="cs-stat-value">{fr(students)}</span>
+            <span className="text-base text-[#5E5850]">Sur les promotions ESSECT Montfleury</span>
+          </div>
+          <div className="cs-stat">
+            <span className="cs-label">Commerces partenaires</span>
+            <span className="cs-stat-value">{fr(merchants)}</span>
+            <span className="text-base text-[#5E5850]">Boulangeries, cafétérias et restaurants</span>
+          </div>
         </section>
 
         {/* =========================================================================
-            SECTION 2 : GRILLE DE MÉTRIQUES ÉDITORIALES
+            SECTION 3 : ÉQUIVALENCES ÉCOLOGIQUES
             ========================================================================= */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#666]">Nourriture Détournée</span>
-            <p className="font-anton text-4xl sm:text-5xl text-[#111111] mt-2">
-              {Math.round(stats.foodSavedGrams / 1000)} <span className="text-xl font-sans text-[#888] font-normal">kg</span>
+        <section className="mb-20 lg:mb-24">
+          <div className="mb-8">
+            <h2 className="cs-title">Concrètement, ça donne quoi ?</h2>
+            <p className="cs-body mt-3 text-[#5E5850] max-w-2xl">
+              Nos chiffres traduits en gestes du quotidien, sur la base des standards FAO et US EPA.
             </p>
-            <p className="text-xs text-[#666] font-sans mt-1">Équivalent à plus de 1 600 barquettes</p>
           </div>
-
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#666]">Empreinte CO2 Évitée</span>
-            <p className="font-anton text-4xl sm:text-5xl text-[#15803D] mt-2">
-              {(stats.co2SavedGrams / 1000000).toFixed(2)} <span className="text-xl font-sans text-[#888] font-normal">t</span>
-            </p>
-            <p className="text-xs text-[#666] font-sans mt-1">~5 800 km en voiture thermique évités</p>
-          </div>
-
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#666]">Pouvoir d'Achat Préservé</span>
-            <p className="font-anton text-4xl sm:text-5xl text-[#DA0711] mt-2">
-              {formatTND(stats.moneySavedMillimes)}
-            </p>
-            <p className="text-xs text-[#666] font-sans mt-1">Économisés directement par les étudiants</p>
-          </div>
-
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#666]">Étudiants Engagés</span>
-            <p className="font-anton text-4xl sm:text-5xl text-[#111111] mt-2">
-              {stats.studentsParticipating}
-            </p>
-            <p className="text-xs text-[#666] font-sans mt-1">Sur les promotions ESSECT Montfleury</p>
-          </div>
-        </section>
-
-        {/* =========================================================================
-            SECTION 3 : ÉQUIVALENCES ÉCOLOGIQUES & CLASSEMENT PAR FILIÈRE
-            ========================================================================= */}
-        <section className="space-y-6">
           <EquivalenceTiles co2SavedGrams={stats.co2SavedGrams} foodSavedGrams={stats.foodSavedGrams} />
+        </section>
+
+        {/* =========================================================================
+            SECTION 4 : CLASSEMENT PAR FILIÈRE
+            ========================================================================= */}
+        <section className="mb-20 lg:mb-24">
           <FiliereLeaderboard />
         </section>
 
         {/* =========================================================================
-            SECTION 4 : ACCORDÉON FAQ FIKA AVEC BOUTONS CIRCULAIRES +/- (image5.png)
+            SECTION 5 : ACCORDÉON FAQ
             ========================================================================= */}
-        <section className="rounded-3xl bg-[#EDE6D7] text-[#111111] p-6 sm:p-12 border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.06)]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+        <section className="cs-card-ink p-7 sm:p-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             {/* Colonne gauche éditoriale */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111111] text-[#FFD000] text-xs font-mono font-bold uppercase shadow-sm">
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>Bon à Savoir</span>
-              </div>
-              <h2 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#111111] leading-tight">
+            <div className="lg:col-span-5">
+              <span className="cs-pill cs-pill-mustard">
+                <HelpCircle className="w-4 h-4" aria-hidden="true" />
+                <span>Bon à savoir</span>
+              </span>
+              <h2 className="cs-display !text-[#FAF3E6] mt-5 !text-[clamp(3rem,5.5vw,5rem)]">
                 Avant de passer au comptoir.
               </h2>
-              <p className="text-sm text-[#666] font-sans leading-relaxed">
-                Les réponses courtes et précises aux questions fréquentes. Pour tout partenariat ou demande particulière, adressez-vous au bureau ESSECT.
+              <p className="text-lg text-[#FAF3E6]/80 mt-4 leading-relaxed">
+                Les réponses courtes aux questions fréquentes. Pour tout partenariat, adressez-vous au bureau ESSECT.
               </p>
             </div>
 
-            {/* Colonne droite accordéon FAQ (image5.png) */}
-            <div className="lg:col-span-7 space-y-3">
+            {/* Colonne droite accordéon FAQ */}
+            <div className="lg:col-span-7">
               {FAQ_ITEMS.map((item, idx) => {
                 const isOpen = openFaqIndex === idx;
 
                 return (
-                  <div
-                    key={idx}
-                    className="py-4 border-b border-[#111111]/10 transition-colors cursor-pointer"
-                    onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <h3 className="font-anton uppercase text-base sm:text-lg tracking-wide text-[#111111] leading-snug">
-                        {item.question}
-                      </h3>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-[#666] font-bold hidden sm:inline">
-                          {item.category}
+                  <div key={idx} className="border-b-2 border-[#FAF3E6]/15 last:border-b-0">
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between gap-4 py-5 text-left cursor-pointer"
+                      onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
+                      aria-expanded={isOpen}
+                    >
+                      <span className="min-w-0">
+                        <span className="cs-label !text-[#FFD000] block mb-1">{item.category}</span>
+                        <span className="block font-sans font-semibold uppercase text-lg sm:text-xl leading-snug text-[#FAF3E6]">
+                          {item.question}
                         </span>
-                        {/* Bouton circulaire jaune +/- (image5.png) */}
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm transition-transform duration-200 ${
-                            isOpen
-                              ? 'bg-[#DA0711] text-white rotate-180'
-                              : 'bg-[#FFD000] text-[#111111]'
-                          }`}
-                        >
-                          {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                        </div>
-                      </div>
-                    </div>
+                      </span>
+                      <span
+                        className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-colors ${
+                          isOpen ? 'bg-[#DA0711] text-[#FAF3E6]' : 'bg-[#FFD000] text-[#111111]'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {isOpen ? <Minus className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                      </span>
+                    </button>
 
                     {isOpen && (
-                      <div className="mt-3 text-xs sm:text-sm text-[#141210]/80 font-sans leading-relaxed animate-fadeIn pr-8">
+                      <p className="pb-6 pr-2 sm:pr-14 text-base sm:text-lg leading-relaxed text-[#FAF3E6]/85 animate-fadeIn">
                         {item.answer}
-                      </div>
+                      </p>
                     )}
                   </div>
                 );

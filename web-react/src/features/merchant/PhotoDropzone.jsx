@@ -58,75 +58,64 @@ export default function PhotoDropzone({ photoUrl, onPhotoChange, className = '' 
   }
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      <label className="text-xs font-black uppercase tracking-wider text-[#111111]/70 block font-mono">
-        Photo de Présentation du Plat
-      </label>
+    <div className={className}>
+      <span className="cs-field-label">Photo du plat</span>
 
-      {/* Dropzone Container */}
+      {/* Zone de dépôt */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`relative w-full h-44 rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center cursor-pointer overflow-hidden ${
-          dragActive
-            ? 'border-[#DA0711] bg-[#FEE2E2]'
-            : photoUrl
-            ? 'border-[#111111]/15 bg-white shadow-sm'
-            : 'border-[#111111]/20 bg-[#EDE6D7] hover:bg-white shadow-sm'
-        }`}
+        className={`group relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-[1.25rem] border-2 border-dashed border-[#111111] overflow-hidden cursor-pointer transition-colors ${
+          dragActive ? 'bg-[#FFD000]' : 'bg-[#FAF3E6] hover:bg-white'
+        } ${photoUrl ? 'border-solid' : ''}`}
       >
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={(e) => handleFiles(e.target.files)}
-          className="absolute inset-0 opacity-0 cursor-pointer z-10"
+          aria-label="Choisir une photo du plat"
+          className="absolute inset-0 opacity-0 cursor-pointer z-20"
         />
 
         {photoUrl ? (
-          <div className="relative w-full h-full flex items-center justify-center group">
+          <div className="cs-photo absolute inset-0 !rounded-none">
             <img
               src={photoUrl}
-              alt="Aperçu plat"
+              alt="Aperçu du plat"
               onError={(e) => { e.currentTarget.onerror = null; }}
-              className="max-h-full max-w-full object-cover rounded-2xl"
             />
-            <div className="absolute inset-0 bg-[#111111]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl z-20 pointer-events-none">
-              <span className="text-xs font-bold text-[#111111] bg-[#FFD000] px-4 py-2 rounded-full shadow-md">
-                Changer la photo (Glisser-déposer)
+            <div className="absolute inset-x-0 bottom-0 z-10 p-4 flex justify-center pointer-events-none">
+              <span className="cs-pill cs-pill-mustard !min-h-[2.5rem] !px-5 !text-[15px]">
+                Changer la photo
               </span>
             </div>
           </div>
         ) : (
-          <div className="space-y-1.5 pointer-events-none">
-            <span className="text-3xl block">📸</span>
-            <p className="text-xs font-bold text-[#111111]">
-              Glissez-déposez une photo culinaire ou cliquez pour parcourir
-            </p>
-            <p className="text-[10px] text-[#666] font-mono">
-              JPEG, PNG ou WEBP jusqu'à 5 Mo
-            </p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center pointer-events-none">
+            <span className="text-5xl leading-none" aria-hidden="true">📸</span>
+            <p className="cs-h3 !text-lg max-w-xs">Glissez une photo ici</p>
+            <p className="text-base text-[#5E5850]">ou touchez pour parcourir · JPEG, PNG, WEBP · 5 Mo max</p>
           </div>
         )}
       </div>
 
-      {error && <p className="text-xs font-bold text-[#DA0711] mt-1">{error}</p>}
+      {error && <p className="cs-error-text">{error}</p>}
 
-      {/* Preset illustrations tunisiennes */}
-      <div className="pt-1">
-        <span className="text-[10px] font-bold uppercase text-[#666] block mb-1.5 font-mono">
-          Ou choisissez une photo d'archive prête à l'emploi :
-        </span>
-        <div className="flex items-center gap-1.5 flex-wrap">
+      {/* Photos d'archive prêtes à l'emploi */}
+      <div className="mt-5">
+        <span className="cs-label block mb-3">Ou une photo d'archive</span>
+        <div className="flex flex-wrap gap-2.5">
           {PRESET_ILLUSTRATIONS.map((preset, idx) => (
             <button
               key={idx}
               type="button"
+              aria-pressed={photoUrl === preset.url}
               onClick={() => onPhotoChange(preset.url)}
-              className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-white border border-[#111111]/15 text-[#111111] hover:bg-[#FFD000] shadow-sm transition-colors flex items-center gap-1"
+              className="cs-chip !normal-case !text-[15px]"
             >
-              <span>{preset.emoji}</span>
+              <span aria-hidden="true">{preset.emoji}</span>
               <span>{preset.label}</span>
             </button>
           ))}

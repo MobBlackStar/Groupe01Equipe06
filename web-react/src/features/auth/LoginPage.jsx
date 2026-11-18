@@ -15,7 +15,16 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  AlertTriangle,
+  Zap,
 } from 'lucide-react';
+
+// Tuiles du 1-Click Demo Bar (présentation uniquement)
+const DEMO_ROLES = [
+  { type: 'student', label: 'Étudiant', hint: 'Yassine', Icon: GraduationCap, iconClass: 'bg-[#DA0711] text-white' },
+  { type: 'merchant', label: 'Commerçant', hint: 'Baguette', Icon: Store, iconClass: 'bg-[#FFD000] text-[#111111]' },
+  { type: 'admin', label: 'Admin', hint: 'ESSECT', Icon: ShieldCheck, iconClass: 'bg-[#111111] text-[#FAF3E6]' },
+];
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -95,252 +104,178 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
-      
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center relative z-10">
-        
-        {/* =========================================================================
-            COLONNE GAUCHE : POLAROID AUTHENTIQUE + REÇU THERMIQUE (IMAGE 3)
-            ========================================================================= */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center">
-          <div className="relative w-full max-w-md">
-            
-            {/* Ticket de caisse thermique en arrière-plan décalé */}
-            <div className="absolute -top-6 -right-4 sm:-right-8 w-68 sm:w-76 rounded-xl bg-white text-[#111111] p-5 font-mono text-[11px] shadow-xl rotate-4 border border-[#111111]/8 hidden sm:block pointer-events-none select-none z-0">
-              <div className="text-center font-anton text-xs uppercase tracking-wider pb-2 border-b border-dashed border-[#111111]/25">
-                CAMPUSSAVE · MONTFLEURY
-                <div className="text-[9px] font-sans font-normal text-[#666]">ESSECT 2026 · SERVICE MIDI & SOIR</div>
-              </div>
-              <div className="flex justify-between py-1 text-[10px] text-[#777]">
-                <span>18/11/2026</span>
-                <span>TABLE 07 · SERVEUR: FEDI</span>
-              </div>
-              <div className="space-y-1.5 py-2.5 border-t border-b border-dashed border-[#111111]/25 font-bold">
-                <div className="flex justify-between">
-                  <span>1x BAGUETTE FARCIE</span>
-                  <span className="font-anton text-[#DA0711]">3.800 DT</span>
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden">
+      <div className="cs-container cs-page">
+        {/* Marque */}
+        <Link
+          to="/"
+          className="inline-block font-title text-[#DA0711] text-2xl sm:text-3xl tracking-tight leading-none mb-10 lg:mb-14"
+        >
+          CAMPUSSAVE
+        </Link>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+          {/* =========================================================================
+              COLONNE GAUCHE : POLAROID INCLINÉ + STICKERS KNEWAVE
+              ========================================================================= */}
+          <div className="order-2 lg:order-1 flex justify-center">
+            <div className="relative w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[540px] px-3 sm:px-6 py-6">
+              <figure className="cs-polaroid rotate-[-4deg] hover:rotate-[-1deg]">
+                <span className="rs-tape-tl" />
+                <span className="rs-tape-tr" />
+                <div className="cs-photo rounded-[4px] aspect-square">
+                  <img
+                    src="/assets/griddle/food/teriyaki-poulet-bowl.webp"
+                    alt="Bowl de poulet teriyaki sauvé des invendus"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/assets/griddle/food/ramen-black-garlic.webp';
+                    }}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>1x PANIER MYSTÈRE</span>
-                  <span className="font-anton text-[#DA0711]">2.500 DT</span>
-                </div>
-                <div className="flex justify-between line-through text-[#999]">
-                  <span>0x GASPILLAGE ALIMENTAIRE</span>
-                  <span>0 DÉCHET</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center pt-2.5 font-bold text-xs">
-                <span>TOTAL :</span>
-                <span className="text-[#DA0711] font-anton text-sm">A BRIGHTER DAY</span>
-              </div>
-              {/* Tampon Caoutchouc Rouge PAYÉ */}
-              <div className="mt-2 text-center">
-                <span className="griddle-stamp text-[10px] py-0.5 px-2">
-                  PAID
-                </span>
-              </div>
-              {/* Code-barres simulé en bas */}
-              <div className="mt-3 pt-2 border-t border-dashed border-[#111111]/25 flex flex-col items-center">
-                <div className="h-6 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_4px)] opacity-70" />
-                <span className="text-[8px] font-bold tracking-widest text-[#777] mt-1">THANK YOU · COME HUNGRY</span>
-              </div>
-            </div>
+                <figcaption>sauvé &amp; savouré ♥</figcaption>
+              </figure>
 
-            {/* Cadre Polaroid Avant-Plan Tilted -3deg */}
-            <div className="relative z-10 w-full rs-polaroid rotate-[-3deg] cursor-pointer hover:rotate-0 transition-transform duration-300">
-              {/* Morceaux de ruban adhésif jaune Griddle */}
-              <span className="rs-tape-tl" />
-              <span className="rs-tape-tr" />
-
-              {/* Photo du Polaroid */}
-              <div className="w-full aspect-[4/3] rounded overflow-hidden bg-[#EDE6D7] relative">
-                <img
-                  src="/assets/griddle/food/hero-double-smash-tray.png"
-                  alt="Repas frais sauvé"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = '/assets/griddle/food/burger-smash-classic.png';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                
-                {/* Badge street food sur la photo */}
-                <div className="absolute top-3 left-3">
-                  <span className="sticker-red">
-                    -50% À -70%
-                  </span>
-                </div>
-                <div className="absolute bottom-3 right-3">
-                  <span className="px-3 py-1 rounded-full bg-[#FFD000] text-[#111111] text-[10px] font-anton shadow-sm">
-                    ESSECT MONTFLEURY
-                  </span>
-                </div>
-              </div>
-
-              {/* Légende manuscrite sous le Polaroid */}
-              <figcaption>
-                first bite, best bite ♥
-              </figcaption>
-            </div>
-          </div>
-        </div>
-
-        {/* =========================================================================
-            COLONNE DROITE : HEADLINE CONDENSÉE + INPUTS + 1-CLICK DEMO BAR
-            ========================================================================= */}
-        <div className="lg:col-span-6 flex flex-col justify-center space-y-6">
-          {/* Titre éditorial percutant */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider mb-3 shadow-sm">
-              <Flame className="w-3.5 h-3.5" />
-              <span>Plateforme Officielle ESSECT</span>
-            </div>
-            <h1 className="font-anton uppercase text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#111111] leading-none">
-              FAIT POUR ÊTRE <span className="text-[#DA0711]">PARTAGÉ.</span>
-            </h1>
-            <p className="mt-2 text-sm text-[#555] font-medium leading-relaxed">
-              Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.
-            </p>
-          </div>
-
-          {/* Erreur serveur éventuelle */}
-          {serverError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2.5">
-              <span className="text-base">⚠️</span>
-              <span>{serverError}</span>
-            </div>
-          )}
-
-          {/* Formulaire d'authentification tactile */}
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <div>
-              <label className="block text-xs font-anton uppercase tracking-wider text-[#111111] mb-1.5">
-                Adresse Email Universitaire
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
-                }}
-                placeholder="nom@essect.u-tunis.tn"
-                className={`w-full px-5 py-3 rounded-full bg-white border text-[#111111] text-sm outline-none transition-all font-medium ${
-                  errors.email
-                    ? 'border-[#DA0711] ring-1 ring-[#DA0711]'
-                    : 'border-[#111111]/10 focus:border-[#DA0711] focus:ring-1 focus:ring-[#DA0711]'
-                }`}
-              />
-              {errors.email && (
-                <p className="text-xs text-[#DA0711] font-bold mt-1">⚠️ {errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-anton uppercase tracking-wider text-[#111111] mb-1.5">
-                Mot de Passe
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
-                  }}
-                  placeholder="••••••••"
-                  className={`w-full px-5 py-3 pr-12 rounded-full bg-white border text-[#111111] text-sm outline-none transition-all font-medium ${
-                    errors.password
-                      ? 'border-[#DA0711] ring-1 ring-[#DA0711]'
-                      : 'border-[#111111]/10 focus:border-[#DA0711] focus:ring-1 focus:ring-[#DA0711]'
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#777] hover:text-[#111111]"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-xs text-[#DA0711] font-bold mt-1">⚠️ {errors.password}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full btn-griddle-primary py-3.5 cursor-pointer shadow-md"
-            >
-              <span>{isSubmitting ? 'Connexion en cours...' : 'SE CONNECTER'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* 1-Click Demo Bar (Jury Soutenance) */}
-          <div className="pt-4 border-t border-[#111111]/10 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-anton uppercase tracking-wider text-[#111111]">
-                ⚡ ACCÈS RAPIDE 1-CLIC (JURY ESSECT) :
+              {/* Stickers qui débordent du polaroid */}
+              <span className="cs-sticker cs-sticker-red absolute -top-1 right-0 z-20 text-[2rem] sm:text-[2.6rem] px-5 py-3">
+                -70%
               </span>
-              <span className="text-[10px] text-[#777] font-medium">Sans mot de passe</span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('student')}
-                disabled={isSubmitting}
-                className="p-3 rounded-2xl bg-[#EDE6D7] hover:bg-[#e2d9c7] border border-[#111111]/8 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer group active:scale-95 shadow-sm"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#DA0711] text-white flex items-center justify-center shadow-sm">
-                  <GraduationCap className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-anton uppercase tracking-wider text-[#111111]">Étudiant</span>
-                <span className="text-[9px] text-[#666] font-mono">Yassine</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('merchant')}
-                disabled={isSubmitting}
-                className="p-3 rounded-2xl bg-[#EDE6D7] hover:bg-[#e2d9c7] border border-[#111111]/8 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer group active:scale-95 shadow-sm"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#FFD000] text-[#111111] flex items-center justify-center shadow-sm">
-                  <Store className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-anton uppercase tracking-wider text-[#111111]">Commerçant</span>
-                <span className="text-[9px] text-[#666] font-mono">Baguette</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('admin')}
-                disabled={isSubmitting}
-                className="p-3 rounded-2xl bg-[#EDE6D7] hover:bg-[#e2d9c7] border border-[#111111]/8 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer group active:scale-95 shadow-sm"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#15803D] text-white flex items-center justify-center shadow-sm">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-anton uppercase tracking-wider text-[#111111]">Admin</span>
-                <span className="text-[9px] text-[#666] font-mono">ESSECT</span>
-              </button>
+              <span className="cs-sticker cs-sticker-mustard cs-sticker-tilt-r absolute bottom-24 left-0 sm:-left-3 z-20 text-[1.35rem] sm:text-[1.7rem] px-5 py-2.5">
+                ANTI-GASPI
+              </span>
             </div>
           </div>
 
-          {/* Lien d'inscription */}
-          <div className="text-center pt-2">
-            <span className="text-xs text-[#666] font-medium">
+          {/* =========================================================================
+              COLONNE DROITE : HEADLINE MONUMENTALE + FORMULAIRE + 1-CLICK DEMO BAR
+              ========================================================================= */}
+          <div className="order-1 lg:order-2 w-full max-w-xl lg:max-w-none mx-auto lg:mx-0">
+            <header className="mb-10">
+              <p className="cs-eyebrow mb-4 inline-flex items-center gap-2">
+                <Flame className="w-4 h-4" aria-hidden="true" />
+                Plateforme officielle ESSECT Montfleury
+              </p>
+              <h1 className="cs-hero text-[clamp(4rem,8vw,8.5rem)]">
+                FAIT POUR
+                <br />
+                ÊTRE <span className="text-[#DA0711]">PARTAGÉ.</span>
+              </h1>
+              <p className="cs-lead mt-6 max-w-lg">
+                Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.
+              </p>
+            </header>
+
+            {/* Erreur serveur éventuelle */}
+            {serverError && (
+              <div
+                role="alert"
+                className="mb-6 flex items-start gap-3 rounded-2xl border-2 border-[#DA0711] bg-white px-5 py-4 text-base font-semibold text-[#DA0711]"
+              >
+                <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
+                <span>{serverError}</span>
+              </div>
+            )}
+
+            {/* Formulaire d'authentification */}
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <div>
+                <label htmlFor="login-email" className="cs-field-label">
+                  Adresse email universitaire
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
+                  }}
+                  placeholder="nom@essect.u-tunis.tn"
+                  aria-invalid={errors.email ? 'true' : undefined}
+                  className="cs-input"
+                />
+                {errors.email && <p className="cs-error-text">{errors.email}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="login-password" className="cs-field-label">
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
+                    }}
+                    placeholder="••••••••"
+                    aria-invalid={errors.password ? 'true' : undefined}
+                    className="cs-input pr-16"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {errors.password && <p className="cs-error-text">{errors.password}</p>}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
+              >
+                <span>{isSubmitting ? 'Connexion en cours...' : 'Se connecter'}</span>
+                <ArrowRight className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </form>
+
+            {/* 1-Click Demo Bar (Jury Soutenance) */}
+            <section className="mt-12 pt-8 border-t-2 border-[#111111]" aria-label="Accès rapide démo">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-5">
+                <h2 className="cs-h3 inline-flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-[#DA0711]" aria-hidden="true" />
+                  Accès rapide 1-clic · Jury
+                </h2>
+                <span className="cs-label">Sans mot de passe</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {DEMO_ROLES.map(({ type, label, hint, Icon, iconClass }) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleDemoLogin(type)}
+                    disabled={isSubmitting}
+                    className="flex items-center gap-3 min-h-[64px] px-4 py-3 rounded-2xl border-2 border-[#111111] bg-[#FAF3E6] text-left cursor-pointer transition-all duration-200 hover:bg-white hover:-translate-y-0.5 hover:shadow-[0_4px_0_#111111] active:translate-y-0 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                  >
+                    <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
+                      <Icon className="w-5 h-5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-semibold uppercase text-lg leading-tight">{label}</span>
+                      <span className="block cs-mono text-[13px] text-[#5E5850] leading-tight mt-0.5">{hint}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Lien d'inscription */}
+            <p className="mt-10 text-base text-[#5E5850]">
               Pas encore inscrit sur CampusSave ?{' '}
-            </span>
-            <Link
-              to="/register"
-              className="text-xs font-anton uppercase tracking-wider text-[#DA0711] hover:underline"
-            >
-              Créer un compte étudiant ou commerçant →
-            </Link>
+              <Link to="/register" className="cs-link text-[#DA0711]">
+                Créer un compte étudiant ou commerçant →
+              </Link>
+            </p>
           </div>
         </div>
       </div>

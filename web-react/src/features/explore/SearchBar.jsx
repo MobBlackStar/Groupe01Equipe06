@@ -42,30 +42,26 @@ export default function SearchBar({
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div className="relative flex items-center bg-white border border-[#111111]/10 shadow-[0_4px_20px_rgba(17,17,17,0.04)] rounded-full overflow-hidden transition-all focus-within:ring-2 focus-within:ring-[#DA0711]/20">
-        {/* Icône Loupe */}
-        <Search className="absolute left-4.5 w-5 h-5 text-[#888] pointer-events-none" />
-
-        {/* Input de recherche */}
-        <input
-          type="text"
-          value={localQuery}
-          onChange={(e) => setLocalQuery(e.target.value)}
-          placeholder={placeholder}
-          className="w-full pl-12 pr-11 py-3 text-[#111111] placeholder-[#888] text-sm focus:outline-none bg-transparent font-medium"
-        />
-
-        {/* Bouton Effacer (X) */}
-        {localQuery && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="absolute right-3.5 p-1 rounded-full text-[#888] hover:text-[#111111] hover:bg-black/5 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
+      <label htmlFor="offer-search" className="sr-only">Rechercher une offre</label>
+      <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none" strokeWidth={2.5} />
+      <input
+        id="offer-search"
+        type="search"
+        value={localQuery}
+        onChange={(e) => setLocalQuery(e.target.value)}
+        placeholder={placeholder}
+        className="cs-input !min-h-[4rem] !pl-16 !pr-16 !text-xl"
+      />
+      {localQuery && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label="Effacer la recherche"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center hover:bg-[#EDE6D7] transition-colors"
+        >
+          <X className="w-5 h-5" strokeWidth={2.5} />
+        </button>
+      )}
     </div>
   );
 }

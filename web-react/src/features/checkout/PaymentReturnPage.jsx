@@ -7,6 +7,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { Spinner } from '../../components/ui/index.js';
+import { ArrowRight, RotateCcw, Ticket } from 'lucide-react';
 
 export default function PaymentReturnPage() {
   const [searchParams] = useSearchParams();
@@ -52,103 +53,155 @@ export default function PaymentReturnPage() {
     };
   }, [orderId, paymentRef]);
 
+  // Libellé et couleur du statut affiché sur le reçu
+  const receiptStatus = {
+    VERIFYING: { label: 'En vérification', className: 'text-[#5E5850]' },
+    SUCCESS: { label: 'Actif · Prêt pour le retrait', className: 'text-[#1F7A3A]' },
+    FAILED: { label: 'Non débité', className: 'text-[#DA0711]' },
+  }[state];
+
   return (
-    <div className="min-h-screen bg-[#FAF3E6] flex items-center justify-center p-4 sm:p-6 text-[#111111]">
-      <div className="max-w-md w-full bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-8 text-center space-y-6 shadow-[0_4px_24px_rgba(17,17,17,0.06)]">
-        {/* État 1 : Vérification en cours */}
-        {state === 'VERIFYING' && (
-          <div className="space-y-4 py-8">
-            <Spinner size="lg" />
-            <h2 className="text-xl font-anton uppercase text-[#111111]">Vérification du paiement en cours...</h2>
-            <p className="text-xs text-[#666] font-medium leading-relaxed">
-              Nous validons la transaction sécurisée avec la passerelle Konnect. Veuillez patienter un instant.
-            </p>
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden">
+      <div className="cs-container cs-page">
+        {/* Marque */}
+        <Link
+          to="/"
+          className="inline-block font-title text-[#DA0711] text-2xl sm:text-3xl tracking-tight leading-none mb-10 lg:mb-14"
+        >
+          CAMPUSSAVE
+        </Link>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          {/* =========================================================================
+              COLONNE GAUCHE : STATUT + PROCHAINES ÉTAPES
+              ========================================================================= */}
+          <div className="lg:col-span-7" aria-live="polite">
+            {/* État 1 : Vérification en cours */}
+            {state === 'VERIFYING' && (
+              <header>
+                <p className="cs-eyebrow mb-3">Paiement Konnect</p>
+                <h1 className="cs-display">
+                  Vérification <span className="text-[#DA0711]">en cours…</span>
+                </h1>
+                <p className="cs-lead mt-5 max-w-xl">
+                  Nous validons la transaction sécurisée avec la passerelle Konnect. Veuillez patienter un instant.
+                </p>
+                <div className="mt-10 flex items-center gap-4">
+                  <Spinner size="lg" />
+                  <span className="cs-label">Connexion à la banque</span>
+                </div>
+              </header>
+            )}
+
+            {/* État 2 : Succès */}
+            {state === 'SUCCESS' && (
+              <>
+                <header>
+                  <p className="cs-eyebrow !text-[#1F7A3A] mb-3">Paiement confirmé</p>
+                  <h1 className="cs-display">
+                    Repas <span className="text-[#DA0711]">sauvé !</span>
+                  </h1>
+                  <p className="cs-lead mt-5 max-w-xl">
+                    Votre commande a été réglée avec succès. Votre ticket de retrait dynamique avec QR code tournant est prêt.
+                  </p>
+                </header>
+
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                  <Link
+                    to={`/app/orders/${orderId}/ticket`}
+                    className="cs-btn cs-btn-red cs-btn-lg whitespace-normal text-center"
+                  >
+                    <Ticket className="w-6 h-6 shrink-0" aria-hidden="true" />
+                    <span>Accéder à mon ticket de retrait</span>
+                  </Link>
+                  <Link to="/app/orders" className="cs-btn cs-btn-cream cs-btn-lg whitespace-normal text-center">
+                    <span>Mes commandes</span>
+                    <ArrowRight className="w-5 h-5 shrink-0" aria-hidden="true" />
+                  </Link>
+                </div>
+              </>
+            )}
+
+            {/* État 3 : Échec */}
+            {state === 'FAILED' && (
+              <>
+                <header>
+                  <p className="cs-eyebrow mb-3">Échec du paiement</p>
+                  <h1 className="cs-display">
+                    Transaction <span className="text-[#DA0711]">non finalisée.</span>
+                  </h1>
+                  <p className="cs-lead mt-5 max-w-xl">
+                    {errorMessage || "Une anomalie est survenue lors de la confirmation bancaire. Aucun montant n'a été débité."}
+                  </p>
+                </header>
+
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/app/checkout/${orderId}`)}
+                    className="cs-btn cs-btn-mustard cs-btn-lg whitespace-normal text-center"
+                  >
+                    <RotateCcw className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>Réessayer le paiement</span>
+                  </button>
+                  <Link to="/app/explore" className="cs-btn cs-btn-cream cs-btn-lg whitespace-normal text-center">
+                    <span>Retour au catalogue</span>
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
-        )}
 
-        {/* État 2 : Succès */}
-        {state === 'SUCCESS' && (
-          <div className="space-y-5">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center text-3xl shadow-sm font-bold">
-              ✓
-            </div>
+          {/* =========================================================================
+              COLONNE DROITE : REÇU AVEC TAMPON
+              ========================================================================= */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+            <div className="relative w-full max-w-md rotate-[1.5deg]">
+              <article className="cs-receipt rounded-t-[1.25rem] p-7 sm:p-9 text-[15px]" aria-label="Récapitulatif du paiement">
+                <p className="font-display uppercase text-[2.75rem] leading-[0.9] text-center">CampusSave</p>
+                <p className="text-[13px] uppercase tracking-[0.18em] text-[#5E5850] text-center mt-2">
+                  Paiement · Konnect
+                </p>
 
-            <div>
-              <span className="text-xs font-bold text-[#15803D] uppercase tracking-wider font-mono">
-                Paiement Confirmé
-              </span>
-              <h1 className="text-3xl font-anton uppercase text-[#111111] mt-1">
-                Félicitations, Repas Sauvé !
-              </h1>
-              <p className="text-xs text-[#666] mt-2 leading-relaxed font-medium">
-                Votre commande a été réglée avec succès. Votre ticket de retrait dynamique avec QR Code tournant est prêt.
-              </p>
-            </div>
+                <hr className="cs-receipt-rule !my-6" />
 
-            <div className="p-4 rounded-2xl bg-white border border-[#111111]/10 text-xs text-left space-y-2 shadow-sm">
-              <div className="flex justify-between">
-                <span className="text-[#666] font-medium">Identifiant commande :</span>
-                <span className="font-mono text-[#111111] font-bold">{orderId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#666] font-medium">Statut du ticket :</span>
-                <span className="text-[#15803D] font-bold uppercase">Actif • Prêt pour le retrait</span>
-              </div>
-            </div>
+                <dl className="space-y-4">
+                  <div>
+                    <dt className="text-[13px] uppercase tracking-[0.12em] text-[#5E5850]">Commande</dt>
+                    <dd className="font-bold text-[17px] break-all">{orderId}</dd>
+                  </div>
+                  {paymentRef && (
+                    <div>
+                      <dt className="text-[13px] uppercase tracking-[0.12em] text-[#5E5850]">Référence</dt>
+                      <dd className="break-all">{paymentRef}</dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-[13px] uppercase tracking-[0.12em] text-[#5E5850]">Statut du ticket</dt>
+                    <dd className={`font-bold uppercase ${receiptStatus.className}`}>{receiptStatus.label}</dd>
+                  </div>
+                </dl>
 
-            <div className="space-y-3 pt-2">
-              <Link
-                to={`/app/orders/${orderId}/ticket`}
-                className="w-full btn-griddle-primary py-3.5 block text-center"
-              >
-                <span>Accéder à mon Ticket de Retrait 🎫 →</span>
-              </Link>
-              <Link
-                to="/app/orders"
-                className="text-xs font-bold text-[#666] hover:text-[#DA0711] block"
-              >
-                Voir l'historique de mes commandes
-              </Link>
-            </div>
-          </div>
-        )}
+                <hr className="cs-receipt-rule !my-6" />
 
-        {/* État 3 : Échec */}
-        {state === 'FAILED' && (
-          <div className="space-y-5">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#FEE2E2] text-[#DA0711] flex items-center justify-center text-3xl shadow-sm font-bold">
-              ✕
-            </div>
+                <div className="h-12 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_5px)] opacity-80" aria-hidden="true" />
+                <p className="text-[13px] tracking-[0.2em] text-[#5E5850] text-center mt-2">MERCI · À TRÈS VITE</p>
+              </article>
 
-            <div>
-              <span className="text-xs font-bold text-[#DA0711] uppercase tracking-wider font-mono">
-                Échec du Paiement
-              </span>
-              <h1 className="text-2xl font-anton uppercase text-[#111111] mt-1">
-                Transaction non finalisée
-              </h1>
-              <p className="text-xs text-[#666] mt-2 leading-relaxed font-medium">
-                {errorMessage || 'Une anomalie est survenue lors de la confirmation bancaire. Aucun montant n a été débité.'}
-              </p>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <button
-                type="button"
-                onClick={() => navigate(`/app/checkout/${orderId}`)}
-                className="w-full btn-griddle-yellow py-3"
-              >
-                <span>Réessayer le paiement</span>
-              </button>
-              <Link
-                to="/app/explore"
-                className="text-xs font-bold text-[#666] hover:text-[#DA0711] block"
-              >
-                Retourner au catalogue des offres
-              </Link>
+              {/* Tampon caoutchouc */}
+              {state === 'SUCCESS' && (
+                <span className="cs-stamp absolute top-[42%] right-4 sm:right-6 text-[2.75rem] sm:text-[3.25rem] bg-[#FFFDF8]/70" aria-hidden="true">
+                  PAYÉ
+                </span>
+              )}
+              {state === 'FAILED' && (
+                <span className="cs-stamp absolute top-[42%] right-4 sm:right-6 text-[2.25rem] sm:text-[2.75rem] bg-[#FFFDF8]/70" aria-hidden="true">
+                  REFUSÉ
+                </span>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

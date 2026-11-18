@@ -1,399 +1,591 @@
 /**
- * Griddle Total Visual Theme & Utility Classes (Framer Griddle High-Fidelity)
- * CampusSave - ESSECT Anti-Gaspillage Platform
- * 
- * True Framer Griddle Palette:
- * - Canvas: #FAF3E6 (Warm Butcher-Paper Cream)
- * - Cards: #EDE6D7 (Soft Biscuit / Cardboard), #FFFFFF (Pure Receipt / Paper)
- * - Ink: #111111 (Deep Warm Charcoal Ink)
- * - Accents: #DA0711 (Griddle Crimson Red), #FFD000 (Mustard Yellow)
- * 
- * Rule: Zero heavy comic-book borders! Zero harsh 4px black shadows!
- * Pure, open, warm organic diner aesthetic with crisp condensed typography.
+ * CampusSave × Griddle — Design System (single source of truth)
+ * ESSECT Montfleury Anti-Gaspillage Platform
+ *
+ * Mirrors the Framer "Griddle" reference site (framergribble.framer.website):
+ *   - Canvas  #FAF3E6  warm butcher-paper cream
+ *   - Biscuit #EDE6D7  cards (radius 16-24px, no border, no hard shadow)
+ *   - Ink     #111111  text + 2px button outlines
+ *   - Red     #DA0711  primary action, prices, accents
+ *   - Mustard #FFD000  stickers, highlights
+ *   - League Gothic (monumental) / Bowlby One SC (section titles) /
+ *     Oswald (body & UI) / Knewave (stickers) / Permanent Marker (captions) /
+ *     Space Mono (receipts)
+ *
+ * Usage guide for page authors: src/styles/README.md
  */
 
 :root {
-  --griddle-canvas: #FAF3E6;
-  --griddle-card: #EDE6D7;
+  --cs-cream: #FAF3E6;
+  --cs-biscuit: #EDE6D7;
+  --cs-sand: #E2D8C5;
+  --cs-paper: #FFFDF8;
+  --cs-ink: #111111;
+  --cs-muted: #5E5850;
+  --cs-red: #DA0711;
+  --cs-red-dark: #B0050D;
+  --cs-mustard: #FFD000;
+  --cs-leaf: #1F7A3A;
+  --cs-tape: rgba(255, 236, 170, 0.78);
+  --cs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cs-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* legacy aliases */
+  --griddle-canvas: var(--cs-cream);
+  --griddle-card: var(--cs-biscuit);
   --griddle-card-white: #FFFFFF;
-  --griddle-ink: #111111;
-  --griddle-red: #DA0711;
-  --griddle-yellow: #FFD000;
-  --griddle-radius-card: 1.25rem;
-  --griddle-radius-pill: 9999px;
-  --griddle-border-subtle: 1px solid rgba(17, 17, 17, 0.07);
-  --griddle-shadow-soft: 0 4px 20px rgba(17, 17, 17, 0.04);
-  --griddle-shadow-hover: 0 12px 32px rgba(17, 17, 17, 0.08);
+  --griddle-ink: var(--cs-ink);
+  --griddle-red: var(--cs-red);
+  --griddle-yellow: var(--cs-mustard);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background-color: var(--cs-cream);
+  color: var(--cs-ink);
+  font-family: 'Oswald', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Legacy `font-anton` utility now maps to Oswald (see tailwind.config) —
+   give it the confident semibold weight Griddle uses for UI labels. */
+.font-anton { font-weight: 600; letter-spacing: 0.02em; }
+
+/* ==========================================================================
+   1. TYPOGRAPHY
+   ========================================================================== */
+
+/* Monumental hero headline — "SMASHED. SEARED. SERVED." */
+.cs-hero {
+  font-family: 'League Gothic', 'Oswald', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(4.25rem, 11.5vw, 11.25rem);
+  line-height: 0.84;
+  letter-spacing: 0;
+  color: var(--cs-ink);
+}
+
+/* Page title — every screen opens with one */
+.cs-display {
+  font-family: 'League Gothic', 'Oswald', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(3.5rem, 7vw, 6.5rem);
+  line-height: 0.96; /* room for French capital accents (É, À) on wrapped lines */
+  color: var(--cs-ink);
+}
+
+/* Section title — "OUR BESTSELLERS" (Bowlby One SC, tight tracking) */
+.cs-title {
+  font-family: 'Bowlby One SC', 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--cs-ink);
+}
+
+.cs-title-lg {
+  font-family: 'Bowlby One SC', 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: clamp(2.25rem, 4.6vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+/* Card / item heading */
+.cs-h3 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+}
+
+/* Intro paragraph under a title */
+.cs-lead {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 400;
+  font-size: clamp(1.125rem, 1.6vw, 1.5rem);
+  line-height: 1.3;
+  color: var(--cs-ink);
+}
+
+.cs-body {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+/* Small uppercase label / eyebrow (never below 13px) */
+.cs-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cs-red);
+}
+
+.cs-label {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cs-muted);
+}
+
+.cs-muted { color: var(--cs-muted); }
+
+/* Big numbers (prices, KPIs) */
+.cs-figure {
+  font-family: 'League Gothic', 'Oswald', sans-serif;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-marker {
+  font-family: 'Permanent Marker', cursive;
+  font-weight: 400;
+}
+
+.cs-mono {
+  font-family: 'Space Mono', monospace;
+}
+
+/* Hand-drawn mustard highlight behind a word */
+.cs-highlight {
+  background-image: linear-gradient(transparent 58%, var(--cs-mustard) 58%, var(--cs-mustard) 92%, transparent 92%);
+  padding: 0 0.12em;
 }
 
 /* ==========================================================================
-   1. GRIDDLE CANVASES & CARDS
+   2. LAYOUT
    ========================================================================== */
 
-.griddle-canvas {
-  background-color: var(--griddle-canvas);
-  color: var(--griddle-ink);
+.cs-container {
+  width: 100%;
+  max-width: 1360px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 3vw, 2.5rem);
+  padding-right: clamp(1rem, 3vw, 2.5rem);
 }
 
-.griddle-card {
-  background-color: var(--griddle-card);
-  color: var(--griddle-ink);
-  border-radius: var(--griddle-radius-card);
-  border: var(--griddle-border-subtle);
-  box-shadow: var(--griddle-shadow-soft);
-  position: relative;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
+.cs-section { padding-top: clamp(3rem, 6vw, 6rem); padding-bottom: clamp(3rem, 6vw, 6rem); }
+.cs-page { padding-top: clamp(2rem, 4vw, 3.5rem); padding-bottom: clamp(3rem, 6vw, 6rem); }
 
-.griddle-card-white {
-  background-color: var(--griddle-card-white);
-  color: var(--griddle-ink);
-  border-radius: var(--griddle-radius-card);
-  border: var(--griddle-border-subtle);
-  box-shadow: 0 8px 30px rgba(17, 17, 17, 0.06);
-  position: relative;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.griddle-card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--griddle-shadow-hover);
-}
-
-.griddle-card-active:active {
-  transform: translateY(1px);
-}
+.cs-rule { height: 2px; background: var(--cs-ink); border: 0; }
 
 /* ==========================================================================
-   2. AUTHENTIC GRIDDLE BUTTONS (PILLS)
+   3. BUTTONS — 2px ink outline pills, Oswald 600 uppercase (Griddle "ORDER NOW")
    ========================================================================== */
 
-.btn-griddle-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background-color: #DA0711;
-  color: #FFFFFF !important;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.75rem 1.75rem;
-  border-radius: 9999px;
-  border: none;
-  cursor: pointer;
-  user-select: none;
-  box-shadow: 0 2px 10px rgba(218, 7, 17, 0.25);
-  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-griddle-primary:hover {
-  background-color: #bd060f;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(218, 7, 17, 0.35);
-}
-
-.btn-griddle-primary:active {
-  transform: translateY(1px) scale(0.98);
-}
-
-.btn-griddle-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background-color: transparent;
-  color: #111111;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.75rem 1.75rem;
-  border-radius: 9999px;
-  border: 1.5px solid #111111;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-griddle-outline:hover {
-  background-color: rgba(17, 17, 17, 0.05);
-  transform: translateY(-1px);
-}
-
-.btn-griddle-outline:active {
-  transform: translateY(1px) scale(0.98);
-}
-
-.btn-griddle-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background-color: #EDE6D7;
-  color: #111111;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.75rem 1.75rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(17, 17, 17, 0.08);
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.15s ease, background-color 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-griddle-secondary:hover {
-  background-color: #e2d9c7;
-  transform: translateY(-1px);
-}
-
-.btn-griddle-secondary:active {
-  transform: translateY(1px) scale(0.98);
-}
-
+.cs-btn,
+.btn-griddle-primary,
+.btn-griddle-outline,
+.btn-griddle-secondary,
 .btn-griddle-yellow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  background-color: #FFD000;
-  color: #111111;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.75rem 1.75rem;
+  gap: 0.6rem;
+  min-height: 3.25rem;
+  padding: 0 1.9rem;
   border-radius: 9999px;
-  border: none;
+  border: 2px solid var(--cs-ink);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  box-shadow: 0 2px 10px rgba(255, 208, 0, 0.3);
-  transition: transform 0.15s ease, background-color 0.15s ease;
-  white-space: nowrap;
+  text-decoration: none;
+  transition: transform 0.18s var(--cs-ease), background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s var(--cs-ease);
 }
 
-.btn-griddle-yellow:hover {
-  background-color: #eec200;
-  transform: translateY(-1px);
+.cs-btn:hover,
+.btn-griddle-primary:hover,
+.btn-griddle-outline:hover,
+.btn-griddle-secondary:hover,
+.btn-griddle-yellow:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--cs-ink); }
+
+.cs-btn:active,
+.btn-griddle-primary:active,
+.btn-griddle-outline:active,
+.btn-griddle-secondary:active,
+.btn-griddle-yellow:active { transform: translateY(1px); box-shadow: none; }
+
+.cs-btn:disabled, .cs-btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.cs-btn:focus-visible,
+.btn-griddle-primary:focus-visible,
+.btn-griddle-outline:focus-visible { outline: 3px solid var(--cs-mustard); outline-offset: 3px; }
+
+.cs-btn-red, .btn-griddle-primary { background: var(--cs-red); color: var(--cs-cream) !important; }
+.cs-btn-red:hover, .btn-griddle-primary:hover { background: var(--cs-red-dark); }
+
+.cs-btn-cream, .btn-griddle-outline { background: var(--cs-cream); color: var(--cs-ink); }
+.cs-btn-cream:hover, .btn-griddle-outline:hover { background: #FFFFFF; }
+
+.cs-btn-ink { background: var(--cs-ink); color: var(--cs-cream) !important; }
+.cs-btn-ink:hover { background: #2a2a2a; }
+
+.cs-btn-mustard, .btn-griddle-yellow { background: var(--cs-mustard); color: var(--cs-ink); }
+
+.cs-btn-biscuit, .btn-griddle-secondary { background: var(--cs-biscuit); color: var(--cs-ink); }
+
+.cs-btn-sm { min-height: 2.5rem; padding: 0 1.15rem; font-size: 0.95rem; gap: 0.45rem; }
+.cs-btn-lg { min-height: 3.75rem; padding: 0 2.4rem; font-size: 1.25rem; }
+.cs-btn-block { width: 100%; }
+
+/* Phones: long French labels wrap inside the pill instead of overflowing */
+@media (max-width: 639px) {
+  .cs-btn, .btn-griddle-primary, .btn-griddle-outline, .btn-griddle-secondary, .btn-griddle-yellow {
+    white-space: normal; text-align: center; line-height: 1.1; padding-top: 0.6rem; padding-bottom: 0.6rem; max-width: 100%;
+  }
 }
 
-.btn-griddle-yellow:active {
-  transform: translateY(1px) scale(0.98);
+/* Round icon button */
+.cs-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem; border-radius: 9999px;
+  border: 2px solid var(--cs-ink); background: var(--cs-cream); color: var(--cs-ink);
+  cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
+.cs-icon-btn:hover { background: var(--cs-ink); color: var(--cs-cream); }
+
+/* Text link with underline (Griddle "PRINT AGAIN") */
+.cs-link {
+  font-family: 'Oswald', sans-serif; font-weight: 600; text-transform: uppercase;
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px;
+  color: var(--cs-ink); cursor: pointer;
+}
+.cs-link:hover { color: var(--cs-red); }
 
 /* ==========================================================================
-   3. STICKERS & BADGES (DIE-CUT & PILL STICKERS)
+   4. SURFACES
    ========================================================================== */
 
-.sticker-yellow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #FFD000;
-  color: #111111;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  padding: 0.3rem 0.85rem;
-  border-radius: 9999px;
-  box-shadow: 0 2px 8px rgba(255, 208, 0, 0.4);
-  transform: rotate(-3deg);
-  user-select: none;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  white-space: nowrap;
-  border: 1px solid rgba(17, 17, 17, 0.08);
-}
-
-.sticker-yellow:hover {
-  transform: rotate(1deg) scale(1.05);
-}
-
-.sticker-red {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #DA0711;
-  color: #FFFFFF;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  padding: 0.3rem 0.85rem;
-  border-radius: 9999px;
-  box-shadow: 0 2px 8px rgba(218, 7, 17, 0.35);
-  transform: rotate(3deg);
-  user-select: none;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  white-space: nowrap;
-}
-
-.sticker-red:hover {
-  transform: rotate(0deg) scale(1.05);
-}
-
-.sticker-circle-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  background-color: #DA0711;
-  color: #FFFFFF;
-  font-family: 'Anton', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  border-radius: 9999px;
-  box-shadow: 0 2px 8px rgba(218, 7, 17, 0.35);
-  user-select: none;
-}
-
-/* ==========================================================================
-   4. POLAROID TAPE & THERMAL RECEIPT
-   ========================================================================== */
-
-.rs-polaroid {
-  background: #FFFFFF;
-  padding: 14px 14px 44px 14px;
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-radius: 3px;
+.cs-card, .griddle-card {
+  background: var(--cs-biscuit);
+  color: var(--cs-ink);
+  border-radius: 1.25rem;
   position: relative;
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.rs-polaroid figcaption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 12px;
+.cs-card-paper, .griddle-card-white {
+  background: #FFFFFF;
+  color: var(--cs-ink);
+  border-radius: 1.25rem;
+  border: 2px solid var(--cs-ink);
+  position: relative;
+}
+
+.cs-card-ink {
+  background: var(--cs-ink);
+  color: var(--cs-cream);
+  border-radius: 1.25rem;
+  position: relative;
+}
+
+.cs-card-hover, .griddle-card-hover {
+  transition: transform 0.35s var(--cs-ease), box-shadow 0.35s var(--cs-ease);
+}
+.cs-card-hover:hover, .griddle-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 30px 60px -28px rgba(17, 17, 17, 0.35);
+}
+.griddle-card-active:active { transform: translateY(1px); }
+
+.griddle-canvas { background-color: var(--cs-cream); color: var(--cs-ink); }
+
+/* Full-bleed photo frame — images ALWAYS cover, never letterbox */
+.cs-photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--cs-sand);
+}
+.cs-photo > img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  transition: transform 0.7s var(--cs-ease);
+}
+.cs-photo-zoom:hover > img, .group:hover .cs-photo-zoom > img { transform: scale(1.06); }
+
+/* Photo tile with title over it (Griddle "OUR STORY" / "MENU") */
+.cs-photo-tile::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(17,17,17,0) 35%, rgba(17,17,17,0.55) 100%);
+  pointer-events: none;
+}
+
+/* Stat tile */
+.cs-stat {
+  background: var(--cs-biscuit);
+  border-radius: 1.25rem;
+  padding: 1.5rem 1.6rem;
+  display: flex; flex-direction: column; gap: 0.35rem;
+}
+.cs-stat-value {
+  font-family: 'League Gothic', 'Oswald', sans-serif;
+  font-size: clamp(2.75rem, 4vw, 3.75rem);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   5. FORMS
+   ========================================================================== */
+
+.cs-field-label {
+  display: block;
+  font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 0.95rem;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--cs-ink);
+  margin-bottom: 0.5rem;
+}
+
+.cs-input {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  border: 2px solid var(--cs-ink);
+  background: #FFFFFF;
+  color: var(--cs-ink);
+  font-family: 'Oswald', sans-serif; font-size: 1.0625rem; font-weight: 400;
+  outline: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.cs-input::placeholder { color: rgba(17, 17, 17, 0.42); }
+.cs-input:focus { box-shadow: 0 0 0 4px rgba(255, 208, 0, 0.55); }
+.cs-input[aria-invalid='true'], .cs-input.is-error { border-color: var(--cs-red); box-shadow: 0 0 0 4px rgba(218, 7, 17, 0.15); }
+textarea.cs-input { border-radius: 1.25rem; min-height: 7rem; resize: vertical; }
+select.cs-input { appearance: none; padding-right: 2.75rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23111' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.2rem center; }
+
+.cs-error-text { color: var(--cs-red); font-weight: 600; font-size: 0.95rem; margin-top: 0.4rem; }
+.cs-help-text { color: var(--cs-muted); font-size: 0.95rem; margin-top: 0.4rem; }
+
+/* Segmented control / chips */
+.cs-chip {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  min-height: 2.75rem; padding: 0 1.15rem; border-radius: 9999px;
+  border: 2px solid var(--cs-ink); background: transparent; color: var(--cs-ink);
+  font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 1rem; text-transform: uppercase;
+  white-space: nowrap; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
+}
+.cs-chip:hover { background: rgba(17, 17, 17, 0.06); }
+.cs-chip[aria-pressed='true'], .cs-chip.is-active { background: var(--cs-ink); color: var(--cs-cream); }
+.cs-chip-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem; border-radius: 9999px;
+  background: var(--cs-red); color: #fff; font-size: 0.85rem; font-weight: 700;
+}
+
+
+/* Range slider: thick ink track, big red thumb */
+.cs-range { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; cursor: ew-resize; }
+.cs-range:focus { outline: none; }
+.cs-range::-webkit-slider-runnable-track { height: 10px; border-radius: 9999px; background: var(--cs-ink); }
+.cs-range::-moz-range-track { height: 10px; border-radius: 9999px; background: var(--cs-ink); }
+.cs-range::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; margin-top: -12px; border-radius: 9999px; background: var(--cs-red); border: 3px solid var(--cs-ink); box-shadow: 0 0 0 4px var(--cs-cream); transition: transform .15s var(--cs-pop); }
+.cs-range::-moz-range-thumb { width: 28px; height: 28px; border-radius: 9999px; background: var(--cs-red); border: 3px solid var(--cs-ink); box-shadow: 0 0 0 4px var(--cs-cream); }
+.cs-range:hover::-webkit-slider-thumb, .cs-range:focus-visible::-webkit-slider-thumb { transform: scale(1.15); }
+.cs-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--cs-cream), 0 0 0 7px var(--cs-mustard); }
+
+/* ==========================================================================
+   6. STICKERS & BADGES
+   ========================================================================== */
+
+/* Knewave die-cut oval stickers (Griddle "BURGERS" / "SMASHED") */
+.cs-sticker {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0.5rem 1.15rem; border-radius: 9999px;
+  font-family: 'Knewave', cursive; font-size: 1.15rem; line-height: 1; text-transform: uppercase;
+  letter-spacing: 0.01em;
+  box-shadow: 0 0 0 3px #fff, 0 10px 18px -8px rgba(17, 17, 17, 0.45);
+  transform: rotate(-6deg);
+  white-space: nowrap; user-select: none;
+  transition: transform 0.3s var(--cs-pop);
+}
+.cs-sticker:hover { transform: rotate(0deg) scale(1.06); }
+.cs-sticker-red { background: var(--cs-red); color: var(--cs-cream); }
+.cs-sticker-mustard { background: var(--cs-mustard); color: var(--cs-ink); }
+.cs-sticker-ink { background: var(--cs-ink); color: var(--cs-cream); }
+.cs-sticker-tilt-r { transform: rotate(5deg); }
+
+/* Round numbered badge ("#1", "HOT") */
+.cs-dot-badge, .sticker-circle-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem; border-radius: 9999px;
+  background: var(--cs-red); color: var(--cs-cream);
+  font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.95rem;
+}
+
+/* Flat status pill */
+.cs-pill {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  min-height: 1.9rem; padding: 0 0.8rem; border-radius: 9999px;
+  font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 0.875rem;
+  text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+  background: var(--cs-cream); color: var(--cs-ink);
+}
+.cs-pill-red { background: var(--cs-red); color: #fff; }
+.cs-pill-mustard { background: var(--cs-mustard); color: var(--cs-ink); }
+.cs-pill-ink { background: var(--cs-ink); color: var(--cs-cream); }
+.cs-pill-leaf { background: #DDEFD9; color: var(--cs-leaf); }
+.cs-pill-outline { background: transparent; box-shadow: inset 0 0 0 2px var(--cs-ink); }
+
+/* Legacy sticker pills */
+.sticker-yellow, .sticker-red {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0.4rem 1rem; border-radius: 9999px;
+  font-family: 'Knewave', cursive; font-size: 1rem; text-transform: uppercase;
+  box-shadow: 0 0 0 3px #fff, 0 8px 16px -8px rgba(17,17,17,0.45);
+  white-space: nowrap; user-select: none; transition: transform 0.3s var(--cs-pop);
+}
+.sticker-yellow { background: var(--cs-mustard); color: var(--cs-ink); transform: rotate(-4deg); }
+.sticker-red { background: var(--cs-red); color: var(--cs-cream); transform: rotate(4deg); }
+.sticker-yellow:hover, .sticker-red:hover { transform: rotate(0deg) scale(1.05); }
+
+/* ==========================================================================
+   7. POLAROID, TAPE, RECEIPT, STAMP
+   ========================================================================== */
+
+.cs-polaroid, .rs-polaroid {
+  background: #FFFFFF;
+  padding: 14px 14px 64px;
+  box-shadow: 0 30px 60px -22px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  transition: transform 0.5s var(--cs-ease);
+}
+.cs-polaroid figcaption, .rs-polaroid figcaption {
+  position: absolute; left: 0; right: 0; bottom: 18px;
   text-align: center;
-  font-family: 'Permanent Marker', cursive;
-  font-size: 1.1rem;
-  color: #1b1b1b;
+  font-family: 'Permanent Marker', cursive; font-size: 1.35rem; color: #1b1b1b;
   transform: rotate(-1.5deg);
 }
 
-.rs-tape-tl {
-  position: absolute;
-  top: -10px;
-  left: -14px;
-  width: 58px;
-  height: 22px;
-  background: rgba(255, 238, 178, 0.85);
-  box-shadow: 0 1px 4px rgba(20, 18, 16, 0.15);
-  transform: rotate(-35deg);
-  border: 1px dashed rgba(220, 195, 120, 0.5);
-  z-index: 10;
-  pointer-events: none;
+.cs-tape, .rs-tape-tl, .rs-tape-tr {
+  position: absolute; width: 96px; height: 30px;
+  background: var(--cs-tape);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  z-index: 10; pointer-events: none;
 }
+.rs-tape-tl { top: -12px; left: -22px; transform: rotate(-35deg); }
+.rs-tape-tr { top: -12px; right: -22px; transform: rotate(35deg); }
 
-.rs-tape-tr {
-  position: absolute;
-  top: -10px;
-  right: -14px;
-  width: 58px;
-  height: 22px;
-  background: rgba(255, 238, 178, 0.85);
-  box-shadow: 0 1px 4px rgba(20, 18, 16, 0.15);
-  transform: rotate(35deg);
-  border: 1px dashed rgba(220, 195, 120, 0.5);
-  z-index: 10;
-  pointer-events: none;
-}
-
-/* Thermal Paper Receipt */
-.griddle-receipt {
-  background-color: #FFFFFF;
-  border-radius: 8px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+.cs-receipt, .griddle-receipt {
+  background: var(--cs-paper);
+  color: #1B1B1B;
+  font-family: 'Space Mono', monospace;
+  box-shadow: 0 22px 40px -20px rgba(0, 0, 0, 0.4);
   position: relative;
-  font-family: 'Space Mono', 'Courier New', monospace;
-  overflow: hidden;
+  /* torn zig-zag bottom edge */
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 18px 100%;
+          mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 18px 100%;
+  padding-bottom: 28px;
 }
+.cs-receipt-rule { border: 0; border-top: 2px dashed rgba(27, 27, 27, 0.35); margin: 1rem 0; }
 
-.griddle-receipt::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background-color: #111111;
-}
-
-.griddle-stamp {
+.cs-stamp, .griddle-stamp {
   display: inline-block;
-  padding: 4px 14px;
-  border: 2px solid #DA0711;
-  color: #DA0711;
-  font-family: 'Anton', sans-serif;
-  font-size: 1.25rem;
-  letter-spacing: 0.12em;
+  padding: 0.25rem 1rem;
+  border: 3px solid var(--cs-red);
+  color: var(--cs-red);
+  font-family: 'Anton', 'Oswald', sans-serif;
+  font-size: 1.75rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   transform: rotate(-8deg);
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px rgba(218, 7, 17, 0.2);
+  border-radius: 6px;
   user-select: none;
 }
 
 /* ==========================================================================
-   5. RED TICKER RIBBON (FULL-BLEED MARQUEE)
+   8. RED TICKER RIBBON (full-bleed marquee)
    ========================================================================== */
 
-.griddle-ticker {
-  background-color: #DA0711;
-  color: #FFFFFF;
-  padding: 0.85rem 0;
+.cs-ticker, .griddle-ticker {
+  background: var(--cs-red);
+  color: var(--cs-cream);
   overflow: hidden;
   white-space: nowrap;
-  font-family: 'Anton', 'Oswald', sans-serif;
-  letter-spacing: 0.05em;
+  font-family: 'League Gothic', 'Oswald', sans-serif;
   text-transform: uppercase;
   user-select: none;
+  padding: 0.65rem 0;
 }
-
-.griddle-ticker-track {
-  display: inline-flex;
-  align-items: center;
-  animation: griddleTickerMarquee 28s linear infinite;
+.cs-ticker-track, .griddle-ticker-track {
+  display: inline-flex; align-items: center;
+  animation: griddleTickerMarquee 32s linear infinite;
 }
+.cs-ticker-item, .griddle-ticker-item { display: inline-flex; align-items: center; font-size: clamp(1.75rem, 3vw, 2.85rem); line-height: 1; }
+.cs-ticker-star, .griddle-ticker-star { color: var(--cs-mustard); margin: 0 1.5rem; font-size: 0.7em; }
 
 @keyframes griddleTickerMarquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
-.griddle-ticker-item {
-  display: inline-flex;
-  align-items: center;
-  font-size: 1.15rem;
-}
-
-.griddle-ticker-star {
-  color: #FFD000;
-  margin: 0 1.25rem;
-  font-size: 1rem;
-}
-
 /* ==========================================================================
-   6. MONUMENTAL BUBBLE FOOTER LOGO
+   9. MONUMENTAL FOOTER WORDMARK
    ========================================================================== */
 
-.griddle-bubble-logo {
+.cs-wordmark, .griddle-bubble-logo {
   font-family: 'Bowlby One SC', 'Anton', sans-serif;
-  color: #DA0711;
-  font-size: clamp(3.5rem, 15.5vw, 16rem);
+  color: var(--cs-red);
+  font-size: clamp(3rem, 12.4vw, 13.5rem);
+  white-space: nowrap;
   line-height: 0.85;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.05em;
   text-align: center;
   text-transform: uppercase;
   user-select: none;
   pointer-events: none;
-  font-weight: 900;
+}
+
+/* ==========================================================================
+   10. TABLES (admin / merchant lists)
+   ========================================================================== */
+
+.cs-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 1rem; }
+.cs-table thead th {
+  text-align: left; font-weight: 600; font-size: 0.875rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--cs-muted); padding: 0.9rem 1.1rem; border-bottom: 2px solid var(--cs-ink);
+}
+.cs-table tbody td { padding: 1.05rem 1.1rem; border-bottom: 1px solid rgba(17, 17, 17, 0.1); vertical-align: middle; }
+.cs-table tbody tr:hover td { background: rgba(255, 255, 255, 0.45); }
+
+/* ==========================================================================
+   11. MOTION
+   ========================================================================== */
+
+@keyframes csFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.animate-fadeIn { animation: fadeIn 0.25s var(--cs-ease) both; }
+.cs-fade-up { animation: csFadeUp 0.6s var(--cs-ease) both; }
+
+@keyframes csFloat { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-10px) rotate(var(--r, 0deg)); } }
+.cs-float { animation: csFloat 5s ease-in-out infinite; }
+
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-ticker-track, .griddle-ticker-track, .cs-float, .cs-fade-up { animation: none !important; }
+  .cs-photo > img { transition: none; }
 }

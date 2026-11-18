@@ -8,13 +8,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
-import { formatTunisTime } from '../../lib/formatters.js';
+import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
+import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
 import { Spinner } from '../../components/ui/index.js';
 import {
   Clock,
   CreditCard,
   Gift,
   AlertTriangle,
+  ArrowLeft,
 } from 'lucide-react';
 
 const MOCK_ORDER = {
@@ -28,11 +30,29 @@ const MOCK_ORDER = {
   quantity: 2,
   lockedUnitPriceMillimes: 3800,
   originalUnitPriceMillimes: 7800,
-  pickupStartAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-  pickupEndAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-  reservationExpiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  pickupStartAt: Date.now() - 10 * 60 * 1000,
+  pickupEndAt: Date.now() + 60 * 60 * 1000,
+  reservationExpiresAt: Date.now() + 10 * 60 * 1000,
   status: 'RESERVED',
 };
+
+/** Convertit une date (ms, ISO, Date, Timestamp Firestore sérialisé) en millisecondes, ou null. */
+function toMillis(value) {
+  if (value == null) return null;
+  if (typeof value === 'object' && !(value instanceof Date)) {
+    if (typeof value.toDate === 'function') return value.toDate().getTime();
+    const secs = value._seconds ?? value.seconds;
+    if (Number.isFinite(secs)) return secs * 1000;
+    return null;
+  }
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/** Montant affichable : jamais NaN / undefined. */
+function money(millimes) {
+  return Number.isFinite(millimes) ? formatTND(millimes) : '—';
+}
 
 export default function CheckoutPage() {
   const { orderId } = useParams();
@@ -89,23 +109,42 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF3E6] flex flex-col items-center justify-center gap-4 text-[#111111]">
+      <div className="cs-container cs-page min-h-[60vh] flex flex-col items-center justify-center gap-5 text-[#111111]">
         <Spinner size="lg" />
-        <p className="text-xs text-[#111111]/70 font-bold">Édition de votre reçu thermique sécurisé...</p>
+        <p className="cs-lead text-center">Édition de votre reçu sécurisé...</p>
       </div>
     );
   }
 
   const currentOrder = order || MOCK_ORDER;
-  const expiresAtMs = new Date(currentOrder.reservationExpiresAt || (Date.now() + 600000)).getTime();
+
+  // Normalisation d'affichage : l'API renvoie `pricing`, `offerSnapshot`, `merchantSnapshot`
+  // alors que la démo utilise des champs à plat.
+  const pricing = currentOrder.pricing || {};
+  const offerSnap = currentOrder.offerSnapshot || {};
+  const orderRef = currentOrder.id || currentOrder.orderId || orderId || MOCK_ORDER.id;
+  const quantity = Number(currentOrder.quantity) || 1;
+  const lockedUnit = Number(currentOrder.lockedUnitPriceMillimes ?? pricing.lockedUnitPriceMillimes);
+  const originalUnit = Number(currentOrder.originalUnitPriceMillimes ?? pricing.originalUnitPriceMillimes);
+  const offerTitle = currentOrder.offerTitle || currentOrder.title || offerSnap.title || 'Offre anti-gaspi';
+  const merchantName = currentOrder.merchantName || currentOrder.merchantSnapshot?.name || 'Commerce partenaire';
+  const pickupStart = toMillis(currentOrder.pickupStartAt ?? offerSnap.pickupStartAt);
+  const pickupEnd = toMillis(currentOrder.pickupEndAt ?? offerSnap.pickupEndAt);
+  const offerPhoto =
+    currentOrder.offerPhotoUrl ||
+    currentOrder.photoUrl ||
+    offerSnap.photoUrl ||
+    getDistinctGriddleFoodImage(offerSnap.category || currentOrder.category || 'fast-food', currentOrder.offerId || orderRef);
+
+  const expiresAtMs = toMillis(currentOrder.reservationExpiresAt) ?? (Date.now() + 600000);
   const secondsLeft = Math.max(0, Math.floor((expiresAtMs - now) / 1000));
   const isExpired = secondsLeft <= 0;
 
   const minStr = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const secStr = String(secondsLeft % 60).padStart(2, '0');
 
-  const subtotalMillimes = currentOrder.lockedUnitPriceMillimes * currentOrder.quantity;
-  const originalTotal = (currentOrder.originalUnitPriceMillimes || currentOrder.lockedUnitPriceMillimes) * currentOrder.quantity;
+  const subtotalMillimes = lockedUnit * quantity;
+  const originalTotal = (Number.isFinite(originalUnit) ? originalUnit : lockedUnit) * quantity;
   const baseSaved = Math.max(0, originalTotal - subtotalMillimes);
 
   let discountAmount = 0;
@@ -117,6 +156,14 @@ export default function CheckoutPage() {
 
   const finalTotalMillimes = Math.max(0, subtotalMillimes - discountAmount);
   const totalSavedMillimes = baseSaved + discountAmount;
+  const discountPct =
+    Number.isFinite(originalUnit) && Number.isFinite(lockedUnit) && originalUnit > lockedUnit
+      ? Math.round((1 - lockedUnit / originalUnit) * 100)
+      : null;
+  const totalLabel =
+    Number.isFinite(finalTotalMillimes) && finalTotalMillimes === 0 && discountAmount > 0
+      ? 'OFFERT'
+      : money(finalTotalMillimes);
 
   const handleCancel = async () => {
     if (!window.confirm('Voulez-vous vraiment annuler votre réservation ? Le stock sera remis en vente pour d autres étudiants.')) {
@@ -124,7 +171,7 @@ export default function CheckoutPage() {
     }
     setIsCancelling(true);
     try {
-      await apiClient.post(ENDPOINTS.CANCEL_ORDER(currentOrder.id));
+      await apiClient.post(ENDPOINTS.CANCEL_ORDER(orderRef));
     } catch (err) {
       console.warn('Annulation locale :', err.message);
     } finally {
@@ -144,7 +191,7 @@ export default function CheckoutPage() {
 
     try {
       const response = await apiClient.post(ENDPOINTS.INIT_PAYMENT, {
-        orderId: currentOrder.id,
+        orderId: orderRef,
         rewardApplied: selectedReward !== 'NONE' ? selectedReward : null,
       });
 
@@ -152,207 +199,235 @@ export default function CheckoutPage() {
       if (payUrl) {
         window.location.href = payUrl;
       } else {
-        navigate(`/payment/return?orderId=${currentOrder.id}&payment_ref=demo-success`);
+        navigate(`/payment/return?orderId=${orderRef}&payment_ref=demo-success`);
       }
     } catch (err) {
       console.warn('Mode démo / Konnect sandbox simulation :', err.message);
-      navigate(`/payment/return?orderId=${currentOrder.id}&payment_ref=demo-success`);
+      navigate(`/payment/return?orderId=${orderRef}&payment_ref=demo-success`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl mx-auto space-y-6">
-        
-        {/* Navigation retour */}
-        <div className="flex items-center justify-between">
-          <Link
-            to="/app/explore"
-            className="text-xs font-anton uppercase tracking-wider text-[#111111] hover:text-[#DA0711] transition-colors"
-          >
-            ← Retour au catalogue
-          </Link>
-          <span className="text-xs font-mono font-bold text-[#DA0711]">
-            RÉSERVATION EN COURS
-          </span>
-        </div>
+  // Couleur du panneau de décompte selon l'urgence
+  const timerPanelClass = isExpired
+    ? 'bg-[#DA0711] text-white'
+    : secondsLeft < 180
+    ? 'bg-[#FFD000] text-[#111111]'
+    : 'bg-[#111111] text-[#FAF3E6]';
 
-        {/* Bannière 10 minutes décompte */}
-        <div
-          className={`p-4 rounded-2xl border flex items-center justify-between transition-all shadow-sm ${
-            isExpired
-              ? 'bg-[#FEE2E2] border-[#DA0711]/30 text-[#DA0711]'
-              : secondsLeft < 180
-              ? 'bg-[#FEF08A] border-[#A16207]/30 text-[#854D0E] animate-pulse'
-              : 'bg-[#DCFCE7] border-[#15803D]/30 text-[#15803D]'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 shrink-0" />
-            <div>
-              <h3 className="font-anton uppercase text-sm tracking-wide">
-                {isExpired ? 'Réservation Expirée' : 'Prix et stock verrouillés :'}
-              </h3>
-              <p className="text-[11px] font-mono font-medium">
-                {isExpired
-                  ? 'Le créneau de 10 min est dépassé. Le stock a été libéré.'
-                  : 'Finalisez votre paiement avant la fin du décompte.'}
+  const rewards = [
+    { key: 'DISCOUNT_20', label: '-20% immédiat', cost: '100 pts', icon: '🎟️' },
+    { key: 'FREE_BASKET', label: 'Panier offert', cost: '300 pts', icon: '🎁' },
+  ];
+
+  return (
+    <div className="cs-container cs-page text-[#111111]">
+      {/* Navigation retour */}
+      <Link to="/app/explore" className="cs-link inline-flex items-center gap-2 min-h-[44px] mb-6">
+        <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+        Retour au catalogue
+      </Link>
+
+      <header className="mb-10 lg:mb-14">
+        <p className="cs-eyebrow mb-3">Réservation en cours</p>
+        <h1 className="cs-display">
+          Presque <span className="text-[#DA0711]">à vous.</span>
+        </h1>
+        <p className="cs-lead mt-4 max-w-2xl">
+          Le prix et le stock sont verrouillés pendant 10 minutes. Vérifiez votre reçu puis finalisez le paiement avant la fin du décompte.
+        </p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+        {/* =========================================================================
+            COLONNE GAUCHE : REÇU THERMIQUE (cs-receipt)
+            ========================================================================= */}
+        <div className="lg:col-span-7 order-2 lg:order-1">
+          <article className="cs-receipt rounded-t-[1.25rem] p-5 sm:p-10 text-[15px] leading-relaxed" aria-label="Reçu de commande">
+            {/* Photo de l'offre */}
+            <div className="cs-photo aspect-[16/9] rounded-xl">
+              <img
+                src={offerPhoto}
+                alt={offerTitle}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/assets/griddle/food/teriyaki-poulet-bowl.webp';
+                }}
+              />
+              {discountPct !== null && (
+                <span className="cs-sticker cs-sticker-red absolute top-4 right-4 z-10 text-[1.6rem] px-5 py-2.5">
+                  -{discountPct}%
+                </span>
+              )}
+            </div>
+
+            {/* En-tête du reçu */}
+            <div className="text-center mt-8">
+              <p className="font-display uppercase text-[2.75rem] sm:text-[3.5rem] leading-[0.9]">
+                CampusSave
+              </p>
+              <p className="text-[13px] uppercase tracking-[0.18em] text-[#5E5850] mt-2">
+                Reçu de caisse · ESSECT Montfleury
+              </p>
+              <p className="mt-4 inline-flex items-center rounded-full bg-[#111111] text-[#FAF3E6] px-4 py-1.5 text-[14px] font-bold">
+                CODE #{currentOrder.orderCode || 'CS-8K4M9'}
               </p>
             </div>
-          </div>
-          <div className="font-mono text-2xl font-black tracking-widest pl-2">
-            {minStr}:{secStr}
-          </div>
+
+            <hr className="cs-receipt-rule !my-6" />
+
+            {/* Métadonnées service */}
+            <dl className="space-y-2">
+              <div className="flex justify-between gap-4">
+                <dt className="text-[#5E5850] uppercase shrink-0">Commerce</dt>
+                <dd className="text-right font-bold">{merchantName}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-[#5E5850] uppercase shrink-0">Date</dt>
+                <dd className="text-right">{formatTunisDate(toMillis(currentOrder.createdAt) ?? now, { includeYear: true })}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-[#5E5850] uppercase shrink-0">Retrait</dt>
+                <dd className="text-right">{formatTunisTimeWindow(pickupStart, pickupEnd)}</dd>
+              </div>
+            </dl>
+
+            <hr className="cs-receipt-rule !my-6" />
+
+            {/* Lignes d'articles */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-start gap-4">
+                <span className="font-bold text-[17px] line-clamp-2">
+                  {quantity}× {offerTitle}
+                </span>
+                <span className="font-bold text-[17px] whitespace-nowrap">{money(subtotalMillimes)}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-[#5E5850] pl-4">
+                <span>Prix unitaire scellé</span>
+                <span className="whitespace-nowrap">{money(lockedUnit)}</span>
+              </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between gap-4 text-[#1F7A3A] font-bold pl-4">
+                  <span>Avantage ÉcoPoints</span>
+                  <span className="whitespace-nowrap">-{money(discountAmount)}</span>
+                </div>
+              )}
+            </div>
+
+            <hr className="cs-receipt-rule !my-6" />
+
+            {/* Totaux & économie */}
+            <div className="space-y-2">
+              {originalTotal > subtotalMillimes && (
+                <div className="flex justify-between gap-4 text-[#5E5850]">
+                  <span className="uppercase">Prix public initial</span>
+                  <span className="line-through whitespace-nowrap">{money(originalTotal)}</span>
+                </div>
+              )}
+              {totalSavedMillimes > 0 && (
+                <div className="flex justify-between gap-4 text-[#1F7A3A] font-bold">
+                  <span className="uppercase">Économie totale</span>
+                  <span className="whitespace-nowrap">{money(totalSavedMillimes)}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 pt-5 border-t-2 border-[#1B1B1B] flex flex-wrap justify-between items-end gap-x-4 gap-y-1">
+              <span className="font-bold uppercase text-[17px]">Total net</span>
+              <span className="font-display text-[#DA0711] text-[3.75rem] sm:text-[4.5rem] leading-[0.85] tabular-nums">
+                {totalLabel}
+              </span>
+            </div>
+
+            {/* Code-barres simulé */}
+            <div className="mt-8 flex flex-col items-center" aria-hidden="true">
+              <div className="h-12 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_5px)] opacity-80" />
+              <span className="text-[13px] tracking-[0.2em] text-[#5E5850] mt-2 break-all text-center">
+                CS-{orderRef}-SECURE-HOLD
+              </span>
+            </div>
+          </article>
         </div>
 
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-[#FEE2E2] border border-[#DA0711]/30 text-[#DA0711] text-xs font-bold flex items-center gap-2 shadow-sm">
-            <AlertTriangle className="w-4 h-4" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
         {/* =========================================================================
-            REÇU THERMIQUE PHYSIQUE SERRATÉ
+            COLONNE DROITE : DÉCOMPTE + RÉCOMPENSE + PAIEMENT
             ========================================================================= */}
-        <div className="relative rounded-3xl bg-white text-[#111111] p-6 sm:p-8 font-mono text-xs shadow-xl border border-[#111111]/10">
-          
-          {/* En-tête du Reçu */}
-          <div className="text-center pb-4 border-b border-dashed border-[#111111]/25">
-            <p className="font-anton uppercase text-2xl font-black tracking-wider text-[#111111]">
-              CAMPUSSAVE · REÇU DE CAISSE
+        <aside className="lg:col-span-5 order-1 lg:order-2 space-y-6 lg:sticky lg:top-24">
+          {/* Décompte 10 minutes */}
+          <div className={`rounded-[1.25rem] p-7 sm:p-8 transition-colors ${timerPanelClass}`} role="timer" aria-label="Temps restant pour payer">
+            <p className="flex items-center gap-2 font-semibold uppercase tracking-wide text-base">
+              <Clock className="w-5 h-5 shrink-0" aria-hidden="true" />
+              {isExpired ? 'Réservation expirée' : 'Prix et stock verrouillés'}
             </p>
-            <p className="text-[10px] text-[#666] mt-0.5 font-bold">
-              ESSECT MONTFLEURY · TUNIS (2026)
+            <p
+              className={`cs-figure text-[clamp(5.5rem,14vw,9rem)] mt-2 ${!isExpired && secondsLeft < 180 ? 'animate-pulse' : ''}`}
+            >
+              {minStr}:{secStr}
             </p>
-            <div className="mt-2 inline-block px-4 py-1 rounded-full bg-[#111111] text-white font-bold text-[11px]">
-              CODE RÉSERVATION : #{currentOrder.orderCode || 'CS-8K4M9'}
+            <p className="text-base mt-2 opacity-90">
+              {isExpired
+                ? 'Le créneau de 10 min est dépassé. Le stock a été libéré.'
+                : 'Finalisez votre paiement avant la fin du décompte.'}
+            </p>
+          </div>
+
+          {errorMessage && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-2xl border-2 border-[#DA0711] bg-white px-5 py-4 text-base font-semibold text-[#DA0711]"
+            >
+              <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Sélecteur récompense ÉcoPoints */}
+          <div className="cs-card p-6 sm:p-7">
+            <h2 className="cs-h3 flex items-center gap-2 mb-4">
+              <Gift className="w-5 h-5 text-[#DA0711]" aria-hidden="true" />
+              Avantage fidélité
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+              {rewards.map((r) => (
+                <button
+                  key={r.key}
+                  type="button"
+                  aria-pressed={selectedReward === r.key}
+                  onClick={() => setSelectedReward(selectedReward === r.key ? 'NONE' : r.key)}
+                  className="cs-chip justify-between w-full min-h-[3.25rem] whitespace-normal text-left"
+                >
+                  <span>
+                    <span aria-hidden="true">{r.icon}</span> {r.label}
+                  </span>
+                  <span className="cs-mono text-[13px] normal-case opacity-80 whitespace-nowrap">{r.cost}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Métadonnées service */}
-          <div className="py-3 flex justify-between text-[11px] text-[#666] font-bold border-b border-dashed border-[#111111]/20">
-            <span>COMMERCE : {currentOrder.merchantName}</span>
-            <span>DATE : 18/11/2026</span>
-          </div>
-
-          {/* Lignes d'articles décomposées */}
-          <div className="py-4 space-y-2 border-b border-dashed border-[#111111]/25 text-xs">
-            <div className="flex justify-between font-black text-sm text-[#111111]">
-              <span>{currentOrder.quantity}x {currentOrder.offerTitle || currentOrder.title}</span>
-              <span>{formatTND(subtotalMillimes)}</span>
-            </div>
-            <div className="flex justify-between text-[11px] text-[#666] font-medium pl-4">
-              <span>Prix unitaire scellé :</span>
-              <span>{formatTND(currentOrder.lockedUnitPriceMillimes)}</span>
-            </div>
-            <div className="flex justify-between text-[11px] text-[#666] font-medium pl-4">
-              <span>Créneau retrait sur place :</span>
-              <span>{formatTunisTime(currentOrder.pickupStartAt)} – {formatTunisTime(currentOrder.pickupEndAt)}</span>
-            </div>
-
-            {/* Récompense déduite si sélectionnée */}
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-[#15803D] font-bold pt-1">
-                <span>Avantage EcoPoints appliqué :</span>
-                <span>-{formatTND(discountAmount)}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Sélecteur Récompense EcoPoints */}
-          <div className="my-4 p-4 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 space-y-2 font-sans shadow-sm">
-            <span className="text-[11px] font-anton uppercase text-[#111111] flex items-center gap-1.5">
-              <Gift className="w-3.5 h-3.5 text-[#DA0711]" />
-              <span>Avantage Fidélité Disponible :</span>
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setSelectedReward(selectedReward === 'DISCOUNT_20' ? 'NONE' : 'DISCOUNT_20')}
-                className={`p-2.5 rounded-full border text-center transition-all cursor-pointer font-bold ${
-                  selectedReward === 'DISCOUNT_20'
-                    ? 'bg-[#15803D] text-white border-[#15803D] shadow-sm'
-                    : 'bg-white text-[#111111] border-[#111111]/15 hover:bg-[#FAF3E6]'
-                }`}
-              >
-                🎟️ -20% Immédiat (100 pts)
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedReward(selectedReward === 'FREE_BASKET' ? 'NONE' : 'FREE_BASKET')}
-                className={`p-2.5 rounded-full border text-center transition-all cursor-pointer font-bold ${
-                  selectedReward === 'FREE_BASKET'
-                    ? 'bg-[#15803D] text-white border-[#15803D] shadow-sm'
-                    : 'bg-white text-[#111111] border-[#111111]/15 hover:bg-[#FAF3E6]'
-                }`}
-              >
-                🎁 Panier Offert (300 pts)
-              </button>
-            </div>
-          </div>
-
-          {/* Totaux & Économie */}
-          <div className="pt-2 pb-4 space-y-1.5 font-mono">
-            <div className="flex justify-between text-xs text-[#666] font-medium">
-              <span>PRIX INITIAL PUBLIC :</span>
-              <span className="line-through">{formatTND(originalTotal)}</span>
-            </div>
-            <div className="flex justify-between text-xs text-[#15803D] font-bold">
-              <span>ÉCONOMIE TOTALE SAUVÉE :</span>
-              <span>{formatTND(totalSavedMillimes)}</span>
-            </div>
-            <div className="flex justify-between items-baseline pt-2 border-t border-dashed border-[#111111]/25">
-              <span className="font-anton uppercase text-base text-[#111111]">
-                TOTAL NET À RÉGLER :
-              </span>
-              <span className="font-anton text-3xl text-[#DA0711]">
-                {formatTND(finalTotalMillimes)}
-              </span>
-            </div>
-          </div>
-
-          {/* Code-barres simulé en bas */}
-          <div className="my-4 pt-3 border-t border-dashed border-[#111111]/25 flex flex-col items-center">
-            <div className="h-7 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_4px)] opacity-80" />
-            <span className="text-[8px] font-bold tracking-widest text-[#666] mt-1">CS-{currentOrder.id}-SECURE-HOLD</span>
-          </div>
-
-          {/* Actions : Payer Konnect / Annuler */}
-          <div className="space-y-2 pt-2">
+          {/* Actions : payer Konnect / annuler */}
+          <div className="space-y-3">
             <button
               type="button"
               onClick={handlePay}
               disabled={isSubmitting || isExpired}
-              className="w-full btn-griddle-primary py-3.5 cursor-pointer"
+              className="cs-btn cs-btn-red cs-btn-lg cs-btn-block whitespace-normal text-center py-3"
             >
-              <CreditCard className="w-5 h-5 text-white" />
-              <span>{isSubmitting ? 'Paiement en cours...' : `Payer via Konnect Test (${formatTND(finalTotalMillimes)}) →`}</span>
+              <CreditCard className="w-6 h-6 shrink-0" aria-hidden="true" />
+              <span>{isSubmitting ? 'Paiement en cours...' : `Payer via Konnect Test (${totalLabel}) →`}</span>
             </button>
 
             <button
               type="button"
               onClick={handleCancel}
               disabled={isCancelling}
-              className="w-full py-2.5 text-center text-xs font-mono font-medium text-[#666] hover:text-[#DA0711] transition-colors cursor-pointer"
+              className="w-full min-h-[44px] text-center text-base font-semibold text-[#5E5850] underline underline-offset-4 hover:text-[#DA0711] transition-colors cursor-pointer disabled:opacity-50"
             >
               {isCancelling ? 'Annulation...' : 'Annuler et libérer la réservation'}
             </button>
           </div>
-
-          {/* Dents de scie inférieures du reçu */}
-          <div
-            aria-hidden="true"
-            className="w-full h-3 bg-repeat-x pointer-events-none mt-4 -mb-6 sm:-mb-8"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23FFFFFF'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
-              backgroundSize: '16px 10px',
-              filter: 'drop-shadow(0 2px 2px rgba(17,17,17,0.1))',
-            }}
-          />
-        </div>
+        </aside>
       </div>
     </div>
   );

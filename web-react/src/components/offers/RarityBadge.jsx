@@ -5,30 +5,28 @@
 import React from 'react';
 import { SURPRISE_RARITY } from '@shared/constants.js';
 
-export default function RarityBadge({ rarity = SURPRISE_RARITY.COMMON, score, className = '' }) {
-  let label = 'Commun';
-  let badgeClasses = 'from-slate-700 to-slate-800 text-slate-200 border-slate-500/40 shadow-slate-900/40';
-  let icon = '🎁';
+const STYLES = {
+  LEGENDARY: { label: 'Légendaire', cls: 'bg-[#FFD000] text-[#111111]', icon: '★' },
+  RARE: { label: 'Rare', cls: 'bg-[#DA0711] text-white', icon: '◆' },
+  COMMON: { label: 'Commun', cls: 'bg-[#111111] text-[#FAF3E6]', icon: '●' },
+};
 
-  if (rarity === SURPRISE_RARITY.LEGENDARY || rarity === 'LEGENDARY') {
-    label = 'Légendaire';
-    badgeClasses = 'from-amber-500/20 to-yellow-600/30 text-yellow-300 border-yellow-400/60 shadow-yellow-500/20';
-    icon = '✨';
-  } else if (rarity === SURPRISE_RARITY.RARE || rarity === 'RARE') {
-    label = 'Rare';
-    badgeClasses = 'from-cyan-500/20 to-blue-600/30 text-cyan-300 border-cyan-400/60 shadow-cyan-500/20';
-    icon = '💎';
-  }
+export default function RarityBadge({ rarity = SURPRISE_RARITY.COMMON, score, className = '' }) {
+  const key = rarity === SURPRISE_RARITY.LEGENDARY || rarity === 'LEGENDARY'
+    ? 'LEGENDARY'
+    : rarity === SURPRISE_RARITY.RARE || rarity === 'RARE'
+      ? 'RARE'
+      : 'COMMON';
+  const s = STYLES[key];
+  const pct = Number.isFinite(score) ? Math.round(score * 100) : null;
 
   return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-gradient-to-r shadow-sm backdrop-blur-sm tracking-wide ${badgeClasses} ${className}`}
+    <span
+      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full border-2 border-[#111111] text-[0.875rem] font-semibold uppercase tracking-wide whitespace-nowrap ${s.cls} ${className}`}
     >
-      <span>{icon}</span>
-      <span>Panier {label}</span>
-      {score !== undefined && (
-        <span className="opacity-70 text-[10px]">({Math.round(score * 100)}%)</span>
-      )}
-    </div>
+      <span aria-hidden="true">{s.icon}</span>
+      Panier {s.label}
+      {pct !== null && <span className="opacity-75">· {pct}%</span>}
+    </span>
   );
 }

@@ -16,13 +16,8 @@ import { calculateWalkingMinutes } from '@shared/geo.js';
 import { calculateImpact, calculateEquivalences } from '@shared/impact.js';
 import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
 import { formatTunisTime } from '../../lib/formatters.js';
-import {
-  Store,
-  Clock,
-  Flame,
-  Minus,
-  Plus,
-} from 'lucide-react';
+import { Store, Clock, Flame, Minus, Plus, MapPin, ArrowLeft, ArrowRight, Lock } from 'lucide-react';
+import { formatCategory } from '../../components/offers/OfferCard.jsx';
 
 const FALLBACK_OFFER = {
   id: 'off-baguette-01',
@@ -95,7 +90,7 @@ export default function OfferDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F4EFE6] flex items-center justify-center">
+      <div className="min-h-[70vh] flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
@@ -105,10 +100,10 @@ export default function OfferDetailPage() {
   const unitPrice = computeUnitPrice(currentOffer, now);
   const totalPrice = unitPrice * quantity;
 
-  const distanceM = currentOffer.distanceFromEssectM || 200;
+  const distanceM = currentOffer.distanceFromEssectM ?? currentOffer.merchantSnapshot?.distanceFromEssectM ?? currentOffer.merchant?.distanceFromEssectM ?? 200;
   const walkingMin = calculateWalkingMinutes(distanceM);
 
-  const grams = (currentOffer.weightGramsPerUnit || currentOffer.impact?.foodSavedGrams || 350) * quantity;
+  const grams = (currentOffer.weightGramsPerUnit || currentOffer.weightGrams || currentOffer.impact?.foodSavedGrams || 350) * quantity;
   const impact = calculateImpact(grams);
   const equivalences = calculateEquivalences(impact.co2SavedGrams);
 
@@ -154,222 +149,183 @@ export default function OfferDetailPage() {
   };
 
   const foodImage = currentOffer.imageUrl || currentOffer.photoUrl || getDistinctGriddleFoodImage(currentOffer.category || 'fast-food', currentOffer.id);
+  const merchantName = currentOffer.merchantName || currentOffer.merchantSnapshot?.name || currentOffer.merchant?.name || 'Commerce Montfleury';
+  const money = (v) => (Number.isFinite(v) ? formatTND(v) : '—');
+  const originalUnit = currentOffer.originalPriceMillimes || 7800;
+  const savings = (originalUnit - unitPrice) * quantity;
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        
-        {/* Navigation retour & Badge urgence */}
-        <div className="flex items-center justify-between">
-          <Link
-            to="/app/explore"
-            className="inline-flex items-center gap-2 text-xs font-anton uppercase tracking-wider text-[#111111] hover:text-[#DA0711] transition-colors"
-          >
-            ← Retour au catalogue des offres
-          </Link>
-          <CountdownChip pickupEndAt={currentOffer.pickupEndAt} />
+    <div className="cs-container cs-page">
+      {/* Navigation retour & urgence */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 lg:mb-10">
+        <Link to="/app/explore" className="cs-link inline-flex items-center gap-2 text-lg">
+          <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
+          Toutes les offres
+        </Link>
+        <CountdownChip pickupEndAt={currentOffer.pickupEndAt} />
+      </div>
+
+      {/* Alerte concurrence 409 */}
+      {errorMessage && (
+        <div role="alert" className="mb-8 rounded-[1.25rem] bg-[#DA0711] text-white px-6 py-5 flex items-start gap-4 border-2 border-[#111111]">
+          <span className="font-display text-4xl leading-none">!</span>
+          <p className="text-lg font-medium leading-snug">{errorMessage}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+        {/* =========================================================================
+            COLONNE GAUCHE : PHOTO 3D PLEIN CADRE + IMPACT
+            ========================================================================= */}
+        <div className="lg:col-span-7 lg:sticky lg:top-28 space-y-6">
+          <DepthCard maxTilt={6} perspective={1400} glare={false}>
+            <div className="cs-photo aspect-[4/3] !rounded-[1.5rem]">
+              <img
+                src={foodImage}
+                alt={currentOffer.title}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = getDistinctGriddleFoodImage(currentOffer.category);
+                }}
+              />
+            </div>
+            <DepthLayer depth={40} className="!absolute -top-4 -right-3 z-20">
+              <span className="cs-sticker cs-sticker-red !text-2xl !px-5 !py-2.5 rotate-6">Anti-gaspi</span>
+            </DepthLayer>
+            {currentOffer.isSurpriseBasket && (
+              <DepthLayer depth={30} className="!absolute top-4 left-4 z-20">
+                <RarityBadge rarity={currentOffer.surprise?.rarity || 'RARE'} score={0.75} />
+              </DepthLayer>
+            )}
+          </DepthCard>
+
+          <div className="grid grid-cols-2 gap-4 sm:gap-6">
+            <div className="cs-stat">
+              <span className="cs-label">Nourriture sauvée</span>
+              <span className="cs-stat-value text-[#1F7A3A]">{Number.isFinite(impact.foodSavedGrams) ? impact.foodSavedGrams : '—'} g</span>
+            </div>
+            <div className="cs-stat">
+              <span className="cs-label">CO₂ évité</span>
+              <span className="cs-stat-value">{Number.isFinite(impact.co2SavedGrams) ? impact.co2SavedGrams : '—'} g</span>
+              {Number.isFinite(equivalences.kmCarAvoided) && (
+                <span className="text-base text-[#5E5850]">≈ {equivalences.kmCarAvoided} km en voiture</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Alerte Concurrence 409 */}
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-[#DA0711] text-xs flex items-center gap-3 shadow-sm">
-            <span className="text-xl">⚠️</span>
-            <p className="flex-1 font-bold leading-relaxed">{errorMessage}</p>
-          </div>
-        )}
+        {/* =========================================================================
+            COLONNE DROITE : FICHE PRODUIT & RÉSERVATION
+            ========================================================================= */}
+        <div className="lg:col-span-5">
+          <p className="cs-eyebrow mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>{formatCategory(currentOffer.category)}</span>
+            <span className="text-[#111111]">·</span>
+            <span className="inline-flex items-center gap-1 text-[#111111]">
+              <MapPin className="w-4 h-4" /> {walkingMin} min à pied
+            </span>
+          </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* =========================================================================
-              COLONNE GAUCHE : 3D FOOD SHOWCASE (DepthCard & DepthLayer)
-              ========================================================================= */}
-          <div className="lg:col-span-6 space-y-4">
-            <DepthCard
-              maxTilt={12}
-              perspective={1100}
-              className="w-full relative rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] overflow-hidden"
-            >
-              <div className="relative aspect-square flex items-center justify-center bg-white border border-[#111111]/10 rounded-2xl overflow-hidden shadow-sm">
-                <DepthLayer depth={30} shadow className="w-4/5 h-4/5 relative z-10 flex items-center justify-center">
-                  <img
-                    src={foodImage}
-                    alt={currentOffer.title}
-                    className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_24px_rgba(20,18,16,0.2)]"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = getDistinctGriddleFoodImage(currentOffer.category);
-                    }}
-                  />
-                </DepthLayer>
+          <h1 className="cs-display !text-[clamp(3.25rem,5.5vw,5.5rem)]">{currentOffer.title}</h1>
 
-                {/* Badges d'angle */}
-                {currentOffer.isSurpriseBasket && (
-                  <div className="absolute top-3 left-3 z-20">
-                    <RarityBadge rarity={currentOffer.surprise?.rarity || 'RARE'} score={0.75} />
-                  </div>
-                )}
+          <p className="mt-4 flex items-center gap-2 text-xl font-semibold uppercase">
+            <Store className="w-5 h-5 text-[#DA0711]" />
+            {merchantName}
+          </p>
 
-                <div className="absolute top-3 right-3 z-20">
-                  <span className="sticker-red">
-                    ANTI-GASPI 🔥
-                  </span>
-                </div>
-              </div>
+          {currentOffer.description && <p className="cs-body mt-4">{currentOffer.description}</p>}
 
-              {/* Barre de progression Enchère Inversée (Dutch Auction Decay) */}
-              {isDutch && (
-                <div className="mt-6 pt-4 border-t border-[#111111]/10 space-y-2">
-                  <div className="flex justify-between items-center text-xs font-mono font-bold">
-                    <span className="text-[#DA0711] flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 text-[#DA0711]" />
-                      <span>Smart Decay : Baisse de prix en cours</span>
-                    </span>
-                    <span className="text-[#111111]">{decayProgress}% écoulé</span>
-                  </div>
-                  <div className="w-full bg-white h-3 rounded-full overflow-hidden border border-[#111111]/15">
-                    <div
-                      className="bg-[#DA0711] h-full transition-all duration-1000"
-                      style={{ width: `${decayProgress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[10px] font-mono text-[#666] font-bold">
-                    <span>Départ : {formatTND(currentOffer.startPriceMillimes || currentOffer.originalPriceMillimes)}</span>
-                    <span className="text-[#DA0711]">Plancher : {formatTND(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
-                  </div>
-                </div>
-              )}
-            </DepthCard>
-
-            {/* Fiche d'impact écologique */}
-            <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] grid grid-cols-2 gap-3 text-center">
-              <div className="p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm">
-                <span className="text-2xl">🥗</span>
-                <p className="font-anton text-xl text-[#15803D] mt-1">
-                  {impact.foodSavedGrams} g
-                </p>
-                <p className="text-[10px] font-bold uppercase text-[#666]">Nourriture Sauvée</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm">
-                <span className="text-2xl">🌱</span>
-                <p className="font-anton text-xl text-[#DA0711] mt-1">
-                  {impact.co2SavedGrams} g
-                </p>
-                <p className="text-[10px] font-bold uppercase text-[#666]">CO2 Évité ({equivalences.kmCarAvoided} km)</p>
-              </div>
-            </div>
+          {/* Créneau de retrait */}
+          <div className="mt-8 flex items-end justify-between gap-4 py-5 border-y-2 border-[#111111]">
+            <span className="cs-field-label !mb-1 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[#DA0711]" /> Retrait
+            </span>
+            <span className="font-display text-[2.75rem] leading-none tabular-nums">
+              {formatTunisTime(currentOffer.pickupStartAt)} – {formatTunisTime(currentOffer.pickupEndAt)}
+            </span>
           </div>
 
-          {/* =========================================================================
-              COLONNE DROITE : TICKET DE RÉSERVATION PHYSIQUE & COMMANDE
-              ========================================================================= */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] text-[#111111] shadow-[0_4px_24px_rgba(17,17,17,0.06)] border border-[#111111]/8 relative overflow-hidden">
-              
-              {/* En-tête ticket */}
-              <div className="flex items-center justify-between pb-3 border-b border-dashed border-[#111111]/20">
-                <div className="flex items-center gap-1.5 text-[11px] font-anton uppercase text-[#DA0711]">
-                  <Flame className="w-3.5 h-3.5" />
-                  <span>{currentOffer.category} · LOT OFFICIEL</span>
-                </div>
-                <div className="text-[11px] font-mono text-[#666] font-bold">
-                  {distanceM}m (~{walkingMin} min à pied)
-                </div>
-              </div>
-
-              {/* Titre & Description */}
-              <div className="pt-4 pb-2">
-                <h1 className="font-anton uppercase text-2xl sm:text-3xl font-black text-[#111111] leading-tight">
-                  {currentOffer.title}
-                </h1>
-                <div className="flex items-center gap-2 text-xs text-[#666] mt-1 mb-3 font-medium">
-                  <Store className="w-4 h-4 text-[#888]" />
-                  <span>{currentOffer.merchantName}</span>
-                </div>
-                <p className="text-xs text-[#666] leading-relaxed font-sans font-medium">
-                  {currentOffer.description}
-                </p>
-              </div>
-
-              {/* Horaires de retrait */}
-              <div className="my-4 p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm flex items-center justify-between text-xs font-bold">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#DA0711]" />
-                  <span>Créneau de retrait :</span>
-                </div>
-                <span className="font-mono text-[#111111]">
-                  {formatTunisTime(currentOffer.pickupStartAt)} — {formatTunisTime(currentOffer.pickupEndAt)}
+          {/* Smart Decay */}
+          {isDutch && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="cs-field-label !mb-0 flex items-center gap-2 !text-[#DA0711]">
+                  <Flame className="w-5 h-5" /> Smart Decay en cours
                 </span>
+                <span className="font-semibold tabular-nums">{decayProgress}% écoulé</span>
               </div>
-
-              {/* Sélecteur de Quantité */}
-              <div className="my-4 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-anton uppercase tracking-wider text-[#111111] block">
-                    Quantité à sauver :
-                  </span>
-                  <span className="text-[10px] text-[#666] font-medium">
-                    Max. {maxAllowed} par étudiant
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                    className="w-9 h-9 rounded-full bg-white border border-[#111111]/15 text-[#111111] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer shadow-sm hover:bg-[#FAF3E6] transition-colors"
-                  >
-                    <Minus className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="w-8 text-center font-anton text-2xl text-[#111111]">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(Math.min(maxAllowed, quantity + 1))}
-                    disabled={quantity >= maxAllowed}
-                    className="w-9 h-9 rounded-full bg-white border border-[#111111]/15 text-[#111111] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer shadow-sm hover:bg-[#FAF3E6] transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="h-3.5 w-full rounded-full bg-[#111111] overflow-hidden">
+                <div className="h-full bg-[#DA0711] transition-all duration-1000" style={{ width: `${decayProgress}%` }} />
               </div>
-
-              {/* Récapitulatif Prix & Hold 10 min */}
-              <div className="mt-6 pt-4 border-t border-dashed border-[#111111]/20 space-y-3">
-                <div className="flex justify-between items-end">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase text-[#666]">
-                      Prix Total Réservé :
-                    </span>
-                    <span className="font-anton text-4xl text-[#DA0711]">
-                      {formatTND(totalPrice)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-mono text-[#888] line-through block font-medium">
-                      {formatTND((currentOffer.originalPriceMillimes || 7800) * quantity)}
-                    </span>
-                    <span className="text-xs font-mono font-bold text-[#15803D]">
-                      Économie : {formatTND(((currentOffer.originalPriceMillimes || 7800) - unitPrice) * quantity)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bouton CTA Réservation */}
-                <button
-                  type="button"
-                  onClick={handleReserve}
-                  disabled={isSubmitting || maxAvailable <= 0}
-                  className="w-full btn-griddle-primary py-3.5 cursor-pointer mt-2"
-                >
-                  <span>{isSubmitting ? 'Verrouillage en cours...' : 'BLOQUER MON PRIX PENDANT 10 MIN →'}</span>
-                </button>
-
-                <p className="text-[10px] text-center font-mono text-[#666] font-medium">
-                  🔒 Transaction atomique : Votre prix et portion sont scellés 10 minutes pour le paiement.
-                </p>
+              <div className="mt-2 flex justify-between text-base text-[#5E5850]">
+                <span>Départ {money(currentOffer.startPriceMillimes || currentOffer.originalPriceMillimes)}</span>
+                <span className="text-[#DA0711] font-semibold">Plancher {money(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
               </div>
             </div>
+          )}
+
+          {/* Quantité */}
+          <div className="mt-8 flex items-center justify-between gap-4">
+            <div>
+              <p className="cs-field-label !mb-0.5">Quantité</p>
+              <p className="text-base text-[#5E5850]">Max. {maxAllowed} par étudiant</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+                aria-label="Retirer une portion"
+                className="cs-icon-btn !w-14 !h-14 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <Minus className="w-5 h-5" strokeWidth={3} />
+              </button>
+              <span className="w-12 text-center font-display text-[3.25rem] leading-none tabular-nums" aria-live="polite">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.min(maxAllowed, quantity + 1))}
+                disabled={quantity >= maxAllowed}
+                aria-label="Ajouter une portion"
+                className="cs-icon-btn !w-14 !h-14 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <Plus className="w-5 h-5" strokeWidth={3} />
+              </button>
+            </div>
+          </div>
+
+          {/* Total & réservation */}
+          <div className="mt-8 cs-card p-6 sm:p-7">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <div>
+                <p className="cs-label">Total à payer</p>
+                <p className="font-display text-[4.5rem] sm:text-[5.25rem] leading-[0.85] text-[#DA0711] tabular-nums mt-1">
+                  {money(totalPrice)}
+                </p>
+              </div>
+              <div className="text-right pb-1">
+                <p className="text-lg line-through decoration-2 text-[#5E5850] tabular-nums">{money(originalUnit * quantity)}</p>
+                {Number.isFinite(savings) && savings > 0 && (
+                  <span className="cs-pill cs-pill-leaf mt-1">Tu économises {formatTND(savings)}</span>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleReserve}
+              disabled={isSubmitting || maxAvailable <= 0}
+              className="cs-btn cs-btn-red cs-btn-lg cs-btn-block mt-6"
+            >
+              {isSubmitting ? 'Verrouillage en cours…' : maxAvailable <= 0 ? 'Épuisé' : 'Bloquer mon prix 10 min'}
+              {!isSubmitting && maxAvailable > 0 && <ArrowRight className="w-6 h-6" strokeWidth={2.5} />}
+            </button>
+
+            <p className="mt-4 flex items-center justify-center gap-2 text-base text-[#5E5850] text-center">
+              <Lock className="w-4 h-4 shrink-0" />
+              Prix et portion réservés 10 minutes, le temps de payer.
+            </p>
           </div>
         </div>
       </div>

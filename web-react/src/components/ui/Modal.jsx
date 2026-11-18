@@ -45,7 +45,7 @@ export default function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#111111]/55 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -54,25 +54,25 @@ export default function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full ${sizes[size] || sizes.md} bg-[#FAF3E6] border border-[#111111]/10 rounded-3xl shadow-[0_20px_50px_rgba(17,17,17,0.15)] p-6 sm:p-8 z-10 my-8 transition-all transform animate-in fade-in zoom-in-95 duration-200 text-[#111111] ${className}`}
+        className={`relative w-full ${sizes[size] || sizes.md} bg-[#FAF3E6] rounded-[1.5rem] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.5)] p-7 sm:p-10 z-10 my-8 animate-fadeIn text-[#111111] ${className}`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             {title && (
-              <h3 className="text-xl sm:text-2xl font-anton uppercase text-[#111111] tracking-tight">
+              <h3 className="cs-display !text-[clamp(2.5rem,5vw,3.25rem)]">
                 {title}
               </h3>
             )}
             {description && (
-              <p className="text-xs text-[#666] mt-1">{description}</p>
+              <p className="cs-body text-[#5E5850] mt-2">{description}</p>
             )}
           </div>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="text-[#111111] hover:bg-[#EDE6D7] border border-[#111111]/15 transition-colors p-2 rounded-full -mr-1.5 -mt-1.5"
+              className="cs-icon-btn shrink-0"
               aria-label="Fermer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,11 +83,11 @@ export default function Modal({
         </div>
 
         {/* Body */}
-        <div className="text-sm text-[#111111]">{children}</div>
+        <div className="text-base text-[#111111]">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="mt-6 pt-4 border-t border-[#111111]/10 flex items-center justify-end gap-3">
+          <div className="mt-8 pt-6 border-t-2 border-[#111111] flex flex-wrap items-center justify-end gap-3">
             {footer}
           </div>
         )}

@@ -4,6 +4,7 @@
 
 import React from 'react';
 
+/** Row of outlined chips; the active tab is filled ink. */
 export default function Tabs({
   tabs = [],
   activeTab,
@@ -11,10 +12,7 @@ export default function Tabs({
   className = '',
 }) {
   return (
-    <div
-      className={`inline-flex p-1.5 bg-[#EDE6D7] rounded-full border border-[#111111]/8 gap-1 overflow-x-auto scrollbar-none max-w-full ${className}`}
-      role="tablist"
-    >
+    <div className={`flex flex-wrap gap-2.5 ${className}`} role="tablist">
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
         return (
@@ -22,27 +20,14 @@ export default function Tabs({
             key={tab.id}
             role="tab"
             aria-selected={isActive}
+            aria-pressed={isActive}
             type="button"
             onClick={() => onChange(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-anton uppercase tracking-wider whitespace-nowrap transition-all duration-150 select-none cursor-pointer ${
-              isActive
-                ? 'bg-[#DA0711] text-white shadow-sm'
-                : 'text-[#111111] hover:bg-white/60'
-            }`}
+            className="cs-chip"
           >
-            {tab.icon && <span className="text-sm">{tab.icon}</span>}
+            {tab.icon && <span className="inline-flex">{tab.icon}</span>}
             <span>{tab.label}</span>
-            {typeof tab.count === 'number' && (
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                  isActive
-                    ? 'bg-white text-[#DA0711]'
-                    : 'bg-[#111111]/10 text-[#111111]'
-                }`}
-              >
-                {tab.count}
-              </span>
-            )}
+            {typeof tab.count === 'number' && <span className="cs-chip-count">{tab.count}</span>}
           </button>
         );
       })}

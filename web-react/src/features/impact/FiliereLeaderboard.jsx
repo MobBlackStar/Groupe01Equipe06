@@ -3,7 +3,7 @@
 // 🎯 À retenir pour la soutenance : "La gamification collective via le challenge inter-filières démultiplie l'engagement étudiant en transformant un acte individuel en fierté de promotion."
 
 import React from 'react';
-import { Trophy, Award, Users, Leaf, Flame } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { FILIERES } from '@shared/constants.js';
 
 // Données réalistes pour les 5 filières de l'ESSECT
@@ -55,6 +55,11 @@ const DEFAULT_FILIERES_DATA = [
   },
 ];
 
+const safeNum = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
 /**
  * Composant de classement inter-filières ESSECT
  * @param {Object} props
@@ -62,95 +67,88 @@ const DEFAULT_FILIERES_DATA = [
  * @param {string} [props.userFiliere] - Filière de l'étudiant connecté
  */
 export default function FiliereLeaderboard({ leaderboard = DEFAULT_FILIERES_DATA, userFiliere }) {
-  const sorted = [...leaderboard].sort((a, b) => b.co2SavedKg - a.co2SavedKg);
-  const maxCo2 = Math.max(...sorted.map((item) => item.co2SavedKg), 1);
-
-  const getRankBadge = (index) => {
-    if (index === 0) return { icon: '🥇', label: '1er', color: 'text-amber-500', border: 'border-amber-500' };
-    if (index === 1) return { icon: '🥈', label: '2ème', color: 'text-slate-600', border: 'border-slate-400' };
-    if (index === 2) return { icon: '🥉', label: '3ème', color: 'text-amber-700', border: 'border-amber-700' };
-    return { icon: `#${index + 1}`, label: `${index + 1}ème`, color: 'text-[#141210]', border: 'border-[#141210]' };
-  };
+  const sorted = [...leaderboard].sort((a, b) => safeNum(b.co2SavedKg) - safeNum(a.co2SavedKg));
+  const maxCo2 = Math.max(...sorted.map((item) => safeNum(item.co2SavedKg)), 1);
 
   return (
-    <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] space-y-6">
-      {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-[#111111]/10">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-[#FFD000] text-[#111111] shadow-sm">
-            <Trophy className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-anton uppercase text-xl sm:text-2xl text-[#111111] tracking-wide">
-              Challenge Inter-Filières ESSECT 🏆
-            </h3>
-            <p className="text-xs text-[#666] mt-0.5 font-sans">
-              Classement en direct de la mobilisation anti-gaspillage par promotion.
-            </p>
-          </div>
+    <div>
+      {/* En-tête de section */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+        <div>
+          <h2 className="cs-title">Challenge inter-filières</h2>
+          <p className="cs-body mt-3 text-[#5E5850] max-w-2xl">
+            Classement en direct de la mobilisation anti-gaspillage par promotion.
+          </p>
         </div>
-
-        <span className="px-4 py-1.5 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase self-start sm:self-auto flex items-center gap-1.5 shadow-sm">
-          <Flame className="w-3.5 h-3.5" />
-          <span>Saison Universitaire 2026</span>
+        <span className="cs-pill cs-pill-red self-start sm:self-auto">
+          <Flame className="w-4 h-4" aria-hidden="true" />
+          <span>Saison universitaire 2026</span>
         </span>
       </div>
 
-      {/* Liste des Filières */}
-      <div className="space-y-4">
+      {/* Liste classée */}
+      <ol className="cs-card px-5 sm:px-8 py-2">
         {sorted.map((item, index) => {
-          const rank = getRankBadge(index);
-          const percent = Math.round((item.co2SavedKg / maxCo2) * 100);
+          const co2 = safeNum(item.co2SavedKg);
+          const percent = Math.max(4, Math.round((co2 / maxCo2) * 100));
           const isUserFiliere = userFiliere && item.filiere === userFiliere;
+          const isFirst = index === 0;
 
           return (
-            <div
-              key={item.filiere}
-              className={`p-4 sm:p-5 rounded-2xl bg-white border transition-all ${
-                isUserFiliere
-                  ? 'border-[#DA0711] ring-2 ring-[#DA0711]/30 shadow-md'
-                  : 'border-[#111111]/10 shadow-sm'
+            <li
+              key={item.filiere || item.name || index}
+              className={`grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_auto] items-center gap-x-5 sm:gap-x-8 gap-y-3 py-6 ${
+                index < sorted.length - 1 ? 'border-b-2 border-[#111111]/10' : ''
               }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-full flex items-center justify-center font-anton text-sm bg-[#EDE6D7] text-[#111111] shadow-sm">
-                    {rank.icon}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-anton uppercase text-base text-[#111111]">{item.name}</h4>
-                      {isUserFiliere && (
-                        <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#DA0711] text-white">
-                          Votre Promotion
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs font-medium text-[#666] font-sans">{item.badge}</span>
-                  </div>
-                </div>
+              {/* Grand numéro de rang */}
+              <span
+                className={`cs-figure row-span-2 sm:row-span-1 w-14 sm:w-20 text-center text-[clamp(3.5rem,7vw,5.5rem)] ${
+                  isFirst ? 'text-[#DA0711]' : 'text-[#111111]'
+                }`}
+                aria-label={`Rang ${index + 1}`}
+              >
+                {index + 1}
+              </span>
 
-                <div className="text-right">
-                  <span className="font-anton text-lg text-[#15803D] block">
-                    {item.co2SavedKg} kg CO₂
-                  </span>
-                  <span className="text-[11px] font-mono text-[#666] font-medium">
-                    {item.studentsCount} étudiants • {item.ecoPoints} pts
-                  </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <h3 className="cs-h3 text-[clamp(1.25rem,2vw,1.6rem)]">{item.name}</h3>
+                  {isUserFiliere && <span className="cs-pill cs-pill-ink">Votre promotion</span>}
+                  {isFirst && <span className="cs-sticker cs-sticker-mustard !text-base">En tête</span>}
                 </div>
-              </div>
+                {item.badge && <p className="text-base text-[#5E5850] mt-1">{item.badge}</p>}
 
-              {/* Barre de progression */}
-              <div className="w-full bg-[#FAF3E6] h-2.5 rounded-full overflow-hidden border border-[#111111]/10">
+                {/* Barre de progression */}
                 <div
-                  className="bg-[#15803D] h-full rounded-full transition-all duration-500"
-                  style={{ width: `${percent}%` }}
-                />
+                  className="mt-3 w-full h-4 rounded-full bg-[#FAF3E6] overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={percent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${item.name} : ${co2} kg de CO₂ évités`}
+                >
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      isFirst ? 'bg-[#DA0711]' : 'bg-[#FFD000]'
+                    } ${isUserFiliere ? 'outline outline-2 outline-[#111111] -outline-offset-2' : ''}`}
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
               </div>
-            </div>
+
+              <div className="col-start-2 sm:col-start-3 sm:text-right">
+                <p className="cs-figure text-[clamp(2.25rem,3.6vw,3.25rem)] whitespace-nowrap">
+                  {co2.toLocaleString('fr-FR')} <span className="text-[0.55em] text-[#5E5850]">kg CO₂</span>
+                </p>
+                <p className="text-[15px] text-[#5E5850] mt-1 whitespace-nowrap">
+                  {safeNum(item.studentsCount).toLocaleString('fr-FR')} étudiants · {safeNum(item.ecoPoints).toLocaleString('fr-FR')} pts
+                </p>
+              </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 }

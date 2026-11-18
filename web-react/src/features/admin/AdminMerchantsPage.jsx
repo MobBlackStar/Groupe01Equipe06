@@ -69,6 +69,34 @@ const DEMO_ADMIN_MERCHANTS = [
   },
 ];
 
+// Libellés d'affichage (présentation uniquement)
+const STATUS_UI = {
+  [MERCHANT_STATUS.PENDING]: { label: 'En attente', pill: 'cs-pill-mustard' },
+  [MERCHANT_STATUS.APPROVED]: { label: 'Approuvé', pill: 'cs-pill-leaf' },
+  [MERCHANT_STATUS.REJECTED]: { label: 'Rejeté', pill: 'cs-pill-red' },
+  [MERCHANT_STATUS.SUSPENDED]: { label: 'Suspendu', pill: 'cs-pill-ink' },
+};
+
+const TYPE_LABELS = {
+  RESTAURANT: 'Restaurant',
+  CAFETERIA: 'Cafétéria',
+  BOULANGERIE: 'Boulangerie',
+  FAST_FOOD: 'Fast-food',
+  PATISSERIE: 'Pâtisserie',
+};
+
+// Date de dépôt : texte libre conservé, ISO / Timestamp Firestore formatés en heure de Tunis
+function submittedLabel(merchant) {
+  const v = merchant.submittedAt ?? merchant.createdAt;
+  if (!v) return '—';
+  if (typeof v === 'string' && !/^\d{4}-\d{2}-\d{2}T/.test(v)) return v;
+  let input = v;
+  if (typeof v?.toDate === 'function') input = v.toDate();
+  else if (typeof v?._seconds === 'number') input = v._seconds * 1000;
+  else if (typeof v?.seconds === 'number') input = v.seconds * 1000;
+  return formatTunisDate(input, { fallback: '—', includeYear: true });
+}
+
 export default function AdminMerchantsPage() {
   const [merchants, setMerchants] = useState(DEMO_ADMIN_MERCHANTS);
   const [activeTab, setActiveTab] = useState('ALL');
@@ -174,41 +202,42 @@ export default function AdminMerchantsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="bg-[#FAF3E6] text-[#111111] min-h-screen">
+      <div className="cs-container cs-page">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#111111]/10">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#111111]">
-                Validation des Commerces Partenaires
-              </h1>
-              <Badge variant="griddle" size="md">CONSOLE ADMIN</Badge>
-            </div>
-            <p className="text-xs text-[#666] mt-1 font-medium">
-              Contrôlez l'ancrage local (rayon ≤ 3 km de l'ESSECT) et délivrez les agréments de publication.
-            </p>
-          </div>
+        <header className="mb-10 lg:mb-12">
+          <p className="cs-eyebrow mb-3">Console admin · Modération</p>
+          <h1 className="cs-display">Commerces partenaires</h1>
+          <p className="cs-lead mt-4 max-w-3xl">
+            Contrôlez l'ancrage local (rayon ≤ 3 km de l'ESSECT) et délivrez les agréments de publication.
+          </p>
+        </header>
+
+        {/* Filtres */}
+        <div className="mb-8 -mx-1 px-1 overflow-x-auto scrollbar-none">
+          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} className="!flex-nowrap sm:!flex-wrap" />
         </div>
 
-        {/* Tabs */}
-        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-
         {/* Table */}
-        <div className="rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#111111] text-white uppercase tracking-wider font-anton text-xs">
+        {filteredMerchants.length === 0 ? (
+          <div className="cs-card p-10 text-center">
+            <p className="cs-h3">Aucun commerce dans cette catégorie</p>
+            <p className="cs-body text-[#5E5850] mt-2">Changez de filtre pour voir les autres dossiers.</p>
+          </div>
+        ) : (
+          <div className="cs-card p-2 overflow-x-auto">
+            <table className="cs-table min-w-[880px]">
+              <thead>
                 <tr>
-                  <th className="py-3.5 px-4">Établissement</th>
-                  <th className="py-3.5 px-4">Type</th>
-                  <th className="py-3.5 px-4">Distance ESSECT</th>
-                  <th className="py-3.5 px-4">Statut</th>
-                  <th className="py-3.5 px-4">Date Dossier</th>
-                  <th className="py-3.5 px-4 text-right">Actions Décisionnelles</th>
+                  <th>Établissement</th>
+                  <th>Type</th>
+                  <th>Distance ESSECT</th>
+                  <th>Statut</th>
+                  <th>Dossier</th>
+                  <th className="!text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#111111]/8">
+              <tbody>
                 {filteredMerchants.map((merchant) => {
                   const lat = merchant.location?.lat ?? merchant.lat;
                   const lng = merchant.location?.lng ?? merchant.lng;
@@ -217,59 +246,42 @@ export default function AdminMerchantsPage() {
                   const walk = calculateWalkingMinutes(dist);
                   const isPending = merchant.status === MERCHANT_STATUS.PENDING;
                   const isApproved = merchant.status === MERCHANT_STATUS.APPROVED;
+                  const statusUi = STATUS_UI[merchant.status] || { label: merchant.status || '—', pill: 'cs-pill-outline' };
 
                   return (
-                    <tr
-                      key={merchant.id}
-                      className="hover:bg-white/40 transition-colors"
-                    >
-                      <td className="py-4 px-4 font-bold text-[#111111]">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xl">🏪</span>
-                          <div>
-                            <span className="block font-bold text-sm">{merchant.name}</span>
-                            <span className="text-[11px] text-[#666] font-medium">
-                              {street}
-                            </span>
-                          </div>
-                        </div>
+                    <tr key={merchant.id}>
+                      <td className="min-w-[240px]">
+                        <span className="block text-[17px] font-semibold uppercase leading-tight line-clamp-2">{merchant.name}</span>
+                        <span className="block text-[15px] text-[#5E5850] mt-1 line-clamp-2">{street}</span>
                       </td>
-                      <td className="py-4 px-4 font-anton uppercase tracking-wider text-[#111111]">
-                        {merchant.type}
+                      <td className="whitespace-nowrap font-semibold">
+                        {TYPE_LABELS[merchant.type] || merchant.type || '—'}
                       </td>
-                      <td className="py-4 px-4">
-                        <span className="font-anton text-sm text-[#111111] block">
-                          {dist} m
-                        </span>
-                        <span className="text-[10px] text-[#666] font-mono">
-                          ~{walk} min à pied
+                      <td className="whitespace-nowrap">
+                        <span className="cs-figure text-[1.75rem] block">{Number.isFinite(Number(dist)) ? `${dist} m` : '—'}</span>
+                        <span className="text-[14px] text-[#5E5850]">
+                          {Number.isFinite(Number(walk)) ? `~${walk} min à pied` : ''}
                         </span>
                       </td>
-                      <td className="py-4 px-4">
-                        <Badge
-                          variant={
-                            isApproved
-                              ? 'green'
-                              : isPending
-                              ? 'yellow'
-                              : 'red'
-                          }
-                          size="sm"
-                          dot={isApproved}
-                        >
-                          {merchant.status}
-                        </Badge>
+                      <td>
+                        <span className={`cs-pill ${statusUi.pill}`}>
+                          {isApproved && <span className="w-2 h-2 rounded-full bg-[#1F7A3A]" aria-hidden="true" />}
+                          {statusUi.label}
+                        </span>
+                        {merchant.statusReason && !isPending && (
+                          <span className="block text-[14px] text-[#5E5850] mt-1.5 max-w-[220px] line-clamp-2">
+                            {merchant.statusReason}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-4 px-4 text-[#666] font-mono">
-                        {merchant.submittedAt?.includes('T') ? formatTunisDate(merchant.submittedAt) : merchant.submittedAt}
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <div className="inline-flex items-center gap-2">
+                      <td className="whitespace-nowrap text-[#5E5850]">{submittedLabel(merchant)}</td>
+                      <td className="text-right">
+                        <div className="inline-flex flex-wrap justify-end items-center gap-2">
                           {!isApproved && (
                             <button
                               type="button"
                               onClick={() => handleApprove(merchant)}
-                              className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-anton uppercase tracking-wider hover:bg-emerald-200 transition-all shadow-sm"
+                              className="cs-btn cs-btn-ink cs-btn-sm"
                             >
                               ✓ Approuver
                             </button>
@@ -285,7 +297,7 @@ export default function AdminMerchantsPage() {
                                   newStatus: MERCHANT_STATUS.REJECTED,
                                 })
                               }
-                              className="px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-800 text-xs font-anton uppercase tracking-wider hover:bg-rose-200 transition-all shadow-sm"
+                              className="cs-btn cs-btn-cream cs-btn-sm !text-[#DA0711]"
                             >
                               ✕ Rejeter
                             </button>
@@ -298,13 +310,13 @@ export default function AdminMerchantsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        )}
 
         {/* Modal Rejet */}
         <Modal
           isOpen={Boolean(rejectModalData)}
           onClose={() => setRejectModalData(null)}
-          title={`Refuser le dossier : ${rejectModalData?.merchant?.name}`}
+          title={`Refuser le dossier : ${rejectModalData?.merchant?.name || ''}`}
           description="Un motif explicatif est obligatoire pour notifier le commerçant."
           footer={
             <>
@@ -320,24 +332,25 @@ export default function AdminMerchantsPage() {
                 size="sm"
                 onClick={handleConfirmReject}
               >
-                Confirmer le Rejet
+                Confirmer le rejet
               </Button>
             </>
           }
         >
           {rejectModalData && (
-            <div className="space-y-3 py-2 text-xs">
-              <label className="block text-xs font-anton uppercase tracking-wider text-[#666]">
-                Motif officiel communiqué au gérant :
+            <div className="py-2">
+              <label htmlFor="reject-reason" className="cs-field-label">
+                Motif officiel communiqué au gérant
               </label>
               <textarea
+                id="reject-reason"
                 rows={3}
                 value={rejectModalData.reason}
                 onChange={(e) =>
                   setRejectModalData((prev) => ({ ...prev, reason: e.target.value }))
                 }
                 placeholder="ex : Établissement situé au-delà de 3 000 m ou registre non conforme..."
-                className="w-full bg-white text-[#111111] border border-[#111111]/10 rounded-xl p-3 outline-none font-sans font-medium focus:ring-1 focus:ring-[#DA0711]"
+                className="cs-input"
               />
             </div>
           )}

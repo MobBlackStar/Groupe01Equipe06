@@ -4,12 +4,13 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, MapPin, Store, Star, Package, ArrowRight } from 'lucide-react';
+import { MapPin, ArrowUpRight } from 'lucide-react';
 import PriceTicker from './PriceTicker.jsx';
 import CountdownChip from './CountdownChip.jsx';
 import RarityBadge from './RarityBadge.jsx';
 import { SURPRISE_RARITY } from '@shared/constants.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
+import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
 
 export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
   if (!offer) return null;
@@ -21,88 +22,60 @@ export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
   const teaser = offer.surprise?.teaser || "Assortiment secret de délices frais cuisinés aujourd'hui.";
   const itemCountHint = offer.surprise?.itemCountHint || 3;
 
-  // Calcul portions
+  // Portions restantes
   const total = offer.quantityTotal ?? offer.totalQuantity ?? offer.quantityAvailable ?? 1;
   const available = offer.quantityAvailable ?? offer.remainingQuantity ?? total;
 
-  const distanceM = offer.distanceFromEssectM ?? offer.merchantSnapshot?.distanceFromEssectM ?? offer.merchant?.distanceFromEssectM ?? 200;
-  const walkingMin = calculateWalkingMinutes(distanceM);
+  const distanceM = offer.distanceFromEssectM ?? offer.merchantSnapshot?.distanceFromEssectM ?? offer.merchant?.distanceFromEssectM;
+  const walkingMin = Number.isFinite(distanceM) ? calculateWalkingMinutes(distanceM) : null;
+
+  // Photo floutée du commerce : on devine, on ne voit pas
+  const teaserImage = offer.photoUrl || getDistinctGriddleFoodImage(offer.category || 'patisserie', id || index);
 
   return (
-    <div className={`relative group select-none transition-all duration-300 hover:-translate-y-1.5 ${className}`}>
-      <Link
-        to={`/app/offers/${id}`}
-        className="block relative rounded-2xl bg-[#EDE6D7] text-[#111111] p-4 sm:p-5 border border-[#FFD000]/40 shadow-[0_4px_20px_rgba(255,208,0,0.1)] hover:shadow-[0_16px_36px_rgba(255,208,0,0.2)] transition-all overflow-hidden flex flex-col justify-between h-full"
-      >
-        {/* En-tête : Badges & Compte à rebours */}
-        <div className="flex items-center justify-between gap-2 mb-3 z-10">
-          <div className="flex items-center gap-1.5">
-            <span className="w-8 h-8 rounded-full bg-[#FFD000] text-[#111111] font-anton text-xs flex items-center justify-center shadow-md">
-              🎁
-            </span>
-            <RarityBadge rarity={rarity} />
-          </div>
-
-          <div className="shrink-0">
-            <CountdownChip pickupEndAt={pickupEndAt} />
-          </div>
-        </div>
-
-        {/* Visuel Boîte Mystère Stylisée */}
-        <div className="relative w-full h-44 sm:h-48 flex flex-col items-center justify-center my-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#FAF3E6] to-[#E5DEC9] border border-[#FFD000]/30">
-          <div className="w-16 h-16 rounded-full bg-[#FFD000]/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-            <Sparkles className="w-9 h-9 text-[#854D0E] animate-pulse" />
-          </div>
-          <p className="font-anton uppercase text-sm tracking-wider text-[#854D0E]">
-            {itemCountHint} Délices Secrets Inclus
-          </p>
-          <span className="text-[10px] font-bold text-[#888] font-mono mt-0.5">
-            Portions : {available} / {total}
+    <Link
+      to={`/app/offers/${id}`}
+      className={`group cs-card cs-card-hover flex flex-col h-full p-3 !bg-[#FFD000] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#111111] ${className}`}
+    >
+      {/* Visuel mystère : photo floutée + énorme point d'interrogation */}
+      <div className="cs-photo aspect-[4/3] !bg-[#111111]">
+        <img src={teaserImage} alt="" aria-hidden="true" className="blur-xl scale-125 opacity-60" loading="lazy" />
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center">
+          <span className="font-display text-[8rem] leading-[0.8] text-[#FFD000] transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">?</span>
+          <span className="mt-2 font-semibold uppercase tracking-wide text-[#FAF3E6] text-base">
+            {itemCountHint} délices secrets · {available}/{total} paniers
           </span>
         </div>
-
-        {/* Informations Panier */}
-        <div className="pt-2 flex flex-col flex-1 justify-between">
-          <div>
-            <h3 className="font-anton uppercase text-xl font-black tracking-wide text-[#111111] line-clamp-1 group-hover:text-[#DA0711] transition-colors">
-              Panier Surprise Montfleury
-            </h3>
-
-            <div className="flex items-center justify-between text-xs text-[#666] mt-1 mb-2 font-medium">
-              <span className="flex items-center gap-1 truncate max-w-[60%]">
-                <Store className="w-3.5 h-3.5 shrink-0 text-[#888]" />
-                <span className="truncate">{merchantName}</span>
-              </span>
-              <span className="flex items-center gap-1 text-[#111111] font-bold shrink-0">
-                <MapPin className="w-3 h-3 text-[#DA0711]" />
-                <span>{distanceM}m (~{walkingMin}m)</span>
-              </span>
-            </div>
-
-            <p className="text-xs text-[#555] line-clamp-2 leading-relaxed font-sans font-medium">
-              {teaser}
-            </p>
-          </div>
-
-          {/* Séparateur subtil */}
-          <div className="my-2.5 border-t border-[#111111]/8" />
-
-          {/* Pied de Carte : Prix Dégressif + Pill Bouton Réserver */}
-          <div className="flex items-end justify-between gap-2 mt-auto">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">
-                PRIX EN DIRECT :
-              </span>
-              <PriceTicker offer={offer} size="md" />
-            </div>
-
-            <div className="btn-griddle-yellow text-xs py-2 px-4 shadow-sm group-hover:bg-[#eec200]">
-              <span>RÉSERVER</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#111111]" />
-            </div>
-          </div>
+        <span className="cs-sticker cs-sticker-red absolute top-3 right-3 z-10 rotate-6">Surprise</span>
+        <div className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-2">
+          <CountdownChip pickupEndAt={pickupEndAt} />
         </div>
-      </Link>
-    </div>
+      </div>
+
+      <div className="flex flex-col flex-1 px-2.5 pt-5 pb-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <RarityBadge rarity={rarity} />
+          {walkingMin !== null && (
+            <span className="inline-flex items-center gap-1 text-[0.9375rem] font-medium uppercase">
+              <MapPin className="w-4 h-4" />
+              {walkingMin} min à pied
+            </span>
+          )}
+        </div>
+
+        <h3 className="cs-h3 mt-3 line-clamp-2">Panier surprise · {merchantName}</h3>
+        <p className="mt-1.5 text-base leading-snug line-clamp-2">{teaser}</p>
+
+        <div className="mt-auto pt-5 flex items-end justify-between gap-3">
+          <PriceTicker offer={offer} size="md" />
+          <span
+            aria-hidden="true"
+            className="shrink-0 w-12 h-12 rounded-full bg-[#111111] text-[#FFD000] border-2 border-[#111111] flex items-center justify-center transition-transform duration-300 group-hover:rotate-45"
+          >
+            <ArrowUpRight className="w-6 h-6" strokeWidth={2.5} />
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }

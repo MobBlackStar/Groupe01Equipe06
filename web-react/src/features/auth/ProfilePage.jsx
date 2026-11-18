@@ -17,6 +17,21 @@ import {
   Badge,
   Toast,
 } from '../../components/ui/index.js';
+import { LogOut, Save, Bell, Mail, Phone, User } from 'lucide-react';
+
+// Libellés français (présentation uniquement)
+const ROLE_LABELS = {
+  [ROLES.STUDENT]: 'Étudiant',
+  [ROLES.MERCHANT]: 'Commerçant',
+  [ROLES.ADMIN]: 'Admin',
+};
+
+const TIER_LABELS = {
+  [LOYALTY_TIERS.GRAINE]: 'Graine',
+  [LOYALTY_TIERS.POUSSE]: 'Pousse',
+  [LOYALTY_TIERS.ARBRE]: 'Arbre',
+  [LOYALTY_TIERS.FORET]: 'Forêt',
+};
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -151,192 +166,238 @@ export default function ProfilePage() {
   }
 
   const displayRole = role || ROLES.STUDENT;
+  const roleLabel = ROLE_LABELS[displayRole] || displayRole;
+  const displayEmail = user?.email || 'donyesbejaoui27@gmail.com';
+  const filiereLabel = filiereOptions.find((opt) => opt.value === formData.filiereId)?.label;
+  const pointsToGo = Math.max(0, nextThreshold - points);
+
+  const prefRows = [
+    {
+      key: 'push',
+      Icon: Bell,
+      title: 'Notifications push (mobile & web)',
+      desc: "Alertes en temps réel quand une offre baisse de prix près de l'ESSECT",
+    },
+    {
+      key: 'email',
+      Icon: Mail,
+      title: 'Emails récapitulatifs & billets',
+      desc: 'Réception immédiate du justificatif et du récapitulatif de paiement',
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* HEADER PROFIL */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#111111]/10">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white border border-[#111111]/10 shadow-sm flex items-center justify-center text-3xl">
-              {displayRole === ROLES.MERCHANT ? '🏪' : '🎓'}
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-anton uppercase text-[#111111] tracking-wide">
-                  {formData.displayName || 'Profil Utilisateur'}
-                </h1>
-                <Badge
-                  variant={
-                    displayRole === ROLES.ADMIN
-                      ? 'purple'
-                      : displayRole === ROLES.MERCHANT
-                      ? 'yellow'
-                      : 'green'
-                  }
-                  size="md"
-                >
-                  {displayRole}
-                </Badge>
-              </div>
-              <p className="text-xs text-[#666] font-medium mt-0.5">
-                {user?.email || 'donyesbejaoui27@gmail.com'}
-              </p>
-            </div>
+    <div className="bg-[#FAF3E6] text-[#111111]">
+      <div className="cs-container cs-page">
+        {/* EN-TÊTE DE PAGE */}
+        <header className="mb-12 lg:mb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+          <div className="min-w-0">
+            <p className="cs-eyebrow mb-3">Mon profil · {roleLabel}</p>
+            <h1 className="cs-display break-words line-clamp-2">
+              {formData.displayName || 'Profil utilisateur'}
+            </h1>
+            <p className="cs-lead mt-4 max-w-2xl">
+              Vos coordonnées, votre impact anti-gaspi et vos préférences d'alerte, au même endroit.
+            </p>
           </div>
 
           <Button
-            variant="danger"
-            size="sm"
+            variant="secondary"
             isLoading={loggingOut}
             onClick={handleLogout}
-            leftIcon={<span>🚪</span>}
+            leftIcon={<LogOut className="w-5 h-5" aria-hidden="true" />}
+            className="shrink-0 self-start lg:self-auto"
           >
-            Se Déconnecter
+            Se déconnecter
           </Button>
-        </div>
+        </header>
 
-        {/* SECTION CARTE DE FIDÉLITÉ & ECOPOINTS (SI ÉTUDIANT) */}
-        {displayRole === ROLES.STUDENT && (
-          <Card className="p-6 bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#15803D]">
-                  🌱 Statut Environnemental &amp; Fidélité
-                </span>
-                <h3 className="text-xl font-anton uppercase text-[#111111] mt-1 flex items-center gap-2">
-                  <span>{tierIcon}</span>
-                  <span>Palier {currentTier}</span>
-                </h3>
-              </div>
-              <div className="text-left sm:text-right">
-                <span className="text-3xl font-anton text-[#15803D] tracking-tight">
-                  {points}
-                </span>
-                <span className="text-xs text-[#666] font-medium block">ÉcoPoints cumulés</span>
-              </div>
-            </div>
-
-            {/* Jauge d'évolution */}
-            <div className="space-y-1.5 mt-2">
-              <div className="flex justify-between text-xs text-[#666] font-medium">
-                <span>Progression vers le palier supérieur</span>
-                <span className="text-[#111111] font-bold">{points} / {nextThreshold} pts</span>
-              </div>
-              <div className="w-full h-3.5 bg-white rounded-full overflow-hidden border border-[#111111]/15">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* =========================================================================
+              COLONNE GAUCHE : CARTE D'IDENTITÉ + FIDÉLITÉ
+              ========================================================================= */}
+          <aside className="lg:col-span-5 space-y-6">
+            {/* Carte d'identité encre */}
+            <Card variant="dark" className="p-7 sm:p-8 overflow-hidden">
+              <div className="flex items-start justify-between gap-4 mb-8">
                 <div
-                  className="h-full bg-[#15803D] transition-all duration-500"
-                  style={{ width: `${progressPercent}%` }}
+                  className="w-20 h-20 rounded-full bg-[#FAF3E6] flex items-center justify-center text-4xl shrink-0"
+                  aria-hidden="true"
+                >
+                  {displayRole === ROLES.MERCHANT ? '🏪' : displayRole === ROLES.ADMIN ? '🛡️' : '🎓'}
+                </div>
+                <Badge
+                  variant={displayRole === ROLES.ADMIN ? 'ink' : displayRole === ROLES.MERCHANT ? 'yellow' : 'red'}
+                  size="lg"
+                  className={displayRole === ROLES.ADMIN ? '!bg-[#FAF3E6] !text-[#111111]' : ''}
+                >
+                  {roleLabel}
+                </Badge>
+              </div>
+
+              <p className="cs-label !text-[#FAF3E6]/60 mb-2">Carte membre CampusSave</p>
+              <p className="font-display uppercase text-[2.75rem] sm:text-[3.25rem] leading-[0.9] break-words">
+                {formData.displayName || 'Profil utilisateur'}
+              </p>
+
+              <hr className="my-6 border-0 border-t-2 border-dashed border-[#FAF3E6]/30" />
+
+              <dl className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 mt-1 shrink-0 text-[#FFD000]" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <dt className="cs-label !text-[#FAF3E6]/60">Email</dt>
+                    <dd className="cs-mono text-base break-all">{displayEmail}</dd>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="w-5 h-5 mt-1 shrink-0 text-[#FFD000]" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <dt className="cs-label !text-[#FAF3E6]/60">Téléphone</dt>
+                    <dd className="cs-mono text-base">{formData.phone || '—'}</dd>
+                  </div>
+                </div>
+                {displayRole === ROLES.STUDENT && filiereLabel && (
+                  <div className="flex items-start gap-3">
+                    <User className="w-5 h-5 mt-1 shrink-0 text-[#FFD000]" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <dt className="cs-label !text-[#FAF3E6]/60">Filière</dt>
+                      <dd className="text-base">{filiereLabel}</dd>
+                    </div>
+                  </div>
+                )}
+              </dl>
+            </Card>
+
+            {/* Carte de fidélité & ÉcoPoints (si étudiant) */}
+            {displayRole === ROLES.STUDENT && (
+              <Card className="p-7 sm:p-8">
+                <p className="cs-eyebrow !text-[#1F7A3A] mb-2">Statut environnemental & fidélité</p>
+                <div className="flex items-end justify-between gap-4">
+                  <h2 className="cs-title flex items-center gap-3">
+                    <span aria-hidden="true">{tierIcon}</span>
+                    <span>{TIER_LABELS[currentTier] || currentTier}</span>
+                  </h2>
+                  <div className="text-right">
+                    <span className="cs-stat-value text-[#1F7A3A] block">{points}</span>
+                    <span className="cs-label">ÉcoPoints</span>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex justify-between gap-4 text-base mb-2">
+                    <span className="text-[#5E5850]">Vers le palier supérieur</span>
+                    <span className="font-semibold">{points} / {nextThreshold} pts</span>
+                  </div>
+                  <div
+                    className="w-full h-4 bg-white rounded-full overflow-hidden border-2 border-[#111111]"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progressPercent}
+                  >
+                    <div
+                      className="h-full bg-[#1F7A3A] transition-all duration-500"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <p className="text-base text-[#5E5850] mt-3">
+                    {pointsToGo > 0
+                      ? `Plus que ${pointsToGo} points pour débloquer un panier surprise gratuit !`
+                      : 'Palier maximal atteint, bravo !'}
+                  </p>
+                </div>
+              </Card>
+            )}
+          </aside>
+
+          {/* =========================================================================
+              COLONNE DROITE : FORMULAIRE DE MODIFICATION
+              ========================================================================= */}
+          <section className="lg:col-span-7">
+            <h2 className="cs-title mb-8">Informations personnelles</h2>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <Input
+                  id="profile-name"
+                  label="Nom & prénom"
+                  required
+                  value={formData.displayName}
+                  onChange={(e) => handleChange('displayName', e.target.value)}
+                  error={errors.displayName}
+                  leftIcon={<User className="w-5 h-5" aria-hidden="true" />}
+                />
+
+                <Input
+                  id="profile-phone"
+                  label="Numéro de téléphone"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
+                  error={errors.phone}
+                  helperText="Pour la confirmation par SMS du retrait"
+                  leftIcon={<Phone className="w-5 h-5" aria-hidden="true" />}
                 />
               </div>
-              <p className="text-[11px] text-[#666] font-medium text-right pt-1">
-                Plus que {Math.max(0, nextThreshold - points)} points pour débloquer un panier surprise gratuit !
-              </p>
-            </div>
-          </Card>
-        )}
 
-        {/* FORMULAIRE DE MODIFICATION */}
-        <Card className="p-6 sm:p-8 bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
-          <h3 className="text-base font-anton uppercase text-[#111111] mb-6 flex items-center gap-2 tracking-wide">
-            <span>⚙️</span> Informations Personnelles &amp; Coordonnées
-          </h3>
+              {displayRole === ROLES.STUDENT && (
+                <Select
+                  id="profile-filiere"
+                  label="Filière universitaire ESSECT"
+                  required
+                  options={filiereOptions}
+                  value={formData.filiereId || ''}
+                  onChange={(e) => handleChange('filiereId', e.target.value)}
+                  error={errors.filiereId}
+                  helperText="Votre filière est prise en compte dans le grand classement éco-responsable"
+                />
+              )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <Input
-                label="Nom & Prénom"
-                required
-                value={formData.displayName}
-                onChange={(e) => handleChange('displayName', e.target.value)}
-                error={errors.displayName}
-                leftIcon={<span>👤</span>}
-              />
-
-              <Input
-                label="Numéro de Téléphone"
-                required
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                error={errors.phone}
-                helperText="Pour la confirmation par SMS du retrait"
-                leftIcon={<span>📞</span>}
-              />
-            </div>
-
-            {displayRole === ROLES.STUDENT && (
-              <Select
-                label="Filière Universitaire ESSECT"
-                required
-                options={filiereOptions}
-                value={formData.filiereId || ''}
-                onChange={(e) => handleChange('filiereId', e.target.value)}
-                error={errors.filiereId}
-                helperText="Votre filière est prise en compte dans le grand classement éco-responsable"
-              />
-            )}
-
-            {/* PRÉFÉRENCES DE NOTIFICATIONS */}
-            <div className="pt-4 border-t border-[#111111]/10">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#111111] mb-3">
-                Préférences d'Alertes Anti-Gaspi
-              </h4>
-              <div className="space-y-3">
-                <label className="flex items-center justify-between p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm cursor-pointer hover:bg-[#FAF3E6] transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">🔔</span>
-                    <div>
-                      <span className="text-sm font-bold text-[#111111] block">
-                        Notifications Push (Mobile &amp; Web)
+              {/* PRÉFÉRENCES DE NOTIFICATIONS */}
+              <div className="pt-4">
+                <h3 className="cs-h3 mb-5">Préférences d'alertes anti-gaspi</h3>
+                <div className="space-y-4">
+                  {prefRows.map(({ key, Icon, title, desc }) => (
+                    <label
+                      key={key}
+                      className="cs-card flex items-center justify-between gap-4 p-5 sm:p-6 cursor-pointer transition-colors hover:bg-[#E2D8C5]"
+                    >
+                      <span className="flex items-start gap-4 min-w-0">
+                        <span className="w-11 h-11 shrink-0 rounded-full bg-[#FAF3E6] flex items-center justify-center">
+                          <Icon className="w-5 h-5" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-lg font-semibold uppercase leading-tight">{title}</span>
+                          <span className="block text-base text-[#5E5850] mt-1">{desc}</span>
+                        </span>
                       </span>
-                      <span className="text-[11px] text-[#666] font-medium">
-                        Alertes en temps réel quand une offre baisse de prix près de l'ESSECT
-                      </span>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.notificationPrefs.push}
-                    onChange={() => handleTogglePref('push')}
-                    className="w-5 h-5 accent-[#DA0711] rounded cursor-pointer"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm cursor-pointer hover:bg-[#FAF3E6] transition-colors">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">✉️</span>
-                    <div>
-                      <span className="text-sm font-bold text-[#111111] block">
-                        Emails Récapitulatifs &amp; Billets
-                      </span>
-                      <span className="text-[11px] text-[#666] font-medium">
-                        Réception immédiate du justificatif et du récapitulatif de paiement
-                      </span>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.notificationPrefs.email}
-                    onChange={() => handleTogglePref('email')}
-                    className="w-5 h-5 accent-[#DA0711] rounded cursor-pointer"
-                  />
-                </label>
+                      <input
+                        type="checkbox"
+                        checked={formData.notificationPrefs[key]}
+                        onChange={() => handleTogglePref(key)}
+                        className="w-6 h-6 shrink-0 accent-[#DA0711] cursor-pointer"
+                      />
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="pt-4 flex justify-end">
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                isLoading={loading}
-                leftIcon={<span>💾</span>}
-              >
-                Enregistrer les Modifications
-              </Button>
-            </div>
-          </form>
-        </Card>
+              <div className="pt-2 flex justify-stretch sm:justify-end">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  isLoading={loading}
+                  leftIcon={<Save className="w-5 h-5" aria-hidden="true" />}
+                  className="w-full sm:w-auto whitespace-normal text-center"
+                >
+                  Enregistrer les modifications
+                </Button>
+              </div>
+            </form>
+          </section>
+        </div>
       </div>
 
       {/* TOAST DE RETOUR */}

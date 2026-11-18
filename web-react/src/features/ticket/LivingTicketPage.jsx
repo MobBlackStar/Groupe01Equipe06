@@ -17,8 +17,8 @@ const FALLBACK_TICKET = {
   offerTitle: 'Baguette Farcie Escalope Panée & Double Fromage',
   merchantName: 'Baguette & Baguette Montfleury',
   merchantAddress: '14 Rue Abou El Kacem Chebbi, Montfleury, Tunis',
-  pickupStartAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-  pickupEndAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  pickupStartAt: new Date(Date.now() - 15 * 60 * 1000),
+  pickupEndAt: new Date(Date.now() + 60 * 60 * 1000),
   quantity: 2,
   ticketKeyHex: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
   status: 'PAID',
@@ -61,9 +61,9 @@ export default function LivingTicketPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF3E6] flex flex-col items-center justify-center gap-4 text-[#111111]">
+      <div className="cs-container cs-page min-h-[70vh] flex flex-col items-center justify-center gap-5 text-[#111111]">
         <Spinner size="lg" />
-        <p className="text-xs text-[#666] font-bold">Génération du Living Ticket sécurisé...</p>
+        <p className="cs-body text-[#5E5850]">Génération du Living Ticket sécurisé...</p>
       </div>
     );
   }
@@ -71,47 +71,79 @@ export default function LivingTicketPage() {
   const currentTicket = ticket || FALLBACK_TICKET;
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl mx-auto space-y-6">
-        {/* En-tête navigation */}
-        <div className="flex items-center justify-between">
-          <Link
-            to="/app/orders"
-            className="text-xs font-anton uppercase tracking-wider text-[#111111] hover:text-[#DA0711] transition-colors"
-          >
-            ← Mes commandes
-          </Link>
-          <div className="text-xs font-medium text-[#777]">
-            Montfleury • Campus ESSECT
-          </div>
+    <div className="cs-container cs-page text-[#111111]">
+      {/* En-tête navigation */}
+      <Link to="/app/orders" className="cs-link inline-flex items-center min-h-[44px] mb-6">
+        ← Mes tickets
+      </Link>
+
+      <header className="mb-10 lg:mb-14">
+        <p className="cs-eyebrow mb-3">Montfleury · Campus ESSECT</p>
+        <h1 className="cs-display">Mon ticket</h1>
+        <p className="cs-lead mt-4 max-w-2xl">
+          Montrez ce ticket vivant au comptoir. Le QR code change toutes les 30 secondes : une capture d'écran ne passera pas.
+        </p>
+      </header>
+
+      <div className="grid gap-12 lg:gap-16 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] items-start">
+        {/* Le Billet Vivant */}
+        <div className="lg:sticky lg:top-28">
+          <BoardingPass ticket={currentTicket} />
         </div>
 
-        {/* Le Billet Vivant */}
-        <BoardingPass ticket={currentTicket} />
+        {/* Mode d'emploi + démo unboxing */}
+        <aside className="space-y-10 lg:pt-4">
+          <section>
+            <h2 className="cs-title mb-8">Au comptoir</h2>
+            <ol className="space-y-7">
+              {[
+                ['Arrivez dans le créneau', 'Le commerçant prépare votre lot pour l’heure indiquée sur le ticket.'],
+                ['Montrez le QR code', 'Luminosité au maximum, le commerçant le scanne en une seconde.'],
+                ['Caméra en panne ?', 'Dictez le code de secours à 6 chiffres affiché sous le QR.'],
+              ].map(([title, text], i) => (
+                <li key={title} className="flex gap-5">
+                  <span className="cs-dot-badge shrink-0 !w-12 !h-12 !text-lg">{i + 1}</span>
+                  <div>
+                    <p className="cs-h3">{title}</p>
+                    <p className="cs-body text-[#5E5850] mt-1">{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
 
-        {/* Bouton Démo Unboxing Panier Surprise */}
-        <button
-          type="button"
-          onClick={() => setShowUnboxing(true)}
-          className="w-full btn-griddle-yellow py-3.5 text-xs font-anton uppercase tracking-wider shadow-sm cursor-pointer"
-        >
-          <span>🎁</span>
-          <span>SIMULER / REVOIR L'UNBOXING DU PANIER SURPRISE</span>
-        </button>
-
-        {/* Modale d'animation Unboxing */}
-        {showUnboxing && (
-          <UnboxingReveal
-            items={[
-              { title: 'Croissant aux Amandes', quantity: 2, valueMillimes: 3600 },
-              { title: 'Pain au Chocolat Beurre', quantity: 2, valueMillimes: 3200 },
-            ]}
-            rarity="LEGENDARY"
-            merchantName={currentTicket.merchantName}
-            onClose={() => setShowUnboxing(false)}
-          />
-        )}
+          <section className="cs-card p-6 sm:p-8">
+            <span className="cs-sticker cs-sticker-red mb-5">Surprise</span>
+            <h2 className="cs-h3 mt-2">Panier surprise ?</h2>
+            <p className="cs-body text-[#5E5850] mt-2 mb-6">
+              Revivez l’ouverture de la boîte mystère et découvrez les EcoPoints gagnés.
+            </p>
+            {/* Bouton Démo Unboxing Panier Surprise */}
+            <button
+              type="button"
+              onClick={() => setShowUnboxing(true)}
+              className="cs-btn cs-btn-mustard cs-btn-block"
+            >
+              <span aria-hidden="true">🎁</span>
+              <span>Revoir l’unboxing</span>
+            </button>
+          </section>
+        </aside>
       </div>
+
+      {/* Modale d'animation Unboxing */}
+      {showUnboxing && (
+        <UnboxingReveal
+          isOpen={showUnboxing}
+          items={[
+            { title: 'Croissant aux Amandes', quantity: 2, valueMillimes: 3600 },
+            { title: 'Pain au Chocolat Beurre', quantity: 2, valueMillimes: 3200 },
+          ]}
+          rarity="LEGENDARY"
+          merchantName={currentTicket.merchantName}
+          onClose={() => setShowUnboxing(false)}
+        />
+      )}
     </div>
   );
 }

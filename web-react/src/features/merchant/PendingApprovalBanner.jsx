@@ -5,9 +5,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MERCHANT_STATUS } from '@shared/constants.js';
-import Badge from '../../components/ui/Badge.jsx';
 import Button from '../../components/ui/Button.jsx';
 
+/** Bandeau d'agrément : vert = approuvé, rouge = rejeté, moutarde = en attente. */
 export default function PendingApprovalBanner({
   status = MERCHANT_STATUS.PENDING,
   statusReason = '',
@@ -17,27 +17,24 @@ export default function PendingApprovalBanner({
   if (status === MERCHANT_STATUS.APPROVED) {
     return (
       <div
-        className={`w-full p-5 rounded-3xl bg-[#DCFCE7] border border-[#15803D]/20 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${className}`}
+        className={`w-full rounded-[1.25rem] bg-[#DDEFD9] text-[#111111] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 ${className}`}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-2xl select-none">🏪</span>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-anton uppercase text-base text-[#15803D] tracking-wide">
-                Établissement Agréé &amp; Actif
-              </h4>
-              <Badge variant="green" size="sm" dot>APPROUVÉ</Badge>
+        <div className="flex items-start gap-4 min-w-0">
+          <span className="text-4xl select-none leading-none" aria-hidden="true">🏪</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <h4 className="cs-h3 !text-2xl">Établissement agréé</h4>
+              <span className="cs-pill cs-pill-ink">Approuvé</span>
             </div>
-            <p className="text-xs text-[#111111]/70 mt-0.5 font-sans">
+            <p className="text-base sm:text-lg leading-snug">
               Votre établissement est vérifié. Vous pouvez publier des offres et des paniers surprises à tout moment.
             </p>
           </div>
         </div>
 
-        <Link to="/merchant/offers/new">
-          <Button variant="primary" size="sm" leftIcon={<span>✨</span>}>
-            Nouvelle Offre Anti-Gaspi
-          </Button>
+        <Link to="/merchant/offers/new" className="cs-btn cs-btn-red shrink-0 self-start md:self-auto">
+          <span aria-hidden="true">✨</span>
+          <span>Nouvelle offre</span>
         </Link>
       </div>
     );
@@ -46,33 +43,31 @@ export default function PendingApprovalBanner({
   if (status === MERCHANT_STATUS.REJECTED) {
     return (
       <div
-        className={`w-full p-5 rounded-3xl bg-[#FEE2E2] border border-[#DA0711]/20 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${className}`}
+        role="alert"
+        className={`w-full rounded-[1.25rem] bg-[#DA0711] text-[#FAF3E6] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 ${className}`}
       >
-        <div className="flex items-start gap-3.5">
-          <span className="text-2xl select-none mt-0.5">⚠️</span>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-anton uppercase text-base text-[#DA0711] tracking-wide">
-                Dossier d'Agrément Non Retenu
-              </h4>
-              <Badge variant="red" size="sm">REJETÉ</Badge>
+        <div className="flex items-start gap-4 min-w-0">
+          <span className="text-4xl select-none leading-none" aria-hidden="true">⚠️</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <h4 className="cs-h3 !text-2xl">Dossier non retenu</h4>
+              <span className="cs-pill cs-pill-ink">Rejeté</span>
             </div>
-            <p className="text-xs text-[#111111] mt-1 font-sans">
+            <p className="text-base sm:text-lg leading-snug">
               Motif de la commission ESSECT :{' '}
-              <span className="font-bold">
+              <strong className="font-bold">
                 {statusReason || "Coordonnées géographiques ou justificatifs d'activité non conformes au rayon de 3 km."}
-              </span>
+              </strong>
             </p>
-            <p className="text-[11px] text-[#111111]/70 mt-1 font-sans">
-              Vous pouvez corriger vos coordonnées et soumettre à nouveau votre fiche.
+            <p className="text-base mt-2 opacity-90">
+              Corrigez vos coordonnées et soumettez à nouveau votre fiche.
             </p>
           </div>
         </div>
 
-        <Link to="/merchant/store">
-          <Button variant="danger" size="sm" leftIcon={<span>✏️</span>}>
-            Corriger mon profil
-          </Button>
+        <Link to="/merchant/store" className="cs-btn cs-btn-cream shrink-0 self-start md:self-auto">
+          <span aria-hidden="true">✏️</span>
+          <span>Corriger mon profil</span>
         </Link>
       </div>
     );
@@ -81,29 +76,31 @@ export default function PendingApprovalBanner({
   // Statut PENDING par défaut
   return (
     <div
-      className={`w-full p-5 rounded-3xl bg-[#FEF08A] border border-[#A16207]/20 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${className}`}
+      role="status"
+      className={`w-full rounded-[1.25rem] bg-[#FFD000] text-[#111111] border-2 border-[#111111] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 ${className}`}
     >
-      <div className="flex items-start gap-3.5">
-        <span className="text-2xl select-none animate-pulse mt-0.5">⏳</span>
-        <div>
-          <div className="flex items-center gap-2">
-            <h4 className="font-anton uppercase text-base text-[#111111] tracking-wide">
-              Dossier en Cours d'Instruction
-            </h4>
-            <Badge variant="yellow" size="sm" dot>EN ATTENTE ADMIN</Badge>
+      <div className="flex items-start gap-4 min-w-0">
+        <span className="text-4xl select-none leading-none" aria-hidden="true">⏳</span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h4 className="cs-h3 !text-2xl">Dossier en cours d'instruction</h4>
+            <span className="cs-pill cs-pill-ink">
+              <span className="w-2 h-2 rounded-full bg-[#FFD000] animate-pulse" aria-hidden="true" />
+              En attente admin
+            </span>
           </div>
-          <p className="text-xs text-[#111111] mt-1 font-sans leading-relaxed">
-            Votre demande d'adhésion est en cours de révision par l'administrateur ESSECT.
-            La publication d'offres sera débloquée dès validation de votre ancrage local (rayon ≤ 3 km).
+          <p className="text-base sm:text-lg leading-snug max-w-3xl">
+            Votre demande d'adhésion est en cours de révision par l'administrateur ESSECT. La publication d'offres
+            sera débloquée dès validation de votre ancrage local (rayon ≤ 3 km).
           </p>
-          <p className="text-[11px] text-[#111111]/70 mt-1 font-mono">
-            Mise à jour en temps réel via Firestore • Délai moyen habituel : moins de 2 heures.
+          <p className="text-[15px] mt-2 font-medium opacity-80">
+            Mise à jour en temps réel · délai moyen : moins de 2 heures.
           </p>
         </div>
       </div>
 
       {onRefresh && (
-        <Button variant="secondary" size="sm" onClick={onRefresh} leftIcon={<span>🔄</span>}>
+        <Button variant="dark" size="sm" onClick={onRefresh} leftIcon={<span aria-hidden="true">🔄</span>} className="shrink-0 self-start md:self-auto">
           Actualiser
         </Button>
       )}

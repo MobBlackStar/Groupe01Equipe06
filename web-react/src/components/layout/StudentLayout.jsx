@@ -3,53 +3,28 @@
 // 🎯 À retenir pour la soutenance : "Ce layout assure une ergonomie responsive sans faille sur fond warm cream #FAF3E6."
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, MapPin, Ticket, Award, BarChart3 } from 'lucide-react';
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
+import MobileTabBar from './MobileTabBar.jsx';
+
+const isExplore = (p) => p === '/app' || p === '/app/explore' || p.startsWith('/app/offers') || p.startsWith('/app/checkout');
+
+const NAV_ITEMS = [
+  { label: 'Offres', path: '/app/explore', icon: <ShoppingBag className="w-5 h-5" />, match: isExplore },
+  { label: 'Radar', path: '/app/radar', icon: <MapPin className="w-5 h-5" /> },
+  { label: 'Tickets', path: '/app/orders', icon: <Ticket className="w-5 h-5" /> },
+  { label: 'Fidélité', path: '/app/loyalty', icon: <Award className="w-5 h-5" /> },
+  { label: 'Bilan', path: '/app/dashboard', icon: <BarChart3 className="w-5 h-5" /> },
+];
 
 export default function StudentLayout({ children }) {
-  const location = useLocation();
-
-  const isCurrent = (path) => {
-    if (path === '/app' && (location.pathname === '/app' || location.pathname === '/app/explore')) return true;
-    return location.pathname.startsWith(path);
-  };
-
-  const navItems = [
-    { label: 'Explorer', path: '/app', icon: <ShoppingBag className="w-5 h-5" /> },
-    { label: 'Radar 3D', path: '/app/radar', icon: <MapPin className="w-5 h-5" /> },
-    { label: 'Commandes', path: '/app/orders', icon: <Ticket className="w-5 h-5" /> },
-    { label: 'Fidélité', path: '/app/loyalty', icon: <Award className="w-5 h-5" /> },
-    { label: 'Dashboard', path: '/app/dashboard', icon: <BarChart3 className="w-5 h-5" /> },
-  ];
-
   return (
     <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex flex-col">
       <Navbar />
-      <main className="flex-1 pb-20 lg:pb-8">{children}</main>
+      <main className="flex-1 pb-24 lg:pb-0">{children}</main>
       <Footer />
-
-      {/* Barre de navigation basse tactile (Mobile 360px - 768px) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#EDE6D7]/95 backdrop-blur-md border-t border-[#111111]/8 px-2 py-2 flex items-center justify-around shadow-lg">
-        {navItems.map((item) => {
-          const active = isCurrent(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-full transition-all ${
-                active ? 'text-[#DA0711] font-bold' : 'text-[#666] hover:text-[#111111]'
-              }`}
-            >
-              <div className={active ? 'scale-110 transition-transform text-[#DA0711]' : ''}>
-                {item.icon}
-              </div>
-              <span className="text-[10px] font-anton uppercase tracking-wider">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <MobileTabBar items={NAV_ITEMS} />
     </div>
   );
 }

@@ -13,7 +13,7 @@ export default function Stepper({
     <div className={`w-full ${className}`}>
       <div className="flex items-center justify-between relative">
         {/* Background connecting bar */}
-        <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-[#111111]/15 -z-0" />
+        <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-0.5 bg-[#111111] -z-0" />
         
         {steps.map((step, idx) => {
           const isCompleted = idx < currentStep;
@@ -23,23 +23,23 @@ export default function Stepper({
           return (
             <div key={idx} className="flex flex-col items-center relative z-10">
               <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 ${
+                className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border-2 border-[#111111] transition-all duration-200 ${
                   isCompleted
-                    ? 'bg-[#15803D] text-white shadow-sm'
+                    ? 'bg-[#111111] text-[#FAF3E6]'
                     : isCurrent
-                    ? 'bg-[#DA0711] text-white shadow-md ring-4 ring-[#DA0711]/20 scale-110'
-                    : 'bg-[#EDE6D7] text-[#888] border border-[#111111]/10'
+                    ? 'bg-[#DA0711] text-white scale-110'
+                    : 'bg-[#FAF3E6] text-[#111111]'
                 }`}
               >
                 {isCompleted ? '✓' : idx + 1}
               </div>
               <span
-                className={`text-[11px] font-anton uppercase tracking-wider mt-2 max-w-[100px] text-center leading-tight truncate ${
+                className={`text-sm font-semibold uppercase tracking-wide mt-3 max-w-[130px] text-center leading-tight bg-[#FAF3E6] px-2 ${
                   isCurrent
                     ? 'text-[#DA0711]'
                     : isCompleted
                     ? 'text-[#111111]'
-                    : 'text-[#888]'
+                    : 'text-[#5E5850]'
                 }`}
               >
                 {stepLabel}

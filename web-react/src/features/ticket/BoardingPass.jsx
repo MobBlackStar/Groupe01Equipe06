@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateClientTicketData } from '../../lib/ticketCrypto.js';
-import { formatTunisTime } from '../../lib/formatters.js';
+import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
 
 export default function BoardingPass({
   ticket,
@@ -72,81 +72,114 @@ export default function BoardingPass({
   const offerTitle = ticket?.offerTitle || 'Baguette Farcie Escalope Panée';
   const quantity = ticket?.quantity || 2;
 
+  const pickupWindow = formatTunisTimeWindow(ticket?.pickupStartAt, ticket?.pickupEndAt);
+  const pickupDate = formatTunisDate(ticket?.pickupStartAt, { fallback: '' });
+  const merchantAddress = ticket?.merchantAddress;
+  const pinDigits = String(qrData.code6 || '');
+  const pinDisplay = pinDigits.length === 6 ? `${pinDigits.slice(0, 3)} ${pinDigits.slice(3)}` : pinDigits || '— — —';
+
+  // Tampon caoutchouc selon le statut du ticket
+  const status = ticket?.status || 'PAID';
+  const stampLabel =
+    status === 'COMPLETED'
+      ? 'Récupéré'
+      : status === 'RESERVED'
+      ? 'À payer'
+      : ['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED', 'NO_SHOW'].includes(status)
+      ? 'Annulé'
+      : 'Payé & validé';
+
   return (
-    <div className={`relative max-w-md w-full mx-auto select-none ${className}`}>
-      
-      {/* Reçu Thermique Physique (Authentic Griddle Receipt) */}
-      <div className="relative rounded-2xl bg-white text-[#111111] p-6 sm:p-8 font-mono shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-[#111111]/8 overflow-hidden">
-        
-        {/* Bande supérieure noire Griddle */}
-        <div className="absolute top-0 left-0 right-0 h-2 bg-[#111111]" />
+    <div className={`relative w-full max-w-[480px] mx-auto select-none ${className}`}>
+      {/* Reçu papier façon ticket de street-food (bord inférieur déchiré) */}
+      <div className="cs-receipt rounded-t-[1.25rem] overflow-hidden px-5 sm:px-9 pt-9 pb-12">
+        {/* Bande rouge en tête de ticket */}
+        <div className="absolute top-0 inset-x-0 h-3 bg-[#DA0711]" aria-hidden="true" />
 
-        {/* TAMPON CAOUTCHOUC ROUGE [PAYÉ & VALIDÉ] */}
-        <div className="absolute top-8 right-6 z-20 pointer-events-none">
-          <div className="griddle-stamp text-xs uppercase px-3 py-1 rotate-[-8deg] flex flex-col items-center">
-            <span>[PAYÉ &amp; VALIDÉ]</span>
-            <span className="text-[8px] font-mono tracking-normal font-normal">ESSECT 2026</span>
+        {/* En-tête : marque + tampon */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-title text-[22px] sm:text-[30px] leading-none tracking-tight text-[#111111]">CAMPUSSAVE</p>
+            <p className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#5E5850] mt-2">Ticket de retrait</p>
           </div>
-        </div>
-
-        {/* En-tête Reçu Vivant */}
-        <div className="pb-4 border-b border-dashed border-[#111111]/25">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#111111] text-[#FFD000] text-[10px] font-bold mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#DA0711] animate-ping" />
-            <span>LIVE · {liveTimeStr}</span>
-          </div>
-          <h2 className="font-anton uppercase text-xl sm:text-2xl font-black tracking-wider text-[#111111]">
-            LIVING TICKET DE RETRAIT
-          </h2>
-          <p className="text-[10px] text-[#666] font-medium">
-            RÉF ÉTUDIANT : <strong className="text-[#DA0711] text-xs font-bold font-mono">#{orderCode}</strong>
-          </p>
-        </div>
-
-        {/* Détails du plat / restaurant */}
-        <div className="py-4 space-y-2.5 border-b border-dashed border-[#111111]/20 text-xs">
-          <div className="flex justify-between font-medium">
-            <span className="text-[#777]">COMMERCE PARTENAIRE :</span>
-            <span className="text-[#111111] font-bold truncate max-w-[170px]">{merchantName}</span>
-          </div>
-          <div className="flex justify-between font-medium">
-            <span className="text-[#777]">LOT COMMANDÉ :</span>
-            <span className="text-[#111111] font-bold">{quantity}x {offerTitle}</span>
-          </div>
-          <div className="flex justify-between font-medium">
-            <span className="text-[#777]">CRÉNEAU DE PASSAGE :</span>
-            <span className="text-[#DA0711] font-bold">
-              {formatTunisTime(ticket?.pickupStartAt)} — {formatTunisTime(ticket?.pickupEndAt)}
+          <div className="pointer-events-none shrink-0 pt-1 pr-1">
+            <span className="cs-stamp block max-w-[118px] sm:max-w-[170px] !text-[18px] sm:!text-[22px] !px-3 !leading-[1.05] text-center mix-blend-multiply">
+              {stampLabel}
             </span>
           </div>
         </div>
 
-        {/* Encoche de découpe latérale */}
-        <div className="relative flex items-center justify-between my-4">
-          <div className="w-5 h-5 rounded-full bg-[#FAF3E6] -ml-9 border-r border-[#111111]/15" />
-          <div className="flex-1 border-t border-dashed border-[#111111]/25 mx-2" />
-          <div className="w-5 h-5 rounded-full bg-[#FAF3E6] -mr-9 border-l border-[#111111]/15" />
+        {/* Réf + horloge live */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[15px]">
+            <span className="text-[#5E5850]">RÉF. </span>
+            <strong className="text-[#DA0711] text-[20px]">#{orderCode}</strong>
+          </p>
+          <span className="cs-pill cs-pill-ink !font-mono !normal-case !tracking-normal">
+            <span className="relative flex w-2.5 h-2.5" aria-hidden="true">
+              <span className="absolute inset-0 rounded-full bg-[#DA0711] animate-ping" />
+              <span className="relative w-2.5 h-2.5 rounded-full bg-[#DA0711]" />
+            </span>
+            LIVE {liveTimeStr}
+          </span>
+        </div>
+
+        <hr className="cs-receipt-rule !my-6" />
+
+        {/* Commerce + créneau en grand */}
+        <div className="space-y-6">
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850]">Commerce</p>
+            <p className="font-display uppercase text-[40px] sm:text-[48px] leading-[0.92] text-[#111111] mt-2 break-words">
+              {merchantName}
+            </p>
+            {merchantAddress && <p className="text-[14px] text-[#5E5850] mt-2 leading-snug">{merchantAddress}</p>}
+          </div>
+
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850]">
+              Créneau de retrait{pickupDate ? ` · ${pickupDate}` : ''}
+            </p>
+            <p className="font-display text-[52px] sm:text-[64px] leading-[0.9] text-[#DA0711] mt-2">{pickupWindow}</p>
+          </div>
+
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850]">Commande</p>
+            <p className="text-[16px] sm:text-[17px] font-bold leading-snug mt-2">
+              <span className="text-[#DA0711]">{quantity} ×</span> {offerTitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Perforation avec encoches latérales */}
+        <div className="relative my-8 h-8 flex items-center" aria-hidden="true">
+          <span className="absolute -left-9 sm:-left-[52px] w-8 h-8 rounded-full bg-[#FAF3E6]" />
+          <span className="w-full border-t-[3px] border-dotted border-[#111111]/35" />
+          <span className="absolute -right-9 sm:-right-[52px] w-8 h-8 rounded-full bg-[#FAF3E6]" />
         </div>
 
         {/* QR CODE ROTATIF CRYPTOGRAPHIQUE 30 SECONDES */}
-        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-[#FAF3E6]/60 border border-[#111111]/8">
-          <div className="p-3 bg-white rounded-xl shadow-sm border border-[#111111]/10">
+        <div className="flex flex-col items-center">
+          <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850] mb-4">Scannez au comptoir</p>
+          <div className="bg-white p-3 sm:p-4 rounded-2xl border-2 border-[#111111]">
             <QRCodeSVG
               value={qrData.qrPayload}
-              size={180}
+              size={300}
               level="H"
               includeMargin={false}
               fgColor="#111111"
+              bgColor="#FFFFFF"
+              className="block w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]"
             />
           </div>
 
           {/* Jauge de rotation des 30 secondes */}
-          <div className="w-full max-w-[200px] mt-4 space-y-1">
-            <div className="flex justify-between text-[10px] font-mono text-[#666]">
-              <span>Rotation HMAC 30s :</span>
-              <span className="text-[#DA0711] font-bold">{secondsRemaining}s</span>
+          <div className="w-full max-w-[300px] mt-5">
+            <div className="flex justify-between items-baseline text-[14px] text-[#5E5850]">
+              <span>Nouveau code dans</span>
+              <span className="text-[#DA0711] font-bold text-[18px]">{secondsRemaining}s</span>
             </div>
-            <div className="w-full bg-[#EDE6D7] h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-[#E2D8C5] h-2.5 rounded-full overflow-hidden mt-2">
               <div
                 className="bg-[#DA0711] h-full transition-all duration-1000 ease-linear rounded-full"
                 style={{ width: `${progressPercent}%` }}
@@ -155,27 +188,25 @@ export default function BoardingPass({
           </div>
 
           {/* Code de secours à 6 chiffres */}
-          <div className="mt-4 pt-3 border-t border-dashed border-[#111111]/15 text-center w-full">
-            <span className="text-[10px] uppercase font-medium tracking-widest text-[#777] block mb-1">
-              CODE PIN MANUEL DE SECOURS (SI CAMÉRA HS) :
-            </span>
-            <div className="inline-block px-4 py-1 rounded-full bg-[#FFD000] font-anton text-2xl font-black tracking-widest text-[#111111] shadow-sm">
-              {qrData.code6}
+          <div className="mt-7 text-center w-full">
+            <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850] mb-3">
+              Code de secours (caméra HS)
+            </p>
+            <div className="inline-block px-6 py-2 rounded-xl bg-[#FFD000] border-2 border-[#111111] text-[34px] sm:text-[40px] font-bold tracking-[0.18em] leading-tight text-[#111111]">
+              {pinDisplay}
             </div>
           </div>
         </div>
 
-        {/* Bas de ticket : Instructions */}
-        <div className="mt-4 text-center">
-          <p className="text-[10px] text-[#777] font-medium">
-            Présentez ce ticket sur votre smartphone au comptoir du commerçant.
-          </p>
-        </div>
+        <hr className="cs-receipt-rule !my-7" />
 
-        {/* Code-barres simulé en bas */}
-        <div className="mt-4 pt-3 border-t border-dashed border-[#111111]/25 flex flex-col items-center">
-          <div className="h-6 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_4px)] opacity-70" />
-          <span className="text-[8px] font-bold tracking-widest text-[#777] mt-1">THANK YOU · COME HUNGRY</span>
+        {/* Bas de ticket : Instructions + code-barres */}
+        <p className="text-[14px] text-center text-[#5E5850] leading-relaxed">
+          Présentez ce ticket sur votre smartphone au comptoir du commerçant.
+        </p>
+        <div className="mt-6 flex flex-col items-center" aria-hidden="true">
+          <div className="h-12 w-full bg-[repeating-linear-gradient(90deg,#111111_0,#111111_2px,transparent_2px,transparent_5px,#111111_5px,#111111_6px,transparent_6px,transparent_9px)]" />
+          <span className="text-[13px] font-bold tracking-[0.3em] text-[#111111] mt-3">MERCI · BON APPÉTIT</span>
         </div>
       </div>
     </div>

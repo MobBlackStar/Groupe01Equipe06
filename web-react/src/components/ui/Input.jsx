@@ -4,6 +4,7 @@
 
 import React, { forwardRef } from 'react';
 
+/** Pill text field — white fill, 2px ink outline, mustard focus ring. */
 const Input = forwardRef(function Input(
   {
     label,
@@ -22,21 +23,16 @@ const Input = forwardRef(function Input(
   const inputId = id || props.name;
 
   return (
-    <div className={`w-full flex flex-col gap-1.5 ${className}`}>
+    <div className={`w-full ${className}`}>
       {label && (
-        <label
-          htmlFor={inputId}
-          className="text-xs font-bold uppercase tracking-wider text-[#111111] flex items-center justify-between font-mono"
-        >
-          <span>
-            {label} {required && <span className="text-[#DA0711]">*</span>}
-          </span>
+        <label htmlFor={inputId} className="cs-field-label">
+          {label} {required && <span className="text-[#DA0711]">*</span>}
         </label>
       )}
 
       <div className="relative flex items-center">
         {leftIcon && (
-          <div className="absolute left-3.5 flex items-center pointer-events-none text-[#111111]/50">
+          <div className="absolute left-5 flex items-center pointer-events-none text-[#111111]/55">
             {leftIcon}
           </div>
         )}
@@ -45,27 +41,22 @@ const Input = forwardRef(function Input(
           ref={ref}
           id={inputId}
           disabled={disabled}
-          className={`w-full bg-[#FAF3E6] text-[#111111] placeholder-[#111111]/40 text-sm rounded-2xl px-4 py-3 transition-all duration-150 border ${
-            error
-              ? 'border-[#DA0711] ring-1 ring-[#DA0711]'
-              : 'border-[#111111]/15 focus:border-[#111111] focus:ring-1 focus:ring-[#111111]'
-          } ${leftIcon ? 'pl-11' : ''} ${rightIcon ? 'pr-11' : ''} disabled:opacity-50 disabled:cursor-not-allowed outline-none font-medium shadow-sm`}
+          aria-invalid={error ? 'true' : undefined}
+          className={`cs-input ${leftIcon ? '!pl-12' : ''} ${rightIcon ? '!pr-12' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
           {...props}
         />
 
         {rightIcon && (
-          <div className="absolute right-3.5 flex items-center text-[#111111]/50">
+          <div className="absolute right-5 flex items-center text-[#111111]/55">
             {rightIcon}
           </div>
         )}
       </div>
 
       {error ? (
-        <p className="text-xs text-[#DA0711] font-bold flex items-center gap-1 mt-0.5">
-          <span>⚠️</span> {error}
-        </p>
+        <p className="cs-error-text">{error}</p>
       ) : helperText ? (
-        <p className="text-xs text-[#111111]/60 mt-0.5 font-sans">{helperText}</p>
+        <p className="cs-help-text">{helperText}</p>
       ) : null}
     </div>
   );

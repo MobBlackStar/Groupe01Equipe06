@@ -6,6 +6,9 @@ import React from 'react';
 import { Smartphone, Car, Utensils } from 'lucide-react';
 import { calculateEquivalences } from '@shared/impact.js';
 
+const frNumber = (n, digits = 0) =>
+  Number(n).toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
 /**
  * Tuiles d'équivalences écologiques basées sur les sources officielles FAO et US EPA
  * @param {Object} props
@@ -13,83 +16,70 @@ import { calculateEquivalences } from '@shared/impact.js';
  * @param {number} props.foodSavedGrams - Poids total de nourriture sauvée en grammes
  */
 export default function EquivalenceTiles({ co2SavedGrams = 1450000, foodSavedGrams = 580000 }) {
-  const equivalences = calculateEquivalences(co2SavedGrams);
-  const foodSavedKg = (foodSavedGrams / 1000).toFixed(1);
-  const co2SavedKg = (co2SavedGrams / 1000).toFixed(1);
+  const co2 = Number(co2SavedGrams);
+  const food = Number(foodSavedGrams);
+  const hasCo2 = Number.isFinite(co2);
+  const hasFood = Number.isFinite(food);
+
+  const equivalences = calculateEquivalences(hasCo2 ? co2 : 0);
+  const foodSavedKg = hasFood ? frNumber(food / 1000, 1) : '—';
+  const roundTrips = hasCo2 ? Math.round(equivalences.kmCarAvoided / 140) : null;
+
+  const tiles = [
+    {
+      key: 'phones',
+      icon: Smartphone,
+      iconClass: 'bg-[#111111] text-[#FAF3E6]',
+      value: hasCo2 ? frNumber(equivalences.smartphonesCharged) : '—',
+      valueClass: 'text-[#111111]',
+      title: 'Recharges de smartphone',
+      text: 'Énergie épargnée au réseau électrique grâce à la valorisation des invendus.',
+      source: '8,22 g CO₂ / charge',
+    },
+    {
+      key: 'car',
+      icon: Car,
+      iconClass: 'bg-[#FFD000] text-[#111111]',
+      value: hasCo2 ? `${frNumber(equivalences.kmCarAvoided)} km` : '—',
+      valueClass: 'text-[#111111]',
+      title: 'De voiture thermique évités',
+      text:
+        roundTrips !== null
+          ? `Soit plus de ${frNumber(roundTrips)} allers-retours Tunis–Sousse sans émission.`
+          : 'Trajets urbains évités grâce aux repas sauvés.',
+      source: '244 g CO₂ / km',
+    },
+    {
+      key: 'food',
+      icon: Utensils,
+      iconClass: 'bg-[#DA0711] text-[#FAF3E6]',
+      value: hasFood ? `${foodSavedKg} kg` : '—',
+      valueClass: 'text-[#DA0711]',
+      title: 'De nourriture réorientée',
+      text: 'Chaque kilo de repas sauvé évite 2,5 kg de CO₂e (FAO, Food Wastage Footprint).',
+      source: 'Ratio 2,5x FAO',
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Grille des 3 Tuiles d'Équivalences */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Tuile 1 : Smartphones rechargés */}
-        <div className="group p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3.5 rounded-2xl bg-[#DCFCE7] text-[#15803D] shadow-sm group-hover:scale-105 transition-transform">
-              <Smartphone className="w-6 h-6" />
-            </div>
-            <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-white text-[#111111] border border-[#111111]/10 shadow-sm">
-              8,22 g CO₂ / charge
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {tiles.map(({ key, icon: Icon, iconClass, value, valueClass, title, text, source }, i) => (
+        <article
+          key={key}
+          className="cs-card cs-card-hover cs-fade-up p-7 sm:p-8 flex flex-col gap-4"
+          style={{ animationDelay: `${i * 80}ms` }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className={`w-14 h-14 rounded-full flex items-center justify-center ${iconClass}`} aria-hidden="true">
+              <Icon className="w-6 h-6" />
             </span>
+            <span className="cs-pill cs-pill-outline">{source}</span>
           </div>
-          <div className="space-y-1">
-            <h4 className="font-anton text-3xl text-[#111111] tracking-wide">
-              {equivalences.smartphonesCharged.toLocaleString('fr-FR')}
-            </h4>
-            <p className="text-sm font-bold text-[#15803D]">
-              Recharges complètes de smartphone
-            </p>
-            <p className="text-xs text-[#666] pt-1 font-sans leading-relaxed">
-              Énergie propre épargnée au réseau électrique grâce à la valorisation des invendus.
-            </p>
-          </div>
-        </div>
-
-        {/* Tuile 2 : Kilomètres en voiture thermique évités */}
-        <div className="group p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3.5 rounded-2xl bg-[#FFD000] text-[#111111] shadow-sm group-hover:scale-105 transition-transform">
-              <Car className="w-6 h-6" />
-            </div>
-            <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-white text-[#111111] border border-[#111111]/10 shadow-sm">
-              244 g CO₂ / km
-            </span>
-          </div>
-          <div className="space-y-1">
-            <h4 className="font-anton text-3xl text-[#111111] tracking-wide">
-              {equivalences.kmCarAvoided.toLocaleString('fr-FR')} km
-            </h4>
-            <p className="text-sm font-bold text-[#111111]">
-              Trajet urbain en voiture évité
-            </p>
-            <p className="text-xs text-[#666] pt-1 font-sans leading-relaxed">
-              Soit l'équivalent de plus de {Math.round(equivalences.kmCarAvoided / 140)} allers-retours Tunis-Sousse sans émission toxique.
-            </p>
-          </div>
-        </div>
-
-        {/* Tuile 3 : Ratio Carbone Alimentaire FAO */}
-        <div className="group p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3.5 rounded-2xl bg-[#FEE2E2] text-[#DA0711] shadow-sm group-hover:scale-105 transition-transform">
-              <Utensils className="w-6 h-6" />
-            </div>
-            <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-white text-[#111111] border border-[#111111]/10 shadow-sm">
-              Ratio 2,5x FAO
-            </span>
-          </div>
-          <div className="space-y-1">
-            <h4 className="font-anton text-3xl text-[#DA0711] tracking-wide">
-              {foodSavedKg} kg
-            </h4>
-            <p className="text-sm font-bold text-[#DA0711]">
-              Nourriture réorientée vers les étudiants
-            </p>
-            <p className="text-xs text-[#666] pt-1 font-sans leading-relaxed">
-              Chaque kilogramme de repas sauvé évite 2,5 kg de CO₂e selon le rapport FAO Food Wastage Footprint.
-            </p>
-          </div>
-        </div>
-      </div>
+          <p className={`cs-figure text-[clamp(3.5rem,6vw,5rem)] break-words ${valueClass}`}>{value}</p>
+          <h3 className="cs-h3">{title}</h3>
+          <p className="text-base leading-relaxed text-[#5E5850]">{text}</p>
+        </article>
+      ))}
     </div>
   );
 }
