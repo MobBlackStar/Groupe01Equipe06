@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <g transform="rotate(-6 100 40)">
+    <rect x="5" y="5" width="190" height="70" rx="8" fill="none" stroke="#EE3124" stroke-width="3" stroke-dasharray="6,4" opacity="0.9"/>
+    <rect x="9" y="9" width="182" height="62" rx="5" fill="none" stroke="#EE3124" stroke-width="1.5" opacity="0.7"/>
+    <text x="100" y="32" font-family="'Oswald', sans-serif" font-size="13" font-weight="700" fill="#EE3124" text-anchor="middle" letter-spacing="3">CAMPUSSAVE</text>
+    <text x="100" y="55" font-family="'Fraunces', serif" font-size="20" font-weight="900" fill="#EE3124" text-anchor="middle" letter-spacing="1">ANTI-GASPI</text>
+    <text x="100" y="66" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#EE3124" text-anchor="middle" letter-spacing="2">★ ESSECT 100% VALIDE ★</text>
+  </g>
+</svg>

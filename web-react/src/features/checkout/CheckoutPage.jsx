@@ -1,6 +1,7 @@
-// 💡 Concept & Analogie : Comme le comptoir d'embarquement à l'aéroport où votre place est bloquée pendant 10 minutes pendant que vous préparez votre billet et appliquez vos miles de fidélité.
-// 🔄 Comparaison React / Flutter : En React, `useEffect` synchronise le décompte de 10 minutes chaque seconde (`setInterval`) ; en Flutter, `CheckoutScreen` utilise un `Timer.periodic` avec une barre de progression circulaire.
-// 🎯 À retenir pour la soutenance : "Le prix unitaire est verrouillé au moment du clic pour protéger l'étudiant de l'enchère dégressive pendant ses 10 minutes de paiement sur Konnect."
+// 💡 Concept & Analogie : Comme le ticket de caisse thermique imprimé minute au comptoir (#CS-...), avec sa perforation en dents de scie et son décompte strict de 10 minutes pour sceller le paiement.
+// 🔄 Comparaison React / Flutter : En React, `CheckoutPage` reproduit un reçu thermique physique tactile avec `font-mono` et bordure déchirée ; en Flutter, `checkout_screen.dart` intègre la vue WebView de Konnect Sandbox.
+// 🎯 À retenir pour la soutenance : "Pendant les 10 minutes de validité de la commande, le prix unitaire reste scellé même si le cours dégressif de l'offre continue de baisser dans le catalogue public (INV-06)."
+// Module : Paiement & Réservation (M5, M6)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -9,8 +10,18 @@ import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
 import { Spinner } from '../../components/ui/index.js';
+import {
+  Clock,
+  Store,
+  MapPin,
+  CreditCard,
+  Gift,
+  AlertTriangle,
+  ArrowRight,
+  ShieldCheck,
+  Flame,
+} from 'lucide-react';
 
-// Commande de secours si backend hors-ligne
 const MOCK_ORDER = {
   id: 'ord-demo-essectx',
   orderCode: 'CS-8K4M9',
@@ -40,18 +51,23 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [now, setNow] = useState(Date.now());
 
-  // Horloge 1 seconde pour le compte à rebours de 10 min
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Chargement des détails de la commande
   useEffect(() => {
     let isMounted = true;
 
     async function fetchOrder() {
       setLoading(true);
+      if (!orderId) {
+        if (isMounted) {
+          setOrder(MOCK_ORDER);
+          setLoading(false);
+        }
+        return;
+      }
       try {
         const response = await apiClient.get(ENDPOINTS.ORDER_BY_ID(orderId));
         if (isMounted) {
@@ -78,9 +94,9 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D0F12] flex flex-col items-center justify-center gap-4 text-white">
+      <div className="min-h-screen bg-[#0E0D0C] flex flex-col items-center justify-center gap-4 text-[#F6F1E7]">
         <Spinner size="lg" />
-        <p className="text-xs text-slate-400">Récupération de votre réservation sécurisée...</p>
+        <p className="text-xs text-stone-400 font-mono">Édition de votre reçu thermique sécurisé...</p>
       </div>
     );
   }
@@ -93,7 +109,6 @@ export default function CheckoutPage() {
   const minStr = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const secStr = String(secondsLeft % 60).padStart(2, '0');
 
-  // Calcul financier
   const subtotalMillimes = currentOrder.lockedUnitPriceMillimes * currentOrder.quantity;
   const originalTotal = (currentOrder.originalUnitPriceMillimes || currentOrder.lockedUnitPriceMillimes) * currentOrder.quantity;
   const baseSaved = Math.max(0, originalTotal - subtotalMillimes);
@@ -108,14 +123,12 @@ export default function CheckoutPage() {
   const finalTotalMillimes = Math.max(0, subtotalMillimes - discountAmount);
   const totalSavedMillimes = baseSaved + discountAmount;
 
-  // Formatage créneau horaire
   const formatTime = (isoString) => {
     if (!isoString) return '--h--';
     const d = new Date(isoString);
     return `${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
-  // Annulation
   const handleCancel = async () => {
     if (!window.confirm('Voulez-vous vraiment annuler votre réservation ? Le stock sera remis en vente pour d autres étudiants.')) {
       return;
@@ -131,7 +144,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // Paiement Konnect ou Gratuit
   const handlePay = async () => {
     if (isExpired) {
       setErrorMessage("Cette réservation a expiré. Veuillez retourner au catalogue pour choisir une nouvelle offre.");
@@ -151,11 +163,10 @@ export default function CheckoutPage() {
       if (payUrl) {
         window.location.href = payUrl;
       } else {
-        // Redirection vers confirmation (simulation / mode gratuit)
         navigate(`/payment/return?orderId=${currentOrder.id}&payment_ref=demo-success`);
       }
     } catch (err) {
-      console.warn('Mode démo / Konnect offline, simulation du retour paiement :', err.message);
+      console.warn('Mode démo / Konnect sandbox simulation :', err.message);
       navigate(`/payment/return?orderId=${currentOrder.id}&payment_ref=demo-success`);
     } finally {
       setIsSubmitting(false);
@@ -163,201 +174,196 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl mx-auto space-y-6">
+        
         {/* Navigation retour */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/explore"
-            className="text-xs font-semibold text-slate-400 hover:text-[#CCFF00] transition-colors"
+            className="text-xs font-mono font-bold uppercase tracking-wider text-stone-400 hover:text-[#F5C400] transition-colors"
           >
             ← Retour au catalogue
           </Link>
-          <span className="text-xs text-slate-400 font-mono">
-            Réf: <strong className="text-[#CCFF00]">{currentOrder.orderCode || 'CS-8K4M9'}</strong>
+          <span className="text-xs font-mono text-[#F5C400]">
+            RÉSERVATION EN COURS
           </span>
         </div>
 
-        {/* Compte à rebours 10 minutes */}
+        {/* Bannière 10 minutes décompte */}
         <div
           className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
             isExpired
-              ? 'bg-[#FF1744]/15 border-[#FF1744]/40 text-[#FF1744]'
+              ? 'bg-[#EE3124]/15 border-[#EE3124] text-[#EE3124]'
               : secondsLeft < 180
-              ? 'bg-[#FF5500]/15 border-[#FF5500]/40 text-[#FF5500]'
-              : 'bg-[#CCFF00]/10 border-[#CCFF00]/30 text-[#CCFF00]'
+              ? 'bg-[#F5C400]/15 border-[#F5C400] text-[#F5C400] animate-pulse'
+              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
           }`}
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl animate-pulse">⏳</span>
+            <Clock className="w-5 h-5 shrink-0" />
             <div>
-              <h3 className="font-bold text-sm">
-                {isExpired ? 'Réservation Expirée' : 'Temps restant pour finaliser :'}
+              <h3 className="font-oswald uppercase text-sm font-bold tracking-wide">
+                {isExpired ? 'Réservation Expirée' : 'Prix et stock verrouillés :'}
               </h3>
-              <p className="text-xs opacity-80">
+              <p className="text-[11px] font-mono opacity-80">
                 {isExpired
                   ? 'Le créneau de 10 min est dépassé. Le stock a été libéré.'
-                  : 'Votre stock et votre prix unitaire sont verrouillés.'}
+                  : 'Finalisez votre paiement avant la fin du décompte.'}
               </p>
             </div>
           </div>
-          <div className="font-mono text-2xl font-black tracking-wider">
+          <div className="font-mono text-2xl font-black tracking-widest pl-2">
             {minStr}:{secStr}
           </div>
         </div>
 
         {errorMessage && (
-          <div className="p-4 rounded-2xl bg-[#FF1744]/20 border border-[#FF1744]/50 text-[#FF1744] text-xs">
-            {errorMessage}
+          <div className="p-3.5 rounded-2xl bg-[#EE3124]/15 border border-[#EE3124]/40 text-[#EE3124] text-xs font-bold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Récapitulatif de la commande */}
-        <div className="p-6 rounded-3xl bg-[#161920] border border-white/10 space-y-5 shadow-xl">
-          <div className="border-b border-white/10 pb-4">
-            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-              Récapitulatif de votre sauvetage
-            </span>
-            <h2 className="text-xl font-bold text-white mt-1">
-              {currentOrder.offerTitle || currentOrder.title}
-            </h2>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-              <span>🏪 {currentOrder.merchantName}</span>
-              <span>•</span>
-              <span className="text-[#CCFF00]">📍 {currentOrder.distanceFromEssectM || 180}m de l ESSECT</span>
+        {/* =========================================================================
+            REÇU THERMIQUE PHYSIQUE SERRATÉ (image.png style receipt)
+            ========================================================================= */}
+        <div className="relative rounded-2xl bg-[#F6F1E7] text-[#161412] p-6 sm:p-8 font-mono text-xs shadow-2xl border border-black/10">
+          
+          {/* En-tête du Reçu */}
+          <div className="text-center pb-4 border-b-2 border-dashed border-[#161412]/30">
+            <p className="font-oswald uppercase text-xl font-black tracking-wider text-[#161412]">
+              CAMPUSSAVE · REÇU DE CAISSE
+            </p>
+            <p className="text-[10px] text-stone-600 mt-0.5">
+              ESSECT MONTFLEURY · TUNIS (2026)
+            </p>
+            <div className="mt-2 inline-block px-3 py-0.5 rounded-full bg-[#161412] text-[#F6F1E7] font-bold text-[11px]">
+              CODE RÉSERVATION : #{currentOrder.orderCode || 'CS-8K4M9'}
             </div>
           </div>
 
-          {/* Lignes de détail */}
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between text-slate-300">
-              <span>Quantité réservée :</span>
-              <span className="font-bold text-white">x {currentOrder.quantity} portion(s)</span>
-            </div>
-            <div className="flex justify-between text-slate-300">
-              <span>Prix unitaire verrouillé :</span>
-              <span className="font-mono font-bold text-[#CCFF00]">
-                {formatTND(currentOrder.lockedUnitPriceMillimes)}
-              </span>
-            </div>
-            <div className="flex justify-between text-slate-300">
-              <span>Sous-total articles :</span>
-              <span className="font-mono text-white">{formatTND(subtotalMillimes)}</span>
-            </div>
-            <div className="flex justify-between text-slate-300">
-              <span>Créneau de retrait sur place :</span>
-              <span className="font-bold text-white">
-                {formatTime(currentOrder.pickupStartAt)} – {formatTime(currentOrder.pickupEndAt)}
-              </span>
-            </div>
+          {/* Métadonnées service */}
+          <div className="py-3 flex justify-between text-[11px] text-stone-600 border-b border-dashed border-[#161412]/20">
+            <span>COMMERCE : {currentOrder.merchantName}</span>
+            <span>DATE : 18/11/2026</span>
           </div>
 
-          {/* Sélecteur de Récompense Fidélité */}
-          <div className="p-4 rounded-2xl bg-[#0D0F12] border border-white/10 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span>🌱</span>
-                <span>Appliquer un avantage EcoPoints Fidélité :</span>
-              </span>
+          {/* Lignes d'articles décomposées */}
+          <div className="py-4 space-y-2 border-b-2 border-dashed border-[#161412]/30 text-xs">
+            <div className="flex justify-between font-bold">
+              <span>{currentOrder.quantity}x {currentOrder.offerTitle || currentOrder.title}</span>
+              <span>{formatTND(subtotalMillimes)}</span>
+            </div>
+            <div className="flex justify-between text-[11px] text-stone-600 pl-4">
+              <span>Prix unitaire scellé :</span>
+              <span>{formatTND(currentOrder.lockedUnitPriceMillimes)}</span>
+            </div>
+            <div className="flex justify-between text-[11px] text-stone-600 pl-4">
+              <span>Créneau retrait sur place :</span>
+              <span>{formatTime(currentOrder.pickupStartAt)} – {formatTime(currentOrder.pickupEndAt)}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedReward('NONE')}
-                className={`p-2.5 rounded-xl text-left border text-xs transition-all ${
-                  selectedReward === 'NONE'
-                    ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white font-bold'
-                    : 'border-white/5 bg-white/5 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>Aucun avantage</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedReward('DISCOUNT_20')}
-                className={`p-2.5 rounded-xl text-left border text-xs transition-all ${
-                  selectedReward === 'DISCOUNT_20'
-                    ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white font-bold'
-                    : 'border-white/5 bg-white/5 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span className="block text-[#CCFF00] font-bold">-20% Réduction</span>
-                <span className="text-[10px] text-slate-500">Palier Pousse (200 pts)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedReward('FREE_BASKET')}
-                className={`p-2.5 rounded-xl text-left border text-xs transition-all ${
-                  selectedReward === 'FREE_BASKET'
-                    ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white font-bold'
-                    : 'border-white/5 bg-white/5 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span className="block text-yellow-400 font-bold">100% Offert ✨</span>
-                <span className="text-[10px] text-slate-500">Palier Forêt (500 pts)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Total Net et Économie */}
-          <div className="pt-4 border-t border-white/10 space-y-2">
+            {/* Récompense déduite si sélectionnée */}
             {discountAmount > 0 && (
-              <div className="flex justify-between text-xs text-yellow-400 font-medium">
-                <span>Avantage fidélité déduit :</span>
+              <div className="flex justify-between text-[#2E6F40] font-bold pt-1">
+                <span>Avantage EcoPoints appliqué :</span>
                 <span>-{formatTND(discountAmount)}</span>
               </div>
             )}
+          </div>
 
-            <div className="flex justify-between items-baseline">
-              <span className="text-sm font-semibold text-slate-300">Net à payer :</span>
-              <span className="text-3xl font-black text-[#CCFF00]">
+          {/* Sélecteur Récompense EcoPoints */}
+          <div className="my-4 p-3.5 rounded-xl bg-stone-200/70 border border-stone-300 space-y-2 font-sans">
+            <span className="text-[11px] font-mono uppercase font-bold text-stone-700 flex items-center gap-1.5">
+              <Gift className="w-3.5 h-3.5 text-[#EE3124]" />
+              <span>Avantage Fidélité Disponible :</span>
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedReward(selectedReward === 'DISCOUNT_20' ? 'NONE' : 'DISCOUNT_20')}
+                className={`p-2 rounded-lg border text-left transition-all ${
+                  selectedReward === 'DISCOUNT_20'
+                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] font-bold'
+                    : 'bg-white text-stone-800 border-stone-300 hover:border-stone-400'
+                }`}
+              >
+                🎟️ -20% Immédiat (100 pts)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedReward(selectedReward === 'FREE_BASKET' ? 'NONE' : 'FREE_BASKET')}
+                className={`p-2 rounded-lg border text-left transition-all ${
+                  selectedReward === 'FREE_BASKET'
+                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] font-bold'
+                    : 'bg-white text-stone-800 border-stone-300 hover:border-stone-400'
+                }`}
+              >
+                🎁 Panier Offert (300 pts)
+              </button>
+            </div>
+          </div>
+
+          {/* Totaux & Économie */}
+          <div className="pt-2 pb-4 space-y-1.5 font-mono">
+            <div className="flex justify-between text-xs text-stone-600">
+              <span>PRIX INITIAL PUBLIC :</span>
+              <span className="line-through">{formatTND(originalTotal)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-[#2E6F40] font-bold">
+              <span>ÉCONOMIE TOTALE SAUVÉE :</span>
+              <span>{formatTND(totalSavedMillimes)}</span>
+            </div>
+            <div className="flex justify-between items-baseline pt-2 border-t-2 border-dashed border-[#161412]/30">
+              <span className="font-oswald uppercase text-base font-black text-[#161412]">
+                TOTAL NET À RÉGLER :
+              </span>
+              <span className="font-oswald text-2xl font-black text-[#EE3124]">
                 {formatTND(finalTotalMillimes)}
               </span>
             </div>
-
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex justify-between items-center">
-              <span>🎉 Économie totale réalisée :</span>
-              <span className="font-bold text-sm">{formatTND(totalSavedMillimes)}</span>
-            </div>
           </div>
+
+          {/* Code-barres simulé en bas */}
+          <div className="my-4 pt-3 border-t border-dashed border-[#161412]/30 flex flex-col items-center">
+            <div className="h-7 w-full bg-[repeating-linear-gradient(90deg,#161412,#161412_2px,transparent_2px,transparent_4px)] opacity-80" />
+            <span className="text-[8px] tracking-widest text-stone-500 mt-1">CS-{currentOrder.id}-SECURE-HOLD</span>
+          </div>
+
+          {/* Actions : Payer Konnect / Annuler */}
+          <div className="space-y-2 pt-2">
+            <button
+              type="button"
+              onClick={handlePay}
+              disabled={isSubmitting || isExpired}
+              className="w-full py-4 px-6 rounded-2xl bg-[#0E0D0C] text-[#F6F1E7] font-oswald uppercase text-base font-black tracking-wider hover:bg-[#EE3124] hover:text-white transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <CreditCard className="w-5 h-5 text-[#F5C400]" />
+              <span>{isSubmitting ? 'Paiement en cours...' : 'Payer via Konnect Test (3.800 DT) →'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="w-full py-2.5 text-center text-xs font-mono font-bold text-stone-500 hover:text-[#EE3124] transition-colors"
+            >
+              {isCancelling ? 'Annulation...' : 'Annuler et libérer la réservation'}
+            </button>
+          </div>
+
+          {/* Dents de scie inférieures du reçu */}
+          <div
+            aria-hidden="true"
+            className="w-full h-3 bg-repeat-x pointer-events-none mt-4 -mb-6 sm:-mb-8"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23F6F1E7'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
+              backgroundSize: '16px 10px',
+              filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))',
+            }}
+          />
         </div>
-
-        {/* Boutons d'action */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
-            onClick={handlePay}
-            disabled={isSubmitting || isExpired}
-            className="flex-1 py-4 px-6 rounded-2xl bg-[#CCFF00] text-black font-black text-sm hover:bg-[#b8e600] active:scale-95 transition-all shadow-lg shadow-[#CCFF00]/20 disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Spinner size="sm" />
-                <span>Connexion à Konnect...</span>
-              </>
-            ) : finalTotalMillimes === 0 ? (
-              <span>✨ Valider la Commande Gratuite</span>
-            ) : (
-              <span>💳 Payer {formatTND(finalTotalMillimes)} avec Konnect</span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={isCancelling}
-            className="py-4 px-6 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 text-xs font-bold transition-all disabled:opacity-40"
-          >
-            {isCancelling ? 'Annulation...' : 'Annuler la réservation'}
-          </button>
-        </div>
-
-        <p className="text-center text-[11px] text-slate-500">
-          🔒 Paiement sécurisé par carte bancaire tunisienne ou e-Dinar via la passerelle Konnect.
-        </p>
       </div>
     </div>
   );

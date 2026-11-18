@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Carte d'embarquement mobile à perforation latérale inspirée des passes de vol VIP, empêchant les fraudes par capture d'écran grâce à un QR code dynamique rotatif.
-// 🔄 Comparaison React / Flutter : En Flutter, les encoches perforées sont créées par un `ClipPath` et le QR code est rendu par `QrImageView` ; en React, ce composant correspond à `BoardingPass.jsx`.
-// 🎯 À retenir pour la soutenance : "Toutes les 30 secondes, l'application mobile calcule un hash HMAC-SHA256 local sans appel réseau et met à jour le QR code et le code de secours à 6 chiffres."
+// 💡 Concept & Analogie : Ticket de caisse thermique de restaurant (Thermal Receipt) avec papier crème texturé, découpe crantée, encoches latérales et typographie monospace officielle.
+// 🔄 Comparaison React / Flutter : En Flutter, le ticket utilise `ThermalReceiptClipper` et `QrImageView` avec rafraîchissement local par Timer ; en React, ce composant correspond à `BoardingPass.jsx`.
+// 🎯 À retenir pour la soutenance : "Ce ticket thermique matérialise la preuve d'achat avec un tampon d'authenticité et un jeton HMAC-SHA256 dynamique infalsifiable recalculé toutes les 30s."
 
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -8,39 +8,75 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../app/theme.dart';
 import '../../core/crypto/ticket_crypto.dart';
 
-class TicketClipper extends CustomClipper<Path> {
+/// Découpe thermique avec encoches de perforation latérales et crantage zig-zag en bas
+class ThermalReceiptClipper extends CustomClipper<Path> {
   final double punchRadius;
   final double punchPosition;
+  final double toothWidth;
+  final double toothHeight;
+  final double topBorderRadius;
 
-  TicketClipper({this.punchRadius = 12.0, this.punchPosition = 0.42});
+  const ThermalReceiptClipper({
+    this.punchRadius = 10.0,
+    this.punchPosition = 0.35,
+    this.toothWidth = 8.0,
+    this.toothHeight = 5.0,
+    this.topBorderRadius = 16.0,
+  });
 
   @override
   Path getClip(Size size) {
     final path = Path();
-    final y = size.height * punchPosition;
+    final r = topBorderRadius;
+    final punchY = size.height * punchPosition;
 
-    path.lineTo(0, y - punchRadius);
+    // Coin supérieur gauche
+    path.moveTo(0, r);
+    path.quadraticBezierTo(0, 0, r, 0);
+    path.lineTo(size.width - r, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, r);
+
+    // Côté droit jusqu'à l'encoche
+    path.lineTo(size.width, punchY - punchRadius);
     path.arcToPoint(
-      Offset(0, y + punchRadius),
+      Offset(size.width, punchY + punchRadius),
       radius: Radius.circular(punchRadius),
-      clockwise: true,
+      clockwise: false,
     );
-    path.lineTo(0, size.height);
-    path.lineTo(size.width, size.height);
-    path.lineTo(size.width, y + punchRadius);
+
+    // Côté droit descendant jusqu'au crantage
+    path.lineTo(size.width, size.height - toothHeight);
+
+    // Crantage thermique zig-zag du bas (droite vers gauche)
+    final teethCount = (size.width / toothWidth).floor();
+    final actualToothWidth = size.width / teethCount;
+
+    for (int i = teethCount; i > 0; i--) {
+      final x1 = (i - 0.5) * actualToothWidth;
+      final y1 = size.height;
+      final x2 = (i - 1) * actualToothWidth;
+      final y2 = size.height - toothHeight;
+      path.lineTo(x1, y1);
+      path.lineTo(x2, y2);
+    }
+
+    // Côté gauche montant jusqu'à l'encoche
+    path.lineTo(0, punchY + punchRadius);
     path.arcToPoint(
-      Offset(size.width, y - punchRadius),
+      Offset(0, punchY - punchRadius),
       radius: Radius.circular(punchRadius),
-      clockwise: true,
+      clockwise: false,
     );
-    path.lineTo(size.width, 0);
+
+    // Retour au coin supérieur gauche
+    path.lineTo(0, r);
     path.close();
 
     return path;
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 class BoardingPass extends StatefulWidget {
@@ -101,179 +137,256 @@ class _BoardingPassState extends State<BoardingPass> {
     final progress = secondsRemaining / 30.0;
 
     final now = DateTime.fromMillisecondsSinceEpoch(_nowMs);
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
     final code6 = ticketData['code6'] as String;
     final formattedCode6 = '${code6.substring(0, 3)} ${code6.substring(3)}';
 
     return ClipPath(
-      clipper: TicketClipper(),
+      clipper: const ThermalReceiptClipper(punchRadius: 10, punchPosition: 0.36, toothWidth: 8, toothHeight: 6),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surfaceCard,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white12),
+          color: AppTheme.warmCream,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Bandeau supérieur holographique
+            // Liseré supérieur aux couleurs CampusSave
             Container(
               height: 4,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.limeAccent, Colors.cyanAccent, AppTheme.orangeUrgent],
-                ),
-              ),
+              color: AppTheme.streetFlameRed,
             ),
 
-            // Partie 1 : Trajet & Données de Vol
+            // En-tête officiel Ticket Thermique
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    '★ CAMPUSSAVE • ESSECT MONTFLEURY ★',
+                    style: TextStyle(
+                      color: AppTheme.deepEspresso,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'monospace',
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'TICKET DE RETRAIT ANTI-GASPI EN DIRECT',
+                    style: TextStyle(
+                      color: AppTheme.deepEspresso.withValues(alpha: 0.65),
+                      fontSize: 9.5,
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Ligne Order Code & Statut Live
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppTheme.redCritical.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.redCritical.withOpacity(0.4)),
+                          color: AppTheme.streetFlameRed.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppTheme.streetFlameRed.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
-                            Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppTheme.redCritical, shape: BoxShape.circle)),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.streetFlameRed,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                             const SizedBox(width: 5),
-                            Text('LIVE • $timeStr', style: const TextStyle(color: AppTheme.redCritical, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Text(
+                              'LIVE • $timeStr',
+                              style: const TextStyle(
+                                color: AppTheme.streetFlameRed,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Text(
-                        widget.orderCode,
-                        style: const TextStyle(color: AppTheme.limeAccent, fontSize: 14, fontWeight: FontWeight.w900, fontFamily: 'monospace'),
+                        '#${widget.orderCode}',
+                        style: const TextStyle(
+                          color: AppTheme.deepEspresso,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'monospace',
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('DÉPART', style: TextStyle(color: Colors.white38, fontSize: 9, letterSpacing: 1)),
-                          Text('ESSECT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('Montfleury', style: TextStyle(color: Colors.white54, fontSize: 10)),
-                        ],
-                      ),
-                      const Text('➔', style: TextStyle(color: AppTheme.limeAccent, fontSize: 20)),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('RETRAIT', style: TextStyle(color: Colors.white38, fontSize: 9, letterSpacing: 1)),
-                          Text(
-                            widget.merchantName,
-                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const Text('Montfleury', style: TextStyle(color: AppTheme.limeAccent, fontSize: 10)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${widget.quantity}x ${widget.offerTitle}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                      const Text('Aujourd hui', style: TextStyle(color: Colors.white54, fontSize: 11)),
                     ],
                   ),
                 ],
               ),
             ),
 
-            // Ligne perforée
+            // Ligne perforée de séparation thermique
+            _buildDashedLine(),
+
+            // Section Corps du Reçu & Données de Retrait
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: List.generate(
-                  30,
-                  (index) => Expanded(
-                    child: Container(
-                      color: index % 2 == 0 ? Colors.transparent : Colors.white12,
-                      height: 1,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildReceiptRow('COMMERCE', widget.merchantName.toUpperCase()),
+                      const SizedBox(height: 6),
+                      _buildReceiptRow('CAMPUS', 'ESSECT TUNIS (MONTFLEURY)'),
+                      const SizedBox(height: 6),
+                      _buildReceiptRow('ARTICLE', '${widget.quantity}x ${widget.offerTitle}'),
+                      const SizedBox(height: 6),
+                      _buildReceiptRow('STATUT', 'PAYÉ & RÉSERVÉ'),
+                    ],
+                  ),
+                  // Tampon Encreur Rouge [PAYÉ] Tilted
+                  Positioned(
+                    right: 0,
+                    top: 8,
+                    child: Transform.rotate(
+                      angle: -0.16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.streetFlameRed, width: 2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PAYÉ • ESSECT',
+                          style: TextStyle(
+                            color: AppTheme.streetFlameRed,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
 
-            // Partie 2 : QR Code rotatif 30s & Code de secours
+            // Ligne perforée au niveau des encoches latérales
+            _buildDashedLine(),
+
+            // Section QR Code Rotatif & Code de Secours
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
               child: Column(
                 children: [
+                  // Boîtier QR Code blanc pur pour contraste de lecture optimal
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDED8CE)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: QrImageView(
                       data: ticketData['qrPayload'] as String,
                       version: QrVersions.auto,
-                      size: 160.0,
+                      size: 165.0,
+                      backgroundColor: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // Barre de progression 30 secondes
+                  // Rotation 30s du jeton
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Rotation jeton cryptographique :', style: TextStyle(color: Colors.white38, fontSize: 10)),
-                      Text('${secondsRemaining}s', style: const TextStyle(color: AppTheme.limeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text(
+                        'ROTATION JETON SÉCURISÉ :',
+                        style: TextStyle(
+                          color: AppTheme.deepEspresso.withValues(alpha: 0.65),
+                          fontSize: 9.5,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${secondsRemaining}s',
+                        style: const TextStyle(
+                          color: AppTheme.streetFlameRed,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: Colors.white12,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.limeAccent),
+                      backgroundColor: const Color(0xFFDED8CE),
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.streetFlameRed),
                       minHeight: 4,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
-                  // Code de secours
+                  // Code de Secours Monospace
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.black38,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white10),
+                      color: AppTheme.deepEspresso,
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       children: [
-                        const Text('CODE DE SECOURS (SAISIE MANUELLE)', style: TextStyle(color: Colors.white38, fontSize: 9, letterSpacing: 1)),
+                        Text(
+                          'CODE DE SECOURS (SAISIE MANUELLE)',
+                          style: TextStyle(
+                            color: AppTheme.warmCream.withValues(alpha: 0.6),
+                            fontSize: 8.5,
+                            letterSpacing: 1,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Text(
                           formattedCode6,
                           style: const TextStyle(
-                            color: AppTheme.limeAccent,
+                            color: AppTheme.mustardGold,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 4,
+                            letterSpacing: 5,
                             fontFamily: 'monospace',
                           ),
                         ),
@@ -284,12 +397,16 @@ class _BoardingPassState extends State<BoardingPass> {
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text('💡', style: TextStyle(fontSize: 12)),
-                      SizedBox(width: 4),
+                    children: [
+                      const Text('💡', style: TextStyle(fontSize: 11)),
+                      const SizedBox(width: 4),
                       Text(
-                        'Augmentez la luminosité pour faciliter le scan',
-                        style: TextStyle(color: Colors.white54, fontSize: 10),
+                        'Présentez ce reçu au comptoir avant expiration',
+                        style: TextStyle(
+                          color: AppTheme.deepEspresso.withValues(alpha: 0.6),
+                          fontSize: 9.5,
+                          fontFamily: 'monospace',
+                        ),
                       ),
                     ],
                   ),
@@ -299,6 +416,58 @@ class _BoardingPassState extends State<BoardingPass> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDashedLine() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: List.generate(
+          32,
+          (index) => Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              color: index % 2 == 0 ? const Color(0xFFC7BEB1) : Colors.transparent,
+              height: 1.2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReceiptRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: AppTheme.deepEspresso.withValues(alpha: 0.55),
+              fontSize: 10,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const Text(': ', style: TextStyle(color: AppTheme.deepEspresso, fontSize: 10, fontFamily: 'monospace')),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: AppTheme.deepEspresso,
+              fontSize: 10.5,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

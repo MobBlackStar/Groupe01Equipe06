@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <g transform="rotate(5 100 40)">
+    <rect x="5" y="5" width="190" height="70" rx="8" fill="none" stroke="#2E6F40" stroke-width="3" stroke-dasharray="8,4" opacity="0.9"/>
+    <rect x="9" y="9" width="182" height="62" rx="5" fill="none" stroke="#2E6F40" stroke-width="1.5" opacity="0.7"/>
+    <text x="100" y="32" font-family="'Oswald', sans-serif" font-size="12" font-weight="700" fill="#2E6F40" text-anchor="middle" letter-spacing="3">RÉDUCTION ÉTUDIANTE</text>
+    <text x="100" y="55" font-family="'Fraunces', serif" font-size="22" font-weight="900" fill="#2E6F40" text-anchor="middle" letter-spacing="1">-50% À -70%</text>
+    <text x="100" y="66" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#2E6F40" text-anchor="middle" letter-spacing="2">SAUVER LE PLAT</text>
+  </g>
+</svg>

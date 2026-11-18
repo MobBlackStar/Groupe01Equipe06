@@ -1,8 +1,8 @@
-// 💡 Concept & Analogie : Comme les balises lumineuses de science-fiction qui jaillissent du sol pour signaler des points de ravitaillement, chaque restaurant projette un prisme hexagonal 3D dont la hauteur traduit le stock d'invendus et la couleur l'urgence de sauvetage.
-// 🔄 Comparaison React / Flutter : En React, rendu via des polygones GeoJSON extrudés en WebGL ; en Flutter, rendu via des marqueurs animés colorés sur la carte 2D.
-// 🎯 À retenir pour la soutenance : "La hauteur du prisme (15 à 60 mètres) est proportionnelle au nombre d'offres actives et sa couleur (#CCFF00, #FF5500, #FF1744) alerte instantanément sur la proximité de l'heure de fermeture."
-// Module : Holo-Radar 3D WebGL
+// Module : Holo-Radar 3D WebGL - Balises 3D & Repères Numérotés Fika
+// Inspiré des balises d'urgence holographiques et des pins numérotés d'image3.png
+// Prismes 3D polygonaux extrudés et marqueurs HTML avec temps de marche.
 
+import maplibregl from 'maplibre-gl';
 import { MAP_CONFIG } from './mapStyle.js';
 
 /**
@@ -32,7 +32,7 @@ export function createHexagonCoordinates([lng, lat], radiusM = 14) {
  */
 export function buildEssectPillarGeoJson() {
   const [lng, lat] = MAP_CONFIG.ESSECT_COORDS;
-  const hexCoords = createHexagonCoordinates([lng, lat], 18);
+  const hexCoords = createHexagonCoordinates([lng, lat], 20);
 
   return {
     type: 'FeatureCollection',
@@ -42,7 +42,7 @@ export function buildEssectPillarGeoJson() {
         properties: {
           id: 'essect-home-base',
           name: 'Campus ESSECT Montfleury',
-          height: 45, // Pilier repère de 45 mètres de hauteur
+          height: 52, // Pilier repère de 52 mètres de hauteur
           base: 0,
           color: MAP_CONFIG.COLORS.ESSECT_PILLAR,
         },
@@ -61,13 +61,13 @@ export function buildEssectPillarGeoJson() {
  */
 export function buildMerchantBeaconsGeoJson(merchants = []) {
   const features = merchants.map((m) => {
-    const lng = m.location?.lng ?? 10.1748;
-    const lat = m.location?.lat ?? 36.7871;
-    const hexCoords = createHexagonCoordinates([lng, lat], 13);
+    const lng = m.location?.lng ?? MAP_CONFIG.ESSECT_COORDS[0];
+    const lat = m.location?.lat ?? MAP_CONFIG.ESSECT_COORDS[1];
+    const hexCoords = createHexagonCoordinates([lng, lat], 14);
 
-    // Hauteur proportionnelle au nombre de paniers disponibles (18 m min jusqu'à 65 m)
-    const offerCount = m.activeOfferCount || 0;
-    const height = Math.min(65, 18 + offerCount * 12);
+    // Hauteur proportionnelle au nombre de paniers disponibles (20 m min jusqu'à 70 m)
+    const offerCount = m.activeOfferCount || (m.activeOffers ? m.activeOffers.length : 1);
+    const height = Math.min(70, 20 + offerCount * 12);
 
     return {
       type: 'Feature',
@@ -78,10 +78,10 @@ export function buildMerchantBeaconsGeoJson(merchants = []) {
         type: m.type,
         height,
         base: 0,
-        color: m.beaconUrgencyColor || MAP_CONFIG.COLORS.URGENCY_LOW,
+        color: m.beaconUrgencyColor || MAP_CONFIG.COLORS.ROUTE_GLOW,
         activeOfferCount: offerCount,
-        walkingMinutes: m.walkingMinutes,
-        distanceM: m.distanceM || m.distanceFromEssectM,
+        walkingMinutes: m.walkingMinutes || 5,
+        distanceM: m.distanceM || m.distanceFromEssectM || 300,
       },
       geometry: {
         type: 'Polygon',
@@ -103,6 +103,8 @@ export function buildMerchantBeaconsGeoJson(merchants = []) {
  * @param {Function} onSelectMerchant - Callback lors du clic sur un prisme
  */
 export function setupBeaconLayers(map, merchants, onSelectMerchant) {
+  if (!map || !map.isStyleLoaded()) return;
+
   // 1. Source & Calque pour le Pilier Central ESSECT
   const essectData = buildEssectPillarGeoJson();
   if (map.getSource('essect-pillar-src')) {
@@ -156,7 +158,7 @@ export function setupBeaconLayers(map, merchants, onSelectMerchant) {
       map.getCanvas().style.cursor = '';
     });
 
-    // Interaction : clic sur une balise 3D pour afficher le tiroir et déclencher le drone swoop
+    // Interaction : clic sur une balise 3D
     map.on('click', 'merchant-beacons-layer', (e) => {
       if (e.features && e.features.length > 0) {
         const props = e.features[0].properties;
@@ -168,4 +170,84 @@ export function setupBeaconLayers(map, merchants, onSelectMerchant) {
       }
     });
   }
+}
+
+/**
+ * Crée les marqueurs HTML numérotés [1], [2], [3] façon Fika (image3.png)
+ * avec pastille jaune moutarde et étiquette noire avec temps de marche.
+ *
+ * @param {object} map - Instance MapLibre GL
+ * @param {Array<object>} merchants - Liste des commerçants
+ * @param {Function} onSelectMerchant - Callback lors du clic
+ * @returns {Array<maplibregl.Marker>} Liste des marqueurs instanciés
+ */
+export function createFikaNumberedMarkers(map, merchants = [], onSelectMerchant) {
+  if (!map) return [];
+
+  const markers = [];
+
+  // Trie par distance pour numéroter 1, 2, 3...
+  const sorted = [...merchants].sort(
+    (a, b) => (a.distanceM || a.distanceFromEssectM || 0) - (b.distanceM || b.distanceFromEssectM || 0)
+  );
+
+  sorted.forEach((m, idx) => {
+    const num = idx + 1;
+    const lng = m.location?.lng ?? MAP_CONFIG.ESSECT_COORDS[0];
+    const lat = m.location?.lat ?? MAP_CONFIG.ESSECT_COORDS[1];
+    const walkMin = m.walkingMinutes || 3;
+
+    // Création de l'élément DOM du marqueur
+    const el = document.createElement('div');
+    el.className = 'group cursor-pointer flex items-center transition-transform hover:scale-110 select-none';
+    el.style.transformOrigin = 'bottom center';
+
+    el.innerHTML = `
+      <div class="relative flex items-center shadow-2xl filter drop-shadow(0 6px 12px rgba(0,0,0,0.6))">
+        <!-- Badge Numéroté circulaire Moutarde Fika -->
+        <div class="w-8 h-8 rounded-full bg-[#F5C400] text-black font-extrabold text-sm flex items-center justify-center border-2 border-black shadow-lg z-10">
+          ${num}
+        </div>
+        <!-- Étiquette textuelle d'accompagnement -->
+        <div class="ml-1.5 px-2.5 py-1 bg-[#0E0D0C]/90 backdrop-blur-md text-white border border-white/20 rounded-lg text-[10px] font-bold tracking-wider uppercase whitespace-nowrap shadow-md flex items-center gap-1.5">
+          <span class="text-amber-300">${m.name}</span>
+          <span class="text-gray-400 font-mono text-[9px]">• ${walkMin} MIN À PIED</span>
+        </div>
+      </div>
+    `;
+
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (onSelectMerchant) {
+        onSelectMerchant(m);
+      }
+    });
+
+    const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      .setLngLat([lng, lat])
+      .addTo(map);
+
+    markers.push(marker);
+  });
+
+  // Marqueur spécial pour le Campus ESSECT lui-même
+  const essectEl = document.createElement('div');
+  essectEl.className = 'flex items-center group cursor-pointer transition-transform hover:scale-105';
+  essectEl.innerHTML = `
+    <div class="flex items-center shadow-2xl">
+      <div class="w-9 h-9 rounded-full bg-[#FF5500] text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xl animate-pulse">
+        ★
+      </div>
+      <div class="ml-1.5 px-3 py-1 bg-[#161412]/95 backdrop-blur-md text-[#FF5500] border border-[#FF5500]/40 rounded-lg text-[10px] font-black tracking-widest uppercase whitespace-nowrap shadow-lg">
+        CAMPUS ESSECT MONTFLEURY
+      </div>
+    </div>
+  `;
+  const essectMarker = new maplibregl.Marker({ element: essectEl, anchor: 'bottom' })
+    .setLngLat(MAP_CONFIG.ESSECT_COORDS)
+    .addTo(map);
+
+  markers.push(essectMarker);
+
+  return markers;
 }

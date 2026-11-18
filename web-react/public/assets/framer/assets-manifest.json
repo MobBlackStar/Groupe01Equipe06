@@ -1,0 +1,613 @@
+[
+  {
+    "file": "burgers/burger-smash-classic.png",
+    "path": "/assets/framer/burgers/burger-smash-classic.png",
+    "size": [
+      1024,
+      976
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Smash Burger Classique",
+    "description": "Double patty smash avec cheddar fondu, pickles et sauce secrète",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/burger-double-smash.png",
+    "path": "/assets/framer/burgers/burger-double-smash.png",
+    "size": [
+      1024,
+      969
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Double Smash Trouble",
+    "description": "Double smash croustillant débordant de fromage américain",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/burger-bacon-melt.png",
+    "path": "/assets/framer/burgers/burger-bacon-melt.png",
+    "size": [
+      1024,
+      953
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Bacon Melt Burger",
+    "description": "Smash burger avec bacon fumé croustillant et oignons caramélisés",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/burger-veggie-stack.png",
+    "path": "/assets/framer/burgers/burger-veggie-stack.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Veggie Stack Burger",
+    "description": "Burger végétarien gourmand avec galette croustillante et légumes grillés",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/sandwich-hot-chicken.png",
+    "path": "/assets/framer/burgers/sandwich-hot-chicken.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Hot Chicken Bun",
+    "description": "Filet de poulet pané piquant avec jalapeños",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/sandwich-crispy-chicken.png",
+    "path": "/assets/framer/burgers/sandwich-crispy-chicken.png",
+    "size": [
+      512,
+      512
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Crispy Chicken Burger",
+    "description": "Poulet extra croustillant et sauce crémeuse",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/sides-onion-rings.png",
+    "path": "/assets/framer/burgers/sides-onion-rings.png",
+    "size": [
+      512,
+      512
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Onion Rings Dorés",
+    "description": "Rondelles d’oignons frites ultra croustillantes",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/sides-cheese-fries.png",
+    "path": "/assets/framer/burgers/sides-cheese-fries.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Frites Cheddar Fondu",
+    "description": "Frites fraîches nappées de sauce cheddar onctueuse",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/sides-bacon-fries.png",
+    "path": "/assets/framer/burgers/sides-bacon-fries.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Loaded Bacon Fries",
+    "description": "Frites garnies de sauce maison et lardons fumés",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/sides-chicken-bites.png",
+    "path": "/assets/framer/burgers/sides-chicken-bites.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Crispy Chicken Bites",
+    "description": "Bouchées de poulet croustillantes dorées à point",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/dessert-soft-serve-vanilla.png",
+    "path": "/assets/framer/burgers/dessert-soft-serve-vanilla.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Soft Serve Vanille",
+    "description": "Glace italienne onctueuse à la vanille de Madagascar",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/dessert-sundae-strawberry.png",
+    "path": "/assets/framer/burgers/dessert-sundae-strawberry.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Sundae Fraise Gourmand",
+    "description": "Soft serve avec coulis de fraises fraîches",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/dessert-chocolate-crunch.png",
+    "path": "/assets/framer/burgers/dessert-chocolate-crunch.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Sundae Chocolat Crunch",
+    "description": "Glace nappée de chocolat chaud et éclats croquants",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/drink-classic-lemonade.png",
+    "path": "/assets/framer/burgers/drink-classic-lemonade.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Limonade Maison Givrée",
+    "description": "Citronnade fraîche pressée minute avec rondelles d’agrumes",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/drink-mango-yuzu.png",
+    "path": "/assets/framer/burgers/drink-mango-yuzu.png",
+    "size": [
+      941,
+      941
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Thé Glacé Mangue Yuzu",
+    "description": "Infusion rafraîchissante mangue et touche de yuzu",
+    "category": "burgers_street"
+  },
+  {
+    "file": "burgers/hero-double-smash-tray.png",
+    "path": "/assets/framer/burgers/hero-double-smash-tray.png",
+    "size": [
+      2400,
+      903
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Plateau Double Smash Hero",
+    "description": "Plateau burger avec double smash, frites et sauces",
+    "category": "burgers_street"
+  },
+  {
+    "file": "pastries/croissant-amande.png",
+    "path": "/assets/framer/pastries/croissant-amande.png",
+    "size": [
+      900,
+      706
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Croissant aux Amandes",
+    "description": "Croissant pur beurre feuilleté garni de crème d’amande et effilés grillés",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/croissant-beurre.png",
+    "path": "/assets/framer/pastries/croissant-beurre.png",
+    "size": [
+      900,
+      744
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Croissant Pur Beurre AOP",
+    "description": "Feuilletage doré et alvéolé croustillant",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/cinnamon-bun.png",
+    "path": "/assets/framer/pastries/cinnamon-bun.png",
+    "size": [
+      900,
+      552
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Kanelbulle / Brioche Cannelle",
+    "description": "Roulé brioché suédois parfumé à la cannelle de Ceylan et sucre perlé",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/cardamom-knot.png",
+    "path": "/assets/framer/pastries/cardamom-knot.png",
+    "size": [
+      900,
+      557
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Kardemummabulle / Nœud Cardamome",
+    "description": "Brioche tressée à la cardamome verte torréfiée",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/morning-bun.png",
+    "path": "/assets/framer/pastries/morning-bun.png",
+    "size": [
+      512,
+      398
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Morning Bun Croustillant",
+    "description": "Pâte feuilletée briochée roulée au sucre vanillé et zestes d’orange",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/burnt-cheesecake.png",
+    "path": "/assets/framer/pastries/burnt-cheesecake.png",
+    "size": [
+      863,
+      900
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Basque Burnt Cheesecake",
+    "description": "Cheesecake crémeux caramélisé au cœur fondant",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/gateau-chocolat-drip.png",
+    "path": "/assets/framer/pastries/gateau-chocolat-drip.png",
+    "size": [
+      512,
+      463
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Gâteau Chocolat Drip",
+    "description": "Gâteau étagé au chocolat noir intense et ganache miroir coulante",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/tarte-citron-meringuee.png",
+    "path": "/assets/framer/pastries/tarte-citron-meringuee.png",
+    "size": [
+      591,
+      900
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Tartelette Citron Meringuée",
+    "description": "Crémeux citron jaune acidulé et meringue italienne dorée au chalumeau",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/layer-cake-fraise.png",
+    "path": "/assets/framer/pastries/layer-cake-fraise.png",
+    "size": [
+      900,
+      671
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Layer Cake Fraises & Crème",
+    "description": "Génoise légère garnie de fraises fraîches et crème montée mascarpone",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/prinsesstarta.png",
+    "path": "/assets/framer/pastries/prinsesstarta.png",
+    "size": [
+      900,
+      643
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Prinsesstårta Suédoise",
+    "description": "Gâteau traditionnel à la pâte d’amande verte et confiture de framboise",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/cookie-sel-marin.png",
+    "path": "/assets/framer/pastries/cookie-sel-marin.png",
+    "size": [
+      900,
+      680
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Cookie Fleur de Sel & Chocolat",
+    "description": "Cookie géant moelleux aux pépites de chocolat noir et fleur de sel",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/pain-campagne-levain.png",
+    "path": "/assets/framer/pastries/pain-campagne-levain.png",
+    "size": [
+      900,
+      674
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Pain de Campagne au Levain",
+    "description": "Pain artisanal à croûte croustillante et mie sauvage alvéolée",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/danoise-fruits.png",
+    "path": "/assets/framer/pastries/danoise-fruits.png",
+    "size": [
+      900,
+      582
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Danoise Feuilletée aux Fruits",
+    "description": "Feuilleté garni de crème pâtissière et fruits de saison",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/box-assortiment-fika.png",
+    "path": "/assets/framer/pastries/box-assortiment-fika.png",
+    "size": [
+      900,
+      864
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Boîte Panier Surprise Pâtisseries",
+    "description": "Assortiment de viennoiseries et gourmandises de fin de service",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "pastries/scone-myrtille.png",
+    "path": "/assets/framer/pastries/scone-myrtille.png",
+    "size": [
+      860,
+      586
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Scone Artisan aux Myrtilles",
+    "description": "Scone doré aux myrtilles sauvages",
+    "category": "pastries_viennoiseries"
+  },
+  {
+    "file": "bowls/ramen-black-garlic.webp",
+    "path": "/assets/framer/bowls/ramen-black-garlic.webp",
+    "size": [
+      1400,
+      1850
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Black Garlic Ramen & Œuf Mollet",
+    "description": "Bouillon riche à l’ail noir rôti, nouilles fraîches, œuf ajitsuke et ciboule",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "bowls/riz-saute-crevettes.webp",
+    "path": "/assets/framer/bowls/riz-saute-crevettes.webp",
+    "size": [
+      1600,
+      1280
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Riz Sauté aux Crevettes Clay Pot",
+    "description": "Crevettes marinées, riz parfumé sauté au wok et légumes croquants",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "bowls/teriyaki-poulet-bowl.webp",
+    "path": "/assets/framer/bowls/teriyaki-poulet-bowl.webp",
+    "size": [
+      1600,
+      1600
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Bowl Poulet Teriyaki & Riz Japonais",
+    "description": "Poulet laqué teriyaki maison sur lit de riz vapeur et sésame grillé",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/wok-fire-action.webp",
+    "path": "/assets/framer/photos/wok-fire-action.webp",
+    "size": [
+      1600,
+      2133
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Cuisson Spectaculaire au Wok Flambé",
+    "description": "Riz sauté exécuté sous la flamme vive du wok",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/chef-tossing-noodles.webp",
+    "path": "/assets/framer/photos/chef-tossing-noodles.webp",
+    "size": [
+      1600,
+      2400
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Chef Street-Food & Nouilles Saisies",
+    "description": "Tirage et saisie des nouilles minute au marché de nuit",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/chef-busy-kitchen.webp",
+    "path": "/assets/framer/photos/chef-busy-kitchen.webp",
+    "size": [
+      1808,
+      2400
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Cuisine en Effervescence",
+    "description": "Ambiance marmites fumantes et brigade street food",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/night-market-wok-stall.webp",
+    "path": "/assets/framer/photos/night-market-wok-stall.webp",
+    "size": [
+      1600,
+      2548
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Stand Wok Marché Nocturne",
+    "description": "Stands ouverts et lanternes chaleureuses",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/noodle-bar-window.webp",
+    "path": "/assets/framer/photos/noodle-bar-window.webp",
+    "size": [
+      1024,
+      696
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Comptoir Noodle Bar aux Lanternes",
+    "description": "Vitrine illuminée et tabourets en bois",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/takeaway-counter.webp",
+    "path": "/assets/framer/photos/takeaway-counter.webp",
+    "size": [
+      2000,
+      1333
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Comptoir Retrait & Takeaway",
+    "description": "Point de retrait rapide pour paniers sauvés",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "photos/lantern-dining-room.webp",
+    "path": "/assets/framer/photos/lantern-dining-room.webp",
+    "size": [
+      1600,
+      2142
+    ],
+    "has_transparency": false,
+    "format": "WEBP",
+    "name": "Salle Conviviale aux Lanternes Rouges",
+    "description": "Espace repas chaleureux esprit marché asiatique",
+    "category": "bowls_photos"
+  },
+  {
+    "file": "textures/ticket-serrated-edge.png",
+    "path": "/assets/framer/textures/ticket-serrated-edge.png",
+    "size": [
+      600,
+      24
+    ],
+    "has_transparency": true,
+    "format": "PNG",
+    "name": "Bordure Ticket Découpée Zig-Zag",
+    "description": "Texture transparente de bordure de ticket de caisse découpé en dents de scie",
+    "category": "textures"
+  },
+  {
+    "file": "textures/ticket-serrated-edge.svg",
+    "path": "/assets/framer/textures/ticket-serrated-edge.svg",
+    "size": [
+      600,
+      24
+    ],
+    "has_transparency": true,
+    "format": "SVG",
+    "name": "Bordure Ticket Découpée SVG",
+    "description": "Bordure vectorielle crantée responsive en papier kraft chaud",
+    "category": "textures"
+  },
+  {
+    "file": "stamps/stamp-anti-gaspi.svg",
+    "path": "/assets/framer/stamps/stamp-anti-gaspi.svg",
+    "size": [
+      200,
+      80
+    ],
+    "has_transparency": true,
+    "format": "SVG",
+    "name": "stamp-anti-gaspi",
+    "description": "Tampon encreur vintage certifié",
+    "category": "stamps"
+  },
+  {
+    "file": "stamps/stamp-prix-reduit.svg",
+    "path": "/assets/framer/stamps/stamp-prix-reduit.svg",
+    "size": [
+      200,
+      80
+    ],
+    "has_transparency": true,
+    "format": "SVG",
+    "name": "stamp-prix-reduit",
+    "description": "Tampon encreur vintage certifié",
+    "category": "stamps"
+  },
+  {
+    "file": "stamps/stamp-garanti-frais.svg",
+    "path": "/assets/framer/stamps/stamp-garanti-frais.svg",
+    "size": [
+      200,
+      80
+    ],
+    "has_transparency": true,
+    "format": "SVG",
+    "name": "stamp-garanti-frais",
+    "description": "Tampon encreur vintage certifié",
+    "category": "stamps"
+  },
+  {
+    "file": "textures/marker-highlight.svg",
+    "path": "/assets/framer/textures/marker-highlight.svg",
+    "size": [
+      300,
+      24
+    ],
+    "has_transparency": true,
+    "format": "SVG",
+    "name": "Surlignage Feutre Moutarde",
+    "description": "Barre de surlignage feutre jaune moutarde style artisan (image2.png)",
+    "category": "textures"
+  }
+]

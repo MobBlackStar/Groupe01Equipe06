@@ -1,6 +1,7 @@
-// 💡 Concept & Analogie : Comme le tableau de bord du chef de cuisine avant le service du soir où l'on liste les portions disponibles, les tarifs solidaires et les éventuels paniers surprises mystères, ce formulaire centralise toute la création d'offre.
-// 🔄 Comparaison React / Flutter : En React, `OfferFormPage` orchestre les sous-composants `AiAutoFillBox`, `SmartDecayToggle` et `PhotoDropzone` dans un formulaire unifié ; en Flutter, la même structure est portée par un formulaire multi-étapes ou scrollable.
-// 🎯 À retenir pour la soutenance : "Ce formulaire intègre à la fois le remplissage magique par IA, la courbe en direct du Smart Decay et le calcul temps réel de rareté (Commun, Rare, Légendaire) selon notre formule mathématique combinant profondeur de remise et note commerçant."
+// 💡 Concept & Analogie : Comme le configurateur interactif d'un chef de cuisine (image7.png "BUILD YOUR BOWL"), ce constructeur étape par étape par numéros (01, 02, 03, 04) permet au commerçant de composer son offre pendant que le bon de commande suspendu se met à jour en direct sous ses yeux.
+// 🔄 Comparaison React / Flutter : En React, `OfferFormPage` offre une vue 2 colonnes avec mise à jour en direct du ticket serraté ; en Flutter, `offer_form_screen.dart` organise les étapes en stepper vertical.
+// 🎯 À retenir pour la soutenance : "Le générateur IA intégré (I5) permet au commerçant de taper 3 mots en dialecte ou français et de voir l'ensemble du ticket se remplir et se chiffrer automatiquement en moins d'une seconde."
+// Module : Publication d'Offre Marchand (M3, I1, I5)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,72 +13,70 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import AiAutoFillBox from './AiAutoFillBox.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
-import PhotoDropzone from './PhotoDropzone.jsx';
+import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
+import { getFramerFoodImage } from '../../lib/framerAssets.js';
 import {
-  Button,
-  Input,
-  Select,
-  Card,
-  Badge,
-  Toast,
-} from '../../components/ui/index.js';
+  Flame,
+  Sparkles,
+  Store,
+  Clock,
+  ArrowRight,
+  Package,
+  Check,
+  AlertTriangle,
+  Gift,
+} from 'lucide-react';
+
+const CATEGORY_ITEMS = [
+  { id: OFFER_CATEGORIES.SANDWICH, label: 'Baguette / Sandwich', icon: '🥖' },
+  { id: OFFER_CATEGORIES.PLAT_CHAUD, label: 'Plat Chaud / Wok', icon: '🍲' },
+  { id: OFFER_CATEGORIES.PIZZA, label: 'Pizza Calzone', icon: '🍕' },
+  { id: OFFER_CATEGORIES.PATISSERIE, label: 'Pâtisserie Fine', icon: '🧁' },
+  { id: OFFER_CATEGORIES.VIENNOISERIE, label: 'Croissant / Viennoiserie', icon: '🥐' },
+  { id: OFFER_CATEGORIES.SNACK, label: 'Frites / Snack', icon: '🍟' },
+  { id: OFFER_CATEGORIES.MIXTE, label: 'Panier Surprise', icon: '🎁' },
+];
 
 export default function OfferFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
 
-  // Valeurs initiales du formulaire
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
+    title: 'Baguette Farcie Escalope & Fromage',
+    description: 'Baguette croustillante garnie d escalope panée, frites, mozzarella et sauce maison.',
     category: OFFER_CATEGORIES.SANDWICH,
     originalPriceMillimes: 7500,
     pricingMode: PRICING_MODES.DUTCH_AUCTION,
     startPriceMillimes: 5500,
-    floorPriceMillimes: 3000,
+    floorPriceMillimes: 3800,
     fixedDiscountedMillimes: 4200,
-    quantityTotal: 3,
-    maxPerOrder: 2,
+    quantityTotal: 4,
+    maxPerOrder: 3,
     weightGramsPerUnit: 400,
     photoUrl: '',
     pickupStartAt: '18:30',
     pickupEndAt: '20:00',
     isSurpriseBasket: false,
     surprise: {
-      teaser: 'Panier surprise avec assortiment chaud du soir',
+      teaser: 'Assortiment surprise gourmand du jour',
       itemCountHint: 3,
-      privateContents: '1x Makloub poulet + 2x Fricassés thon',
+      privateContents: '1x Sandwich + 2x Viennoiseries',
     },
   });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [toast, setToast] = useState(null);
-  const [autoFilledFields, setAutoFilledFields] = useState(new Set());
+  const [toastMsg, setToastMsg] = useState(null);
 
-  const categoryOptions = [
-    { value: OFFER_CATEGORIES.SANDWICH, label: '🥖 Sandwich (Baguette farcie, Makloub, Chapati, Mlewi)' },
-    { value: OFFER_CATEGORIES.PLAT_CHAUD, label: '🍲 Plat Chaud (Ojja, Couscous, Kafteji, Lablabi)' },
-    { value: OFFER_CATEGORIES.PIZZA, label: '🍕 Pizza Artisanale' },
-    { value: OFFER_CATEGORIES.PATISSERIE, label: '🧁 Pâtisserie & Gâteaux traditionnels' },
-    { value: OFFER_CATEGORIES.VIENNOISERIE, label: '🥐 Viennoiserie (Croissant, Pain chocolat)' },
-    { value: OFFER_CATEGORIES.SALADE, label: '🥗 Salade (Méchouia, César tunisienne)' },
-    { value: OFFER_CATEGORIES.SNACK, label: '🥟 Snack & Fricassé' },
-    { value: OFFER_CATEGORIES.BOISSON, label: '🥤 Boisson fraîche & Jus' },
-    { value: OFFER_CATEGORIES.MIXTE, label: '🎁 Panier Mixte / Surprise' },
-  ];
-
-  // Calcul d'impact écologique en temps réel
   const impact = calculateImpact(
-    (Number(formData.weightGramsPerUnit) || 300) * (Number(formData.quantityTotal) || 1)
+    (Number(formData.weightGramsPerUnit) || 350) * (Number(formData.quantityTotal) || 1)
   );
 
-  // Calcul de la rareté en direct si Panier Mystère activé
   const referencePrice =
     formData.pricingMode === PRICING_MODES.DUTCH_AUCTION
-      ? Number(formData.startPriceMillimes) || 5000
-      : Number(formData.fixedDiscountedMillimes) || 4000;
+      ? Number(formData.floorPriceMillimes) || 3800
+      : Number(formData.fixedDiscountedMillimes) || 4200;
 
   const originalPrice = Number(formData.originalPriceMillimes) || 7500;
   const rarityResult = computeRarity(originalPrice, referencePrice, 4.8);
@@ -89,17 +88,6 @@ export default function OfferFormPage() {
     }
   }
 
-  function handleSurpriseChange(subField, value) {
-    setFormData((prev) => ({
-      ...prev,
-      surprise: {
-        ...prev.surprise,
-        [subField]: value,
-      },
-    }));
-  }
-
-  // Intégration du remplissage magique IA
   function handleAiAutoFill(aiData) {
     setFormData((prev) => ({
       ...prev,
@@ -123,39 +111,43 @@ export default function OfferFormPage() {
       },
     }));
 
-    setAutoFilledFields(new Set(['title', 'description', 'category', 'prices', 'weight']));
-    setToast({
-      type: 'success',
-      message: 'Champs générés et pré-remplis avec succès par l IA !',
-    });
+    setToastMsg('✨ L intelligence artificielle a configuré l ensemble de votre ticket !');
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setErrors({});
+    setToastMsg(null);
 
-    const newErrors = {};
-    if (!formData.title.trim()) newErrors.title = "Le titre de l'offre est obligatoire";
-    if (!formData.description.trim()) newErrors.description = 'La description est obligatoire';
-    if (!formData.originalPriceMillimes || formData.originalPriceMillimes <= 0) {
-      newErrors.originalPriceMillimes = 'Le prix original doit être supérieur à 0';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setToast({ type: 'error', message: 'Veuillez corriger les champs requis.' });
+    if (!formData.title.trim()) {
+      setErrors((prev) => ({ ...prev, title: 'Le titre de l offre est obligatoire' }));
       return;
     }
 
     setLoading(true);
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date();
+      const [startH, startM] = formData.pickupStartAt.split(':').map(Number);
+      const [endH, endM] = formData.pickupEndAt.split(':').map(Number);
+
+      const pickupStart = new Date(today);
+      pickupStart.setHours(startH, startM, 0, 0);
+
+      const pickupEnd = new Date(today);
+      pickupEnd.setHours(endH, endM, 0, 0);
+
       const payload = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
         originalPriceMillimes: Number(formData.originalPriceMillimes),
+        quantityTotal: Number(formData.quantityTotal),
+        maxPerOrder: Number(formData.maxPerOrder),
+        weightGramsPerUnit: Number(formData.weightGramsPerUnit),
+        pickupStartAt: pickupStart.toISOString(),
+        pickupEndAt: pickupEnd.toISOString(),
+        isSurpriseBasket: formData.isSurpriseBasket,
         pricing: {
           mode: formData.pricingMode,
           startPriceMillimes: Number(formData.startPriceMillimes),
@@ -163,298 +155,394 @@ export default function OfferFormPage() {
           discountedPriceMillimes: Number(formData.fixedDiscountedMillimes),
           roundingStepMillimes: 100,
         },
-        quantityTotal: Number(formData.quantityTotal),
-        maxPerOrder: Number(formData.maxPerOrder),
-        weightGramsPerUnit: Number(formData.weightGramsPerUnit),
-        photoUrl: formData.photoUrl || undefined,
-        pickupStartAt: `${today}T${formData.pickupStartAt}:00.000Z`,
-        pickupEndAt: `${today}T${formData.pickupEndAt}:00.000Z`,
-        isSurpriseBasket: formData.isSurpriseBasket,
-        surprise: formData.isSurpriseBasket
-          ? {
-              rarity: rarityResult.rarity,
-              score: rarityResult.score,
-              teaser: formData.surprise.teaser,
-              itemCountHint: Number(formData.surprise.itemCountHint),
-              privateContents: formData.surprise.privateContents,
-            }
-          : undefined,
+        surprise: formData.isSurpriseBasket ? {
+          teaser: formData.surprise.teaser,
+          itemCountHint: Number(formData.surprise.itemCountHint),
+          privateContents: formData.surprise.privateContents,
+        } : undefined,
       };
 
       if (isEditing) {
         await apiClient.patch(ENDPOINTS.OFFER_BY_ID(id), payload);
-        setToast({ type: 'success', message: 'Offre mise à jour avec succès !' });
       } else {
         await apiClient.post(ENDPOINTS.OFFERS, payload);
-        setToast({ type: 'success', message: 'Nouvelle offre publiée en direct !' });
       }
 
-      setTimeout(() => {
-        navigate('/merchant/offers');
-      }, 1000);
+      setToastMsg('✅ Offre publiée avec succès sur le catalogue de l ESSECT !');
+      setTimeout(() => navigate('/merchant/offers'), 800);
     } catch (err) {
-      console.warn('API OFFERS fallback démo:', err.message);
-      setToast({ type: 'success', message: 'Offre enregistrée pour la démonstration !' });
-      setTimeout(() => {
-        navigate('/merchant/offers');
-      }, 1000);
+      console.warn('Mode démo / offline publish :', err.message);
+      setToastMsg('✅ Offre enregistrée localement pour la démonstration !');
+      setTimeout(() => navigate('/merchant/offers'), 800);
     } finally {
       setLoading(false);
     }
   }
 
+  // Image d'illustration en direct
+  const previewImage = getFramerFoodImage(formData.title || formData.category);
+
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Titre & Lien retour */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* En-tête */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              {isEditing ? "Modifier l'Offre Anti-Gaspi" : 'Publier une Offre Anti-Gaspillage'}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5C400]/10 text-[#F5C400] text-xs font-mono font-bold uppercase tracking-wider mb-2">
+              <Store className="w-3.5 h-3.5" />
+              <span>Espace Commerçant Partenaire</span>
+            </div>
+            <h1 className="font-oswald uppercase text-3xl sm:text-5xl font-black tracking-tight text-white leading-none">
+              BUILD YOUR <span className="text-[#EE3124]">TICKET.</span>
             </h1>
-            <p className="text-xs sm:text-sm text-[#8A92A6] mt-0.5">
-              Renseignez vos invendus du jour pour les étudiants de l'ESSECT Montfleury.
+            <p className="text-xs sm:text-sm text-stone-400 font-sans mt-2">
+              Composez votre offre anti-gaspi en 4 étapes numérotées. Observez le ticket se générer en direct à droite.
             </p>
           </div>
+
           <button
             type="button"
             onClick={() => navigate('/merchant/offers')}
-            className="text-xs text-[#8A92A6] hover:text-white px-3 py-2 rounded-xl bg-[#161920] border border-[#262A33]"
+            className="px-4 py-2 rounded-full bg-white/5 border border-white/15 text-stone-300 hover:text-white text-xs font-mono font-bold transition-colors self-start sm:self-auto"
           >
             ← Annuler
           </button>
         </div>
 
-        {/* 1. ASSISTANT MAGIQUE IA */}
+        {/* Assistant IA Magique Zero-Typing (I5) */}
         <AiAutoFillBox onAutoFill={handleAiAutoFill} />
 
-        {/* FORMULAIRE PRINCIPAL */}
-        <Card className="p-6 sm:p-8 bg-[#161920] border-[#262A33]">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Titre & Catégorie */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="relative">
-                <Input
-                  label="Titre de l'Offre"
-                  required
-                  placeholder="ex: Baguette Farcie Escalope Panée"
-                  value={formData.title}
-                  onChange={(e) => handleChange('title', e.target.value)}
-                  error={errors.title}
-                  leftIcon={<span>🥖</span>}
-                />
-                {autoFilledFields.has('title') && (
-                  <span className="absolute right-3 top-0 text-[10px] text-[#CCFF00] font-bold">
-                    IA AUTO ✨
+        {toastMsg && (
+          <div className="p-4 rounded-2xl bg-[#F5C400]/15 border border-[#F5C400]/40 text-[#F5C400] text-xs font-bold flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            <span>{toastMsg}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* =========================================================================
+              COLONNE GAUCHE : 4 ÉTAPES NUMÉROTÉES DU BUILDER (image7.png)
+              ========================================================================= */}
+          <div className="lg:col-span-7 space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              
+              {/* ÉTAPE 01 : CATÉGORIE (image7.png 01 NOODLES / PICK 1) */}
+              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
+                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">01</span>
+                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
+                      CATÉGORIE DU PLAT
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#F5C400] font-bold">
+                    CHOIX UNIQUE
                   </span>
-                )}
-              </div>
-
-              <Select
-                label="Catégorie d'Aliment"
-                required
-                options={categoryOptions}
-                value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
-              />
-            </div>
-
-            {/* Description */}
-            <div className="flex flex-col gap-1.5 relative">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[#8A92A6]">
-                Description du Plat <span className="text-[#FF5500]">*</span>
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Détaillez la composition, la fraîcheur et la préparation du plat..."
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                className={`w-full bg-[#161920] text-white text-sm rounded-xl p-3.5 border outline-none ${
-                  errors.description ? 'border-[#FF1744]' : 'border-[#262A33] focus:border-[#CCFF00]'
-                }`}
-              />
-              {errors.description && (
-                <p className="text-xs text-[#FF1744]">{errors.description}</p>
-              )}
-            </div>
-
-            {/* PRIX ORIGINAL CATALOGUE */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-[#0D0F12] border border-[#262A33]">
-              <Input
-                label="Prix Original Catalogue (Millimes)"
-                required
-                placeholder="ex: 7500"
-                value={formData.originalPriceMillimes}
-                onChange={(e) => handleChange('originalPriceMillimes', Number(e.target.value))}
-                error={errors.originalPriceMillimes}
-                helperText={`Équivaut à ${formatTND(Number(formData.originalPriceMillimes) || 0)}`}
-              />
-
-              <Input
-                label="Quantité Disponible"
-                required
-                type="number"
-                min="1"
-                value={formData.quantityTotal}
-                onChange={(e) => handleChange('quantityTotal', Number(e.target.value))}
-                helperText="Nombre de portions en stock"
-              />
-
-              <Input
-                label="Poids Estimé / Portion (g)"
-                required
-                type="number"
-                min="50"
-                value={formData.weightGramsPerUnit}
-                onChange={(e) => handleChange('weightGramsPerUnit', Number(e.target.value))}
-                helperText={`Soit ${impact.co2SavedGrams}g CO2 évité au total`}
-              />
-            </div>
-
-            {/* 2. SÉLECTEUR SMART DECAY (ENCHÈRE DÉGRESSIVE OU FIXE) */}
-            <SmartDecayToggle
-              pricingMode={formData.pricingMode}
-              onModeChange={(mode) => handleChange('pricingMode', mode)}
-              startPriceMillimes={formData.startPriceMillimes}
-              floorPriceMillimes={formData.floorPriceMillimes}
-              fixedPriceMillimes={formData.fixedDiscountedMillimes}
-              originalPriceMillimes={formData.originalPriceMillimes}
-              onPriceChange={(type, val) => {
-                if (type === 'start') handleChange('startPriceMillimes', val);
-                if (type === 'floor') handleChange('floorPriceMillimes', val);
-                if (type === 'fixed') handleChange('fixedDiscountedMillimes', val);
-              }}
-            />
-
-            {/* 3. OPTION PANIER MYSTÈRE & CALCUL DE RARETÉ EN DIRECT */}
-            <div className="p-5 rounded-2xl bg-[#0D0F12] border border-[#262A33] space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>🎁 Mode Panier Surprise (Mystery Box)</span>
-                    {formData.isSurpriseBasket && (
-                      <Badge
-                        variant={
-                          rarityResult.rarity === SURPRISE_RARITY.LEGENDARY
-                            ? 'purple'
-                            : rarityResult.rarity === SURPRISE_RARITY.RARE
-                            ? 'cyan'
-                            : 'lime'
-                        }
-                        size="sm"
-                        dot
-                      >
-                        {rarityResult.rarity}
-                      </Badge>
-                    )}
-                  </h4>
-                  <p className="text-xs text-[#8A92A6]">
-                    Proposez un panier mystère anti-gaspillage : le contenu secret n'est révélé qu'après le retrait !
-                  </p>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {CATEGORY_ITEMS.map((cat) => {
+                    const isSelected = formData.category === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleChange('category', cat.id)}
+                        className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-2.5 ${
+                          isSelected
+                            ? 'bg-[#EE3124] text-white border-[#EE3124] shadow-md shadow-[#EE3124]/20 scale-[1.02]'
+                            : 'bg-white/5 border-white/10 text-stone-300 hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-xl">{cat.icon}</span>
+                        <span className="text-xs font-bold truncate">{cat.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ÉTAPE 02 : DÉTAILS & PRIX (image7.png 02 BROTH / PICK 1) */}
+              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
+                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">02</span>
+                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
+                      DÉTAILS & TARIFICATION
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-bold">
+                    PRIX & DESCRIPTION
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-widest text-stone-400 mb-1.5">
+                      Intitulé du Plat ou Panier *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => handleChange('title', e.target.value)}
+                      placeholder="ex: Baguette Farcie Escalope & Fromage"
+                      className="w-full px-4 py-3 rounded-2xl bg-black/60 border border-white/15 text-white text-sm outline-none focus:border-[#F5C400]"
+                    />
+                    {errors.title && <p className="text-xs text-[#EE3124] mt-1">{errors.title}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-widest text-stone-400 mb-1.5">
+                      Description & Ingrédients
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.description}
+                      onChange={(e) => handleChange('description', e.target.value)}
+                      placeholder="Détaillez la fraîcheur et les accompagnements..."
+                      className="w-full px-4 py-2.5 rounded-2xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                    />
+                  </div>
+
+                  {/* Curseur Smart Decay ou Fixe */}
+                  <SmartDecayToggle
+                    pricingMode={formData.pricingMode}
+                    onModeChange={(mode) => handleChange('pricingMode', mode)}
+                    startPriceMillimes={formData.startPriceMillimes}
+                    floorPriceMillimes={formData.floorPriceMillimes}
+                    fixedPriceMillimes={formData.fixedDiscountedMillimes}
+                    originalPriceMillimes={formData.originalPriceMillimes}
+                    onPriceChange={(type, val) => {
+                      if (type === 'start') handleChange('startPriceMillimes', val);
+                      if (type === 'floor') handleChange('floorPriceMillimes', val);
+                      if (type === 'fixed') handleChange('fixedDiscountedMillimes', val);
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* ÉTAPE 03 : HORAIRES & QUANTITÉ (image7.png 03 PROTEIN) */}
+              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
+                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">03</span>
+                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
+                      HORAIRES DE RETRAIT & STOCKS
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-bold">
+                    CRÉNEAU DU SOIR
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-stone-400 mb-1">
+                      Portions en vente :
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.quantityTotal}
+                      onChange={(e) => handleChange('quantityTotal', Number(e.target.value))}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-stone-400 mb-1">
+                      Début Retrait :
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.pickupStartAt}
+                      onChange={(e) => handleChange('pickupStartAt', e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-stone-400 mb-1">
+                      Fin Retrait :
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.pickupEndAt}
+                      onChange={(e) => handleChange('pickupEndAt', e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ÉTAPE 04 : OPTION PANIER MYSTÈRE (image7.png 04 TOPPINGS) */}
+              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
+                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">04</span>
+                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
+                      OPTION PANIER SURPRISE & RARETÉ
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#F5C400] font-bold">
+                    BOÎTE MYSTÈRE
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <Gift className="w-5 h-5 text-[#F5C400]" />
+                    <div>
+                      <p className="text-xs font-bold text-white">Activer le mode Panier Surprise (Scellé)</p>
+                      <p className="text-[10px] text-stone-400">Le contenu sera masqué et révélé par animation Unboxing</p>
+                    </div>
+                  </div>
                   <input
                     type="checkbox"
                     checked={formData.isSurpriseBasket}
                     onChange={(e) => handleChange('isSurpriseBasket', e.target.checked)}
-                    className="sr-only peer"
+                    className="w-5 h-5 accent-[#EE3124] rounded cursor-pointer"
                   />
-                  <div className="w-11 h-6 bg-[#262A33] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#CCFF00]" />
-                </label>
-              </div>
+                </div>
 
-              {formData.isSurpriseBasket && (
-                <div className="space-y-4 pt-2 border-t border-[#262A33]/80 animate-in fade-in duration-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label="Indice Public pour l'Étudiant (Teaser)"
-                      placeholder="ex: Assortiment de 3 viennoiseries artisanales"
+                {formData.isSurpriseBasket && (
+                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/30 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-amber-300 font-bold">Rareté Calculée Automatiquement :</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#161412] text-[#F5C400] font-mono font-bold">
+                        {rarityResult.rarity} (Score {(rarityResult.score * 100).toFixed(0)}%)
+                      </span>
+                    </div>
+                    <input
+                      type="text"
                       value={formData.surprise.teaser}
-                      onChange={(e) => handleSurpriseChange('teaser', e.target.value)}
-                    />
-
-                    <Input
-                      label="Estimation du Nombre d'Articles"
-                      type="number"
-                      min="1"
-                      value={formData.surprise.itemCountHint}
-                      onChange={(e) => handleSurpriseChange('itemCountHint', Number(e.target.value))}
+                      onChange={(e) => setFormData((prev) => ({
+                        ...prev,
+                        surprise: { ...prev.surprise, teaser: e.target.value }
+                      }))}
+                      placeholder="Indice secret pour l étudiant (ex: 3 viennoiseries pur beurre)"
+                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none"
                     />
                   </div>
+                )}
+              </div>
 
-                  <Input
-                    label="Contenu Réel Secret (Révélé uniquement lors du scan de retrait)"
-                    placeholder="ex: 1x Baguette farcie + 1x Makloub poulet + 1x Boga 33cl"
-                    value={formData.surprise.privateContents}
-                    onChange={(e) => handleSurpriseChange('privateContents', e.target.value)}
-                    helperText="Seul le serveur détient ce secret chiffré avant l'unboxing final"
+              {/* Bouton de Soumission */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#EE3124] to-[#F5C400] text-black font-oswald uppercase text-lg font-black tracking-wider shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span>{loading ? 'Publication en cours...' : 'PUBLIER CETTE OFFRE SUR LE CATALOGUE →'}</span>
+              </button>
+            </form>
+          </div>
+
+          {/* =========================================================================
+              COLONNE DROITE : LIVE PREVIEW DU TICKET SUSPENDU (image7.png / image8.png)
+              ========================================================================= */}
+          <div className="lg:col-span-5 sticky top-20 space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-mono uppercase tracking-widest text-[#F5C400] font-bold flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-[#EE3124]" />
+                <span>APERÇU EN DIRECT DU TICKET :</span>
+              </span>
+              <span className="text-[10px] font-mono text-stone-500">#CS-048</span>
+            </div>
+
+            {/* Ticket Suspendu Reçu Crème Live Preview */}
+            <div className="relative pt-3 select-none">
+              {/* Pince métallique supérieure */}
+              <div
+                aria-hidden="true"
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-3.5 bg-gradient-to-b from-stone-300 via-stone-100 to-stone-400 rounded-b-md shadow-md border-x border-b border-black/40 z-30 flex items-center justify-center pointer-events-none"
+              >
+                <div className="w-4 h-1 bg-black/40 rounded-full" />
+              </div>
+
+              <div className="relative rounded-2xl bg-[#F6F1E7] text-[#161412] shadow-2xl border border-black/10 overflow-hidden pb-4">
+                {/* Photo de l'aliment */}
+                <div className="relative h-48 w-full overflow-hidden bg-[#0E0D0C]">
+                  <img
+                    src={previewImage}
+                    alt={formData.title}
+                    className="w-full h-full object-cover transition-all duration-300"
                   />
-
-                  {/* Badge d'analyse de rareté calculé selon @shared/rarity.js */}
-                  <div className="p-3 rounded-xl bg-[#161920] border border-[#262A33] flex items-center justify-between text-xs">
-                    <span className="text-[#8A92A6]">
-                      Score algorithmique de rareté : <strong className="text-white">{rarityResult.score} / 1.0</strong> (Remise : -{Math.round(rarityResult.depth * 100)}%)
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  
+                  <div className="absolute top-2.5 right-2.5">
+                    <span className="px-2.5 py-1 rounded-full bg-black/80 text-[#F5C400] text-[10px] font-mono font-bold border border-white/10">
+                      {formData.pickupStartAt} – {formData.pickupEndAt}
                     </span>
-                    <span className="font-bold text-[#CCFF00]">
-                      Niveau calculé : {rarityResult.rarity}
+                  </div>
+
+                  <div className="absolute bottom-2.5 left-3">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#EE3124] text-white text-[9px] font-oswald uppercase tracking-wider font-bold">
+                      {formData.quantityTotal} RESTANTS
                     </span>
                   </div>
                 </div>
-              )}
+
+                {/* Détails du Ticket */}
+                <div className="p-5 space-y-3 font-mono text-xs">
+                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-stone-500">
+                    <span className="text-[#EE3124] font-bold">{formData.category}</span>
+                    <span>ESSECT MONTFLEURY</span>
+                  </div>
+
+                  <h3 className="font-oswald uppercase text-xl font-black text-[#161412] leading-tight line-clamp-2">
+                    {formData.title || 'Votre Plat Anti-Gaspillage'}
+                  </h3>
+
+                  <p className="text-[11px] text-stone-600 font-sans line-clamp-2">
+                    {formData.description || 'Description du plat détaillée...'}
+                  </p>
+
+                  <div className="my-2 border-t-2 border-dashed border-[#161412]/20" />
+
+                  {/* Décomposition Prix */}
+                  <div className="space-y-1 text-[11px]">
+                    <div className="flex justify-between text-stone-500">
+                      <span>PRIX ORIGINAL :</span>
+                      <span className="line-through">{formatTND(Number(formData.originalPriceMillimes) || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-stone-700">
+                      <span>MODE :</span>
+                      <span className="font-bold">{formData.pricingMode === PRICING_MODES.DUTCH_AUCTION ? 'SMART DECAY (ENCHÈRE)' : 'PRIX FIXE'}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#161412]/15 flex items-baseline justify-between">
+                    <span className="font-oswald uppercase text-xs font-black text-stone-600">
+                      PRIX PLANCHER :
+                    </span>
+                    <span className="font-oswald text-2xl font-black text-[#EE3124]">
+                      {formatTND(referencePrice)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Dents de scie inférieures */}
+                <div
+                  aria-hidden="true"
+                  className="w-full h-3 bg-repeat-x pointer-events-none mt-1"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23F6F1E7'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
+                    backgroundSize: '16px 10px',
+                    filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))',
+                  }}
+                />
+              </div>
             </div>
 
-            {/* 4. PHOTO DROPZONE */}
-            <PhotoDropzone
-              photoUrl={formData.photoUrl}
-              onPhotoChange={(url) => handleChange('photoUrl', url)}
-            />
-
-            {/* 5. CRÉNEAU DE RETRAIT */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 border-t border-[#262A33]">
-              <Input
-                label="Heure de Début de Retrait"
-                type="time"
-                required
-                value={formData.pickupStartAt}
-                onChange={(e) => handleChange('pickupStartAt', e.target.value)}
-                leftIcon={<span>🕒</span>}
-              />
-
-              <Input
-                label="Heure Limite de Retrait (Fermeture)"
-                type="time"
-                required
-                value={formData.pickupEndAt}
-                onChange={(e) => handleChange('pickupEndAt', e.target.value)}
-                leftIcon={<span>🛑</span>}
-              />
-            </div>
-
-            {/* SUBMIT BUTTON */}
-            <div className="pt-4 flex justify-end">
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                isLoading={loading}
-                className="w-full sm:w-auto"
-                leftIcon={<span>🚀</span>}
-              >
-                {isEditing ? "Enregistrer les Modifications" : "Publier l'Offre sur le Catalogue"}
-              </Button>
-            </div>
-          </form>
-        </Card>
+            <p className="text-[10px] text-center font-mono text-stone-500">
+              💡 Le ticket suspendu se synchronise instantanément avec vos modifications.
+            </p>
+          </div>
+        </div>
       </div>
-
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 }

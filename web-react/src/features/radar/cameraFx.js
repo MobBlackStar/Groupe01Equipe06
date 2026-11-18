@@ -1,7 +1,6 @@
-// 💡 Concept & Analogie : Comme un vol de drone de cinéma qui plonge en piqué au-dessus des toits pour cadrer un point d'intérêt précis, cet effet de caméra cinématique offre une immersion 3D spectaculaire.
-// 🔄 Comparaison React / Flutter : Utilise la méthode `flyTo` native de MapLibre avec courbes d'accélération bézier ; sur mobile Flutter, un `AnimatedMapController` gère la transition de zoom.
-// 🎯 À retenir pour la soutenance : "Le 'Drone Swoop' (zoom 18, pitch 70°, bearing 40°) sublime la démonstration devant le jury en transformant une simple consultation en une expérience visuelle mémorable."
-// Module : Holo-Radar 3D WebGL
+// Module : Holo-Radar 3D WebGL - Effets de Caméra Cinématiques
+// Offre un 'Drone Swoop' immersif lors de la sélection d'un restaurant
+// avec interpolation fluide sans saccades.
 
 import { MAP_CONFIG } from './mapStyle.js';
 
@@ -15,11 +14,11 @@ export function droneSwoopToMerchant(map, targetCoords) {
 
   map.flyTo({
     center: targetCoords,
-    zoom: 17.8,
-    pitch: 70,
-    bearing: 42,
-    duration: 2200,
-    curve: 1.6,
+    zoom: 17.6,
+    pitch: 68,
+    bearing: 38,
+    duration: 2100,
+    curve: 1.42,
     essential: true,
   });
 }
@@ -33,10 +32,11 @@ export function resetToCampusHome(map) {
 
   map.flyTo({
     center: MAP_CONFIG.ESSECT_COORDS,
-    zoom: 16,
-    pitch: 60,
-    bearing: -20,
-    duration: 2000,
+    zoom: MAP_CONFIG.DEFAULT_CAMERA.zoom,
+    pitch: MAP_CONFIG.DEFAULT_CAMERA.pitch,
+    bearing: MAP_CONFIG.DEFAULT_CAMERA.bearing,
+    duration: 1900,
+    curve: 1.3,
     essential: true,
   });
 }

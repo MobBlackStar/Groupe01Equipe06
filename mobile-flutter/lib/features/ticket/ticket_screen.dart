@@ -54,19 +54,19 @@ class TicketScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceCard,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppTheme.borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
                     Text(
                       '📍 Comment récupérer votre repas :',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppTheme.warmCream, fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 6),
                     Text(
-                      '1. Présentez-vous au restaurant à Montfleury pendant le créneau horaire.\n2. Montrez ce QR code vivant au commerçant.\n3. Si le scan optique échoue, dictez simplement le code à 6 chiffres.',
-                      style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.5),
+                      '1. Présentez-vous au restaurant à Montfleury pendant le créneau horaire.\n2. Montrez ce ticket thermique et son QR code vivant au commerçant.\n3. Si le scan optique échoue, dictez simplement le code de secours à 6 chiffres.',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 11, height: 1.5),
                     ),
                   ],
                 ),

@@ -1,20 +1,35 @@
-// 💡 Concept & Analogie : Comme la fiche descriptive d'un vol avec sa carte d'embarquement en préparation, cette page rassemble tous les détails du sauvetage : prix dégressif en temps réel, impact carbone calculé au gramme près et réservation verrouillée pendant 10 minutes.
-// 🔄 Comparaison React / Flutter : En React, `OfferDetailPage` utilise `useParams` de React Router et le hook d'actualisation de prix ; en Flutter, `OfferDetailScreen` présente une disposition `CustomScrollView` avec un bouton flottant en bas d'écran (`bottomNavigationBar`).
-// 🎯 À retenir pour la soutenance : "Lors de la réservation, une transaction atomique verrouille le stock pendant 10 minutes au prix unitaire de la seconde exacte où l'étudiant a cliqué, protégeant contre toute concurrence d'achat (erreur 409 gérée avec élégance)."
+// 💡 Concept & Analogie : Comme la fiche produit interactive d'un restaurant d'exception, cette page met en scène le repas sauvé en 3D avec sa jauge de décomposition de prix (Smart Decay) et son impact environnemental au gramme près.
+// 🔄 Comparaison React / Flutter : En React, `OfferDetailPage` exploite un DepthCard 3D avec DepthLayer pour faire flotter le mets ; en Flutter, `offer_detail_screen.dart` utilise un `CustomScrollView` avec un bouton persistant en bas d'écran.
+// 🎯 À retenir pour la soutenance : "Lors de la réservation, le prix est scellé à la milliseconde près par une transaction atomique et réservé 10 minutes pour le paiement Konnect (INV-06)."
+// Module : Réservation & Détails (M5, I1)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PriceTicker, CountdownChip, RarityBadge } from '../../components/offers/index.js';
-import { Button, Card, Spinner, Badge, Stepper } from '../../components/ui/index.js';
+import { Spinner } from '../../components/ui/index.js';
+import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { computeUnitPrice, computeMinutesLeft } from '@shared/pricing.js';
 import { formatTND } from '@shared/money.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
 import { calculateImpact, calculateEquivalences } from '@shared/impact.js';
-import { BUSINESS_RULES } from '@shared/constants.js';
+import { getFramerFoodImage } from '../../lib/framerAssets.js';
+import {
+  MapPin,
+  Store,
+  Clock,
+  Flame,
+  Leaf,
+  Sparkles,
+  ShieldCheck,
+  ArrowRight,
+  Package,
+  Minus,
+  Plus,
+  Phone,
+} from 'lucide-react';
 
-// Offre de secours si API hors-ligne
 const FALLBACK_OFFER = {
   id: 'off-baguette-01',
   merchantId: 'merchant-baguette-baguette',
@@ -36,7 +51,7 @@ const FALLBACK_OFFER = {
   pickupStartAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   pickupEndAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
   isSurpriseBasket: false,
-  imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',
+  imageUrl: '/assets/framer/burgers/sandwich-hot-chicken.png',
 };
 
 export default function OfferDetailPage() {
@@ -50,13 +65,11 @@ export default function OfferDetailPage() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [now, setNow] = useState(Date.now());
 
-  // Horloge 1s pour le calcul du prix et de la progression
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Récupération de l'offre
   useEffect(() => {
     let isMounted = true;
 
@@ -71,7 +84,6 @@ export default function OfferDetailPage() {
       } catch (err) {
         console.warn('Offre non trouvée via API, activation du fallback :', err.message);
         if (isMounted) {
-          // Offre de secours enrichie avec l'id
           setOffer({ ...FALLBACK_OFFER, id: id || FALLBACK_OFFER.id });
         }
       } finally {
@@ -90,9 +102,9 @@ export default function OfferDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D0F12] flex flex-col items-center justify-center gap-4 py-20 text-white">
+      <div className="min-h-screen bg-[#0E0D0C] flex flex-col items-center justify-center gap-4 py-20 text-[#F6F1E7]">
         <Spinner size="lg" />
-        <p className="text-xs text-slate-400">Chargement des détails de l offre...</p>
+        <p className="text-xs text-stone-400 font-mono">Chargement du ticket d'offre...</p>
       </div>
     );
   }
@@ -103,30 +115,25 @@ export default function OfferDetailPage() {
   const maxAvailable = currentOffer.quantityAvailable ?? currentOffer.remainingQuantity ?? 1;
   const maxAllowed = Math.min(currentOffer.maxPerOrder || 4, maxAvailable);
 
-  // Calcul impact écologique
   const weightGrams = (currentOffer.weightGramsPerUnit || 350) * quantity;
   const impact = calculateImpact(weightGrams);
   const equivalences = calculateEquivalences(impact.co2SavedGrams);
 
-  // Temps de marche
   const distanceM = currentOffer.distanceFromEssectM || 180;
   const walkingMin = calculateWalkingMinutes(distanceM);
 
-  // Formatage créneau horaire
   const formatTime = (isoString) => {
     if (!isoString) return '--h--';
     const d = new Date(isoString);
     return `${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
-  // Progression de l'enchère dégressive (Smart Decay)
   const isDutch = (currentOffer.pricing?.mode || currentOffer.pricingType) === 'DUTCH' ||
                   (currentOffer.pricing?.mode || currentOffer.pricingType) === 'DUTCH_AUCTION';
   const startMs = new Date(currentOffer.pickupStartAt || currentOffer.decayStartAt || (now - 30 * 60 * 1000)).getTime();
   const endMs = new Date(currentOffer.pickupEndAt).getTime();
   const decayProgress = Math.min(100, Math.max(0, Math.round(((now - startMs) / (endMs - startMs)) * 100)));
 
-  // Réservation
   const handleReserve = async () => {
     if (quantity > maxAvailable) {
       setErrorMessage("La quantité demandée n'est plus disponible.");
@@ -145,14 +152,12 @@ export default function OfferDetailPage() {
       const orderId = response.data?.order?.id || response.data?.id || 'ord-demo-essectx';
       navigate(`/app/checkout/${orderId}`);
     } catch (err) {
-      // Gestion de la concurrence (409 OFFER_SOLD_OUT)
       if (err.response?.status === 409) {
         setErrorMessage(
-          '⚡ Rupture de stock instantanée : Un autre étudiant vient de réserver les dernières portions de cette offre il y a quelques secondes !'
+          '⚡ Rupture de stock instantanée : Un autre étudiant vient de réserver les dernières portions il y a quelques secondes !'
         );
       } else {
-        // Mode démonstration résilient si le backend n'est pas démarré
-        console.warn('Mode démo : redirection vers checkout suite à réponse offline');
+        console.warn('Mode démo : redirection vers checkout');
         navigate(`/app/checkout/demo-${Date.now().toString().slice(-6)}`);
       }
     } finally {
@@ -160,244 +165,225 @@ export default function OfferDetailPage() {
     }
   };
 
+  const foodImage = currentOffer.imageUrl || currentOffer.photoUrl || getFramerFoodImage(currentOffer.title || currentOffer.category);
+
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Fil d'Ariane & Retour */}
+    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        
+        {/* Navigation retour & Badge urgence */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/explore"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-[#CCFF00] transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-stone-400 hover:text-[#F5C400] transition-colors"
           >
             ← Retour au catalogue des offres
           </Link>
           <CountdownChip pickupEndAt={currentOffer.pickupEndAt} />
         </div>
 
-        {/* Alerte d'erreur éventuelle (notamment 409) */}
+        {/* Alerte Concurrence 409 */}
         {errorMessage && (
-          <div className="p-4 rounded-2xl bg-[#FF1744]/15 border border-[#FF1744]/40 text-[#FF1744] text-xs flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-[#EE3124]/15 border border-[#EE3124]/40 text-[#EE3124] text-xs flex items-center gap-3">
             <span className="text-xl">⚠️</span>
-            <p className="flex-1 font-medium leading-relaxed">{errorMessage}</p>
+            <p className="flex-1 font-semibold leading-relaxed">{errorMessage}</p>
           </div>
         )}
 
-        {/* Grille principale : Visuel & Infos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          {/* Colonne Gauche : Image / Coffre Mystère */}
-          <div className="space-y-4">
-            <div className="relative rounded-3xl overflow-hidden bg-[#161920] border border-white/10 aspect-square shadow-xl">
-              <img
-                src={currentOffer.imageUrl || 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80'}
-                alt={currentOffer.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#161920] via-transparent to-black/30" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* =========================================================================
+              COLONNE GAUCHE : 3D FOOD SHOWCASE (DepthCard & DepthLayer)
+              ========================================================================= */}
+          <div className="lg:col-span-6 space-y-4">
+            <DepthCard
+              maxTilt={14}
+              perspective={1100}
+              className="w-full relative rounded-3xl bg-[#161412] border border-white/10 p-6 sm:p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="relative aspect-square flex items-center justify-center">
+                <DepthLayer depth={30} shadow className="w-4/5 h-4/5 relative z-10 flex items-center justify-center">
+                  <img
+                    src={foodImage}
+                    alt={currentOffer.title}
+                    className="max-w-full max-h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.7)]"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = getFramerFoodImage(currentOffer.category);
+                    }}
+                  />
+                </DepthLayer>
 
-              {/* Badges sur l'image */}
-              {currentOffer.isSurpriseBasket && (
-                <div className="absolute top-4 left-4 z-10">
-                  <RarityBadge rarity={currentOffer.surprise?.rarity || 'RARE'} score={0.68} />
-                </div>
-              )}
+                {/* Halos lumineux intérieurs */}
+                <div className="absolute inset-0 bg-radial from-[#F5C400]/10 via-transparent to-transparent pointer-events-none" />
 
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs">
-                <span className="px-3 py-1 rounded-xl bg-black/80 backdrop-blur-md text-white font-medium border border-white/10">
-                  📦 {maxAvailable} portion{maxAvailable > 1 ? 's' : ''} disponible{maxAvailable > 1 ? 's' : ''}
-                </span>
-                <span className="px-3 py-1 rounded-xl bg-[#CCFF00]/20 border border-[#CCFF00]/40 text-[#CCFF00] font-bold">
-                  {currentOffer.category}
-                </span>
-              </div>
-            </div>
-
-            {/* Encart Panier Mystère le cas échéant */}
-            {currentOffer.isSurpriseBasket && currentOffer.surprise && (
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-yellow-600/10 border border-yellow-500/30">
-                <div className="flex items-center gap-2 mb-1.5 text-yellow-300 font-bold text-xs">
-                  <span>✨</span>
-                  <span>Teaser du Panier Mystère</span>
-                </div>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  {currentOffer.surprise.teaser || "Assortiment surprise d'invendus de première fraîcheur à découvrir au moment du déballage !"}
-                </p>
-                <div className="mt-2 text-[11px] text-yellow-400 font-medium">
-                  🎯 Contient environ {currentOffer.surprise.itemCountHint || 3} délices
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Colonne Droite : Données de commande */}
-          <div className="space-y-6 flex flex-col justify-between">
-            <div>
-              {/* Restaurant & Distance */}
-              <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span className="font-semibold text-slate-300">
-                  🏪 {currentOffer.merchantName}
-                </span>
-                <span className="text-[#CCFF00] font-medium">
-                  📍 {distanceM} m de l'ESSECT (~{walkingMin} min à pied)
-                </span>
-              </div>
-
-              {/* Titre */}
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
-                {currentOffer.title}
-              </h1>
-
-              {/* Description */}
-              <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                {currentOffer.description}
-              </p>
-
-              {/* Horaires de retrait */}
-              <div className="mt-4 p-3.5 rounded-2xl bg-[#161920] border border-white/5 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">🕒</span>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Créneau de retrait sur place</span>
-                    <span className="font-bold text-white">
-                      Aujourd'hui : {formatTime(currentOffer.pickupStartAt)} – {formatTime(currentOffer.pickupEndAt)}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-slate-500 text-[11px]">Montfleury</span>
-              </div>
-
-              {/* Ticker de Prix Grand Format */}
-              <div className="mt-6 p-4 rounded-2xl bg-[#161920] border border-white/10">
-                <div className="text-xs text-slate-400 mb-1">Prix unitaire en direct :</div>
-                <PriceTicker offer={currentOffer} size="lg" />
-
-                {/* Barre de progression Smart Decay si enchère dégressive */}
-                {isDutch && (
-                  <div className="mt-4 pt-3 border-t border-white/5 space-y-1.5">
-                    <div className="flex justify-between text-[11px] text-slate-400">
-                      <span>Début de l'enchère</span>
-                      <span className="text-[#CCFF00] font-bold">Progression : {decayProgress}%</span>
-                      <span>Fermeture (Plancher)</span>
-                    </div>
-                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                      <div
-                        style={{ width: `${decayProgress}%` }}
-                        className="bg-gradient-to-r from-[#CCFF00] to-[#FF5500] h-full transition-all duration-1000"
-                      />
-                    </div>
+                {/* Badges d'angle */}
+                {currentOffer.isSurpriseBasket && (
+                  <div className="absolute top-0 left-0 z-20">
+                    <RarityBadge rarity={currentOffer.surprise?.rarity || 'RARE'} score={0.75} />
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Sélecteur de Quantité & Réservation */}
-            <div className="p-5 rounded-3xl bg-[#161920] border border-[#CCFF00]/30 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="block text-xs font-semibold text-slate-300">
-                    Nombre de portions
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    Max {maxAllowed} par étudiant
+                <div className="absolute top-0 right-0 z-20">
+                  <span className="px-3 py-1 rounded-full bg-[#EE3124] text-white text-[10px] font-oswald uppercase font-black tracking-wider shadow-md">
+                    ANTI-GASPI
                   </span>
                 </div>
+              </div>
 
-                {/* Boutons Compteur */}
-                <div className="flex items-center gap-3 bg-[#0D0F12] p-1.5 rounded-2xl border border-white/10">
+              {/* Barre de progression Enchère Inversée (Dutch Auction Decay) */}
+              {isDutch && (
+                <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono">
+                    <span className="text-[#F5C400] font-bold flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>Smart Decay : Baisse de prix en cours</span>
+                    </span>
+                    <span className="text-stone-400 font-bold">{decayProgress}% écoulé</span>
+                  </div>
+                  <div className="w-full bg-stone-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-[#F5C400] to-[#EE3124] h-full transition-all duration-1000"
+                      style={{ width: `${decayProgress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] font-mono text-stone-500">
+                    <span>Départ : {formatTND(currentOffer.startPriceMillimes || currentOffer.originalPriceMillimes)}</span>
+                    <span className="text-[#EE3124] font-bold">Plancher garanti : {formatTND(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
+                  </div>
+                </div>
+              )}
+            </DepthCard>
+
+            {/* Fiche d'impact écologique */}
+            <div className="p-4 rounded-3xl bg-[#161412] border border-white/10 grid grid-cols-2 gap-3 text-center">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                <span className="text-xl">🥗</span>
+                <p className="font-oswald text-lg font-black text-emerald-400 mt-1">
+                  {impact.foodSavedGrams} g
+                </p>
+                <p className="text-[10px] font-mono uppercase text-stone-400">Nourriture Sauvée</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                <span className="text-xl">🌱</span>
+                <p className="font-oswald text-lg font-black text-[#F5C400] mt-1">
+                  {impact.co2SavedGrams} g
+                </p>
+                <p className="text-[10px] font-mono uppercase text-stone-400">CO2 Évité ({equivalences.kmCarAvoided} km auto)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* =========================================================================
+              COLONNE DROITE : TICKET DE RÉSERVATION PHYSIQUE & COMMANDE
+              ========================================================================= */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#F6F1E7] text-[#161412] shadow-2xl border border-black/10 relative overflow-hidden">
+              
+              {/* En-tête ticket */}
+              <div className="flex items-center justify-between pb-3 border-b-2 border-dashed border-[#161412]/20">
+                <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase font-bold text-[#EE3124]">
+                  <Flame className="w-3.5 h-3.5" />
+                  <span>{currentOffer.category} · LOT OFFICIEL</span>
+                </div>
+                <div className="text-[11px] font-mono text-stone-600 font-bold">
+                  {distanceM}m (~{walkingMin} min à pied)
+                </div>
+              </div>
+
+              {/* Titre & Description */}
+              <div className="pt-4 pb-2">
+                <h1 className="font-oswald uppercase text-2xl sm:text-3xl font-black text-[#161412] leading-tight">
+                  {currentOffer.title}
+                </h1>
+                <div className="flex items-center gap-2 text-xs text-stone-600 mt-1 mb-3">
+                  <Store className="w-4 h-4 text-stone-500" />
+                  <span className="font-bold">{currentOffer.merchantName}</span>
+                </div>
+                <p className="text-xs text-stone-700 leading-relaxed font-sans">
+                  {currentOffer.description}
+                </p>
+              </div>
+
+              {/* Horaires de retrait */}
+              <div className="my-4 p-3.5 rounded-2xl bg-stone-200/70 border border-stone-300 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#EE3124]" />
+                  <span className="font-bold">Créneau de retrait :</span>
+                </div>
+                <span className="font-mono font-black text-[#161412]">
+                  {formatTime(currentOffer.pickupStartAt)} — {formatTime(currentOffer.pickupEndAt)}
+                </span>
+              </div>
+
+              {/* Sélecteur de Quantité */}
+              <div className="my-4 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-mono uppercase font-bold text-stone-600 block">
+                    Quantité à sauver :
+                  </span>
+                  <span className="text-[10px] text-stone-500">
+                    Max. {maxAllowed} par étudiant
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={quantity <= 1}
-                    className="w-8 h-8 rounded-xl bg-white/5 text-white font-bold flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    className="w-8 h-8 rounded-full bg-[#161412] text-white flex items-center justify-center font-bold disabled:opacity-30"
                   >
-                    -
+                    <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="font-bold text-base px-2 text-[#CCFF00]">
+                  <span className="w-8 text-center font-oswald text-lg font-black text-[#161412]">
                     {quantity}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => Math.min(maxAllowed, q + 1))}
+                    onClick={() => setQuantity(Math.min(maxAllowed, quantity + 1))}
                     disabled={quantity >= maxAllowed}
-                    className="w-8 h-8 rounded-xl bg-white/5 text-white font-bold flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    className="w-8 h-8 rounded-full bg-[#161412] text-white flex items-center justify-center font-bold disabled:opacity-30"
                   >
-                    +
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Total & Bouton d'action */}
-              <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-slate-400 block">Total à régler :</span>
-                  <span className="text-2xl font-black text-[#CCFF00]">
-                    {formatTND(totalPrice)}
-                  </span>
+              {/* Récapitulatif Prix & Hold 10 min */}
+              <div className="mt-6 pt-4 border-t-2 border-dashed border-[#161412]/20 space-y-3">
+                <div className="flex justify-between items-end">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-mono uppercase text-stone-500 font-bold">
+                      Prix Total Réservé :
+                    </span>
+                    <span className="font-oswald text-3xl font-black text-[#EE3124]">
+                      {formatTND(totalPrice)}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono text-stone-500 line-through block">
+                      {formatTND((currentOffer.originalPriceMillimes || 7800) * quantity)}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#2E6F40]">
+                      Économie : {formatTND(((currentOffer.originalPriceMillimes || 7800) - unitPrice) * quantity)}
+                    </span>
+                  </div>
                 </div>
 
+                {/* Bouton CTA Réservation */}
                 <button
                   type="button"
                   onClick={handleReserve}
                   disabled={isSubmitting || maxAvailable <= 0}
-                  className="px-6 py-3 rounded-2xl bg-[#CCFF00] text-black font-black text-sm hover:bg-[#b8e600] active:scale-95 transition-all shadow-lg shadow-[#CCFF00]/20 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-2"
+                  className="w-full py-4 px-6 rounded-2xl bg-[#0E0D0C] text-[#F6F1E7] font-oswald uppercase text-base font-black tracking-wider hover:bg-[#EE3124] hover:text-white active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Spinner size="sm" />
-                      <span>Verrouillage (10 min)...</span>
-                    </>
-                  ) : maxAvailable <= 0 ? (
-                    <span>Épuisé</span>
-                  ) : (
-                    <span>⚡ Réserver Maintenant</span>
-                  )}
+                  <span>{isSubmitting ? 'Verrouillage en cours...' : 'Bloquer mon prix pendant 10 min →'}</span>
                 </button>
-              </div>
 
-              {/* Règle des 10 minutes */}
-              <p className="text-[11px] text-slate-400 text-center">
-                🔒 Le stock est bloqué à votre nom pendant <strong className="text-white">10 minutes</strong> pour finaliser votre commande.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Encart Impact Écologique & Commerce */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          {/* Impact Écologique */}
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/5 space-y-3">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span>🌱</span>
-              <span>Votre Impact Écologique en sauvant cette offre</span>
-            </h3>
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-[11px] text-slate-400 block">Aliments sauvés</span>
-                <span className="text-base font-black text-white">{weightGrams} g</span>
-                <span className="text-[10px] text-emerald-400 block mt-0.5">Non gaspillés</span>
+                <p className="text-[10px] text-center font-mono text-stone-500">
+                  🔒 Transaction atomique : Votre prix et votre portion sont scellés pendant 10 minutes pour le paiement.
+                </p>
               </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                <span className="text-[11px] text-slate-400 block">CO₂ Évité (FAO)</span>
-                <span className="text-base font-black text-cyan-400">{impact.co2SavedGrams} g</span>
-                <span className="text-[10px] text-cyan-300/70 block mt-0.5">
-                  ≈ {equivalences.smartphonesCharged} recharges tel
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Coordonnées & Accès Restaurant */}
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/5 space-y-2">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <span>📍</span>
-              <span>Lieu de Retrait à Montfleury</span>
-            </h3>
-            <p className="text-xs text-slate-300">
-              {currentOffer.merchantAddress || 'Montfleury, à proximité immédiate de l ESSECT'}
-            </p>
-            <div className="flex items-center gap-3 pt-2 text-xs text-slate-400">
-              <span>📞 {currentOffer.merchantPhone || '+216 71 390 000'}</span>
-              <span>•</span>
-              <span className="text-[#CCFF00]">🚶 {walkingMin} min depuis l'entrée principale ESSECT</span>
             </div>
           </div>
         </div>

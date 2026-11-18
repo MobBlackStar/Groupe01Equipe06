@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Comme le tableau de bord supérieur d'un navire de croisière, la barre de navigation oriente l'utilisateur et lui permet de changer d'espace en un clin d'œil.
-// 🔄 Comparaison React / Flutter : En React, `Navbar` est un composant adaptatif (Desktop/Mobile) avec menu hamburger ; en Flutter, nous combinons `AppBar` et `BottomNavigationBar`.
-// 🎯 À retenir pour la soutenance : "La barre intègre un commutateur de rôle 1-clic ultra-rapide pour basculer en direct devant le jury entre Étudiant, Commerçant et Administrateur sans aucune latence."
+// 💡 Concept & Analogie : Comme la capsule de commande suspendue d'un marché nocturne, cette barre de navigation flottante en forme de pilule (floating pill nav) offre une ergonomie moderne et immédiate.
+// 🔄 Comparaison React / Flutter : En React, la navbar est une capsule flottante adaptative avec un commutateur direct de rôles ; en Flutter, nous combinons une AppBar stylisée et la barre basse tactile.
+// 🎯 À retenir pour la soutenance : "La barre intègre un commutateur de rôle 1-clic ultra-rapide (Étudiant · Commerçant · Admin) accessible directement pour une démonstration fluide et sans latence devant le jury."
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -21,7 +21,8 @@ import {
   LogOut,
   ChevronDown,
   GraduationCap,
-  RefreshCw,
+  Flame,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLES } from '@shared/constants.js';
@@ -34,7 +35,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const menuRef = useRef(null);
 
-  // Fermeture automatique du menu au clic extérieur
+  // Fermeture automatique au clic extérieur
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -61,233 +62,332 @@ export default function Navbar() {
     return location.pathname.startsWith(path);
   };
 
-  // Liens spécifiques au rôle
+  // Liens par rôle
   const studentLinks = [
-    { label: 'Catalogue', path: '/app', icon: <ShoppingBag className="w-4 h-4" /> },
-    { label: 'Radar 3D', path: '/app/radar', icon: <MapPin className="w-4 h-4" /> },
-    { label: 'Commandes', path: '/app/orders', icon: <Ticket className="w-4 h-4" /> },
-    { label: 'Fidélité', path: '/app/loyalty', icon: <Award className="w-4 h-4" /> },
-    { label: 'Dashboard', path: '/app/dashboard', icon: <BarChart3 className="w-4 h-4" /> },
+    { label: 'Offres', path: '/app', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+    { label: 'Radar 3D', path: '/app/radar', icon: <MapPin className="w-3.5 h-3.5" /> },
+    { label: 'Tickets', path: '/app/orders', icon: <Ticket className="w-3.5 h-3.5" /> },
+    { label: 'Fidélité', path: '/app/loyalty', icon: <Award className="w-3.5 h-3.5" /> },
+    { label: 'Stats', path: '/app/dashboard', icon: <BarChart3 className="w-3.5 h-3.5" /> },
   ];
 
   const merchantLinks = [
-    { label: 'Dashboard', path: '/merchant/dashboard', icon: <BarChart3 className="w-4 h-4" /> },
-    { label: 'Mes Offres', path: '/merchant/offers', icon: <ShoppingBag className="w-4 h-4" /> },
-    { label: '+ Publier', path: '/merchant/offers/new', icon: <Sparkles className="w-4 h-4" /> },
-    { label: 'Commandes', path: '/merchant/orders', icon: <Ticket className="w-4 h-4" /> },
-    { label: 'Scanner QR', path: '/merchant/scan', icon: <QrCode className="w-4 h-4" /> },
-    { label: 'Boutique', path: '/merchant/store', icon: <Store className="w-4 h-4" /> },
+    { label: 'Dashboard', path: '/merchant/dashboard', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+    { label: 'Mes Offres', path: '/merchant/offers', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+    { label: '+ Publier', path: '/merchant/offers/new', icon: <Sparkles className="w-3.5 h-3.5 text-[#F5C400]" /> },
+    { label: 'Commandes', path: '/merchant/orders', icon: <Ticket className="w-3.5 h-3.5" /> },
+    { label: 'Scanner', path: '/merchant/scan', icon: <QrCode className="w-3.5 h-3.5" /> },
+    { label: 'Boutique', path: '/merchant/store', icon: <Store className="w-3.5 h-3.5" /> },
   ];
 
   const adminLinks = [
-    { label: 'Dashboard', path: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" /> },
-    { label: 'Commerces', path: '/admin/merchants', icon: <Store className="w-4 h-4" /> },
-    { label: 'Utilisateurs', path: '/admin/users', icon: <ShieldCheck className="w-4 h-4" /> },
+    { label: 'Dashboard', path: '/admin/dashboard', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+    { label: 'Commerces', path: '/admin/merchants', icon: <Store className="w-3.5 h-3.5" /> },
+    { label: 'Utilisateurs', path: '/admin/users', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
   ];
 
-  let currentNavLinks = [];
+  let currentNavLinks = studentLinks;
   if (role === ROLES.MERCHANT) currentNavLinks = merchantLinks;
   else if (role === ROLES.ADMIN) currentNavLinks = adminLinks;
-  else currentNavLinks = studentLinks;
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#0D0F12]/95 backdrop-blur-md border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Logo & Marque */}
-        <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#CCFF00] to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-[#CCFF00]/10">
-              <div className="w-full h-full bg-[#0D0F12] rounded-[10px] flex items-center justify-center">
-                <span className="font-black text-[#CCFF00] text-lg">CS</span>
+    <header className="sticky top-3 z-40 w-full px-3 sm:px-6 pointer-events-none transition-all duration-300">
+      <div className="max-w-7xl mx-auto pointer-events-auto">
+        <div className="h-14 sm:h-16 px-3 sm:px-5 rounded-full bg-[#0E0D0C]/90 backdrop-blur-xl border border-white/15 shadow-2xl flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo & Marque Flottante */}
+          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-[#EE3124] to-[#F5C400] p-0.5 flex items-center justify-center shadow-lg shadow-[#EE3124]/20 group-hover:scale-105 transition-transform">
+                <div className="w-full h-full bg-[#0E0D0C] rounded-full flex items-center justify-center">
+                  <Flame className="w-4 h-4 text-[#F5C400] group-hover:rotate-12 transition-transform" />
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black tracking-tight text-white text-base leading-none">
-                Campus<span className="text-[#CCFF00]">Save</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-wide">ESSECT Montfleury</span>
-            </div>
-          </Link>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="font-oswald uppercase font-black text-white text-base sm:text-lg tracking-wider">
+                    Campus<span className="text-[#F5C400]">Save</span>
+                  </span>
+                  <span className="hidden md:inline-block text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-white/10 text-[#F6F1E7]/80 tracking-widest">
+                    ESSECT
+                  </span>
+                </div>
+                <span className="text-[9px] text-[#F6F1E7]/50 font-sans tracking-tight">Montfleury · Anti-Gaspi</span>
+              </div>
+            </Link>
 
-          {/* Liens de navigation Desktop */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {currentNavLinks.map((link) => {
-              const active = isActive(link.path);
-              return (
+            {/* Séparateur vertical discret */}
+            <div className="hidden lg:block h-6 w-px bg-white/15" />
+
+            {/* Navigation Pills Desktop */}
+            <nav className="hidden lg:flex items-center gap-1">
+              {currentNavLinks.map((link) => {
+                const active = isActive(link.path);
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                      active
+                        ? 'bg-[#F5C400] text-[#0E0D0C] shadow-md shadow-[#F5C400]/20'
+                        : 'text-[#F6F1E7]/80 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {link.icon}
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Centre / Droite : Segmented 1-Click Role Switcher (Etudiant · Commerçant · Admin) */}
+          <div className="hidden xl:flex items-center p-1 rounded-full bg-black/60 border border-white/10 text-[11px] font-bold">
+            <span className="px-2 text-[10px] uppercase font-mono tracking-widest text-[#F6F1E7]/50">
+              Rôle :
+            </span>
+            <button
+              type="button"
+              onClick={() => handleRoleSwitch(ROLES.STUDENT)}
+              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
+                role === ROLES.STUDENT
+                  ? 'bg-[#EE3124] text-white shadow-sm'
+                  : 'text-[#F6F1E7]/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Étudiant</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleRoleSwitch(ROLES.MERCHANT)}
+              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
+                role === ROLES.MERCHANT
+                  ? 'bg-[#F5C400] text-[#0E0D0C] shadow-sm font-extrabold'
+                  : 'text-[#F6F1E7]/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>Commerçant</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleRoleSwitch(ROLES.ADMIN)}
+              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1.5 ${
+                role === ROLES.ADMIN
+                  ? 'bg-[#2E6F40] text-white shadow-sm'
+                  : 'text-[#F6F1E7]/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin</span>
+            </button>
+          </div>
+
+          {/* Actions Droite : Impact Campus, Menu Démo Compact (si écran moyen), Profil */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {/* Bouton Impact Campus */}
+            <Link
+              to="/impact"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-[#F6F1E7] transition-all hover:border-[#F5C400]/40"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#F5C400]" />
+              <span className="hidden md:inline">Impact</span>
+            </Link>
+
+            {/* Commutateur Dropdown compact pour les écrans < xl */}
+            <div className="relative xl:hidden" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setDemoMenuOpen(!demoMenuOpen)}
+                className="px-2.5 sm:px-3 py-1.5 rounded-full bg-black/60 border border-white/15 text-xs font-bold text-[#F6F1E7] hover:border-[#F5C400]/50 flex items-center gap-1.5 transition-all"
+              >
+                <span className="w-2 h-2 rounded-full bg-[#F5C400] animate-pulse" />
+                <span className="text-[11px] font-mono text-[#F5C400] font-black">
+                  {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}
+                </span>
+                <ChevronDown className="w-3 h-3 text-[#F6F1E7]/60" />
+              </button>
+
+              {demoMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0E0D0C]/95 border border-white/15 p-2 shadow-2xl z-50 animate-fadeIn space-y-1 backdrop-blur-2xl">
+                  <div className="px-3 py-1.5 text-[10px] uppercase font-mono tracking-widest text-[#F6F1E7]/50 border-b border-white/10 mb-1">
+                    1-Click Switcher (Jury)
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSwitch(ROLES.STUDENT)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
+                      role === ROLES.STUDENT ? 'bg-[#EE3124] text-white' : 'text-[#F6F1E7] hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Étudiant (Yassine)</span>
+                    </div>
+                    {role === ROLES.STUDENT && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSwitch(ROLES.MERCHANT)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
+                      role === ROLES.MERCHANT ? 'bg-[#F5C400] text-[#0E0D0C] font-extrabold' : 'text-[#F6F1E7] hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Store className="w-4 h-4" />
+                      <span>Commerçant (Baguette)</span>
+                    </div>
+                    {role === ROLES.MERCHANT && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSwitch(ROLES.ADMIN)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
+                      role === ROLES.ADMIN ? 'bg-[#2E6F40] text-white' : 'text-[#F6F1E7] hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Admin ESSECT</span>
+                    </div>
+                    {role === ROLES.ADMIN && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Profil Utilisateur / Connexion */}
+            {user ? (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-[#F5C400]/40 transition-all"
+                  title="Mon Profil"
+                >
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-[#F5C400] to-[#EE3124] flex items-center justify-center text-[#0E0D0C] font-black text-xs">
+                    {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  {profile?.ecoPoints !== undefined && role === ROLES.STUDENT && (
+                    <span className="hidden sm:inline text-xs font-mono font-bold text-[#F5C400] pr-1">
+                      {profile.ecoPoints} <span className="text-[10px] font-sans font-normal text-white/60">pts</span>
+                    </span>
+                  )}
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  title="Déconnexion"
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-full text-[#F6F1E7]/70 hover:text-[#EE3124] hover:bg-[#EE3124]/10 border border-white/10 hover:border-[#EE3124]/30 text-xs font-bold transition-all flex items-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Quitter</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-1.5 rounded-full bg-[#EE3124] text-white font-extrabold text-xs hover:bg-[#d6281c] shadow-lg shadow-[#EE3124]/20 transition-all"
+              >
+                Connexion
+              </Link>
+            )}
+
+            {/* Hamburger Button Mobile */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 rounded-full text-[#F6F1E7]/80 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Panel */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden mt-2 rounded-3xl bg-[#0E0D0C]/98 border border-white/15 p-4 shadow-2xl backdrop-blur-2xl space-y-3 animate-fadeIn">
+            <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-[#F6F1E7]/50 flex items-center justify-between border-b border-white/10 pb-2">
+              <span>Espace {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}</span>
+              {user && (
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-[#EE3124] text-xs flex items-center gap-1 font-bold"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Déconnexion</span>
+                </button>
+              )}
+            </div>
+
+            {/* Liens de l'espace */}
+            <div className="grid grid-cols-2 gap-2">
+              {currentNavLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    active
-                      ? 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/30 shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-2 p-2.5 rounded-2xl text-xs font-bold transition-all ${
+                    isActive(link.path)
+                      ? 'bg-[#F5C400] text-[#0E0D0C]'
+                      : 'bg-white/5 text-[#F6F1E7] hover:bg-white/10'
                   }`}
                 >
                   {link.icon}
                   <span>{link.label}</span>
                 </Link>
-              );
-            })}
-          </nav>
-        </div>
+              ))}
+            </div>
 
-        {/* Actions Droite : Impact, Commutateur Rôle Démo, Profil */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Lien Public Impact Campus */}
-          <Link
-            to="/impact"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-200 transition-colors"
-          >
-            <Globe className="w-3.5 h-3.5 text-[#00E5FF]" />
-            <span>Impact Campus</span>
-          </Link>
-
-          {/* Commutateur de Rôle Démo (Jury 1-Clic) */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setDemoMenuOpen(!demoMenuOpen)}
-              className="px-3 py-1.5 rounded-xl bg-[#161920] border border-white/15 text-xs font-bold text-slate-200 hover:border-[#CCFF00]/50 flex items-center gap-2 transition-all shadow-sm"
-              title="Changer de rôle pour la démonstration"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-[#CCFF00] animate-spin-slow" />
-              <span className="hidden sm:inline text-slate-400">Rôle :</span>
-              <span className="text-[#CCFF00] font-black">
-                {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}
+            {/* Sélecteur de rôle 1-clic mobile */}
+            <div className="pt-2 border-t border-white/10">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#F6F1E7]/50 block mb-2 px-1">
+                Changer de rôle (Démo Jury) :
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {demoMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#161920] border border-white/15 p-2 shadow-2xl z-50 animate-fadeIn space-y-1 backdrop-blur-xl">
-                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 border-b border-white/10 mb-1">
-                  Changer de rôle (Démo Jury)
-                </div>
+              <div className="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleRoleSwitch(ROLES.STUDENT)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${
-                    role === ROLES.STUDENT ? 'bg-[#CCFF00] text-black shadow-md shadow-[#CCFF00]/20' : 'text-slate-300 hover:bg-white/5'
+                  className={`p-2 rounded-xl text-[11px] font-bold text-center ${
+                    role === ROLES.STUDENT ? 'bg-[#EE3124] text-white' : 'bg-white/5 text-[#F6F1E7]'
                   }`}
                 >
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Étudiant (Yassine)</span>
+                  Étudiant
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRoleSwitch(ROLES.MERCHANT)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${
-                    role === ROLES.MERCHANT ? 'bg-[#CCFF00] text-black shadow-md shadow-[#CCFF00]/20' : 'text-slate-300 hover:bg-white/5'
+                  className={`p-2 rounded-xl text-[11px] font-bold text-center ${
+                    role === ROLES.MERCHANT ? 'bg-[#F5C400] text-[#0E0D0C]' : 'bg-white/5 text-[#F6F1E7]'
                   }`}
                 >
-                  <Store className="w-4 h-4" />
-                  <span>Commerçant (Baguette)</span>
+                  Commerçant
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRoleSwitch(ROLES.ADMIN)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${
-                    role === ROLES.ADMIN ? 'bg-[#CCFF00] text-black shadow-md shadow-[#CCFF00]/20' : 'text-slate-300 hover:bg-white/5'
+                  className={`p-2 rounded-xl text-[11px] font-bold text-center ${
+                    role === ROLES.ADMIN ? 'bg-[#2E6F40] text-white' : 'bg-white/5 text-[#F6F1E7]'
                   }`}
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Administrateur ESSECT</span>
+                  Admin
                 </button>
               </div>
-            )}
-          </div>
-
-          {/* Profil ou Connexion */}
-          {user ? (
-            <div className="flex items-center gap-2">
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 p-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
-                title="Mon Profil"
-              >
-                <div className="w-7 h-7 rounded-lg bg-[#CCFF00]/10 border border-[#CCFF00]/30 flex items-center justify-center text-[#CCFF00] font-black text-xs">
-                  {user.displayName ? user.displayName.charAt(0) : 'U'}
-                </div>
-                {profile?.ecoPoints !== undefined && role === ROLES.STUDENT && (
-                  <span className="hidden sm:inline text-xs font-mono font-bold text-[#CCFF00] pr-1">
-                    {profile.ecoPoints} pts
-                  </span>
-                )}
-              </Link>
-
-              <button
-                type="button"
-                onClick={logout}
-                title="Déconnexion"
-                className="px-2.5 py-1.5 rounded-xl text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Sortir</span>
-              </button>
             </div>
-          ) : (
-            <Link
-              to="/login"
-              className="px-3.5 py-1.5 rounded-xl bg-[#CCFF00] text-black font-extrabold text-xs hover:bg-[#b8e600] transition-colors"
-            >
-              Connexion
-            </Link>
-          )}
 
-          {/* Bouton Hamburger Mobile */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Menu Déroulant Mobile (Tablette & Mobile) */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#0D0F12] border-b border-white/10 px-4 pt-2 pb-6 space-y-3 animate-fadeIn">
-          <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-            <span>Navigation {role === ROLES.MERCHANT ? 'Commerçant' : role === ROLES.ADMIN ? 'Admin' : 'Étudiant'}</span>
-            <button
-              type="button"
-              onClick={logout}
-              className="text-rose-400 text-xs flex items-center gap-1 font-bold"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Déconnexion</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {currentNavLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2 p-3 rounded-xl text-xs font-bold ${
-                  isActive(link.path)
-                    ? 'bg-[#CCFF00] text-black'
-                    : 'bg-[#161920] text-slate-300 hover:text-white'
-                }`}
-              >
-                {link.icon}
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </div>
-          <div className="pt-2">
+            {/* Lien Impact */}
             <Link
               to="/impact"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] text-xs font-bold"
+              className="w-full flex items-center justify-center gap-2 p-2.5 rounded-2xl bg-white/5 border border-white/10 text-[#F5C400] text-xs font-bold"
             >
               <Globe className="w-4 h-4" />
-              <span>Voir l'Impact Public Campus ESSECT</span>
+              <span>Voir l'Impact Public Campus</span>
             </Link>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 }

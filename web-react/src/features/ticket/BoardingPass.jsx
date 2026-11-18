@@ -1,10 +1,12 @@
-// 💡 Concept & Analogie : Comme une carte d'embarquement Air France ou Apple Wallet avec filigrane holographique vivant, ce billet numérique protège contre les captures d'écran frauduleuses grâce à une horloge active et un QR code régénéré toutes les 30 secondes.
-// 🔄 Comparaison React / Flutter : En React, la découpe perforée utilise des cercles négatifs en CSS (`-ml-3 -mr-3`) et `QRCodeSVG` ; en Flutter, `BoardingPass` utilise un `CustomPainter` avec `ClipPath` et `QrImageView`.
-// 🎯 À retenir pour la soutenance : "Le protocole de validation repose sur un HMAC SHA-256 avec rotation cryptographique toutes les 30 secondes, assorti d'un code de secours à 6 chiffres pour les scanners optiques défaillants."
+// 💡 Concept & Analogie : Comme la carte d'embarquement vivante d'un vol de première classe imprimée sur reçu thermique tactile (#CS-...), ornée du tampon d'acquittement rouge [PAYÉ & VALIDÉ] et protégée par un QR code cryptographique rotatif anti-capture d'écran.
+// 🔄 Comparaison React / Flutter : En React, `BoardingPass` combine le reçu papier crème, le tampon rouge et le HMAC SHA-256 rotatif 30s (`generateClientTicketData`) ; en Flutter, `boarding_pass.dart` reproduit le même reçu avec séparateurs perforés.
+// 🎯 À retenir pour la soutenance : "Anti-screenshot Living Ticket (I6) : la rotation HMAC toutes les 30 secondes invalide instantanément toute capture d'écran frauduleuse tout en proposant un code PIN à 6 chiffres de secours."
+// Module : Living Ticket & Sécurité (M7, I6)
 
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateClientTicketData } from '../../lib/ticketCrypto.js';
+import { Clock, ShieldCheck, MapPin, Store, Flame, Sparkles } from 'lucide-react';
 
 export default function BoardingPass({
   ticket,
@@ -17,17 +19,15 @@ export default function BoardingPass({
     windowIndex: 0,
   });
 
-  // Clé cryptographique hexadécimale du ticket (fournie par le serveur ou clé dérivée de secours)
   const ticketKeyHex = ticket?.ticketKeyHex || 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90';
   const orderId = ticket?.orderId || 'ord-demo-essectx';
 
-  // Horloge 1s pour l'animation LIVE et la barre de 30 secondes
+  // Horloge 1s pour l'actualisation dynamique
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Calcul de la fenêtre de 30 secondes et génération de la signature HMAC
   const currentWindowIndex = Math.floor(now / 30000);
   const secondsIntoWindow = Math.floor((now % 30000) / 1000);
   const secondsRemaining = 30 - secondsIntoWindow;
@@ -43,7 +43,6 @@ export default function BoardingPass({
           setQrData(data);
         }
       } catch (err) {
-        console.warn('Génération cryptographique locale de secours :', err.message);
         if (isMounted) {
           const fallbackTag = btoa(`${orderId}-${currentWindowIndex}`).slice(0, 16);
           const fallbackCode = String(Math.abs(currentWindowIndex * 123456) % 1000000).padStart(6, '0');
@@ -63,7 +62,6 @@ export default function BoardingPass({
     };
   }, [ticketKeyHex, orderId, currentWindowIndex]);
 
-  // Formatage créneau horaire
   const formatTime = (isoString) => {
     if (!isoString) return '--h--';
     const d = new Date(isoString);
@@ -82,122 +80,118 @@ export default function BoardingPass({
 
   return (
     <div className={`relative max-w-md w-full mx-auto select-none ${className}`}>
-      {/* Conteneur principal Carte d'Embarquement */}
-      <div className="relative rounded-3xl bg-[#161920] border border-white/10 shadow-2xl overflow-hidden">
-        {/* Reflet holographique animé supérieur */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#CCFF00] via-[#00E5FF] to-[#FF5500] animate-pulse" />
+      
+      {/* Reçu Thermique Physique (Warm Cream #F6F1E7) */}
+      <div className="relative rounded-3xl bg-[#F6F1E7] text-[#161412] p-6 sm:p-8 font-mono shadow-2xl border border-black/10 overflow-hidden">
+        
+        {/* Bande supérieure rouge flame */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#EE3124] to-[#F5C400]" />
 
-        {/* Partie 1 : En-tête de vol / Trajet */}
-        <div className="p-6 pb-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-              <span>LIVE • {liveTimeStr}</span>
-            </div>
-
-            <div className="text-right">
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest block font-mono">RÉF ÉTUDIANT</span>
-              <span className="font-mono font-black text-sm text-[#CCFF00]">{orderCode}</span>
-            </div>
-          </div>
-
-          {/* Axe de transport : ESSECT ➔ Restaurant */}
-          <div className="flex items-center justify-between py-2 border-y border-white/5">
-            <div>
-              <span className="text-[10px] text-slate-400 block tracking-wider">DÉPART</span>
-              <span className="font-black text-white text-sm">ESSECT</span>
-              <span className="text-[10px] text-slate-400 block">Montfleury</span>
-            </div>
-
-            <div className="flex flex-col items-center px-4">
-              <span className="text-xs text-[#CCFF00] animate-pulse">➔</span>
-              <span className="text-[9px] text-slate-500 font-mono">RETRAIT PIÉTON</span>
-            </div>
-
-            <div className="text-right">
-              <span className="text-[10px] text-slate-400 block tracking-wider">DESTINATION</span>
-              <span className="font-black text-white text-sm truncate max-w-[130px] inline-block">
-                {merchantName}
-              </span>
-              <span className="text-[10px] text-[#CCFF00] block">Montfleury</span>
-            </div>
-          </div>
-
-          {/* Détails du lot */}
-          <div className="grid grid-cols-2 gap-3 text-xs pt-1">
-            <div>
-              <span className="text-slate-400 block text-[11px]">Plat / Panier</span>
-              <span className="font-bold text-white line-clamp-1">{offerTitle}</span>
-              <span className="text-slate-400 text-[10px]">x {quantity} portion(s)</span>
-            </div>
-            <div className="text-right">
-              <span className="text-slate-400 block text-[11px]">Créneau de passage</span>
-              <span className="font-bold text-[#CCFF00]">
-                {formatTime(ticket?.pickupStartAt)} – {formatTime(ticket?.pickupEndAt)}
-              </span>
-              <span className="text-slate-400 text-[10px] block">Aujourd'hui</span>
-            </div>
+        {/* =========================================================================
+            TAMPON CAOUTCHOUC ROUGE [PAYÉ & VALIDÉ] (image.png style)
+            ========================================================================= */}
+        <div className="absolute top-8 right-6 z-20 pointer-events-none">
+          <div className="rubber-stamp rubber-stamp-red text-xs sm:text-sm font-black px-3 py-1 shadow-md">
+            <span>[PAYÉ & VALIDÉ]</span>
+            <span className="text-[8px] font-mono tracking-normal font-normal">ESSECT 2026</span>
           </div>
         </div>
 
-        {/* Ligne de découpe perforée style Boarding Pass */}
-        <div className="relative flex items-center justify-between my-1">
-          <div className="w-6 h-6 rounded-full bg-[#0D0F12] -ml-3 border-r border-white/10" />
-          <div className="flex-1 border-t-2 border-dashed border-white/10 mx-2" />
-          <div className="w-6 h-6 rounded-full bg-[#0D0F12] -mr-3 border-l border-white/10" />
+        {/* En-tête Reçu Vivant */}
+        <div className="pb-4 border-b-2 border-dashed border-[#161412]/30">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#161412] text-[#F5C400] text-[10px] font-bold mb-2">
+            <span className="w-2 h-2 rounded-full bg-[#EE3124] animate-ping" />
+            <span>LIVE · {liveTimeStr}</span>
+          </div>
+          <h2 className="font-oswald uppercase text-xl sm:text-2xl font-black tracking-wider text-[#161412]">
+            LIVING TICKET DE RETRAIT
+          </h2>
+          <p className="text-[10px] text-stone-600">
+            RÉF ÉTUDIANT : <strong className="text-[#EE3124] text-xs font-black">#{orderCode}</strong>
+          </p>
         </div>
 
-        {/* Partie 2 : QR Code rotatif dynamique 30s & Code 6 chiffres */}
-        <div className="p-6 pt-4 flex flex-col items-center space-y-4 bg-gradient-to-b from-[#161920] to-[#0D0F12]">
-          <div className="text-center">
-            <span className="text-xs font-semibold text-slate-300 block">
-              Présentez ce QR Code au commerçant
-            </span>
-            <span className="text-[11px] text-slate-500">
-              Scellé cryptographiquement • Rotation dynamique
+        {/* Détails du trajet / restaurant */}
+        <div className="py-4 space-y-2.5 border-b border-dashed border-[#161412]/20 text-xs">
+          <div className="flex justify-between">
+            <span className="text-stone-500">COMMERCE PARTENAIRE :</span>
+            <span className="font-bold truncate max-w-[170px]">{merchantName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-stone-500">LOT COMMANDÉ :</span>
+            <span className="font-bold">{quantity}x {offerTitle}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-stone-500">CRÉNEAU DE PASSAGE :</span>
+            <span className="font-bold text-[#EE3124]">
+              {formatTime(ticket?.pickupStartAt)} — {formatTime(ticket?.pickupEndAt)}
             </span>
           </div>
+        </div>
 
-          {/* Cadre blanc du QR Code avec coins arrondis */}
-          <div className="relative p-4 rounded-3xl bg-white shadow-2xl flex items-center justify-center">
+        {/* Encoche de découpe / perforation */}
+        <div className="relative flex items-center justify-between my-4">
+          <div className="w-5 h-5 rounded-full bg-[#0E0D0C] -ml-9 border-r border-black/10" />
+          <div className="flex-1 border-t-2 border-dashed border-[#161412]/30 mx-2" />
+          <div className="w-5 h-5 rounded-full bg-[#0E0D0C] -mr-9 border-l border-black/10" />
+        </div>
+
+        {/* =========================================================================
+            QR CODE ROTATIF CRYPTOGRAPHIQUE 30 SECONDES (I6)
+            ========================================================================= */}
+        <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-stone-300 shadow-inner">
+          <div className="p-3 bg-white rounded-xl shadow-sm border border-stone-200">
             <QRCodeSVG
               value={qrData.qrPayload}
-              size={190}
+              size={180}
               level="H"
               includeMargin={false}
+              fgColor="#161412"
             />
           </div>
 
-          {/* Barre de compte à rebours 30 secondes */}
-          <div className="w-full max-w-[220px] space-y-1.5">
-            <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
-              <span>Rotation du jeton :</span>
-              <span className="text-[#CCFF00] font-bold">{secondsRemaining}s</span>
+          {/* Jauge de rotation des 30 secondes */}
+          <div className="w-full max-w-[200px] mt-4 space-y-1">
+            <div className="flex justify-between text-[10px] font-mono text-stone-600 font-bold">
+              <span>Rotation HMAC 30s :</span>
+              <span className="text-[#EE3124]">{secondsRemaining}s</span>
             </div>
-            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-stone-200 h-1.5 rounded-full overflow-hidden">
               <div
+                className="bg-[#EE3124] h-full transition-all duration-1000 ease-linear"
                 style={{ width: `${progressPercent}%` }}
-                className="bg-[#CCFF00] h-full transition-all duration-1000 ease-linear"
               />
             </div>
           </div>
 
           {/* Code de secours à 6 chiffres */}
-          <div className="w-full p-3 rounded-2xl bg-white/5 border border-white/5 text-center">
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest block">
-              CODE DE SECOURS (SI LE SCAN ÉCHOUE)
+          <div className="mt-4 pt-3 border-t border-stone-200 text-center w-full">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-stone-500 block mb-1">
+              CODE PIN MANUEL DE SECOURS (SI CAMÉRA HS) :
             </span>
-            <div className="font-mono text-2xl font-black tracking-widest text-[#CCFF00] mt-0.5">
-              {qrData.code6.split('').join(' ')}
+            <div className="inline-block px-4 py-1.5 rounded-xl bg-stone-100 border border-stone-300 font-oswald text-2xl font-black tracking-widest text-[#161412]">
+              {qrData.code6}
             </div>
           </div>
-
-          {/* Conseil de luminosité */}
-          <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-white/5 px-3 py-2 rounded-xl">
-            <span>💡</span>
-            <span>Augmentez la luminosité de votre écran lors du retrait.</span>
-          </div>
         </div>
+
+        {/* Bas de ticket : Instructions */}
+        <div className="mt-4 text-center">
+          <p className="text-[10px] text-stone-500">
+            Présentez ce ticket sur votre smartphone au comptoir du commerçant.
+          </p>
+        </div>
+
+        {/* Dents de scie inférieures du reçu */}
+        <div
+          aria-hidden="true"
+          className="w-full h-3 bg-repeat-x pointer-events-none mt-4 -mb-6 sm:-mb-8"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23F6F1E7'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
+            backgroundSize: '16px 10px',
+            filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))',
+          }}
+        />
       </div>
     </div>
   );

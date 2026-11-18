@@ -1,6 +1,7 @@
-// 💡 Concept & Analogie : Comme le grand panneau lumineux à l'entrée d'une smart-city affichant en direct l'énergie verte produite et les déchets recyclés par l'ensemble des citoyens.
-// 🔄 Comparaison React / Flutter : En React, `ImpactDashboardPage` est une page vitrine responsive haute fidélité Recharts ; en Flutter, `ImpactScreen` adapte cette vue pour un affichage sur smartphone avec podium d'honneur.
-// 🎯 À retenir pour la soutenance : "Cette page publique accessible sans compte permet d'ouvrir notre présentation devant le jury en affichant l'impact sociétal et environnemental global de l'ESSECT."
+// 💡 Concept & Analogie : Comme le manifeste éditorial d'un magazine écologique prestigieux mêlé à une vitrine de transparence scandinave (image5.png "Before you come by"), cette page célèbre l'impact concret de la communauté ESSECT.
+// 🔄 Comparaison React / Flutter : En React, la page utilise la typographie Fraunces, des surlignages feutre jaune (.marker-highlight) et un accordéon FAQ Fika avec boutons circulaires +/- ; en Flutter, `impact_screen.dart` adapte la vue pour mobile.
+// 🎯 À retenir pour la soutenance : "Ce tableau de bord public et ouvert permet au jury de mesurer l'impact écologique consolidé : repas sauvés, CO2 épargné, argent économisé et classement inter-filières."
+// Module : Impact Campus & FAQ (B4, I4)
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,16 +15,18 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  Plus,
+  Minus,
+  HelpCircle,
+  Flame,
 } from 'lucide-react';
 import EquivalenceTiles from './EquivalenceTiles.jsx';
 import FiliereLeaderboard from './FiliereLeaderboard.jsx';
-import { LineChartCard } from '../../components/charts/index.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-// Données consolidées de démonstration pour le campus de l'ESSECT
 const DEMO_GLOBAL_IMPACT = {
   stats: {
     ordersCompleted: 1420,
@@ -34,28 +37,41 @@ const DEMO_GLOBAL_IMPACT = {
     studentsParticipating: 620,
     merchantsParticipating: 18,
   },
-  trend14d: [
-    { label: 'J1', value: 45, co2: 112 },
-    { label: 'J2', value: 92, co2: 230 },
-    { label: 'J3', value: 140, co2: 350 },
-    { label: 'J4', value: 198, co2: 495 },
-    { label: 'J5', value: 260, co2: 650 },
-    { label: 'J6', value: 330, co2: 825 },
-    { label: 'J7', value: 395, co2: 987 },
-    { label: 'J8', value: 470, co2: 1175 },
-    { label: 'J9', value: 550, co2: 1375 },
-    { label: 'J10', value: 640, co2: 1600 },
-    { label: 'J11', value: 735, co2: 1837 },
-    { label: 'J12', value: 830, co2: 2075 },
-    { label: 'J13', value: 940, co2: 2350 },
-    { label: 'J14', value: 1050, co2: 2625 },
-  ],
 };
+
+const FAQ_ITEMS = [
+  {
+    question: "Comment fonctionne l'enchère inversée Smart Decay ?",
+    category: "PRIX",
+    answer: "À l'approche de la fermeture du commerce, le prix de l'offre baisse automatiquement chaque minute selon un algorithme dégressif strict. L'étudiant qui réserve verrouille son prix à la seconde exacte du clic pendant 10 minutes pour procéder au règlement.",
+  },
+  {
+    question: "Comment le commerçant valide-t-il mon retrait au comptoir ?",
+    category: "TICKETS",
+    answer: "Chaque commande payée génère un Living Ticket avec QR code HMAC rotatif toutes les 30 secondes. Le commerçant scanne le QR code avec la caméra de son téléphone ou saisit le code PIN à 6 chiffres de secours.",
+  },
+  {
+    question: "Qu'est-ce qui se cache dans les Paniers Mystères ?",
+    category: "SURPRISE",
+    answer: "Les paniers surprises réunissent un assortiment frais cuisiné le jour même (viennoiseries, plats chauds, salades) dont la valeur réelle dépasse largement le prix payé. Le contenu secret est dévoilé lors de l'animation tactile d'Unboxing !",
+  },
+  {
+    question: "Comment sont calculés les EcoPoints et le classement par filière ?",
+    category: "FIDÉLITÉ",
+    answer: "Chaque repas sauvé rapporte 20 EcoPoints au compte étudiant et alimente simultanément le score écologique global de sa promotion (3A E-Business, Finance, Marketing, Gestion, Comptabilité). Tous les 100 points, un coupon de -20% est débloqué.",
+  },
+  {
+    question: "Que se passe-t-il si j'annule ou si je ne récupère pas mon repas ?",
+    category: "RÈGLES",
+    answer: "Une réservation non payée dans les 10 minutes est immédiatement remise en vente dans le catalogue public pour d'autres étudiants. Aucun débit bancaire n'est effectué avant la validation Konnect.",
+  },
+];
 
 export default function ImpactDashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState(DEMO_GLOBAL_IMPACT);
   const [loading, setLoading] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -86,139 +102,176 @@ export default function ImpactDashboardPage() {
   const stats = data.stats || DEMO_GLOBAL_IMPACT.stats;
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-12">
-        {/* En-tête Héroïque */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/30 text-[#CCFF00] text-xs font-black tracking-wide">
+    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-16">
+        
+        {/* =========================================================================
+            SECTION 1 : HÉROS ÉDITORIAL AVEC TYPOGRAPHIE FRAUNCES & SURLIGNAGE (image2.png / image5.png)
+            ========================================================================= */}
+        <section className="text-center max-w-4xl mx-auto space-y-5 pt-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EE3124]/10 border border-[#EE3124]/30 text-[#EE3124] text-xs font-mono font-bold uppercase tracking-wider">
             <Globe className="w-3.5 h-3.5" />
-            <span>BILAN ÉCOLOGIQUE & SOLIDAIRE DU CAMPUS ESSECT</span>
+            <span>BILAN ÉCOLOGIQUE & SOLIDAIRE DU CAMPUS ESSECT MONTFLEURY</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-            Chaque repas sauvé est une victoire pour la planète 🌱
+          <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl tracking-tight leading-tight text-white">
+            Chaque repas sauvé est{' '}
+            <span className="relative inline-block">
+              <span className="relative z-10 text-[#0E0D0C]">une victoire pour la planète.</span>
+              {/* Surlignage jaune feutre (image2.png / image5.png) */}
+              <span
+                aria-hidden="true"
+                className="absolute -bottom-1 left-0 right-0 h-8 sm:h-12 bg-[#F5C400] -rotate-1 rounded-sm -z-0 opacity-95"
+              />
+            </span>
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
+          <p className="text-sm sm:text-lg text-stone-300 font-sans leading-relaxed max-w-2xl mx-auto">
             Mesurez l'empreinte environnementale consolidée de notre communauté : aliments détournés du gaspillage, pouvoir d'achat préservé pour les étudiants et gaz à effet de serre épargnés.
           </p>
 
-          <div className="flex items-center justify-center gap-4 pt-2">
+          <div className="flex items-center justify-center gap-4 pt-4">
             <Link
               to="/app/explore"
-              className="px-6 py-3 rounded-2xl bg-[#CCFF00] text-black font-extrabold text-sm hover:bg-[#b8e600] transition-colors flex items-center gap-2 shadow-xl shadow-[#CCFF00]/15"
+              className="px-6 py-3.5 rounded-2xl bg-[#EE3124] text-white font-oswald uppercase text-sm font-black tracking-wider hover:bg-[#d6281c] transition-all flex items-center gap-2 shadow-xl shadow-[#EE3124]/20"
             >
               <span>Sauver un repas à Montfleury</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-white" />
             </Link>
             {!user && (
               <Link
                 to="/register"
-                className="px-6 py-3 rounded-2xl bg-[#161920] border border-white/10 hover:border-white/20 text-white font-bold text-sm transition-colors"
+                className="px-6 py-3.5 rounded-2xl bg-[#161412] border border-white/15 hover:border-white/30 text-white font-bold text-sm transition-all"
               >
-                Rejoindre le mouvement
+                Rejoindre le Club
               </Link>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* 6 Grands Compteurs Animés de Synthèse */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/10 text-center space-y-1">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-[#CCFF00]/10 text-[#CCFF00] flex items-center justify-center mb-2">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <span className="text-2xl sm:text-3xl font-black text-white">
-              {stats.mealsRescued.toLocaleString('fr-FR')}
-            </span>
-            <p className="text-[11px] font-semibold text-slate-400">Repas Sauvés</p>
+        {/* =========================================================================
+            SECTION 2 : GRILLE DE MÉTRIQUES ÉDITORIALES SÉRIF
+            ========================================================================= */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 shadow-xl relative overflow-hidden">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400">Nourriture Détournée</span>
+            <p className="font-display font-black text-4xl sm:text-5xl text-[#F5C400] mt-2">
+              {Math.round(stats.foodSavedGrams / 1000)} <span className="text-xl font-sans text-stone-400 font-normal">kg</span>
+            </p>
+            <p className="text-xs text-stone-500 font-sans mt-1">Équivalent à plus de 1 600 barquettes</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/10 text-center space-y-1">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-[#FF5500]/10 text-[#FF5500] flex items-center justify-center mb-2">
-              <Coins className="w-5 h-5" />
-            </div>
-            <span className="text-2xl sm:text-3xl font-black text-[#FF5500]">
+          <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 shadow-xl relative overflow-hidden">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400">Empreinte CO2 Évitée</span>
+            <p className="font-display font-black text-4xl sm:text-5xl text-emerald-400 mt-2">
+              {(stats.co2SavedGrams / 1000000).toFixed(2)} <span className="text-xl font-sans text-stone-400 font-normal">t</span>
+            </p>
+            <p className="text-xs text-stone-500 font-sans mt-1">~5 800 km en voiture thermique évités</p>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 shadow-xl relative overflow-hidden">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400">Pouvoir d'Achat Préservé</span>
+            <p className="font-display font-black text-4xl sm:text-5xl text-[#EE3124] mt-2">
               {formatTND(stats.moneySavedMillimes)}
-            </span>
-            <p className="text-[11px] font-semibold text-slate-400">Épargne Étudiante</p>
+            </p>
+            <p className="text-xs text-stone-500 font-sans mt-1">Économisés directement par les étudiants</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/10 text-center space-y-1">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-2">
-              <Leaf className="w-5 h-5" />
-            </div>
-            <span className="text-2xl sm:text-3xl font-black text-white">
-              {(stats.foodSavedGrams / 1000).toFixed(0)} kg
-            </span>
-            <p className="text-[11px] font-semibold text-slate-400">Nourriture Sauvée</p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/10 text-center space-y-1">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-2">
-              <Globe className="w-5 h-5" />
-            </div>
-            <span className="text-2xl sm:text-3xl font-black text-[#CCFF00]">
-              {(stats.co2SavedGrams / 1000).toFixed(0)} kg
-            </span>
-            <p className="text-[11px] font-semibold text-slate-400">CO₂e Évité</p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/10 text-center space-y-1">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-2">
-              <Users className="w-5 h-5" />
-            </div>
-            <span className="text-2xl sm:text-3xl font-black text-white">
+          <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 shadow-xl relative overflow-hidden">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400">Étudiants Engagés</span>
+            <p className="font-display font-black text-4xl sm:text-5xl text-white mt-2">
               {stats.studentsParticipating}
-            </span>
-            <p className="text-[11px] font-semibold text-slate-400">Étudiants Actifs</p>
+            </p>
+            <p className="text-xs text-stone-500 font-sans mt-1">Sur les promotions ESSECT Montfleury</p>
           </div>
+        </section>
 
-          <div className="p-5 rounded-2xl bg-[#161920] border border-white/10 text-center space-y-1">
-            <div className="w-10 h-10 mx-auto rounded-xl bg-yellow-500/10 text-yellow-400 flex items-center justify-center mb-2">
-              <Store className="w-5 h-5" />
+        {/* =========================================================================
+            SECTION 3 : ÉQUIVALENCES ÉCOLOGIQUES & CLASSEMENT PAR FILIÈRE
+            ========================================================================= */}
+        <section className="space-y-6">
+          <EquivalenceTiles co2Grams={stats.co2SavedGrams} foodGrams={stats.foodSavedGrams} />
+          <FiliereLeaderboard />
+        </section>
+
+        {/* =========================================================================
+            SECTION 4 : ACCORDÉON FAQ FIKA AVEC BOUTONS CIRCULAIRES +/- (image5.png)
+            ========================================================================= */}
+        <section className="rounded-3xl bg-[#F6F1E7] text-[#161412] p-6 sm:p-12 shadow-2xl border border-black/10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Colonne gauche éditoriale */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#161412]/10 text-[#161412] text-xs font-mono font-bold uppercase">
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Bon à Savoir</span>
+              </div>
+              <h2 className="font-display font-black text-3xl sm:text-5xl tracking-tight text-[#161412] leading-tight">
+                Avant de passer au comptoir.
+              </h2>
+              <p className="text-sm text-stone-600 font-sans leading-relaxed">
+                Les réponses courtes et précises aux questions fréquentes. Pour tout partenariat ou demande particulière, adressez-vous au bureau ESSECT.
+              </p>
+
+              {/* Photo d'ambiance Fika */}
+              <div className="pt-4 hidden sm:block">
+                <div className="relative w-48 h-48 rounded-2xl overflow-hidden shadow-lg border border-stone-300">
+                  <img
+                    src="/assets/framer/pastries/tarte-citron-meringuee.png"
+                    alt="Pâtisserie artisanale"
+                    className="w-full h-full object-contain p-2"
+                  />
+                  <div className="absolute bottom-2 left-2 right-2 px-2 py-1 bg-white/90 rounded-lg text-center font-mono text-[9px] font-bold text-[#161412]">
+                    GARANTI FRAIS DU JOUR
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className="text-2xl sm:text-3xl font-black text-white">
-              {stats.merchantsParticipating}
-            </span>
-            <p className="text-[11px] font-semibold text-slate-400">Commerces Partenaires</p>
+
+            {/* Colonne droite accordéon FAQ (image5.png) */}
+            <div className="lg:col-span-7 space-y-3">
+              {FAQ_ITEMS.map((item, idx) => {
+                const isOpen = openFaqIndex === idx;
+
+                return (
+                  <div
+                    key={idx}
+                    className="py-4 border-b border-stone-300/80 transition-colors cursor-pointer"
+                    onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <h3 className="font-display text-base sm:text-lg font-black text-[#161412] leading-snug">
+                        {item.question}
+                      </h3>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-stone-500 font-bold hidden sm:inline">
+                          {item.category}
+                        </span>
+                        {/* Bouton circulaire jaune +/- (image5.png) */}
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-transform duration-200 ${
+                            isOpen
+                              ? 'bg-[#F5C400] text-[#0E0D0C] rotate-180 shadow-sm'
+                              : 'bg-[#F5C400] text-[#0E0D0C]'
+                          }`}
+                        >
+                          {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isOpen && (
+                      <div className="mt-3 text-xs sm:text-sm text-stone-700 font-sans leading-relaxed animate-fadeIn pr-8">
+                        {item.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-
-        {/* Section 1 : Tuiles d'Équivalences Scientifiques FAO / EPA */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#CCFF00]" />
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Ce que ces chiffres représentent concrètement
-            </h2>
-          </div>
-          <EquivalenceTiles
-            co2SavedGrams={stats.co2SavedGrams}
-            foodSavedGrams={stats.foodSavedGrams}
-          />
-        </div>
-
-        {/* Section 2 : Graphique d'Impact Temporel Recharts sur 14 Jours */}
-        <div className="space-y-4">
-          <LineChartCard
-            title="Dynamique Cumulative des Repas Sauvés (14 Derniers Jours)"
-            subtitle="Accélération des sauvetages alimentaires sur le quartier de Montfleury"
-            data={data.trend14d || DEMO_GLOBAL_IMPACT.trend14d}
-            xKey="label"
-            yKey="value"
-            name="Repas Sauvés"
-            strokeColor="#CCFF00"
-            gradientId="impactGlobalGradient"
-            yFormatter={(val) => `${val}`}
-            tooltipFormatter={(val) => `${val} repas`}
-          />
-        </div>
-
-        {/* Section 3 : Challenge Inter-Filières ESSECT */}
-        <div className="space-y-4">
-          <FiliereLeaderboard userFiliere={user?.filiere} />
-        </div>
+        </section>
       </div>
     </div>
   );

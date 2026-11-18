@@ -1,0 +1,326 @@
+/**
+ * Framer Street Food & Paper Market Theme
+ * CampusSave - ESSECT Anti-Gaspillage Platform
+ * 
+ * Colors:
+ * - Paper: #F6F1E7 (warm cream paper)
+ * - Carbon: #0E0D0C (night market carbon)
+ * - Flame: #EE3124 (street flame red)
+ * - Mustard: #F5C400 (mustard gold)
+ * - Matcha: #2E6F40 (matcha emerald)
+ * - Ink: #161412 (deep espresso ink)
+ */
+
+:root {
+  --market-paper: #F6F1E7;
+  --market-carbon: #0E0D0C;
+  --market-flame: #EE3124;
+  --market-mustard: #F5C400;
+  --market-matcha: #2E6F40;
+  --market-ink: #161412;
+}
+
+/* ==========================================================================
+   1. SERRATED TICKET & RECEIPT EDGES (.ticket-serrated-edge)
+   ========================================================================== */
+
+/**
+ * .ticket-serrated-edge
+ * Automatically applies a zig-zag torn paper serrated bottom edge.
+ * Uses a pure SVG mask data-uri for perfect resolution independence.
+ */
+.ticket-serrated-edge,
+.ticket-serrated-bottom {
+  position: relative;
+  /* 12px zig-zag mask along the bottom edge */
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent calc(100% - 12px)),
+                      radial-gradient(circle 8px at 12px 100%, black 100%, transparent 100%);
+  -webkit-mask-composite: source-over, source-over;
+  mask-composite: add;
+}
+
+/* Alternative high-precision CSS SVG mask for authentic ticket tears */
+.ticket-tear-bottom {
+  position: relative;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 10' preserveAspectRatio='none'%3E%3Cpolygon points='0,0 20,0 20,0 10,10 0,0' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12' fill='none'%3E%3Cpath d='M0 0H24V2L18 12L12 2L6 12L0 2V0Z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Class that appends an authentic serrated teeth strip to the bottom */
+.ticket-serrated-teeth::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 10px;
+  background-repeat: repeat-x;
+  background-size: 16px 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23F6F1E7'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Dark variant teeth for carbon receipts */
+.ticket-serrated-teeth-dark::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%230E0D0C'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E");
+}
+
+/* Using the harvested Framer 600x24 texture */
+.ticket-edge-harvested::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  height: 12px;
+  background-image: url('/assets/framer/textures/ticket-serrated-edge.png');
+  background-repeat: repeat-x;
+  background-size: auto 12px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+
+/* ==========================================================================
+   2. RUBBER STAMPS (.rubber-stamp)
+   ========================================================================== */
+
+/**
+ * .rubber-stamp
+ * Authentic vintage rubber stamp with dashed double-stroke borders,
+ * slight tilt, stencil-like opacity and tactile ink personality.
+ */
+.rubber-stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.85rem;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  border: 3px dashed currentColor;
+  border-radius: 6px;
+  position: relative;
+  user-select: none;
+  transform: rotate(-4deg);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 0 2px transparent;
+}
+
+.rubber-stamp::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.rubber-stamp:hover {
+  transform: rotate(-1deg) scale(1.04);
+}
+
+/* Stamp Rotations */
+.rubber-stamp-tilt-left {
+  transform: rotate(-6deg);
+}
+.rubber-stamp-tilt-right {
+  transform: rotate(5deg);
+}
+
+/* Stamp Color Variations */
+.rubber-stamp-red {
+  color: #EE3124;
+  border-color: #EE3124;
+  background-color: rgba(238, 49, 36, 0.06);
+}
+
+.rubber-stamp-green {
+  color: #2E6F40;
+  border-color: #2E6F40;
+  background-color: rgba(46, 111, 64, 0.06);
+}
+
+.rubber-stamp-mustard {
+  color: #D9A000;
+  border-color: #F5C400;
+  background-color: rgba(245, 196, 0, 0.08);
+}
+
+.rubber-stamp-ink {
+  color: #161412;
+  border-color: #161412;
+  background-color: rgba(22, 20, 18, 0.05);
+}
+
+.rubber-stamp-paper {
+  color: #F6F1E7;
+  border-color: #F6F1E7;
+  background-color: rgba(246, 241, 231, 0.08);
+}
+
+
+/* ==========================================================================
+   3. MARKER HIGHLIGHT (.marker-highlight)
+   ========================================================================== */
+
+/**
+ * .marker-highlight
+ * Mustard yellow highlighter underline bar inspired by Framer street food editorial
+ * and image2.png design reference.
+ */
+.marker-highlight {
+  position: relative;
+  white-space: nowrap;
+  display: inline-block;
+  z-index: 1;
+}
+
+.marker-highlight::after {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: 12%;
+  height: 42%;
+  background-color: #F5C400;
+  opacity: 0.82;
+  z-index: -1;
+  border-radius: 3px 5px 2px 4px;
+  transform: skewX(-7deg) rotate(-0.5deg);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.marker-highlight:hover::after {
+  opacity: 0.95;
+  transform: skewX(-4deg) scaleY(1.1);
+}
+
+/* Full text highlight bar */
+.marker-highlight-full {
+  position: relative;
+  z-index: 1;
+}
+
+.marker-highlight-full::after {
+  content: "";
+  position: absolute;
+  inset: -2px -6px;
+  background-color: #F5C400;
+  opacity: 0.85;
+  z-index: -1;
+  border-radius: 4px 6px 3px 5px;
+  transform: rotate(-0.7deg);
+}
+
+/* Green Matcha Marker variant */
+.marker-highlight-matcha::after {
+  background-color: #2E6F40;
+  opacity: 0.35;
+}
+
+/* Red Flame Marker variant */
+.marker-highlight-flame::after {
+  background-color: #EE3124;
+  opacity: 0.28;
+}
+
+
+/* ==========================================================================
+   4. PAPER & RECEIPT CARDS (.paper-ticket, .paper-sheet)
+   ========================================================================== */
+
+.paper-sheet {
+  background-color: #F6F1E7;
+  color: #161412;
+  box-shadow: 0 4px 20px rgba(14, 13, 12, 0.1), 0 1px 3px rgba(14, 13, 12, 0.06);
+  border: 1px solid rgba(22, 20, 18, 0.08);
+}
+
+.paper-ticket {
+  background-color: #F6F1E7;
+  color: #161412;
+  position: relative;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+}
+
+/* Perforation dashed line */
+.ticket-perforation {
+  position: relative;
+  border-bottom: 2px dashed rgba(22, 20, 18, 0.25);
+  margin: 1rem 0;
+}
+
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--market-carbon, #0E0D0C);
+}
+
+.ticket-perforation::before {
+  left: -20px;
+}
+
+.ticket-perforation::after {
+  right: -20px;
+}
+
+
+/* ==========================================================================
+   5. STREET FOOD BADGES & MARQUEE
+   ========================================================================== */
+
+.badge-street {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 9999px;
+}
+
+.badge-street-red {
+  background-color: #EE3124;
+  color: #F6F1E7;
+}
+
+.badge-street-mustard {
+  background-color: #F5C400;
+  color: #0E0D0C;
+}
+
+.badge-street-matcha {
+  background-color: #2E6F40;
+  color: #F6F1E7;
+}
+
+/* Smooth continuous marquee ticker */
+@keyframes framerTicker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.framer-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: framerTicker 25s linear infinite;
+}
+
+.framer-ticker-track:hover {
+  animation-play-state: paused;
+}
