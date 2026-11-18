@@ -25,23 +25,34 @@ export default function PaymentReturnPage() {
     async function verify() {
       setState('VERIFYING');
       try {
-        await apiClient.post(ENDPOINTS.VERIFY_PAYMENT, {
+        // `paymentRef` n'est envoyé que s'il est présent dans l'URL (passerelle simulée : absent → le serveur
+        // retrouve la référence enregistrée sur la commande). Un `null` serait refusé par la validation Zod.
+        const res = await apiClient.post(ENDPOINTS.VERIFY_PAYMENT, {
           orderId,
-          paymentRef,
+          ...(paymentRef ? { paymentRef } : {}),
         });
 
-        if (isMounted) {
+        if (!isMounted) return;
+        if (res?.data?.confirmed === false) {
+          // La passerelle n'a pas (encore) confirmé : ne jamais afficher « prêt pour le retrait »
+          setState('FAILED');
+          setErrorMessage(`Le paiement n'est pas confirmé par la passerelle (statut : ${res.data.status || 'en attente'}).`);
+        } else {
           setState('SUCCESS');
         }
       } catch (err) {
-        console.warn('Vérification API Konnect, bascule démo réussie :', err.message);
-        if (isMounted) {
-          if (!paymentRef || paymentRef.includes('fail')) {
-            setState('FAILED');
-            setErrorMessage('Le paiement a été interrompu ou refusé par la banque.');
-          } else {
-            setState('SUCCESS');
-          }
+        if (!isMounted) return;
+        if (err.response) {
+          // Réponse HTTP d'erreur du serveur : l'échec est réel, on ne le maquille pas en succès
+          setState('FAILED');
+          setErrorMessage(err.response.data?.error?.message || "Le paiement n'a pas pu être vérifié.");
+        } else if (!paymentRef || paymentRef.includes('fail')) {
+          // Serveur injoignable (démo hors-ligne) sans référence valide
+          setState('FAILED');
+          setErrorMessage('Le paiement a été interrompu ou refusé par la banque.');
+        } else {
+          console.warn('API injoignable, bascule démo réussie :', err.message);
+          setState('SUCCESS');
         }
       }
     }

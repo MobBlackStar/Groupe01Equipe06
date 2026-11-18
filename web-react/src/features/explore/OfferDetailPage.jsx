@@ -12,6 +12,7 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { computeUnitPrice, computeMinutesLeft } from '@shared/pricing.js';
 import { formatTND } from '@shared/money.js';
+import { rewardKey } from '@shared/loyalty.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
 import { calculateImpact, calculateEquivalences } from '@shared/impact.js';
 import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
@@ -52,6 +53,22 @@ export default function OfferDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [now, setNow] = useState(Date.now());
+  // Coupons fidélité réellement débloqués (GET /loyalty/me) ; le coupon choisi est envoyé à la réservation (rewardId)
+  const [rewards, setRewards] = useState([]);
+  const [selectedRewardId, setSelectedRewardId] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    apiClient
+      .get(ENDPOINTS.LOYALTY_ME)
+      .then((res) => {
+        if (alive) setRewards((res.data?.rewards || []).filter((r) => r.status === 'AVAILABLE'));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -100,6 +117,30 @@ export default function OfferDetailPage() {
   const unitPrice = computeUnitPrice(currentOffer, now);
   const totalPrice = unitPrice * quantity;
 
+  // Coupons applicables à cette offre (FREE_SURPRISE : uniquement paniers surprise COMMON ; ni expirés ni consommés)
+  const rewardMs = (v) => (v?._seconds ? v._seconds * 1000 : v?.seconds ? v.seconds * 1000 : v ? new Date(v).getTime() : null);
+  const isCommonSurprise = Boolean(
+    currentOffer.isSurpriseBasket && (currentOffer.rarity || currentOffer.surprise?.rarity || 'COMMON') === 'COMMON'
+  );
+  const applicableRewards = rewards.filter((r) => {
+    const exp = rewardMs(r.expiresAt);
+    if (exp && exp < now) return false;
+    return r.type !== 'FREE_SURPRISE' || isCommonSurprise;
+  });
+  const selectedReward = applicableRewards.find((r) => rewardKey(r) === selectedRewardId) || null;
+  // Même règle que le serveur (ALG-LOYALTY) : pourcentage ou portion offerte, plafonné par `maxDiscountMillimes`
+  let rewardDiscount = 0;
+  if (selectedReward) {
+    rewardDiscount =
+      selectedReward.type === 'FREE_SURPRISE'
+        ? unitPrice
+        : Math.round((totalPrice * (selectedReward.percentOff || 10)) / 100);
+    if (Number.isInteger(selectedReward.maxDiscountMillimes)) {
+      rewardDiscount = Math.min(rewardDiscount, selectedReward.maxDiscountMillimes);
+    }
+  }
+  const payable = Math.max(0, totalPrice - rewardDiscount);
+
   const distanceM = currentOffer.distanceFromEssectM ?? currentOffer.merchantSnapshot?.distanceFromEssectM ?? currentOffer.merchant?.distanceFromEssectM ?? 200;
   const walkingMin = calculateWalkingMinutes(distanceM);
 
@@ -130,6 +171,7 @@ export default function OfferDetailPage() {
       const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, {
         offerId: currentOffer.id,
         quantity,
+        ...(selectedReward ? { rewardId: rewardKey(selectedReward) } : {}),
       });
 
       // L'API renvoie { order: { orderId, ... } } ; on accepte aussi `id` par compatibilité
@@ -154,7 +196,7 @@ export default function OfferDetailPage() {
   const merchantName = currentOffer.merchantName || currentOffer.merchantSnapshot?.name || currentOffer.merchant?.name || 'Commerce Montfleury';
   const money = (v) => (Number.isFinite(v) ? formatTND(v) : '—');
   const originalUnit = currentOffer.originalPriceMillimes || 7800;
-  const savings = (originalUnit - unitPrice) * quantity;
+  const savings = (originalUnit - unitPrice) * quantity + rewardDiscount;
 
   return (
     <div className="cs-container cs-page">
@@ -297,13 +339,43 @@ export default function OfferDetailPage() {
             </div>
           </div>
 
+          {/* Coupon fidélité : uniquement les coupons réellement débloqués, appliqués par le serveur à la réservation */}
+          {applicableRewards.length > 0 && (
+            <div className="mt-8">
+              <p className="cs-field-label">Coupon fidélité</p>
+              <div className="flex flex-wrap gap-2.5">
+                <button type="button" aria-pressed={!selectedReward} onClick={() => setSelectedRewardId(null)} className="cs-chip">
+                  Aucun
+                </button>
+                {applicableRewards.map((r) => (
+                  <button
+                    key={rewardKey(r)}
+                    type="button"
+                    aria-pressed={selectedReward === r}
+                    onClick={() => setSelectedRewardId(rewardKey(r))}
+                    className="cs-chip"
+                  >
+                    <span aria-hidden="true">🎟️</span>
+                    {r.type === 'FREE_SURPRISE' ? 'Panier offert' : `−${r.percentOff || 10} %`}
+                    {Number.isInteger(r.maxDiscountMillimes) && (
+                      <span className="text-[0.8125rem] normal-case opacity-75">max {formatTND(r.maxDiscountMillimes)}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {selectedReward && rewardDiscount > 0 && (
+                <p className="mt-3 text-base font-semibold text-[#1F7A3A]">Coupon appliqué : −{formatTND(rewardDiscount)}</p>
+              )}
+            </div>
+          )}
+
           {/* Total & réservation */}
           <div className="mt-8 cs-card p-6 sm:p-7">
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div>
                 <p className="cs-label">Total à payer</p>
                 <p className="font-display text-[4.5rem] sm:text-[5.25rem] leading-[0.85] text-[#DA0711] tabular-nums mt-1">
-                  {money(totalPrice)}
+                  {money(payable)}
                 </p>
               </div>
               <div className="text-right pb-1">

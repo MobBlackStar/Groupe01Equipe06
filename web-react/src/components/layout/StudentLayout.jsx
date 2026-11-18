@@ -2,7 +2,9 @@
 // 🔄 Comparaison React / Flutter : En React, `StudentLayout` utilise un conteneur Flexbox avec une barre basse fixe sur mobile ; en Flutter, c'est l'équivalent du widget `Scaffold` avec `bottomNavigationBar`.
 // 🎯 À retenir pour la soutenance : "Ce layout assure une ergonomie responsive sans faille sur fond warm cream #FAF3E6."
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { ShoppingBag, MapPin, Ticket, Award, BarChart3 } from 'lucide-react';
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
@@ -19,6 +21,14 @@ const NAV_ITEMS = [
 ];
 
 export default function StudentLayout({ children }) {
+  const { pathname } = useLocation();
+  const { refreshProfile } = useAuth();
+
+  // EcoPoints et palier suivent les retraits validés : on relit le profil à chaque changement de page
+  useEffect(() => {
+    refreshProfile?.();
+  }, [pathname, refreshProfile]);
+
   return (
     <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex flex-col pb-[calc(68px+env(safe-area-inset-bottom))] lg:pb-0">
       <Navbar />

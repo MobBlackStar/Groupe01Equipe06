@@ -117,9 +117,11 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
         rawNote: textToUse,
       });
 
-      if (res.data?.offer) {
-        onAutoFill(res.data.offer);
-        setLastSource('Intelligence Artificielle (Claude 3.5 Sonnet)');
+      // Contrat API : { suggestion, source: 'ai' | 'fallback' } (ancien format `offer` toléré)
+      const suggestion = res.data?.suggestion || res.data?.offer;
+      if (suggestion) {
+        onAutoFill(suggestion);
+        setLastSource(res.data?.source === 'ai' ? 'Intelligence Artificielle (Claude)' : 'Analyseur culinaire du serveur');
         setLoading(false);
         return;
       }

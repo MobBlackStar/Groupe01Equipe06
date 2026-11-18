@@ -281,6 +281,34 @@ export function AuthProvider({ children }) {
    * Rafraîchit les Custom Claims et le profil
    */
   const refreshProfile = useCallback(async () => {
+    // Session démo (jeton de test, pas d'utilisateur Firebase) : le profil local est simulé, donc on y fusionne
+    // les champs de fidélité réels du serveur (EcoPoints, palier, repas sauvés) pour qu'ils suivent les retraits.
+    if (!auth?.currentUser) {
+      const hasDemoSession = Boolean(localStorage.getItem('campussave_demo_session'));
+      if (!hasDemoSession) return;
+      try {
+        const res = await apiClient.get(ENDPOINTS.ME);
+        const u = res.data?.user;
+        if (u && u.role === ROLES.STUDENT) {
+          setProfile((prev) => {
+            if (!prev || prev.role !== ROLES.STUDENT) return prev;
+            const merged = {
+              ...prev,
+              ecoPoints: Number.isFinite(u.ecoPoints) ? u.ecoPoints : prev.ecoPoints,
+              loyaltyTier: u.loyaltyTier || prev.loyaltyTier,
+              nextRewardAt: Number.isFinite(u.nextRewardAt) ? u.nextRewardAt : prev.nextRewardAt,
+              totalMealsRescued: Number.isFinite(u.totalMealsRescued) ? u.totalMealsRescued : prev.totalMealsRescued,
+              unlockedRewards: Array.isArray(u.unlockedRewards) ? u.unlockedRewards : prev.unlockedRewards,
+            };
+            try { localStorage.setItem('campussave_demo_session', JSON.stringify(merged)); } catch { /* quota */ }
+            return merged;
+          });
+        }
+      } catch {
+        /* serveur injoignable : on garde le profil simulé local */
+      }
+      return;
+    }
     if (auth?.currentUser) {
       try {
         const tokenResult = await auth.currentUser.getIdTokenResult(true);

@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Comme la carte à tampons carton BOWL CLUB / CAMPUSSAVE CLUB de StreetWok (image9.png), avec ses emplacements circulaires pointillés, ses tampons rouge vermillon en forme de bol fumant et son 10ème emplacement "FREE BOWL".
-// 🔄 Comparaison React / Flutter : En React, la grille utilise 10 cercles pointillés en 2 rangées avec tampons vectoriels et inclinaison -2deg ; en Flutter, `loyalty_card_screen.dart` adapte la même grille tactile.
-// 🎯 À retenir pour la soutenance : "La mécanique de 10 tampons (1 repas = 1 tampon) déclenche un palier à 100% de complétion avec déblocage immédiat d'un coupon détachable de réduction."
+// 💡 Concept & Analogie : Comme la carte à tampons carton d'un snack de quartier, 5 emplacements circulaires dont le dernier est un coupon détachable : 4 tampons rouges, puis -20 %.
+// 🔄 Comparaison React / Flutter : En React, la grille de 5 cercles utilise `calculateStamps` de `shared/loyalty.js` ; en Flutter, `loyalty_card_screen.dart` appelle la même règle.  
+// 🎯 À retenir pour la soutenance : "Selon ALG-LOYALTY, tampons = floor((EcoPoints mod 100) / 20) sur 5 ; chaque palier de 100 points débloque un coupon -20 % (plafonné à 2 DT)."
 // Module : Gamification & Fidélité (B3, I4)
 
 import React from 'react';
@@ -8,11 +8,10 @@ import { calculateStamps } from '@shared/loyalty.js';
 import { Flame } from 'lucide-react';
 
 export default function StampGrid({ ecoPoints = 0, className = '' }) {
-  // Calcul du nombre de tampons (sur 10 pour le CLUB)
+  // ALG-LOYALTY (plan) : tampons = floor((ecoPoints mod 100) / 20) sur 5 ; le 5e emplacement est le coupon -20 % débloqué à chaque palier de 100 pts
   const safePoints = Number.isFinite(Number(ecoPoints)) ? Math.max(0, Number(ecoPoints)) : 0;
-  const currentCyclePoints = safePoints % 200; // Cycle de 10 repas x 20 pts = 200 pts
-  const activeStamps = Math.min(10, Math.floor(currentCyclePoints / 20));
-  const pointsToNext = 20 - (currentCyclePoints % 20);
+  const activeStamps = calculateStamps(safePoints);
+  const pointsToNext = 20 - (safePoints % 20);
 
   return (
     <div
@@ -30,34 +29,34 @@ export default function StampGrid({ ecoPoints = 0, className = '' }) {
         {/* En-tête de la carte : règle + compteur */}
         <div className="flex items-end justify-between gap-4">
           <p className="text-base sm:text-lg leading-snug max-w-[18rem]">
-            1 repas sauvé = 1 tampon rouge. Le 10e est offert par le club.
+            20 points = 1 tampon rouge. Au 5e, le club t'offre −20 %.
           </p>
           <div className="text-right shrink-0">
             <span className="cs-figure block text-[48px] sm:text-[60px] text-[#DA0711]">
               {activeStamps}
-              <span className="text-[#111111]">/10</span>
+              <span className="text-[#111111]">/5</span>
             </span>
             <span className="cs-label">Tampons</span>
           </div>
         </div>
 
-        {/* Grille des 10 tampons circulaires (2 rangées de 5) */}
+        {/* Grille des 5 emplacements : 4 tampons + le coupon -20 % */}
         <div className="grid grid-cols-5 gap-2 sm:gap-4 py-7">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => {
+          {[1, 2, 3, 4, 5].map((slot) => {
             const isStamped = slot <= activeStamps;
-            const isFinal = slot === 10;
+            const isFinal = slot === 5;
             const tilt = ((slot * 37) % 25) - 12; // inclinaison « coup de tampon » pseudo-aléatoire stable
 
             if (isFinal && !isStamped) {
-              /* 10ème emplacement : récompense moutarde */
+              /* 5ème emplacement : coupon moutarde */
               return (
                 <div
                   key={slot}
                   className="relative aspect-square rounded-full bg-[#FFD000] border-2 border-[#111111] flex flex-col items-center justify-center text-center rotate-[-8deg]"
-                  aria-label="10e tampon : repas offert"
+                  aria-label="5e emplacement : coupon -20 %"
                 >
-                  <span className="hidden sm:block font-sticker text-lg leading-none text-[#DA0711]">OFFERT</span>
-                  <span className="text-2xl sm:text-xl leading-none sm:mt-0.5" aria-hidden="true">🎁</span>
+                  <span className="hidden sm:block font-sticker text-lg leading-none text-[#DA0711]">-20 %</span>
+                  <span className="text-2xl sm:text-xl leading-none sm:mt-0.5" aria-hidden="true">🎟️</span>
                 </div>
               );
             }

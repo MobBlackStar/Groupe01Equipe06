@@ -83,7 +83,6 @@ export default function CheckoutPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [selectedReward, setSelectedReward] = useState('NONE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -216,14 +215,12 @@ export default function CheckoutPage() {
   const originalTotal = (Number.isFinite(originalUnit) ? originalUnit : lockedUnit) * quantity;
   const baseSaved = Math.max(0, originalTotal - subtotalMillimes);
 
-  let discountAmount = 0;
-  if (selectedReward === 'DISCOUNT_20') {
-    discountAmount = Math.round(subtotalMillimes * 0.2);
-  } else if (selectedReward === 'FREE_BASKET') {
-    discountAmount = subtotalMillimes;
-  }
-
-  const finalTotalMillimes = Math.max(0, subtotalMillimes - discountAmount);
+  // Remise et total calculés par le SERVEUR au moment de la réservation (coupon choisi sur la fiche offre).
+  // Ne jamais recalculer un rabais côté client : le montant débité par Konnect est celui de `pricing.totalMillimes`.
+  const serverDiscount = Number(pricing.discountMillimes ?? pricing.reward?.discountMillimes);
+  const discountAmount = Number.isFinite(serverDiscount) && serverDiscount > 0 ? serverDiscount : 0;
+  const serverTotal = Number(pricing.totalMillimes);
+  const finalTotalMillimes = Number.isFinite(serverTotal) ? serverTotal : Math.max(0, subtotalMillimes - discountAmount);
   const totalSavedMillimes = baseSaved + discountAmount;
   const discountPct =
     Number.isFinite(originalUnit) && Number.isFinite(lockedUnit) && originalUnit > lockedUnit
@@ -261,7 +258,6 @@ export default function CheckoutPage() {
     try {
       const response = await apiClient.post(ENDPOINTS.INIT_PAYMENT, {
         orderId: orderRef,
-        rewardApplied: selectedReward !== 'NONE' ? selectedReward : null,
       });
 
       const payUrl = response.data?.payUrl;
@@ -284,11 +280,6 @@ export default function CheckoutPage() {
     : secondsLeft < 180
     ? 'bg-[#FFD000] text-[#111111]'
     : 'bg-[#111111] text-[#FAF3E6]';
-
-  const rewards = [
-    { key: 'DISCOUNT_20', label: '-20% immédiat', cost: '100 pts', icon: '🎟️' },
-    { key: 'FREE_BASKET', label: 'Panier offert', cost: '300 pts', icon: '🎁' },
-  ];
 
   return (
     <div className="cs-container cs-page text-[#111111]">
@@ -457,30 +448,6 @@ export default function CheckoutPage() {
               <span>{errorMessage}</span>
             </div>
           )}
-
-          {/* Sélecteur récompense ÉcoPoints */}
-          <div className="cs-card p-6 sm:p-7">
-            <h2 className="cs-h3 flex items-center gap-2 mb-4">
-              <Gift className="w-5 h-5 text-[#DA0711]" aria-hidden="true" />
-              Avantage fidélité
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
-              {rewards.map((r) => (
-                <button
-                  key={r.key}
-                  type="button"
-                  aria-pressed={selectedReward === r.key}
-                  onClick={() => setSelectedReward(selectedReward === r.key ? 'NONE' : r.key)}
-                  className="cs-chip justify-between w-full min-h-[3.25rem] whitespace-normal text-left"
-                >
-                  <span>
-                    <span aria-hidden="true">{r.icon}</span> {r.label}
-                  </span>
-                  <span className="cs-mono text-[13px] normal-case opacity-80 whitespace-nowrap">{r.cost}</span>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Actions : payer Konnect / annuler */}
           <div className="space-y-3">

@@ -24,6 +24,28 @@ const FALLBACK_TICKET = {
   status: 'PAID',
 };
 
+/**
+ * Assemble le ticket affiché à partir de la réponse /orders/:id/ticket (ticketKey, orderCode)
+ * et de la commande (snapshots d'offre et de commerce).
+ */
+function buildTicket(id, crypto = {}, order = {}) {
+  const offer = order?.offerSnapshot || {};
+  const merchant = order?.merchantSnapshot || {};
+  return {
+    orderId: order?.orderId || order?.id || id,
+    orderCode: crypto.orderCode || order?.orderCode,
+    // Clé HMAC réelle du serveur (hex). Le nom historique `ticketKeyHex` reste accepté.
+    ticketKeyHex: crypto.ticketKey || crypto.ticketKeyHex,
+    offerTitle: offer.title,
+    merchantName: merchant.name,
+    merchantAddress: merchant.address?.street,
+    pickupStartAt: offer.pickupStartAt,
+    pickupEndAt: offer.pickupEndAt,
+    quantity: order?.quantity,
+    status: order?.status || 'PAID',
+  };
+}
+
 export default function LivingTicketPage() {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
@@ -36,9 +58,14 @@ export default function LivingTicketPage() {
     async function fetchTicket() {
       setLoading(true);
       try {
-        const response = await apiClient.get(ENDPOINTS.GET_TICKET(id));
+        // Deux sources distinctes : les paramètres cryptographiques (/ticket : ticketKey, orderCode) et la
+        // commande elle-même (titre, quantité, créneau, commerce). Sans la clé réelle, le QR est inscannable.
+        const [ticketRes, orderRes] = await Promise.all([
+          apiClient.get(ENDPOINTS.GET_TICKET(id)),
+          apiClient.get(ENDPOINTS.ORDER_BY_ID(id)).catch(() => null),
+        ]);
         if (isMounted) {
-          setTicket(response.data?.ticket || response.data || FALLBACK_TICKET);
+          setTicket(buildTicket(id, ticketRes.data?.ticket || ticketRes.data, orderRes?.data?.order || orderRes?.data));
         }
       } catch (err) {
         console.warn('Ticket non trouvé via API, activation du fallback de démonstration :', err.message);
