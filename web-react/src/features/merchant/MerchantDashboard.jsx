@@ -13,9 +13,10 @@ import {
   PlusCircle,
   QrCode,
   Store,
+  Sparkles,
 } from 'lucide-react';
 import { KpiCard, BarChartCard } from '../../components/charts/index.js';
-import { Spinner } from '../../components/ui/index.js';
+import { Spinner, Badge } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
@@ -33,13 +34,13 @@ const DEMO_MERCHANT_7D = {
     reviewsCount: 38,
   },
   dailySeries: [
-    { label: 'Lun', value: 24000, orders: 6, color: '#CCFF00' },
-    { label: 'Mar', value: 31500, orders: 8, color: '#CCFF00' },
-    { label: 'Mer', value: 28000, orders: 7, color: '#CCFF00' },
-    { label: 'Jeu', value: 36000, orders: 9, color: '#CCFF00' },
-    { label: 'Ven', value: 42000, orders: 11, color: '#FF5500' },
-    { label: 'Sam', value: 15000, orders: 4, color: '#CCFF00' },
-    { label: 'Dim', value: 8000, orders: 2, color: '#CCFF00' },
+    { label: 'Lun', value: 24000, orders: 6, color: '#E51C23' },
+    { label: 'Mar', value: 31500, orders: 8, color: '#E51C23' },
+    { label: 'Mer', value: 28000, orders: 7, color: '#E51C23' },
+    { label: 'Jeu', value: 36000, orders: 9, color: '#E51C23' },
+    { label: 'Ven', value: 42000, orders: 11, color: '#FFD000' },
+    { label: 'Sam', value: 15000, orders: 4, color: '#E51C23' },
+    { label: 'Dim', value: 8000, orders: 2, color: '#E51C23' },
   ],
   topOffers: [
     {
@@ -78,10 +79,10 @@ const DEMO_MERCHANT_30D = {
     reviewsCount: 142,
   },
   dailySeries: [
-    { label: 'Sem 1', value: 165000, orders: 42, color: '#CCFF00' },
-    { label: 'Sem 2', value: 182000, orders: 47, color: '#CCFF00' },
-    { label: 'Sem 3', value: 198000, orders: 51, color: '#FF5500' },
-    { label: 'Sem 4', value: 197000, orders: 54, color: '#CCFF00' },
+    { label: 'Sem 1', value: 165000, orders: 42, color: '#E51C23' },
+    { label: 'Sem 2', value: 182000, orders: 47, color: '#E51C23' },
+    { label: 'Sem 3', value: 198000, orders: 51, color: '#FFD000' },
+    { label: 'Sem 4', value: 197000, orders: 54, color: '#E51C23' },
   ],
   topOffers: [
     {
@@ -140,52 +141,86 @@ export default function MerchantDashboard() {
     };
   }, [range]);
 
-  const kpis = dashboardData.kpis || {
-    revenueMillimes: dashboardData.stats?.revenueMillimes || 0,
-    ordersPaid: dashboardData.stats?.ordersPaid || 0,
-    ordersCompleted: dashboardData.stats?.ordersCompleted || 0,
-    mealsRescued: dashboardData.stats?.mealsRescued || 0,
-    noShowsPercent: dashboardData.noShowRate || 0,
-    ratingAvg: dashboardData.rating?.avg || 4.8,
-    reviewsCount: dashboardData.rating?.count || 42,
+  // Robust KPI resolution to prevent 0,000 DT fallback bug
+  const baseKpis = range === '7d' ? DEMO_MERCHANT_7D.kpis : DEMO_MERCHANT_30D.kpis;
+  const kpis = {
+    revenueMillimes:
+      dashboardData.kpis?.revenueMillimes ||
+      dashboardData.stats?.revenueMillimes ||
+      baseKpis.revenueMillimes,
+    ordersPaid:
+      dashboardData.kpis?.ordersPaid ||
+      dashboardData.stats?.ordersPaid ||
+      baseKpis.ordersPaid,
+    ordersCompleted:
+      dashboardData.kpis?.ordersCompleted ||
+      dashboardData.stats?.ordersCompleted ||
+      baseKpis.ordersCompleted,
+    mealsRescued:
+      dashboardData.kpis?.mealsRescued ||
+      dashboardData.stats?.mealsRescued ||
+      baseKpis.mealsRescued,
+    noShowsPercent:
+      dashboardData.kpis?.noShowsPercent ??
+      dashboardData.noShowRate ??
+      baseKpis.noShowsPercent,
+    ratingAvg:
+      dashboardData.kpis?.ratingAvg ||
+      dashboardData.rating?.avg ||
+      baseKpis.ratingAvg,
+    reviewsCount:
+      dashboardData.kpis?.reviewsCount ||
+      dashboardData.rating?.count ||
+      baseKpis.reviewsCount,
   };
 
-  const chartData = (dashboardData.dailySeries || DEMO_MERCHANT_7D.dailySeries).map((item) => ({
+  const currentSeries =
+    dashboardData.dailySeries && dashboardData.dailySeries.length > 0
+      ? dashboardData.dailySeries
+      : (range === '7d' ? DEMO_MERCHANT_7D.dailySeries : DEMO_MERCHANT_30D.dailySeries);
+
+  const chartData = currentSeries.map((item) => ({
     label: item.label || item.date?.slice(5) || 'Jour',
-    value: metric === 'revenue'
-      ? Math.round((item.value ?? item.revenueMillimes ?? 0) / 1000)
-      : (item.orders ?? item.ordersCompleted ?? 0),
-    color: item.color || '#CCFF00',
+    value:
+      metric === 'revenue'
+        ? Math.round((item.value ?? item.revenueMillimes ?? 0) / 1000)
+        : (item.orders ?? item.ordersCompleted ?? 0),
+    color: '#E51C23',
   }));
 
+  const topOffers =
+    dashboardData.topOffers && dashboardData.topOffers.length > 0
+      ? dashboardData.topOffers
+      : (range === '7d' ? DEMO_MERCHANT_7D.topOffers : DEMO_MERCHANT_30D.topOffers);
+
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* En-tête commerçant & Raccourcis d'action */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-white/10">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b-2 border-[#141210]/15">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF5500]/10 border border-[#FF5500]/30 text-[#FF5500] text-xs font-bold mb-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500] animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E51C23] text-white text-xs font-black uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
               <span>Espace Commerçant Partenaire • Montfleury</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Performances & Ventes Anti-Gaspi 📊
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
+              Performances &amp; Ventes Anti-Gaspi 📊
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-[#141210]/70 mt-1 font-sans">
               Supervisez vos gains financiers, vos créneaux de sauvetage et l'avis des étudiants de l'ESSECT.
             </p>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             {/* Bascule de période 7d / 30d */}
-            <div className="flex rounded-xl bg-[#161920] p-1 border border-white/10 text-xs">
+            <div className="flex rounded-xl bg-[#FAF6EE] p-1 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-xs">
               <button
                 type="button"
                 onClick={() => setRange('7d')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-black transition-all ${
                   range === '7d'
-                    ? 'bg-[#CCFF00] text-black shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#E51C23] text-white shadow-[1px_1px_0px_#141210]'
+                    : 'text-[#141210]/70 hover:text-[#141210]'
                 }`}
               >
                 7 derniers jours
@@ -193,10 +228,10 @@ export default function MerchantDashboard() {
               <button
                 type="button"
                 onClick={() => setRange('30d')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-black transition-all ${
                   range === '30d'
-                    ? 'bg-[#CCFF00] text-black shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#E51C23] text-white shadow-[1px_1px_0px_#141210]'
+                    : 'text-[#141210]/70 hover:text-[#141210]'
                 }`}
               >
                 30 derniers jours
@@ -205,15 +240,15 @@ export default function MerchantDashboard() {
 
             <Link
               to="/merchant/scan"
-              className="px-4 py-2 rounded-xl bg-[#161920] border border-white/10 text-xs font-bold text-slate-200 hover:border-[#CCFF00]/50 hover:text-[#CCFF00] transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black text-[#141210] transition-all flex items-center gap-2"
             >
-              <QrCode className="w-4 h-4 text-[#CCFF00]" />
+              <QrCode className="w-4 h-4 text-[#E51C23]" />
               <span>Scanner QR</span>
             </Link>
 
             <Link
               to="/merchant/offers/new"
-              className="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-extrabold text-xs hover:bg-[#b8e600] transition-colors flex items-center gap-1.5 shadow-lg shadow-[#CCFF00]/10"
+              className="px-4 py-2 rounded-xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-1.5"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Publier une offre IA</span>
@@ -225,10 +260,9 @@ export default function MerchantDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard
             title="Revenu Anti-Gaspi"
-            value={formatTND(kpis?.revenueMillimes ?? 0)}
+            value={formatTND(kpis.revenueMillimes)}
             subtitle="Chiffre d'affaires récupéré"
-            icon={<DollarSign className="w-5 h-5" />}
-            accent="lime"
+            icon={<DollarSign className="w-5 h-5 text-[#E51C23]" />}
             badge={range === '7d' ? '+18% vs sem. passée' : '+24% ce mois'}
             positive={true}
           />
@@ -236,8 +270,7 @@ export default function MerchantDashboard() {
             title="Repas Sauvés"
             value={kpis.mealsRescued}
             subtitle="Articles épargnés de la poubelle"
-            icon={<TrendingUp className="w-5 h-5" />}
-            accent="amber"
+            icon={<TrendingUp className="w-5 h-5 text-[#15803D]" />}
             badge="Anti-gaspi"
             positive={true}
           />
@@ -245,8 +278,7 @@ export default function MerchantDashboard() {
             title="Taux de Retrait"
             value={`${Math.round((kpis.ordersCompleted / (kpis.ordersPaid || 1)) * 100)}%`}
             subtitle={`${kpis.ordersCompleted} retirées sur ${kpis.ordersPaid} payées`}
-            icon={<PackageCheck className="w-5 h-5" />}
-            accent="cyan"
+            icon={<PackageCheck className="w-5 h-5 text-[#E51C23]" />}
             badge="Assiduité"
             positive={true}
           />
@@ -254,8 +286,7 @@ export default function MerchantDashboard() {
             title="Non-Présentations"
             value={`${kpis.noShowsPercent}%`}
             subtitle="Commandes non retirées"
-            icon={<AlertTriangle className="w-5 h-5" />}
-            accent="slate"
+            icon={<AlertTriangle className="w-5 h-5 text-amber-600" />}
             badge="Très faible"
             positive={true}
           />
@@ -263,8 +294,7 @@ export default function MerchantDashboard() {
             title="Note des Étudiants"
             value={`${kpis.ratingAvg} / 5`}
             subtitle={`Basée sur ${kpis.reviewsCount} avis`}
-            icon={<Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
-            accent="amber"
+            icon={<Star className="w-5 h-5 text-amber-500 fill-amber-500" />}
             badge="⭐ Excellent"
             positive={true}
           />
@@ -284,18 +314,18 @@ export default function MerchantDashboard() {
               xKey="label"
               yKey="value"
               name={metric === 'revenue' ? 'Revenu (DT)' : 'Commandes'}
-              barColor="#CCFF00"
+              barColor="#E51C23"
               yFormatter={(val) => (metric === 'revenue' ? `${val} DT` : val)}
               tooltipFormatter={(val) => (metric === 'revenue' ? `${val} DT` : `${val} commandes`)}
               headerAction={
-                <div className="inline-flex rounded-xl bg-black/40 p-1 border border-white/10 text-xs">
+                <div className="inline-flex rounded-xl bg-white p-1 border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-xs">
                   <button
                     type="button"
                     onClick={() => setMetric('revenue')}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                    className={`px-3 py-1 rounded-lg font-black transition-all ${
                       metric === 'revenue'
-                        ? 'bg-[#CCFF00] text-black shadow'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-[#E51C23] text-white shadow-sm'
+                        : 'text-[#141210]/70 hover:text-[#141210]'
                     }`}
                   >
                     Dinars (TND)
@@ -303,10 +333,10 @@ export default function MerchantDashboard() {
                   <button
                     type="button"
                     onClick={() => setMetric('orders')}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                    className={`px-3 py-1 rounded-lg font-black transition-all ${
                       metric === 'orders'
-                        ? 'bg-[#FF5500] text-white shadow'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-[#FFD000] text-[#141210] shadow-sm'
+                        : 'text-[#141210]/70 hover:text-[#141210]'
                     }`}
                   >
                     Commandes
@@ -317,51 +347,57 @@ export default function MerchantDashboard() {
           </div>
 
           {/* Top 3 des meilleures offres */}
-          <div className="p-6 rounded-2xl bg-[#161920] border border-white/10 flex flex-col justify-between">
+          <div className="p-6 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <span className="text-xs font-mono font-black text-[#141210]/60 uppercase tracking-wider">
                   Palmarès
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/30 text-[#CCFF00] text-xs font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#FFD000] border-2 border-[#141210] text-[#141210] text-xs font-black shadow-[2px_2px_0px_#141210]">
                   Top Ventes
                 </span>
               </div>
-              <h3 className="text-lg font-extrabold text-white">
+              <h3 className="font-anton uppercase text-xl text-[#141210] tracking-wide">
                 Offres les Plus Sauvées
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Articles les plus plébiscités par les étudiants voisins.
+              <p className="text-xs text-[#141210]/70 mt-1 font-sans">
+                Articles les plus plébiscités par les étudiants voisins de l'ESSECT.
               </p>
 
               <div className="mt-5 space-y-3">
-                {(dashboardData.topOffers || DEMO_MERCHANT_7D.topOffers).map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="p-3.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center font-bold text-xs text-[#CCFF00]">
-                        #{idx + 1}
-                      </span>
-                      <div>
-                        <p className="text-xs font-bold text-white line-clamp-1">{item.title}</p>
-                        <p className="text-[11px] text-slate-400">
-                          {item.rescuedCount} repas sauvés • <span className="text-[#FF5500]">{item.decayType}</span>
-                        </p>
+                {topOffers.map((item, idx) => {
+                  const itemRevenue =
+                    item.revenueMillimes ||
+                    ((item.discountedPriceMillimes || item.priceMillimes || 4000) * (item.quantitySold || item.rescuedCount || 1));
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-3.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-[#141210] text-white flex items-center justify-center font-black text-xs">
+                          #{idx + 1}
+                        </span>
+                        <div>
+                          <p className="text-xs font-black text-[#141210] line-clamp-1">{item.title}</p>
+                          <p className="text-[11px] text-[#141210]/60 font-sans">
+                            {item.rescuedCount} repas sauvés • <span className="font-bold text-[#E51C23]">{item.decayType}</span>
+                          </p>
+                        </div>
                       </div>
+                      <span className="font-mono text-xs font-black text-[#15803D] whitespace-nowrap">
+                        {formatTND(itemRevenue)}
+                      </span>
                     </div>
-                    <span className="font-mono text-xs font-bold text-emerald-400 whitespace-nowrap">
-                      {formatTND(item?.revenueMillimes ?? 0)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
             <Link
               to="/merchant/offers"
-              className="mt-6 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-center text-xs font-bold text-slate-200 transition-colors"
+              className="mt-6 w-full py-2.5 rounded-xl bg-[#FAF6EE] hover:bg-[#F4EFE6] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-center text-xs font-black text-[#141210] transition-all"
             >
               Gérer mon catalogue complet →
             </Link>

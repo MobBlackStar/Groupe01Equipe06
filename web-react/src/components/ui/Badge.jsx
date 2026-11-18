@@ -1,52 +1,61 @@
-// 💡 Concept & Analogie : Comme une étiquette autocollante fluo 'Offre Flash' ou 'Certifié Bio' sur un paquet en rayon, le badge attire immédiatement le regard sur un statut clé ou une caractéristique notable.
-// 🔄 Comparaison React / Flutter : En React, `Badge` est un `span` stylisé en flexbox inline ; en Flutter, il correspond au widget `Chip` ou à un `Container` compact avec padding réduit.
-// 🎯 À retenir pour la soutenance : "Nous utilisons un code couleur sémantique strict : Vert Lime pour l'actif/écologie, Ambre Urgent pour le Smart Decay et Cramoisi pour les alertes ou annulations."
+// 💡 Concept & Analogie : Comme une étiquette autocollante 'Offre Flash' ou 'Certifié Bio' sur un paquet en rayon, le badge attire immédiatement le regard sur un statut clé.
+// 🔄 Comparaison React / Flutter : En React, `Badge` est un `span` stylisé en flexbox inline ; en Flutter, il correspond au widget `Chip` ou à un `Container` compact.
+// 🎯 À retenir pour la soutenance : "Nous utilisons un code couleur tactile : Vert pour actif/écologie, Jaune Griddle pour le Smart Decay et Rouge pour les alertes ou expirations."
 
 import React from 'react';
 
 export default function Badge({
   children,
-  variant = 'lime',
+  variant = 'green',
   size = 'md',
   dot = false,
   icon = null,
   className = '',
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center font-semibold uppercase tracking-wider rounded-full select-none';
+  const baseStyles = 'inline-flex items-center font-bold uppercase tracking-wider rounded-md select-none border text-xs';
 
   const variants = {
-    lime: 'bg-[#CCFF00]/15 text-[#CCFF00] border border-[#CCFF00]/30',
-    orange: 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/30',
-    red: 'bg-[#FF1744]/15 text-[#FF1744] border border-[#FF1744]/30',
-    cyan: 'bg-[#38bdf8]/15 text-[#38bdf8] border border-[#38bdf8]/30',
-    purple: 'bg-[#a855f7]/15 text-[#c084fc] border border-[#a855f7]/30',
-    muted: 'bg-[#262A33] text-[#8A92A6] border border-[#383e4c]',
+    green: 'bg-[#DCFCE7] text-[#15803D] border-[#166534]',
+    lime: 'bg-[#DCFCE7] text-[#15803D] border-[#166534]',
+    emerald: 'bg-[#DCFCE7] text-[#15803D] border-[#166534]',
+    yellow: 'bg-[#FEF08A] text-[#854D0E] border-[#A16207]',
+    griddle: 'bg-[#FFD000] text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]',
+    orange: 'bg-[#FFEDD5] text-[#C2410C] border-[#EA580C]',
+    red: 'bg-[#FEE2E2] text-[#B91C1C] border-[#DC2626]',
+    cyan: 'bg-[#E0F2FE] text-[#0369A1] border-[#0284C7]',
+    purple: 'bg-[#F3E8FF] text-[#7E22CE] border-[#9333EA]',
+    muted: 'bg-[#F4EFE6] text-[#555] border-[#141210]/30',
   };
 
   const dotColors = {
-    lime: 'bg-[#CCFF00]',
-    orange: 'bg-[#FF5500]',
-    red: 'bg-[#FF1744]',
-    cyan: 'bg-[#38bdf8]',
-    purple: 'bg-[#c084fc]',
-    muted: 'bg-[#8A92A6]',
+    green: 'bg-[#15803D]',
+    lime: 'bg-[#15803D]',
+    emerald: 'bg-[#15803D]',
+    yellow: 'bg-[#854D0E]',
+    griddle: 'bg-[#141210]',
+    orange: 'bg-[#C2410C]',
+    red: 'bg-[#B91C1C]',
+    cyan: 'bg-[#0369A1]',
+    purple: 'bg-[#7E22CE]',
+    muted: 'bg-[#666]',
   };
 
   const sizes = {
     sm: 'text-[10px] px-2 py-0.5 gap-1',
-    md: 'text-xs px-2.5 py-1 gap-1.5',
+    md: 'text-xs px-2.5 py-0.5 gap-1.5',
+    lg: 'text-sm px-3 py-1 gap-2',
   };
 
   return (
     <span
-      className={`${baseStyles} ${variants[variant] || variants.lime} ${sizes[size] || sizes.md} ${className}`}
+      className={`${baseStyles} ${variants[variant] || variants.green} ${sizes[size] || sizes.md} ${className}`}
       {...props}
     >
       {dot && (
         <span
           className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-            dotColors[variant] || dotColors.lime
+            dotColors[variant] || dotColors.green
           }`}
         />
       )}

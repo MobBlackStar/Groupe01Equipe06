@@ -17,7 +17,6 @@ export default function PaymentReturnPage() {
 
   const [state, setState] = useState('VERIFYING'); // 'VERIFYING', 'SUCCESS', 'FAILED'
   const [errorMessage, setErrorMessage] = useState(null);
-  const [attempts, setAttempts] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -36,7 +35,6 @@ export default function PaymentReturnPage() {
       } catch (err) {
         console.warn('Vérification API Konnect, bascule démo réussie :', err.message);
         if (isMounted) {
-          // Si paiement simulé ou démo valide
           if (!paymentRef || paymentRef.includes('fail')) {
             setState('FAILED');
             setErrorMessage('Le paiement a été interrompu ou refusé par la banque.');
@@ -55,14 +53,14 @@ export default function PaymentReturnPage() {
   }, [orderId, paymentRef]);
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] flex items-center justify-center p-4 sm:p-6 text-white">
-      <div className="max-w-md w-full bg-[#161920] border border-white/10 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
+    <div className="min-h-screen bg-[#F4EFE6] flex items-center justify-center p-4 sm:p-6 text-[#141210]">
+      <div className="max-w-md w-full bg-[#FAF6EE] border-2 border-[#141210] rounded-xl p-8 text-center space-y-6 shadow-[6px_6px_0px_#141210]">
         {/* État 1 : Vérification en cours */}
         {state === 'VERIFYING' && (
           <div className="space-y-4 py-8">
             <Spinner size="lg" />
-            <h2 className="text-lg font-bold text-white">Vérification du paiement en cours...</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <h2 className="text-xl font-anton uppercase text-[#141210]">Vérification du paiement en cours...</h2>
+            <p className="text-xs text-[#555] font-medium leading-relaxed">
               Nous validons la transaction sécurisée avec la passerelle Konnect. Veuillez patienter un instant.
             </p>
           </div>
@@ -71,44 +69,43 @@ export default function PaymentReturnPage() {
         {/* État 2 : Succès */}
         {state === 'SUCCESS' && (
           <div className="space-y-5">
-            <div className="w-20 h-20 mx-auto rounded-full bg-[#CCFF00]/15 border-2 border-[#CCFF00] flex items-center justify-center text-4xl shadow-lg shadow-[#CCFF00]/20 animate-bounce">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] border-2 border-[#166534] text-[#15803D] flex items-center justify-center text-3xl shadow-[3px_3px_0px_#166534] font-black">
               ✓
             </div>
 
             <div>
-              <span className="text-xs font-bold text-[#CCFF00] uppercase tracking-wider">
+              <span className="text-xs font-black text-[#15803D] uppercase tracking-wider font-mono">
                 Paiement Confirmé
               </span>
-              <h1 className="text-2xl font-black text-white mt-1">
+              <h1 className="text-3xl font-anton uppercase text-[#141210] mt-1">
                 Félicitations, Repas Sauvé !
               </h1>
-              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+              <p className="text-xs text-[#555] mt-2 leading-relaxed font-medium">
                 Votre commande a été réglée avec succès. Votre ticket de retrait dynamique avec QR Code tournant est prêt.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0D0F12] border border-white/10 text-xs text-left space-y-2">
+            <div className="p-4 rounded-lg bg-white border-2 border-[#141210] text-xs text-left space-y-2 shadow-[2px_2px_0px_#141210]">
               <div className="flex justify-between">
-                <span className="text-slate-400">Identifiant commande :</span>
-                <span className="font-mono text-white font-bold">{orderId}</span>
+                <span className="text-[#666] font-bold">Identifiant commande :</span>
+                <span className="font-mono text-[#141210] font-bold">{orderId}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Statut du ticket :</span>
-                <span className="text-[#CCFF00] font-bold">Actif • Prêt pour le retrait</span>
+                <span className="text-[#666] font-bold">Statut du ticket :</span>
+                <span className="text-[#15803D] font-black uppercase">Actif • Prêt pour le retrait</span>
               </div>
             </div>
 
-            <div className="pt-2 flex flex-col gap-3">
+            <div className="space-y-3 pt-2">
               <Link
                 to={`/app/orders/${orderId}/ticket`}
-                className="w-full py-3.5 px-6 rounded-2xl bg-[#CCFF00] text-black font-black text-sm hover:bg-[#b8e600] active:scale-95 transition-all shadow-lg shadow-[#CCFF00]/20 flex items-center justify-center gap-2"
+                className="w-full btn-griddle-primary py-3.5 block text-center"
               >
-                <span>🎟️ Ouvrir mon Living Ticket QR</span>
+                <span>Accéder à mon Ticket de Retrait 🎫 →</span>
               </Link>
-
               <Link
                 to="/app/orders"
-                className="w-full py-3 px-6 rounded-2xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 text-xs font-semibold transition-all"
+                className="text-xs font-bold text-[#555] hover:text-[#141210] block"
               >
                 Voir l'historique de mes commandes
               </Link>
@@ -119,39 +116,35 @@ export default function PaymentReturnPage() {
         {/* État 3 : Échec */}
         {state === 'FAILED' && (
           <div className="space-y-5">
-            <div className="w-20 h-20 mx-auto rounded-full bg-[#FF1744]/15 border-2 border-[#FF1744] flex items-center justify-center text-3xl text-[#FF1744]">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#FEE2E2] border-2 border-[#DC2626] text-[#B91C1C] flex items-center justify-center text-3xl shadow-[3px_3px_0px_#DC2626] font-black">
               ✕
             </div>
 
             <div>
-              <span className="text-xs font-bold text-[#FF1744] uppercase tracking-wider">
+              <span className="text-xs font-black text-[#B91C1C] uppercase tracking-wider font-mono">
                 Échec du Paiement
               </span>
-              <h1 className="text-xl font-bold text-white mt-1">
+              <h1 className="text-2xl font-anton uppercase text-[#141210] mt-1">
                 Transaction non finalisée
               </h1>
-              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                {errorMessage || "Le paiement n'a pas pu être validé par la banque ou a été annulé."}
+              <p className="text-xs text-[#555] mt-2 leading-relaxed font-medium">
+                {errorMessage || 'Une anomalie est survenue lors de la confirmation bancaire. Aucun montant n a été débité.'}
               </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-white/5 text-[11px] text-slate-400">
-              Tentative {attempts} sur 3 • Le stock reste réservé tant que les 10 minutes ne sont pas écoulées.
-            </div>
-
-            <div className="pt-2 flex flex-col gap-3">
-              <Link
-                to={`/app/checkout/${orderId}`}
-                className="w-full py-3.5 px-6 rounded-2xl bg-[#CCFF00] text-black font-black text-sm hover:bg-[#b8e600] transition-colors"
+            <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/app/checkout/${orderId}`)}
+                className="w-full btn-griddle-yellow py-3"
               >
-                🔄 Réessayer le paiement
-              </Link>
-
+                <span>Réessayer le paiement</span>
+              </button>
               <Link
                 to="/app/explore"
-                className="w-full py-3 px-6 rounded-2xl bg-white/5 text-slate-400 hover:text-white text-xs transition-colors"
+                className="text-xs font-bold text-[#555] hover:text-[#141210] block"
               >
-                Annuler et retourner au catalogue
+                Retourner au catalogue des offres
               </Link>
             </div>
           </div>

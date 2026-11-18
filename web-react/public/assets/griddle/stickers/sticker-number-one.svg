@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <g transform="rotate(-6 60 60)">
+    <!-- 16-point Starburst -->
+    <path d="M60 4 L72 20 L92 12 L96 32 L116 36 L108 55 L120 70 L102 80 L104 100 L84 98 L76 116 L60 104 L44 116 L36 98 L16 100 L18 80 L0 70 L12 55 L4 36 L24 32 L28 12 L48 20 Z" 
+          fill="#FFD000" stroke="#141210" stroke-width="3.5" stroke-linejoin="round"/>
+    <circle cx="60" cy="60" r="40" fill="#FAF6EE" stroke="#141210" stroke-width="2.5"/>
+    <text x="60" y="56" font-family="'Anton', 'Bebas Neue', sans-serif" font-size="34" font-weight="900" fill="#E51C23" text-anchor="middle" letter-spacing="-1">#1</text>
+    <text x="60" y="74" font-family="'Permanent Marker', cursive" font-size="12" font-weight="700" fill="#141210" text-anchor="middle">BEST</text>
+  </g>
+</svg>

@@ -1,47 +1,91 @@
-// 💡 Concept & Analogie : Charte graphique unifiée pour l'application mobile harmonisée avec les identités Street Market & Framer.
-// 🔄 Comparaison React / Flutter : Équivalent direct des classes Tailwind CSS définies dans `web-react/tailwind.config.js`.
-// 🎯 À retenir pour la soutenance : "Nous appliquons une charte graphique cohérente combinant papier chaud (#F5EFE6), encre espresso (#161412), carbone nocturne (#0E0D0C) et touches street red (#EE3124) / mustard gold (#F5C400)."
+// 💡 Concept & Analogie : Charte graphique Griddle Neo-Brutaliste pour l'application mobile.
+// 🔄 Comparaison React / Flutter : Équivalent direct des classes Tailwind CSS Griddle (Warm Cream #F4EFE6, Warm Ivory #FAF6EE, Deep Ink #141210, Griddle Red #E51C23, Mustard Yellow #FFD000).
+// 🎯 À retenir pour la soutenance : "Design néo-brutaliste percutant combinant cartes crème/ivoire, bordures franches 2px et ombres dures portées à 45° sans flou."
 
 import 'package:flutter/material.dart';
 
-/// Charte graphique unifiée pour CampusSave Mobile (Harmonisée Street Market & Framer).
+/// Charte graphique Griddle pour CampusSave Mobile.
 class AppTheme {
-  // --- Palette Principale Harmonisée ---
-  static const Color warmCream = Color(0xFFF5EFE6);
-  static const Color nightCarbon = Color(0xFF0E0D0C);
-  static const Color deepEspresso = Color(0xFF161412);
-  static const Color streetFlameRed = Color(0xFFEE3124);
-  static const Color mustardGold = Color(0xFFF5C400);
+  // --- Palette Principale Griddle ---
+  static const Color warmCream = Color(0xFFF4EFE6);
+  static const Color warmIvory = Color(0xFFFAF6EE);
+  static const Color deepInk = Color(0xFF141210);
+  static const Color griddleRed = Color(0xFFE51C23);
+  static const Color mustardYellow = Color(0xFFFFD000);
   static const Color matchaEmerald = Color(0xFF2E6F40);
 
-  // --- Surfaces & Papiers ---
-  static const Color darkBackground = nightCarbon;
-  static const Color cardColor = Color(0xFF1A1816);
-  static const Color surfaceCard = Color(0xFF1A1816);
+  // --- Surfaces & Rétro-compatibilité ---
+  static const Color darkBackground = Color(0xFF141210);
+  static const Color cardColor = Color(0xFF1E1B18);
+  static const Color surfaceCard = Color(0xFF1E1B18);
   static const Color paperCream = warmCream;
-  static const Color paperInk = deepEspresso;
-  static const Color borderColor = Color(0xFF2A2724);
+  static const Color paperIvory = warmIvory;
+  static const Color paperInk = deepInk;
+  static const Color borderColor = deepInk;
 
-  // --- Accents & Rétro-compatibilité ---
-  static const Color limeAccent = mustardGold; // Harmonisé vers Mustard Gold Street Market
-  static const Color orangeUrgent = streetFlameRed; // Harmonisé vers Street Flame Red
-  static const Color redCritical = streetFlameRed;
-  static const Color textMuted = Color(0xFF9E988F);
+  // --- Accents & Typographie ---
+  static const Color limeAccent = mustardYellow;
+  static const Color orangeUrgent = griddleRed;
+  static const Color redCritical = griddleRed;
+  static const Color textMuted = Color(0xFF8C857B);
   static const Color textLight = warmCream;
-  static const Color textDark = deepEspresso;
+  static const Color textDark = deepInk;
+
+  // --- Helpers Néo-Brutalistes (Bordures 2px + Ombres dures décalées) ---
+  static BoxDecoration neoBrutalCard({
+    Color backgroundColor = warmIvory,
+    Color borderColor = deepInk,
+    double borderWidth = 2.0,
+    double radius = 16.0,
+    Offset shadowOffset = const Offset(4, 4),
+  }) {
+    return BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: borderColor, width: borderWidth),
+      boxShadow: [
+        BoxShadow(
+          color: deepInk,
+          offset: shadowOffset,
+          blurRadius: 0,
+        ),
+      ],
+    );
+  }
+
+  static BoxDecoration neoBrutalButton({
+    Color backgroundColor = griddleRed,
+    Color borderColor = deepInk,
+    double borderWidth = 2.0,
+    double radius = 10.0,
+    Offset shadowOffset = const Offset(3, 3),
+  }) {
+    return BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: borderColor, width: borderWidth),
+      boxShadow: [
+        BoxShadow(
+          color: deepInk,
+          offset: shadowOffset,
+          blurRadius: 0,
+        ),
+      ],
+    );
+  }
 
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     scaffoldBackgroundColor: darkBackground,
-    primaryColor: mustardGold,
+    primaryColor: griddleRed,
     cardColor: cardColor,
     colorScheme: const ColorScheme.dark(
-      primary: mustardGold,
-      secondary: streetFlameRed,
+      primary: griddleRed,
+      secondary: mustardYellow,
       surface: surfaceCard,
-      onPrimary: deepEspresso,
+      onPrimary: Colors.white,
       onSurface: warmCream,
-      error: streetFlameRed,
+      error: griddleRed,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: darkBackground,
@@ -51,7 +95,8 @@ class AppTheme {
       titleTextStyle: TextStyle(
         color: warmCream,
         fontSize: 18,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0.5,
       ),
     ),
   );

@@ -17,16 +17,18 @@ export default function PendingApprovalBanner({
   if (status === MERCHANT_STATUS.APPROVED) {
     return (
       <div
-        className={`w-full p-4 rounded-2xl bg-[#CCFF00]/10 border border-[#CCFF00]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${className}`}
+        className={`w-full p-4 rounded-2xl bg-[#DCFCE7] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${className}`}
       >
         <div className="flex items-center gap-3">
           <span className="text-2xl select-none">🏪</span>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-white">Établissement Agréé &amp; Actif</h4>
-              <Badge variant="lime" size="sm" dot>APPROUVÉ</Badge>
+              <h4 className="font-anton uppercase text-base text-[#15803D] tracking-wide">
+                Établissement Agréé &amp; Actif
+              </h4>
+              <Badge variant="green" size="sm" dot>APPROUVÉ</Badge>
             </div>
-            <p className="text-xs text-[#8A92A6] mt-0.5">
+            <p className="text-xs text-[#141210]/70 mt-0.5 font-sans">
               Votre établissement est vérifié. Vous pouvez publier des offres et des paniers surprises à tout moment.
             </p>
           </div>
@@ -44,22 +46,24 @@ export default function PendingApprovalBanner({
   if (status === MERCHANT_STATUS.REJECTED) {
     return (
       <div
-        className={`w-full p-5 rounded-2xl bg-[#FF1744]/10 border border-[#FF1744]/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${className}`}
+        className={`w-full p-5 rounded-2xl bg-[#FEE2E2] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${className}`}
       >
         <div className="flex items-start gap-3.5">
           <span className="text-2xl select-none mt-0.5">⚠️</span>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-[#FF1744]">Dossier d'Agrément Non Retenu</h4>
+              <h4 className="font-anton uppercase text-base text-[#991B1B] tracking-wide">
+                Dossier d'Agrément Non Retenu
+              </h4>
               <Badge variant="red" size="sm">REJETÉ</Badge>
             </div>
-            <p className="text-xs text-gray-200 mt-1">
+            <p className="text-xs text-[#141210] mt-1 font-sans">
               Motif de la commission ESSECT :{' '}
-              <span className="font-semibold text-white">
+              <span className="font-bold">
                 {statusReason || "Coordonnées géographiques ou justificatifs d'activité non conformes au rayon de 3 km."}
               </span>
             </p>
-            <p className="text-[11px] text-[#8A92A6] mt-1">
+            <p className="text-[11px] text-[#141210]/70 mt-1 font-sans">
               Vous pouvez corriger vos coordonnées et soumettre à nouveau votre fiche.
             </p>
           </div>
@@ -77,20 +81,22 @@ export default function PendingApprovalBanner({
   // Statut PENDING par défaut
   return (
     <div
-      className={`w-full p-5 rounded-2xl bg-[#FF5500]/10 border border-[#FF5500]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${className}`}
+      className={`w-full p-5 rounded-2xl bg-[#FEF08A] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${className}`}
     >
       <div className="flex items-start gap-3.5">
         <span className="text-2xl select-none animate-pulse mt-0.5">⏳</span>
         <div>
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-bold text-[#FF5500]">Dossier en Cours d'Instruction</h4>
-            <Badge variant="orange" size="sm" dot>EN ATTENTE ADMIN</Badge>
+            <h4 className="font-anton uppercase text-base text-[#141210] tracking-wide">
+              Dossier en Cours d'Instruction
+            </h4>
+            <Badge variant="yellow" size="sm" dot>EN ATTENTE ADMIN</Badge>
           </div>
-          <p className="text-xs text-gray-200 mt-1 leading-relaxed">
+          <p className="text-xs text-[#141210] mt-1 font-sans leading-relaxed">
             Votre demande d'adhésion est en cours de révision par l'administrateur ESSECT.
             La publication d'offres sera débloquée dès validation de votre ancrage local (rayon ≤ 3 km).
           </p>
-          <p className="text-[11px] text-[#8A92A6] mt-1">
+          <p className="text-[11px] text-[#141210]/70 mt-1 font-mono">
             Mise à jour en temps réel via Firestore • Délai moyen habituel : moins de 2 heures.
           </p>
         </div>

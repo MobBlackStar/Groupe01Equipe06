@@ -7,6 +7,7 @@ import { MERCHANT_STATUS } from '@shared/constants.js';
 import { distanceFromEssect, calculateWalkingMinutes } from '@shared/geo.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
+import { formatTunisDate } from '../../lib/formatters.js';
 import {
   Button,
   Card,
@@ -72,7 +73,6 @@ export default function AdminMerchantsPage() {
   const [merchants, setMerchants] = useState(DEMO_ADMIN_MERCHANTS);
   const [activeTab, setActiveTab] = useState('ALL');
   const [rejectModalData, setRejectModalData] = useState(null); // { merchant, reason }
-  const [selectedDrawerMerchant, setSelectedDrawerMerchant] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -173,16 +173,18 @@ export default function AdminMerchantsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#262A33]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-white">Validation des Commerces Partenaires</h1>
-              <Badge variant="purple" size="md">CONSOLE ADMIN</Badge>
+              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#141210]">
+                Validation des Commerces Partenaires
+              </h1>
+              <Badge variant="griddle" size="md">CONSOLE ADMIN</Badge>
             </div>
-            <p className="text-xs text-[#8A92A6] mt-1">
+            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
               Contrôlez l'ancrage local (rayon ≤ 3 km de l'ESSECT) et délivrez les agréments de publication.
             </p>
           </div>
@@ -192,10 +194,10 @@ export default function AdminMerchantsPage() {
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
         {/* Table */}
-        <Card className="bg-[#161920] border-[#262A33] overflow-hidden">
+        <Card className="bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0D0F12] text-[#8A92A6] uppercase tracking-wider border-b border-[#262A33]">
+              <thead className="bg-[#141210] text-white uppercase tracking-wider font-mono">
                 <tr>
                   <th className="py-3.5 px-4 font-bold">Établissement</th>
                   <th className="py-3.5 px-4 font-bold">Type</th>
@@ -205,7 +207,7 @@ export default function AdminMerchantsPage() {
                   <th className="py-3.5 px-4 font-bold text-right">Actions Décisionnelles</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#262A33]">
+              <tbody className="divide-y-2 divide-[#141210]/15">
                 {filteredMerchants.map((merchant) => {
                   const lat = merchant.location?.lat ?? merchant.lat;
                   const lng = merchant.location?.lng ?? merchant.lng;
@@ -218,27 +220,27 @@ export default function AdminMerchantsPage() {
                   return (
                     <tr
                       key={merchant.id}
-                      className="hover:bg-white/[0.02] transition-colors"
+                      className="hover:bg-white/50 transition-colors"
                     >
-                      <td className="py-4 px-4 font-bold text-white">
+                      <td className="py-4 px-4 font-bold text-[#141210]">
                         <div className="flex items-center gap-2">
-                          <span>🏪</span>
+                          <span className="text-xl">🏪</span>
                           <div>
-                            <span className="block">{merchant.name}</span>
-                            <span className="text-[11px] text-[#8A92A6] font-normal">
+                            <span className="block font-black text-sm">{merchant.name}</span>
+                            <span className="text-[11px] text-[#141210]/60 font-sans">
                               {street}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 font-mono text-[#8A92A6]">
+                      <td className="py-4 px-4 font-mono font-bold text-[#141210]">
                         {merchant.type}
                       </td>
                       <td className="py-4 px-4">
-                        <span className="font-bold text-[#CCFF00] block">
+                        <span className="font-anton text-sm text-[#141210] block">
                           {dist} m
                         </span>
-                        <span className="text-[10px] text-[#8A92A6]">
+                        <span className="text-[10px] text-[#141210]/60 font-mono">
                           ~{walk} min à pied
                         </span>
                       </td>
@@ -246,68 +248,45 @@ export default function AdminMerchantsPage() {
                         <Badge
                           variant={
                             isApproved
-                              ? 'lime'
+                              ? 'green'
                               : isPending
-                              ? 'orange'
+                              ? 'yellow'
                               : 'red'
                           }
                           size="sm"
-                          dot={isPending}
+                          dot={isApproved}
                         >
                           {merchant.status}
                         </Badge>
                       </td>
-                      <td className="py-4 px-4 text-[#8A92A6]">
-                        {merchant.submittedAt}
+                      <td className="py-4 px-4 text-[#141210]/70 font-mono">
+                        {merchant.submittedAt?.includes('T') ? formatTunisDate(merchant.submittedAt) : merchant.submittedAt}
                       </td>
                       <td className="py-4 px-4 text-right">
                         <div className="inline-flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedDrawerMerchant(merchant)}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#0D0F12] border border-[#262A33] text-gray-300 hover:text-white"
-                          >
-                            Détails
-                          </button>
-
-                          {isPending && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() => handleApprove(merchant)}
-                              >
-                                Approuver ✓
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                onClick={() =>
-                                  setRejectModalData({
-                                    merchant,
-                                    reason: '',
-                                    newStatus: MERCHANT_STATUS.REJECTED,
-                                  })
-                                }
-                              >
-                                Rejeter ✕
-                              </Button>
-                            </>
+                          {!isApproved && (
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(merchant)}
+                              className="px-3 py-1.5 rounded-lg bg-[#DCFCE7] text-[#15803D] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black transition-all"
+                            >
+                              ✓ Approuver
+                            </button>
                           )}
 
-                          {isApproved && (
+                          {merchant.status !== MERCHANT_STATUS.REJECTED && (
                             <button
                               type="button"
                               onClick={() =>
                                 setRejectModalData({
                                   merchant,
                                   reason: '',
-                                  newStatus: MERCHANT_STATUS.SUSPENDED,
+                                  newStatus: MERCHANT_STATUS.REJECTED,
                                 })
                               }
-                              className="px-2.5 py-1.5 rounded-lg bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/30 hover:bg-[#FF5500]/20"
+                              className="px-3 py-1.5 rounded-lg bg-[#FEE2E2] text-[#991B1B] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black transition-all"
                             >
-                              Suspendre
+                              ✕ Rejeter
                             </button>
                           )}
                         </div>
@@ -320,12 +299,12 @@ export default function AdminMerchantsPage() {
           </div>
         </Card>
 
-        {/* MODALE DE REJET / SUSPENSION AVEC MOTIF OBLIGATOIRE */}
+        {/* Modal Rejet */}
         <Modal
           isOpen={Boolean(rejectModalData)}
           onClose={() => setRejectModalData(null)}
-          title={`Décision Administrative : ${rejectModalData?.newStatus || 'Rejet'}`}
-          description="Un motif motivé est obligatoirement transmis au commerçant par email et notification push."
+          title={`Refuser le dossier : ${rejectModalData?.merchant?.name}`}
+          description="Un motif explicatif est obligatoire pour notifier le commerçant."
           footer={
             <>
               <Button
@@ -340,81 +319,27 @@ export default function AdminMerchantsPage() {
                 size="sm"
                 onClick={handleConfirmReject}
               >
-                Confirmer la Décision
+                Confirmer le Rejet
               </Button>
             </>
           }
         >
           {rejectModalData && (
-            <div className="space-y-4 py-2">
-              <p className="text-xs text-gray-300">
-                Établissement concerné :{' '}
-                <strong className="text-white">{rejectModalData.merchant.name}</strong>
-              </p>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase text-[#8A92A6]">
-                  Motif officiel de rejet / suspension <span className="text-[#FF5500]">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="ex: Coordonnées géographiques non conformes, registre de commerce illisible..."
-                  value={rejectModalData.reason}
-                  onChange={(e) =>
-                    setRejectModalData((prev) => ({ ...prev, reason: e.target.value }))
-                  }
-                  className="w-full bg-[#0D0F12] text-white text-xs rounded-xl p-3 border border-[#262A33] focus:border-[#FF1744] outline-none"
-                />
-              </div>
+            <div className="space-y-3 py-2 text-xs">
+              <label className="block text-xs font-black uppercase text-[#141210]/70 font-mono">
+                Motif officiel communiqué au gérant :
+              </label>
+              <textarea
+                rows={3}
+                value={rejectModalData.reason}
+                onChange={(e) =>
+                  setRejectModalData((prev) => ({ ...prev, reason: e.target.value }))
+                }
+                placeholder="ex : Établissement situé au-delà de 3 000 m ou registre non conforme..."
+                className="w-full bg-white text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] rounded-xl p-3 outline-none font-sans font-medium"
+              />
             </div>
           )}
-        </Modal>
-
-        {/* TIROIR DE DÉTAIL DU COMMERCE */}
-        <Modal
-          isOpen={Boolean(selectedDrawerMerchant)}
-          onClose={() => setSelectedDrawerMerchant(null)}
-          title={selectedDrawerMerchant?.name || 'Fiche Établissement'}
-          description="Informations certifiées transmises lors de la demande d'adhésion."
-          footer={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setSelectedDrawerMerchant(null)}
-            >
-              Fermer
-            </Button>
-          }
-        >
-          {selectedDrawerMerchant && (() => {
-            const modalLat = selectedDrawerMerchant.location?.lat ?? selectedDrawerMerchant.lat;
-            const modalLng = selectedDrawerMerchant.location?.lng ?? selectedDrawerMerchant.lng;
-            const modalStreet = selectedDrawerMerchant.address?.street ?? selectedDrawerMerchant.street ?? 'Montfleury';
-            const modalPhone = selectedDrawerMerchant.phone ?? '+216 -- --- ---';
-            const modalDist = (modalLat != null && modalLng != null) ? distanceFromEssect(modalLat, modalLng) : (selectedDrawerMerchant.distanceM ?? 500);
-
-            return (
-              <div className="space-y-3 py-2 text-xs">
-                <div className="p-3 rounded-xl bg-[#0D0F12] border border-[#262A33] space-y-1.5">
-                  <p>📍 <strong>Adresse :</strong> {modalStreet}</p>
-                  <p>📞 <strong>Téléphone :</strong> {modalPhone}</p>
-                  <p>🗺️ <strong>Coordonnées GPS :</strong> {modalLat ?? '36.7885'}, {modalLng ?? '10.1762'}</p>
-                  <p>
-                    📏 <strong>Distance de l'ESSECT :</strong>{' '}
-                    <span className="text-[#CCFF00] font-bold">
-                      {modalDist} mètres (Éligible ≤ 3000 m)
-                    </span>
-                  </p>
-                  <p>📋 <strong>Statut Actuel :</strong> {selectedDrawerMerchant.status}</p>
-                  {selectedDrawerMerchant.statusReason && (
-                    <p className="text-[#8A92A6]">
-                      💬 <strong>Remarque :</strong> {selectedDrawerMerchant.statusReason}
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
         </Modal>
       </div>
 

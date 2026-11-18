@@ -1,4 +1,4 @@
-// 💡 Concept & Analogie : Comme un billet de concert haute sécurité avec un hologramme animé et un code-barres qui change constamment pour empêcher les copies d'écran illicites.
+// 💡 Concept & Analogie : Comme un billet de concert haute sécurité avec un QR code rotatif qui change constamment pour empêcher les copies d'écran illicites.
 // 🔄 Comparaison React / Flutter : En React, `qrcode.react` rend le QR SVG avec un anneau de compte à rebours SVG ; en Flutter, `qr_flutter` et un `CustomPaint` réalisent l'équivalent.
 // 🎯 À retenir pour la soutenance : "Le composant calcule localement la rotation cryptographique 30 secondes et présente à la fois le QR code dynamique et le code de secours à 6 chiffres."
 // Module : Interface Living Ticket React
@@ -34,17 +34,14 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
       }
     }
 
-    // Calcul initial immédiat
     updateTicket();
 
-    // Horloge d'animation et de rotation (rafraîchie chaque seconde)
     const interval = setInterval(() => {
       const nowMs = Date.now();
       const currentSeconds = Math.floor((nowMs % 30000) / 1000);
       const remaining = 30 - currentSeconds;
       setSecondsRemaining(remaining);
 
-      // Renouvellement à l'expiration de la fenêtre de 30 secondes
       if (remaining === 30 || !ticketData || ticketData.windowIndex !== getWindowIndex(nowMs)) {
         updateTicket();
       }
@@ -56,46 +53,46 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
     };
   }, [ticketKey, orderId]);
 
-  // Rayon et circonférence de l'anneau de progression SVG
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (secondsRemaining / 30) * circumference;
 
   return (
-    <div className="flex flex-col items-center bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+    <div className="flex flex-col items-center bg-[#FAF6EE] border-2 border-[#141210] rounded-xl p-6 shadow-[6px_6px_0px_#141210] relative overflow-hidden text-[#141210]">
       {/* Pastille Live et statut temps réel */}
-      <div className="flex items-center gap-2 mb-4 bg-gray-800/80 px-4 py-1.5 rounded-full border border-gray-700">
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-        <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+      <div className="flex items-center gap-2 mb-4 bg-white px-4 py-1.5 rounded-full border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#15803D] animate-ping" />
+        <span className="text-xs font-black text-[#15803D] uppercase tracking-wider">
           Living Ticket Actif
         </span>
       </div>
 
-      {/* Cadre central du QR Code avec anneau de synchronisation */}
-      <div className="relative p-4 bg-white rounded-2xl shadow-inner my-2 flex items-center justify-center">
+      {/* Cadre central du QR Code */}
+      <div className="relative p-4 bg-white rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] my-2 flex items-center justify-center">
         {ticketData?.qrPayload ? (
           <QRCodeSVG
             value={ticketData.qrPayload}
             size={220}
             level="H"
             includeMargin={false}
+            fgColor="#141210"
             className="transition-opacity duration-300"
           />
         ) : (
-          <div className="w-[220px] h-[220px] flex items-center justify-center text-gray-500 text-sm">
+          <div className="w-[220px] h-[220px] flex items-center justify-center text-[#777] text-sm font-bold">
             {error ? 'Erreur de génération' : 'Chargement du ticket...'}
           </div>
         )}
       </div>
 
-      {/* Code de secours à 6 chiffres formaté pour lecture humaine */}
+      {/* Code de secours à 6 chiffres formaté */}
       <div className="mt-4 text-center">
-        <span className="text-xs text-gray-400 block mb-1">Code de secours (si caméra indisponible) :</span>
-        <div className="inline-flex items-center gap-1 font-mono text-2xl font-black text-[#CCFF00] tracking-widest bg-gray-800/90 px-4 py-1.5 rounded-xl border border-gray-700">
+        <span className="text-xs text-[#666] font-bold block mb-1">Code de secours (si caméra indisponible) :</span>
+        <div className="inline-flex items-center gap-1 font-anton text-2xl font-black text-[#141210] tracking-widest bg-[#FFD000] px-4 py-1.5 rounded-lg border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
           {ticketData?.code6 ? (
             <>
               <span>{ticketData.code6.slice(0, 3)}</span>
-              <span className="text-gray-500">-</span>
+              <span className="text-[#141210]">-</span>
               <span>{ticketData.code6.slice(3, 6)}</span>
             </>
           ) : (
@@ -105,7 +102,7 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
       </div>
 
       {/* Anneau de décompte circulaire 30 secondes */}
-      <div className="flex items-center gap-3 mt-5 bg-gray-950/60 px-5 py-2.5 rounded-2xl border border-gray-800/80">
+      <div className="flex items-center gap-3 mt-5 bg-white px-5 py-2.5 rounded-lg border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
         <div className="relative w-8 h-8 flex items-center justify-center">
           <svg className="w-8 h-8 transform -rotate-90">
             <circle
@@ -114,7 +111,7 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
               r={radius / 2}
               stroke="currentColor"
               strokeWidth="3"
-              className="text-gray-800"
+              className="text-[#E5E7EB]"
               fill="transparent"
             />
             <circle
@@ -123,27 +120,27 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
               r={radius / 2}
               stroke="currentColor"
               strokeWidth="3"
-              className="text-[#CCFF00] transition-all duration-1000 ease-linear"
+              className="text-[#E51C23] transition-all duration-1000 ease-linear"
               fill="transparent"
               strokeDasharray={circumference / 2}
               strokeDashoffset={strokeDashoffset / 2}
               strokeLinecap="round"
             />
           </svg>
-          <span className="absolute text-[10px] font-bold text-gray-300">
+          <span className="absolute text-[10px] font-black text-[#141210]">
             {secondsRemaining}
           </span>
         </div>
         <div className="text-left">
-          <p className="text-xs font-medium text-gray-300">Renouvellement automatique</p>
-          <p className="text-[10px] text-gray-500">Protection anti-capture d'écran</p>
+          <p className="text-xs font-bold text-[#141210]">Renouvellement automatique</p>
+          <p className="text-[10px] text-[#666] font-medium">Protection anti-capture d'écran</p>
         </div>
       </div>
 
       {/* Identifiant de commande */}
       {orderCode && (
-        <div className="mt-3 text-[11px] font-mono text-gray-400">
-          N° de retrait : <span className="text-gray-200 font-semibold">{orderCode}</span>
+        <div className="mt-3 text-[11px] font-mono text-[#666] font-bold">
+          N° de retrait : <span className="text-[#141210] font-black">{orderCode}</span>
         </div>
       )}
     </div>

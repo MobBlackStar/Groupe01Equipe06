@@ -13,7 +13,7 @@ export function RoleRoute({ allowedRoles = [] }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0D0F12] text-[#CCFF00] font-mono text-xs">
+      <div className="flex h-screen items-center justify-center bg-[#F4EFE6] text-[#E51C23] font-bold text-sm">
         Vérification des autorisations CampusSave...
       </div>
     );

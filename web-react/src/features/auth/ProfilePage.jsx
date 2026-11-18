@@ -37,7 +37,6 @@ export default function ProfilePage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Synchronisation avec les données profil dès chargement
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -60,7 +59,6 @@ export default function ProfilePage() {
     { value: FILIERES.COMPTABILITE, label: '📑 Comptabilité & Fiscalité' },
   ];
 
-  // Calcul du palier de fidélité et progression
   const points = profile?.ecoPoints || 240;
   let currentTier = LOYALTY_TIERS.GRAINE;
   let nextThreshold = LOYALTY_THRESHOLDS.POUSSE;
@@ -155,17 +153,17 @@ export default function ProfilePage() {
   const displayRole = role || ROLES.STUDENT;
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* HEADER PROFIL */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#262A33]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b-2 border-[#141210]">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#161920] border border-[#262A33] flex items-center justify-center text-3xl shadow-lg">
+            <div className="w-16 h-16 rounded-xl bg-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex items-center justify-center text-3xl">
               {displayRole === ROLES.MERCHANT ? '🏪' : '🎓'}
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-white">
+                <h1 className="text-xl sm:text-2xl font-anton uppercase text-[#141210] tracking-wide">
                   {formData.displayName || 'Profil Utilisateur'}
                 </h1>
                 <Badge
@@ -173,15 +171,15 @@ export default function ProfilePage() {
                     displayRole === ROLES.ADMIN
                       ? 'purple'
                       : displayRole === ROLES.MERCHANT
-                      ? 'orange'
-                      : 'lime'
+                      ? 'yellow'
+                      : 'green'
                   }
                   size="md"
                 >
                   {displayRole}
                 </Badge>
               </div>
-              <p className="text-xs text-[#8A92A6] mt-0.5">
+              <p className="text-xs text-[#555] font-bold mt-0.5">
                 {user?.email || 'donyesbejaoui27@gmail.com'}
               </p>
             </div>
@@ -200,38 +198,38 @@ export default function ProfilePage() {
 
         {/* SECTION CARTE DE FIDÉLITÉ & ECOPOINTS (SI ÉTUDIANT) */}
         {displayRole === ROLES.STUDENT && (
-          <Card className="p-6 bg-[#161920] border-[#262A33] relative overflow-hidden">
+          <Card className="p-6 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] relative overflow-hidden">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#CCFF00]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#15803D]">
                   🌱 Statut Environnemental &amp; Fidélité
                 </span>
-                <h3 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
+                <h3 className="text-lg font-anton uppercase text-[#141210] mt-1 flex items-center gap-2">
                   <span>{tierIcon}</span>
                   <span>Palier {currentTier}</span>
                 </h3>
               </div>
               <div className="text-left sm:text-right">
-                <span className="text-2xl font-black text-[#CCFF00] tracking-tight">
+                <span className="text-3xl font-anton text-[#15803D] tracking-tight">
                   {points}
                 </span>
-                <span className="text-xs text-[#8A92A6] block">ÉcoPoints cumulés</span>
+                <span className="text-xs text-[#555] font-bold block">ÉcoPoints cumulés</span>
               </div>
             </div>
 
             {/* Jauge d'évolution */}
             <div className="space-y-1.5 mt-2">
-              <div className="flex justify-between text-xs text-[#8A92A6]">
+              <div className="flex justify-between text-xs text-[#555] font-bold">
                 <span>Progression vers le palier supérieur</span>
-                <span className="text-white font-medium">{points} / {nextThreshold} pts</span>
+                <span className="text-[#141210]">{points} / {nextThreshold} pts</span>
               </div>
-              <div className="w-full h-3 bg-[#0D0F12] rounded-full overflow-hidden border border-[#262A33]">
+              <div className="w-full h-3.5 bg-white rounded-full overflow-hidden border-2 border-[#141210]">
                 <div
-                  className="h-full bg-gradient-to-r from-[#10b981] to-[#CCFF00] rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(204,255,0,0.4)]"
+                  className="h-full bg-[#15803D] transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <p className="text-[11px] text-[#8A92A6] text-right pt-1">
+              <p className="text-[11px] text-[#666] font-bold text-right pt-1">
                 Plus que {Math.max(0, nextThreshold - points)} points pour débloquer un panier surprise gratuit !
               </p>
             </div>
@@ -239,8 +237,8 @@ export default function ProfilePage() {
         )}
 
         {/* FORMULAIRE DE MODIFICATION */}
-        <Card className="p-6 sm:p-8 bg-[#161920] border-[#262A33]">
-          <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2">
+        <Card className="p-6 sm:p-8 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210]">
+          <h3 className="text-base font-anton uppercase text-[#141210] mb-6 flex items-center gap-2 tracking-wide">
             <span>⚙️</span> Informations Personnelles &amp; Coordonnées
           </h3>
 
@@ -279,19 +277,19 @@ export default function ProfilePage() {
             )}
 
             {/* PRÉFÉRENCES DE NOTIFICATIONS */}
-            <div className="pt-4 border-t border-[#262A33]">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#8A92A6] mb-3">
+            <div className="pt-4 border-t-2 border-[#141210]/15">
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#141210] mb-3">
                 Préférences d'Alertes Anti-Gaspi
               </h4>
               <div className="space-y-3">
-                <label className="flex items-center justify-between p-3 rounded-xl bg-[#0D0F12] border border-[#262A33] cursor-pointer hover:border-[#383e4c] transition-colors">
+                <label className="flex items-center justify-between p-3 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] cursor-pointer hover:bg-[#F4EFE6] transition-colors">
                   <div className="flex items-center gap-3">
                     <span className="text-xl">🔔</span>
                     <div>
-                      <span className="text-sm font-medium text-white block">
+                      <span className="text-sm font-bold text-[#141210] block">
                         Notifications Push (Mobile &amp; Web)
                       </span>
-                      <span className="text-[11px] text-[#8A92A6]">
+                      <span className="text-[11px] text-[#666] font-medium">
                         Alertes en temps réel quand une offre baisse de prix près de l'ESSECT
                       </span>
                     </div>
@@ -300,18 +298,18 @@ export default function ProfilePage() {
                     type="checkbox"
                     checked={formData.notificationPrefs.push}
                     onChange={() => handleTogglePref('push')}
-                    className="w-5 h-5 accent-[#CCFF00] rounded cursor-pointer"
+                    className="w-5 h-5 accent-[#E51C23] rounded cursor-pointer"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-3 rounded-xl bg-[#0D0F12] border border-[#262A33] cursor-pointer hover:border-[#383e4c] transition-colors">
+                <label className="flex items-center justify-between p-3 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] cursor-pointer hover:bg-[#F4EFE6] transition-colors">
                   <div className="flex items-center gap-3">
                     <span className="text-xl">✉️</span>
                     <div>
-                      <span className="text-sm font-medium text-white block">
+                      <span className="text-sm font-bold text-[#141210] block">
                         Emails Récapitulatifs &amp; Billets
                       </span>
-                      <span className="text-[11px] text-[#8A92A6]">
+                      <span className="text-[11px] text-[#666] font-medium">
                         Réception immédiate du justificatif et du récapitulatif de paiement
                       </span>
                     </div>
@@ -320,7 +318,7 @@ export default function ProfilePage() {
                     type="checkbox"
                     checked={formData.notificationPrefs.email}
                     onChange={() => handleTogglePref('email')}
-                    className="w-5 h-5 accent-[#CCFF00] rounded cursor-pointer"
+                    className="w-5 h-5 accent-[#E51C23] rounded cursor-pointer"
                   />
                 </label>
               </div>

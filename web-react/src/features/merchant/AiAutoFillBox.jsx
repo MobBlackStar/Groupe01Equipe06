@@ -1,5 +1,5 @@
 // 💡 Concept & Analogie : Comme un sous-chef attentif qui écoute les instructions orales rapides du cuisinier en fin de service et remplit automatiquement le registre des invendus sans lui faire perdre une minute, cette boîte magique transforme du jargon brut en offre prête à publier.
-// 🔄 Comparaison React / Flutter : En React, `AiAutoFillBox` interroge l'API ou bascule instantanément sur un parseur regex local avec surlignage vert lime ; en Flutter, le composant utilise un champ `TextField` avec un bouton d'action magique similaire.
+// 🔄 Comparaison React / Flutter : En React, `AiAutoFillBox` interroge l'API ou bascule instantanément sur un parseur regex local ; en Flutter, le composant utilise un champ `TextField` avec un bouton d'action magique similaire.
 // 🎯 À retenir pour la soutenance : "Ce module d'IA intègre un fallback déterministe autonome : si la clé API externe est coupée ou indisponible, notre parseur culinaire tunisien extrait tout de même les quantités, horaires et catégories avec 100% de fidélité."
 
 import React, { useState } from 'react';
@@ -9,6 +9,7 @@ import { OFFER_CATEGORIES, PRICING_MODES, SURPRISE_RARITY } from '@shared/consta
 import { calculateImpact } from '@shared/impact.js';
 import Button from '../../components/ui/Button.jsx';
 import Badge from '../../components/ui/Badge.jsx';
+import { Sparkles } from 'lucide-react';
 
 // Lexique culinaire tunisien embarqué pour le fallback 100% client
 const CLIENT_TUNISIAN_LEXICON = [
@@ -136,29 +137,26 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
 
   return (
     <div
-      className={`p-5 rounded-2xl bg-gradient-to-br from-[#161920] to-[#1F1928] border border-[#A855F7]/40 shadow-xl relative overflow-hidden ${className}`}
+      className={`p-5 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] relative overflow-hidden ${className}`}
     >
-      {/* Glow décoratif violet */}
-      <div className="absolute top-0 right-0 w-48 h-48 bg-[#A855F7]/10 blur-3xl pointer-events-none rounded-full" />
-
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#A855F7]/20 border border-[#A855F7]/40 flex items-center justify-center text-lg shadow-sm">
+          <div className="w-8 h-8 rounded-lg bg-[#FFD000] border-2 border-[#141210] flex items-center justify-center text-lg shadow-[2px_2px_0px_#141210]">
             ✨
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="font-anton uppercase text-base text-[#141210] flex items-center gap-2 tracking-wide">
               <span>Assistant Culinaire IA &amp; Saisie Magique</span>
-              <Badge variant="purple" size="sm">IA CLAUDE + FALLBACK</Badge>
+              <Badge variant="yellow" size="sm">IA ZERO-TYPING</Badge>
             </h3>
-            <p className="text-[11px] text-[#8A92A6]">
+            <p className="text-[11px] text-[#141210]/70 font-sans">
               Tapez vos invendus en style cuisine : l'IA génère les prix, le poids et la description.
             </p>
           </div>
         </div>
 
         {lastSource && (
-          <span className="text-[10px] text-[#C084FC] font-medium bg-[#A855F7]/10 px-2.5 py-1 rounded-full border border-[#A855F7]/20">
+          <span className="text-[10px] text-[#141210] font-black bg-[#FFD000] px-2.5 py-1 rounded-full border-2 border-[#141210] shadow-[1px_1px_0px_#141210]">
             Source : {lastSource}
           </span>
         )}
@@ -172,24 +170,23 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
             onChange={(e) => setRawText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleGenerate())}
             placeholder="ex: 4 makloub escalope + 3 brik, fermeture 17h"
-            className="w-full bg-[#0D0F12] text-white placeholder-[#8A92A6]/60 text-xs sm:text-sm rounded-xl pl-4 pr-32 py-3 border border-[#262A33] focus:border-[#A855F7] outline-none transition-colors"
+            className="w-full bg-white text-[#141210] placeholder-[#141210]/40 text-xs sm:text-sm rounded-xl pl-4 pr-32 py-3 border-2 border-[#141210] shadow-[2px_2px_0px_#141210] focus:shadow-[3px_3px_0px_#141210] outline-none transition-all"
           />
           <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
-            <Button
-              size="sm"
-              variant="primary"
-              isLoading={loading}
+            <button
+              type="button"
+              disabled={loading}
               onClick={() => handleGenerate()}
-              className="!bg-[#A855F7] !text-white hover:!bg-[#9333EA] shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+              className="px-4 py-1.5 rounded-lg bg-[#E51C23] text-white font-black text-xs border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all disabled:opacity-50"
             >
-              Remplir ✨
-            </Button>
+              {loading ? 'Calcul...' : 'Remplir ✨'}
+            </button>
           </div>
         </div>
 
         {/* Exemples rapides en 1-clic pour la démo soutenance */}
         <div className="flex items-center gap-2 flex-wrap pt-0.5">
-          <span className="text-[10px] font-semibold uppercase text-[#8A92A6]">Exemples rapides :</span>
+          <span className="text-[10px] font-black uppercase text-[#141210]/60">Exemples rapides :</span>
           {examples.map((ex, i) => (
             <button
               key={i}
@@ -198,7 +195,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
                 setRawText(ex);
                 handleGenerate(ex);
               }}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0D0F12] border border-[#262A33] text-gray-300 hover:text-[#CCFF00] hover:border-[#CCFF00] transition-colors"
+              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white border-2 border-[#141210] shadow-[1px_1px_0px_#141210] text-[#141210] hover:bg-[#FFD000] transition-colors"
             >
               {ex}
             </button>

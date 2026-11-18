@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="100" height="80">
+  <g transform="rotate(3 50 40)">
+    <!-- Griddle Imperial Crown -->
+    <path d="M12 62 L88 62 L84 26 L62 46 L50 14 L38 46 L16 26 Z" 
+          fill="#FFD000" stroke="#141210" stroke-width="3.5" stroke-linejoin="round"/>
+    <rect x="12" y="62" width="76" height="10" rx="3" fill="#E51C23" stroke="#141210" stroke-width="3"/>
+    <circle cx="50" cy="14" r="5" fill="#FAF6EE" stroke="#141210" stroke-width="2"/>
+    <circle cx="16" cy="26" r="4" fill="#FAF6EE" stroke="#141210" stroke-width="2"/>
+    <circle cx="84" cy="26" r="4" fill="#FAF6EE" stroke="#141210" stroke-width="2"/>
+    <circle cx="38" cy="67" r="2.5" fill="#FAF6EE"/>
+    <circle cx="50" cy="67" r="2.5" fill="#FAF6EE"/>
+    <circle cx="62" cy="67" r="2.5" fill="#FAF6EE"/>
+  </g>
+</svg>

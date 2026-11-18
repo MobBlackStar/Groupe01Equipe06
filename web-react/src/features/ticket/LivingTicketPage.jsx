@@ -61,9 +61,9 @@ export default function LivingTicketPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D0F12] flex flex-col items-center justify-center gap-4 text-white">
+      <div className="min-h-screen bg-[#F4EFE6] flex flex-col items-center justify-center gap-4 text-[#141210]">
         <Spinner size="lg" />
-        <p className="text-xs text-slate-400">Génération du Living Ticket sécurisé...</p>
+        <p className="text-xs text-[#555] font-bold">Génération du Living Ticket sécurisé...</p>
       </div>
     );
   }
@@ -71,17 +71,17 @@ export default function LivingTicketPage() {
   const currentTicket = ticket || FALLBACK_TICKET;
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto space-y-6">
         {/* En-tête navigation */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/orders"
-            className="text-xs font-semibold text-slate-400 hover:text-[#CCFF00] transition-colors"
+            className="text-xs font-anton uppercase tracking-wider text-[#141210] hover:text-[#E51C23] transition-colors"
           >
             ← Mes commandes
           </Link>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs font-bold text-[#666]">
             Montfleury • Campus ESSECT
           </div>
         </div>
@@ -93,29 +93,24 @@ export default function LivingTicketPage() {
         <button
           type="button"
           onClick={() => setShowUnboxing(true)}
-          className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border border-yellow-400/50 text-yellow-300 font-bold text-xs hover:bg-yellow-400/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/10"
+          className="w-full btn-griddle-yellow py-3.5 text-xs font-anton tracking-wider shadow-[3px_3px_0px_#141210] cursor-pointer"
         >
           <span>🎁</span>
-          <span>Simuler / Revoir l'ouverture du Panier Surprise (Unboxing)</span>
+          <span>SIMULER / REVOIR L'UNBOXING DU PANIER SURPRISE</span>
         </button>
 
-        {/* Modal Unboxing Reveal */}
-        <UnboxingReveal
-          isOpen={showUnboxing}
-          onClose={() => setShowUnboxing(false)}
-          order={currentTicket}
-        />
-
-        {/* Conseils et Consignes de retrait */}
-        <div className="p-4 rounded-2xl bg-[#161920] border border-white/5 space-y-2 text-xs">
-          <h4 className="font-bold text-white flex items-center gap-2">
-            <span>🛡️</span>
-            <span>Sécurité Anti-Fraude & Conseils</span>
-          </h4>
-          <p className="text-slate-400 leading-relaxed">
-            Ce QR code est dynamique et ne peut pas être partagé par capture d'écran. Présentez directement cet écran au commerçant qui le scannera avec son terminal sécurisé.
-          </p>
-        </div>
+        {/* Modale d'animation Unboxing */}
+        {showUnboxing && (
+          <UnboxingReveal
+            items={[
+              { title: 'Croissant aux Amandes', quantity: 2, valueMillimes: 3600 },
+              { title: 'Pain au Chocolat Beurre', quantity: 2, valueMillimes: 3200 },
+            ]}
+            rarity="LEGENDARY"
+            merchantName={currentTicket.merchantName}
+            onClose={() => setShowUnboxing(false)}
+          />
+        )}
       </div>
     </div>
   );

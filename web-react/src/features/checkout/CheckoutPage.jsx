@@ -8,18 +8,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
-import { calculateWalkingMinutes } from '@shared/geo.js';
+import { formatTunisTime } from '../../lib/formatters.js';
 import { Spinner } from '../../components/ui/index.js';
 import {
   Clock,
-  Store,
-  MapPin,
   CreditCard,
   Gift,
   AlertTriangle,
-  ArrowRight,
-  ShieldCheck,
-  Flame,
 } from 'lucide-react';
 
 const MOCK_ORDER = {
@@ -45,7 +40,7 @@ export default function CheckoutPage() {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedReward, setSelectedReward] = useState('NONE'); // 'NONE', 'DISCOUNT_20', 'FREE_BASKET'
+  const [selectedReward, setSelectedReward] = useState('NONE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -94,9 +89,9 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0E0D0C] flex flex-col items-center justify-center gap-4 text-[#F6F1E7]">
+      <div className="min-h-screen bg-[#F4EFE6] flex flex-col items-center justify-center gap-4 text-[#141210]">
         <Spinner size="lg" />
-        <p className="text-xs text-stone-400 font-mono">Édition de votre reçu thermique sécurisé...</p>
+        <p className="text-xs text-[#555] font-bold">Édition de votre reçu thermique sécurisé...</p>
       </div>
     );
   }
@@ -122,12 +117,6 @@ export default function CheckoutPage() {
 
   const finalTotalMillimes = Math.max(0, subtotalMillimes - discountAmount);
   const totalSavedMillimes = baseSaved + discountAmount;
-
-  const formatTime = (isoString) => {
-    if (!isoString) return '--h--';
-    const d = new Date(isoString);
-    return `${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}`;
-  };
 
   const handleCancel = async () => {
     if (!window.confirm('Voulez-vous vraiment annuler votre réservation ? Le stock sera remis en vente pour d autres étudiants.')) {
@@ -174,39 +163,39 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto space-y-6">
         
         {/* Navigation retour */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/explore"
-            className="text-xs font-mono font-bold uppercase tracking-wider text-stone-400 hover:text-[#F5C400] transition-colors"
+            className="text-xs font-anton uppercase tracking-wider text-[#141210] hover:text-[#E51C23] transition-colors"
           >
             ← Retour au catalogue
           </Link>
-          <span className="text-xs font-mono text-[#F5C400]">
+          <span className="text-xs font-mono font-bold text-[#E51C23]">
             RÉSERVATION EN COURS
           </span>
         </div>
 
         {/* Bannière 10 minutes décompte */}
         <div
-          className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
+          className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all shadow-[4px_4px_0px_#141210] ${
             isExpired
-              ? 'bg-[#EE3124]/15 border-[#EE3124] text-[#EE3124]'
+              ? 'bg-[#FEE2E2] border-[#DC2626] text-[#B91C1C]'
               : secondsLeft < 180
-              ? 'bg-[#F5C400]/15 border-[#F5C400] text-[#F5C400] animate-pulse'
-              : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+              ? 'bg-[#FEF08A] border-[#141210] text-[#854D0E] animate-pulse'
+              : 'bg-[#DCFCE7] border-[#141210] text-[#15803D]'
           }`}
         >
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 shrink-0" />
             <div>
-              <h3 className="font-oswald uppercase text-sm font-bold tracking-wide">
+              <h3 className="font-anton uppercase text-sm tracking-wide">
                 {isExpired ? 'Réservation Expirée' : 'Prix et stock verrouillés :'}
               </h3>
-              <p className="text-[11px] font-mono opacity-80">
+              <p className="text-[11px] font-mono font-bold">
                 {isExpired
                   ? 'Le créneau de 10 min est dépassé. Le stock a été libéré.'
                   : 'Finalisez votre paiement avant la fin du décompte.'}
@@ -219,54 +208,54 @@ export default function CheckoutPage() {
         </div>
 
         {errorMessage && (
-          <div className="p-3.5 rounded-2xl bg-[#EE3124]/15 border border-[#EE3124]/40 text-[#EE3124] text-xs font-bold flex items-center gap-2">
+          <div className="p-3.5 rounded-xl bg-[#FEE2E2] border-2 border-[#DC2626] text-[#B91C1C] text-xs font-bold flex items-center gap-2 shadow-[2px_2px_0px_#DC2626]">
             <AlertTriangle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {/* =========================================================================
-            REÇU THERMIQUE PHYSIQUE SERRATÉ (image.png style receipt)
+            REÇU THERMIQUE PHYSIQUE SERRATÉ
             ========================================================================= */}
-        <div className="relative rounded-2xl bg-[#F6F1E7] text-[#161412] p-6 sm:p-8 font-mono text-xs shadow-2xl border border-black/10">
+        <div className="relative rounded-xl bg-[#FAF6EE] text-[#141210] p-6 sm:p-8 font-mono text-xs shadow-[6px_6px_0px_#141210] border-2 border-[#141210]">
           
           {/* En-tête du Reçu */}
-          <div className="text-center pb-4 border-b-2 border-dashed border-[#161412]/30">
-            <p className="font-oswald uppercase text-xl font-black tracking-wider text-[#161412]">
+          <div className="text-center pb-4 border-b-2 border-dashed border-[#141210]/30">
+            <p className="font-anton uppercase text-2xl font-black tracking-wider text-[#141210]">
               CAMPUSSAVE · REÇU DE CAISSE
             </p>
-            <p className="text-[10px] text-stone-600 mt-0.5">
+            <p className="text-[10px] text-[#555] mt-0.5 font-bold">
               ESSECT MONTFLEURY · TUNIS (2026)
             </p>
-            <div className="mt-2 inline-block px-3 py-0.5 rounded-full bg-[#161412] text-[#F6F1E7] font-bold text-[11px]">
+            <div className="mt-2 inline-block px-3 py-0.5 rounded-full bg-[#141210] text-white font-bold text-[11px]">
               CODE RÉSERVATION : #{currentOrder.orderCode || 'CS-8K4M9'}
             </div>
           </div>
 
           {/* Métadonnées service */}
-          <div className="py-3 flex justify-between text-[11px] text-stone-600 border-b border-dashed border-[#161412]/20">
+          <div className="py-3 flex justify-between text-[11px] text-[#555] font-bold border-b-2 border-dashed border-[#141210]/20">
             <span>COMMERCE : {currentOrder.merchantName}</span>
             <span>DATE : 18/11/2026</span>
           </div>
 
           {/* Lignes d'articles décomposées */}
-          <div className="py-4 space-y-2 border-b-2 border-dashed border-[#161412]/30 text-xs">
-            <div className="flex justify-between font-bold">
+          <div className="py-4 space-y-2 border-b-2 border-dashed border-[#141210]/30 text-xs">
+            <div className="flex justify-between font-black text-sm text-[#141210]">
               <span>{currentOrder.quantity}x {currentOrder.offerTitle || currentOrder.title}</span>
               <span>{formatTND(subtotalMillimes)}</span>
             </div>
-            <div className="flex justify-between text-[11px] text-stone-600 pl-4">
+            <div className="flex justify-between text-[11px] text-[#555] font-bold pl-4">
               <span>Prix unitaire scellé :</span>
               <span>{formatTND(currentOrder.lockedUnitPriceMillimes)}</span>
             </div>
-            <div className="flex justify-between text-[11px] text-stone-600 pl-4">
+            <div className="flex justify-between text-[11px] text-[#555] font-bold pl-4">
               <span>Créneau retrait sur place :</span>
-              <span>{formatTime(currentOrder.pickupStartAt)} – {formatTime(currentOrder.pickupEndAt)}</span>
+              <span>{formatTunisTime(currentOrder.pickupStartAt)} – {formatTunisTime(currentOrder.pickupEndAt)}</span>
             </div>
 
             {/* Récompense déduite si sélectionnée */}
             {discountAmount > 0 && (
-              <div className="flex justify-between text-[#2E6F40] font-bold pt-1">
+              <div className="flex justify-between text-[#15803D] font-black pt-1">
                 <span>Avantage EcoPoints appliqué :</span>
                 <span>-{formatTND(discountAmount)}</span>
               </div>
@@ -274,19 +263,19 @@ export default function CheckoutPage() {
           </div>
 
           {/* Sélecteur Récompense EcoPoints */}
-          <div className="my-4 p-3.5 rounded-xl bg-stone-200/70 border border-stone-300 space-y-2 font-sans">
-            <span className="text-[11px] font-mono uppercase font-bold text-stone-700 flex items-center gap-1.5">
-              <Gift className="w-3.5 h-3.5 text-[#EE3124]" />
+          <div className="my-4 p-3.5 rounded-lg bg-white border-2 border-[#141210] space-y-2 font-sans shadow-[2px_2px_0px_#141210]">
+            <span className="text-[11px] font-anton uppercase text-[#141210] flex items-center gap-1.5">
+              <Gift className="w-3.5 h-3.5 text-[#E51C23]" />
               <span>Avantage Fidélité Disponible :</span>
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => setSelectedReward(selectedReward === 'DISCOUNT_20' ? 'NONE' : 'DISCOUNT_20')}
-                className={`p-2 rounded-lg border text-left transition-all ${
+                className={`p-2 rounded-lg border-2 text-left transition-all cursor-pointer ${
                   selectedReward === 'DISCOUNT_20'
-                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] font-bold'
-                    : 'bg-white text-stone-800 border-stone-300 hover:border-stone-400'
+                    ? 'bg-[#15803D] text-white border-[#141210] font-black shadow-[2px_2px_0px_#141210]'
+                    : 'bg-[#FAF6EE] text-[#141210] border-[#141210] hover:bg-white font-bold'
                 }`}
               >
                 🎟️ -20% Immédiat (100 pts)
@@ -294,10 +283,10 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => setSelectedReward(selectedReward === 'FREE_BASKET' ? 'NONE' : 'FREE_BASKET')}
-                className={`p-2 rounded-lg border text-left transition-all ${
+                className={`p-2 rounded-lg border-2 text-left transition-all cursor-pointer ${
                   selectedReward === 'FREE_BASKET'
-                    ? 'bg-[#2E6F40] text-white border-[#2E6F40] font-bold'
-                    : 'bg-white text-stone-800 border-stone-300 hover:border-stone-400'
+                    ? 'bg-[#15803D] text-white border-[#141210] font-black shadow-[2px_2px_0px_#141210]'
+                    : 'bg-[#FAF6EE] text-[#141210] border-[#141210] hover:bg-white font-bold'
                 }`}
               >
                 🎁 Panier Offert (300 pts)
@@ -307,28 +296,28 @@ export default function CheckoutPage() {
 
           {/* Totaux & Économie */}
           <div className="pt-2 pb-4 space-y-1.5 font-mono">
-            <div className="flex justify-between text-xs text-stone-600">
+            <div className="flex justify-between text-xs text-[#555] font-bold">
               <span>PRIX INITIAL PUBLIC :</span>
               <span className="line-through">{formatTND(originalTotal)}</span>
             </div>
-            <div className="flex justify-between text-xs text-[#2E6F40] font-bold">
+            <div className="flex justify-between text-xs text-[#15803D] font-black">
               <span>ÉCONOMIE TOTALE SAUVÉE :</span>
               <span>{formatTND(totalSavedMillimes)}</span>
             </div>
-            <div className="flex justify-between items-baseline pt-2 border-t-2 border-dashed border-[#161412]/30">
-              <span className="font-oswald uppercase text-base font-black text-[#161412]">
+            <div className="flex justify-between items-baseline pt-2 border-t-2 border-dashed border-[#141210]/30">
+              <span className="font-anton uppercase text-base text-[#141210]">
                 TOTAL NET À RÉGLER :
               </span>
-              <span className="font-oswald text-2xl font-black text-[#EE3124]">
+              <span className="font-anton text-3xl text-[#E51C23]">
                 {formatTND(finalTotalMillimes)}
               </span>
             </div>
           </div>
 
           {/* Code-barres simulé en bas */}
-          <div className="my-4 pt-3 border-t border-dashed border-[#161412]/30 flex flex-col items-center">
-            <div className="h-7 w-full bg-[repeating-linear-gradient(90deg,#161412,#161412_2px,transparent_2px,transparent_4px)] opacity-80" />
-            <span className="text-[8px] tracking-widest text-stone-500 mt-1">CS-{currentOrder.id}-SECURE-HOLD</span>
+          <div className="my-4 pt-3 border-t-2 border-dashed border-[#141210]/30 flex flex-col items-center">
+            <div className="h-7 w-full bg-[repeating-linear-gradient(90deg,#141210,#141210_2px,transparent_2px,transparent_4px)] opacity-80" />
+            <span className="text-[8px] font-bold tracking-widest text-[#555] mt-1">CS-{currentOrder.id}-SECURE-HOLD</span>
           </div>
 
           {/* Actions : Payer Konnect / Annuler */}
@@ -337,17 +326,17 @@ export default function CheckoutPage() {
               type="button"
               onClick={handlePay}
               disabled={isSubmitting || isExpired}
-              className="w-full py-4 px-6 rounded-2xl bg-[#0E0D0C] text-[#F6F1E7] font-oswald uppercase text-base font-black tracking-wider hover:bg-[#EE3124] hover:text-white transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full btn-griddle-primary py-3.5 cursor-pointer"
             >
-              <CreditCard className="w-5 h-5 text-[#F5C400]" />
-              <span>{isSubmitting ? 'Paiement en cours...' : 'Payer via Konnect Test (3.800 DT) →'}</span>
+              <CreditCard className="w-5 h-5 text-white" />
+              <span>{isSubmitting ? 'Paiement en cours...' : `Payer via Konnect Test (${formatTND(finalTotalMillimes)}) →`}</span>
             </button>
 
             <button
               type="button"
               onClick={handleCancel}
               disabled={isCancelling}
-              className="w-full py-2.5 text-center text-xs font-mono font-bold text-stone-500 hover:text-[#EE3124] transition-colors"
+              className="w-full py-2.5 text-center text-xs font-mono font-bold text-[#555] hover:text-[#E51C23] transition-colors cursor-pointer"
             >
               {isCancelling ? 'Annulation...' : 'Annuler et libérer la réservation'}
             </button>
@@ -358,9 +347,9 @@ export default function CheckoutPage() {
             aria-hidden="true"
             className="w-full h-3 bg-repeat-x pointer-events-none mt-4 -mb-6 sm:-mb-8"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23F6F1E7'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23FAF6EE'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
               backgroundSize: '16px 10px',
-              filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))',
+              filter: 'drop-shadow(0 2px 2px rgba(20,18,16,0.15))',
             }}
           />
         </div>

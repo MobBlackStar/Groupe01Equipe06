@@ -8,7 +8,7 @@ import Footer from './Footer.jsx';
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white flex flex-col">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] flex flex-col">
       <Navbar />
       <main className="flex-1 pb-8">{children}</main>
       <Footer />

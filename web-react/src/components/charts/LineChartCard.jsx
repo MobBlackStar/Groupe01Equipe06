@@ -1,6 +1,6 @@
 // 💡 Concept & Analogie : Comme l'électrocardiogramme de l'activité économique et environnementale, cette courbe illustre l'évolution dans le temps des économies et de l'impact carbone.
 // 🔄 Comparaison React / Flutter : En React, `LineChartCard` utilise `recharts` avec rendu SVG dynamique vectoriel ; en Flutter, le dashboard utilise `LineChart` du package `fl_chart`.
-// 🎯 À retenir pour la soutenance : "Nous offrons une visualisation chronologique interactive avec dégradé semi-transparent pour matérialiser la progression continue de l'engagement étudiant."
+// 🎯 À retenir pour la soutenance : "Nous offrons une visualisation chronologique interactive pour matérialiser la progression continue."
 
 import React from 'react';
 import {
@@ -14,19 +14,19 @@ import {
 } from 'recharts';
 
 /**
- * Tooltip sombre personnalisé pour Recharts
+ * Tooltip Griddle néo-brutaliste pour Recharts
  */
 function CustomTooltip({ active, payload, label, unit = '', formatter }) {
   if (active && payload && payload.length) {
     const item = payload[0];
     const displayValue = formatter ? formatter(item.value) : `${item.value} ${unit}`.trim();
     return (
-      <div className="bg-[#161920]/95 backdrop-blur-md border border-[#CCFF00]/40 rounded-xl p-3 shadow-xl">
-        <p className="text-xs text-slate-400 font-medium mb-1">{label}</p>
-        <p className="text-sm font-bold text-white flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#CCFF00]" />
+      <div className="bg-white border-2 border-[#141210] rounded-lg p-3 shadow-[3px_3px_0px_#141210]">
+        <p className="text-xs text-[#666] font-bold mb-1">{label}</p>
+        <p className="text-sm font-black text-[#141210] flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#E51C23]" />
           <span>{item.name || 'Valeur'} :</span>
-          <span className="text-[#CCFF00]">{displayValue}</span>
+          <span className="text-[#E51C23] font-bold">{displayValue}</span>
         </p>
       </div>
     );
@@ -34,22 +34,6 @@ function CustomTooltip({ active, payload, label, unit = '', formatter }) {
   return null;
 }
 
-/**
- * Composant de graphique en ligne / aire
- * @param {Object} props
- * @param {string} props.title - Titre du graphique
- * @param {string} [props.subtitle] - Sous-titre explicatif
- * @param {Array<Object>} props.data - Données de la série temporelle
- * @param {string} props.xKey - Clé d'abscisse (ex: 'date', 'day')
- * @param {string} props.yKey - Clé d'ordonnée (ex: 'savedMillimes', 'co2Grams')
- * @param {string} [props.name='Impact'] - Nom de la série dans le tooltip
- * @param {string} [props.strokeColor='#CCFF00'] - Couleur de la ligne
- * @param {string} [props.gradientId='lineGradient'] - Identifiant unique SVG
- * @param {Function} [props.yFormatter] - Formateur d'ordonnée
- * @param {Function} [props.tooltipFormatter] - Formateur de tooltip
- * @param {React.ReactNode} [props.headerAction] - Action en haut à droite
- * @param {number} [props.height=260] - Hauteur du graphique en pixels
- */
 export default function LineChartCard({
   title,
   subtitle,
@@ -57,14 +41,13 @@ export default function LineChartCard({
   xKey = 'label',
   yKey = 'value',
   name = 'Valeur',
-  strokeColor = '#CCFF00',
+  strokeColor = '#E51C23',
   gradientId = 'lineGradient',
   yFormatter,
   tooltipFormatter,
   headerAction,
   height = 260,
 }) {
-  // Normalisation résiliente de la prop data (Array ou Objet clé-valeur)
   const normalizedData = React.useMemo(() => {
     if (Array.isArray(data)) return data;
     if (data && typeof data === 'object') {
@@ -81,12 +64,12 @@ export default function LineChartCard({
   }, [data]);
 
   return (
-    <div className="p-6 rounded-2xl bg-[#161920] border border-white/10 flex flex-col justify-between">
+    <div className="p-6 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col justify-between">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-base font-bold text-white tracking-tight">{title}</h3>
-          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+          <h3 className="text-base font-black text-[#141210] uppercase tracking-wide">{title}</h3>
+          {subtitle && <p className="text-xs text-[#666] font-medium mt-0.5">{subtitle}</p>}
         </div>
         {headerAction && <div className="self-start sm:self-auto">{headerAction}</div>}
       </div>
@@ -97,23 +80,25 @@ export default function LineChartCard({
           <AreaChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={strokeColor} stopOpacity={0.35} />
+                <stop offset="5%" stopColor={strokeColor} stopOpacity={0.25} />
                 <stop offset="95%" stopColor={strokeColor} stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#252A36" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#141210" strokeOpacity={0.12} vertical={false} />
             <XAxis
               dataKey={xKey}
-              stroke="#64748B"
+              stroke="#141210"
               fontSize={11}
+              fontWeight={600}
               tickLine={false}
-              axisLine={{ stroke: '#252A36' }}
+              axisLine={{ stroke: '#141210', strokeWidth: 1.5 }}
             />
             <YAxis
-              stroke="#64748B"
+              stroke="#141210"
               fontSize={11}
+              fontWeight={600}
               tickLine={false}
-              axisLine={{ stroke: '#252A36' }}
+              axisLine={{ stroke: '#141210', strokeWidth: 1.5 }}
               tickFormatter={yFormatter}
             />
             <Tooltip
@@ -128,7 +113,7 @@ export default function LineChartCard({
               dataKey={yKey}
               name={name}
               stroke={strokeColor}
-              strokeWidth={2.5}
+              strokeWidth={3}
               fillOpacity={1}
               fill={`url(#${gradientId})`}
             />

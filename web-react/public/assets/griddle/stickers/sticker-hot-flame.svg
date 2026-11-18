@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110" width="110" height="110">
+  <g transform="rotate(-4 55 55)">
+    <!-- 12-point badge -->
+    <polygon points="55,5 69,20 89,16 93,36 109,46 100,64 107,83 89,91 82,109 63,103 48,111 39,94 19,95 21,75 5,64 16,47 11,27 31,23 41,5" 
+             fill="#E51C23" stroke="#141210" stroke-width="3.5" stroke-linejoin="round"/>
+    <!-- Flame Graphic -->
+    <path d="M55 28 C55 28 67 43 67 56 C67 67 59 74 55 77 C51 74 43 67 43 56 C43 45 49 37 55 28 Z" fill="#FFD000"/>
+    <path d="M55 46 C55 46 61 54 61 62 C61 68 57 72 55 74 C53 72 49 68 49 62 C49 55 52 50 55 46 Z" fill="#FAF6EE"/>
+    <text x="55" y="93" font-family="'Anton', 'Bebas Neue', sans-serif" font-size="18" font-weight="900" fill="#FAF6EE" text-anchor="middle" letter-spacing="2">HOT</text>
+  </g>
+</svg>

@@ -37,22 +37,33 @@ function CountdownChipComponent({ pickupEndAt, className = '' }) {
     timeText = `${minutesLeft} min restantes`;
   }
 
-  // Styles selon urgence
-  let badgeStyle = {
-    color: colorHex,
-    borderColor: `${colorHex}55`,
-    backgroundColor: `${colorHex}15`,
-  };
+  // Styles Griddle selon urgence (élimination stricte de l'ancien #CCFF00 vert néon)
+  let griddleColor = '#2E6F40'; // Matcha Emerald
+  let griddleBg = '#F0FDF4';
+  let griddleBorder = '#86EFAC';
+  if (isCritical || isExpired) {
+    griddleColor = '#E51C23'; // Griddle Crimson
+    griddleBg = '#FEF2F2';
+    griddleBorder = '#FCA5A5';
+  } else if (minutesLeft < 60) {
+    griddleColor = '#B45309'; // Mustard Amber
+    griddleBg = '#FFFBEB';
+    griddleBorder = '#FDE68A';
+  }
 
   return (
     <div
-      style={badgeStyle}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border backdrop-blur-md transition-all duration-300 ${
+      style={{
+        color: griddleColor,
+        borderColor: griddleBorder,
+        backgroundColor: griddleBg,
+      }}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border-2 shadow-[2px_2px_0px_#141210] transition-all duration-300 ${
         isCritical ? 'animate-pulse' : ''
       } ${className}`}
     >
       <span
-        style={{ backgroundColor: colorHex }}
+        style={{ backgroundColor: griddleColor }}
         className={`w-2 h-2 rounded-full ${isCritical ? 'animate-ping' : ''}`}
       />
       <span>{timeText}</span>

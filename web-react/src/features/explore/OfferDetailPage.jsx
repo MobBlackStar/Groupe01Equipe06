@@ -1,11 +1,11 @@
-// 💡 Concept & Analogie : Comme la fiche produit interactive d'un restaurant d'exception, cette page met en scène le repas sauvé en 3D avec sa jauge de décomposition de prix (Smart Decay) et son impact environnemental au gramme près.
-// 🔄 Comparaison React / Flutter : En React, `OfferDetailPage` exploite un DepthCard 3D avec DepthLayer pour faire flotter le mets ; en Flutter, `offer_detail_screen.dart` utilise un `CustomScrollView` avec un bouton persistant en bas d'écran.
+// 💡 Concept & Analogie : Comme la fiche produit interactive d'un restaurant d'exception, cette page met en scène le repas sauvé en 3D avec sa jauge de décomposition de prix (Smart Decay) et son impact environnemental.
+// 🔄 Comparaison React / Flutter : En React, `OfferDetailPage` exploite un DepthCard 3D avec DepthLayer pour faire flotter le mets ; en Flutter, `offer_detail_screen.dart` utilise un `CustomScrollView`.
 // 🎯 À retenir pour la soutenance : "Lors de la réservation, le prix est scellé à la milliseconde près par une transaction atomique et réservé 10 minutes pour le paiement Konnect (INV-06)."
 // Module : Réservation & Détails (M5, I1)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { PriceTicker, CountdownChip, RarityBadge } from '../../components/offers/index.js';
+import { CountdownChip, RarityBadge } from '../../components/offers/index.js';
 import { Spinner } from '../../components/ui/index.js';
 import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
 import { apiClient } from '../../lib/api.js';
@@ -14,20 +14,14 @@ import { computeUnitPrice, computeMinutesLeft } from '@shared/pricing.js';
 import { formatTND } from '@shared/money.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
 import { calculateImpact, calculateEquivalences } from '@shared/impact.js';
-import { getFramerFoodImage } from '../../lib/framerAssets.js';
+import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
+import { formatTunisTime } from '../../lib/formatters.js';
 import {
-  MapPin,
   Store,
   Clock,
   Flame,
-  Leaf,
-  Sparkles,
-  ShieldCheck,
-  ArrowRight,
-  Package,
   Minus,
   Plus,
-  Phone,
 } from 'lucide-react';
 
 const FALLBACK_OFFER = {
@@ -51,7 +45,6 @@ const FALLBACK_OFFER = {
   pickupStartAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   pickupEndAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
   isSurpriseBasket: false,
-  imageUrl: '/assets/framer/burgers/sandwich-hot-chicken.png',
 };
 
 export default function OfferDetailPage() {
@@ -102,9 +95,8 @@ export default function OfferDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0E0D0C] flex flex-col items-center justify-center gap-4 py-20 text-[#F6F1E7]">
+      <div className="min-h-screen bg-[#F4EFE6] flex items-center justify-center">
         <Spinner size="lg" />
-        <p className="text-xs text-stone-400 font-mono">Chargement du ticket d'offre...</p>
       </div>
     );
   }
@@ -112,39 +104,35 @@ export default function OfferDetailPage() {
   const currentOffer = offer || FALLBACK_OFFER;
   const unitPrice = computeUnitPrice(currentOffer, now);
   const totalPrice = unitPrice * quantity;
-  const maxAvailable = currentOffer.quantityAvailable ?? currentOffer.remainingQuantity ?? 1;
-  const maxAllowed = Math.min(currentOffer.maxPerOrder || 4, maxAvailable);
 
-  const weightGrams = (currentOffer.weightGramsPerUnit || 350) * quantity;
-  const impact = calculateImpact(weightGrams);
-  const equivalences = calculateEquivalences(impact.co2SavedGrams);
-
-  const distanceM = currentOffer.distanceFromEssectM || 180;
+  const distanceM = currentOffer.distanceFromEssectM || 200;
   const walkingMin = calculateWalkingMinutes(distanceM);
 
-  const formatTime = (isoString) => {
-    if (!isoString) return '--h--';
-    const d = new Date(isoString);
-    return `${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}`;
-  };
+  const grams = (currentOffer.weightGramsPerUnit || currentOffer.impact?.foodSavedGrams || 350) * quantity;
+  const impact = calculateImpact(grams);
+  const equivalences = calculateEquivalences(impact.co2SavedGrams);
 
-  const isDutch = (currentOffer.pricing?.mode || currentOffer.pricingType) === 'DUTCH' ||
-                  (currentOffer.pricing?.mode || currentOffer.pricingType) === 'DUTCH_AUCTION';
-  const startMs = new Date(currentOffer.pickupStartAt || currentOffer.decayStartAt || (now - 30 * 60 * 1000)).getTime();
-  const endMs = new Date(currentOffer.pickupEndAt).getTime();
-  const decayProgress = Math.min(100, Math.max(0, Math.round(((now - startMs) / (endMs - startMs)) * 100)));
+  const maxAvailable = currentOffer.quantityAvailable ?? currentOffer.remainingQuantity ?? 1;
+  const maxAllowed = Math.min(currentOffer.maxPerOrder || 3, maxAvailable);
+
+  const isDutch = (currentOffer.pricingType || currentOffer.pricing?.mode || currentOffer.mode) === 'DUTCH';
+  
+  let decayProgress = 0;
+  if (isDutch) {
+    const startMs = new Date(currentOffer.pickupStartAt || (Date.now() - 3600000)).getTime();
+    const endMs = new Date(currentOffer.pickupEndAt || (Date.now() + 3600000)).getTime();
+    const totalDuration = Math.max(1, (endMs || 0) - (startMs || 0));
+    const elapsed = Math.max(0, now - (startMs || now));
+    const rawCalc = totalDuration > 0 ? Math.round((elapsed / totalDuration) * 100) : 0;
+    decayProgress = Number.isNaN(rawCalc) ? 0 : Math.max(0, Math.min(100, rawCalc));
+  }
 
   const handleReserve = async () => {
-    if (quantity > maxAvailable) {
-      setErrorMessage("La quantité demandée n'est plus disponible.");
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
-      const response = await apiClient.post(ENDPOINTS.ORDERS, {
+      const response = await apiClient.post(ENDPOINTS.ORDERS.CREATE, {
         offerId: currentOffer.id,
         quantity,
       });
@@ -165,17 +153,17 @@ export default function OfferDetailPage() {
     }
   };
 
-  const foodImage = currentOffer.imageUrl || currentOffer.photoUrl || getFramerFoodImage(currentOffer.title || currentOffer.category);
+  const foodImage = currentOffer.imageUrl || currentOffer.photoUrl || getDistinctGriddleFoodImage(currentOffer.category || 'fast-food', currentOffer.id);
 
   return (
-    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Navigation retour & Badge urgence */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/explore"
-            className="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-stone-400 hover:text-[#F5C400] transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-anton uppercase tracking-wider text-[#141210] hover:text-[#E51C23] transition-colors"
           >
             ← Retour au catalogue des offres
           </Link>
@@ -184,9 +172,9 @@ export default function OfferDetailPage() {
 
         {/* Alerte Concurrence 409 */}
         {errorMessage && (
-          <div className="p-4 rounded-2xl bg-[#EE3124]/15 border border-[#EE3124]/40 text-[#EE3124] text-xs flex items-center gap-3">
+          <div className="p-4 rounded-xl bg-[#FEE2E2] border-2 border-[#DC2626] text-[#B91C1C] text-xs flex items-center gap-3 shadow-[2px_2px_0px_#DC2626]">
             <span className="text-xl">⚠️</span>
-            <p className="flex-1 font-semibold leading-relaxed">{errorMessage}</p>
+            <p className="flex-1 font-bold leading-relaxed">{errorMessage}</p>
           </div>
         )}
 
@@ -197,79 +185,76 @@ export default function OfferDetailPage() {
               ========================================================================= */}
           <div className="lg:col-span-6 space-y-4">
             <DepthCard
-              maxTilt={14}
+              maxTilt={12}
               perspective={1100}
-              className="w-full relative rounded-3xl bg-[#161412] border border-white/10 p-6 sm:p-8 shadow-2xl overflow-hidden"
+              className="w-full relative rounded-xl bg-[#FAF6EE] border-2 border-[#141210] p-6 sm:p-8 shadow-[4px_4px_0px_#141210] overflow-hidden"
             >
-              <div className="relative aspect-square flex items-center justify-center">
+              <div className="relative aspect-square flex items-center justify-center bg-white border-2 border-[#141210] rounded-xl overflow-hidden shadow-inner">
                 <DepthLayer depth={30} shadow className="w-4/5 h-4/5 relative z-10 flex items-center justify-center">
                   <img
                     src={foodImage}
                     alt={currentOffer.title}
-                    className="max-w-full max-h-full object-contain filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.7)]"
+                    className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_24px_rgba(20,18,16,0.3)]"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = getFramerFoodImage(currentOffer.category);
+                      e.currentTarget.src = getDistinctGriddleFoodImage(currentOffer.category);
                     }}
                   />
                 </DepthLayer>
 
-                {/* Halos lumineux intérieurs */}
-                <div className="absolute inset-0 bg-radial from-[#F5C400]/10 via-transparent to-transparent pointer-events-none" />
-
                 {/* Badges d'angle */}
                 {currentOffer.isSurpriseBasket && (
-                  <div className="absolute top-0 left-0 z-20">
+                  <div className="absolute top-2.5 left-2.5 z-20">
                     <RarityBadge rarity={currentOffer.surprise?.rarity || 'RARE'} score={0.75} />
                   </div>
                 )}
 
-                <div className="absolute top-0 right-0 z-20">
-                  <span className="px-3 py-1 rounded-full bg-[#EE3124] text-white text-[10px] font-oswald uppercase font-black tracking-wider shadow-md">
-                    ANTI-GASPI
+                <div className="absolute top-2.5 right-2.5 z-20">
+                  <span className="px-3 py-1 rounded-md bg-[#E51C23] text-white text-[10px] font-anton uppercase tracking-wider shadow-[1.5px_1.5px_0px_#141210] border border-[#141210]">
+                    ANTI-GASPI 🔥
                   </span>
                 </div>
               </div>
 
               {/* Barre de progression Enchère Inversée (Dutch Auction Decay) */}
               {isDutch && (
-                <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
-                  <div className="flex justify-between items-center text-xs font-mono">
-                    <span className="text-[#F5C400] font-bold flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5" />
+                <div className="mt-6 pt-4 border-t-2 border-[#141210]/20 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-mono font-bold">
+                    <span className="text-[#C2410C] flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
                       <span>Smart Decay : Baisse de prix en cours</span>
                     </span>
-                    <span className="text-stone-400 font-bold">{decayProgress}% écoulé</span>
+                    <span className="text-[#141210]">{decayProgress}% écoulé</span>
                   </div>
-                  <div className="w-full bg-stone-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-white h-3 rounded-full overflow-hidden border-2 border-[#141210]">
                     <div
-                      className="bg-gradient-to-r from-[#F5C400] to-[#EE3124] h-full transition-all duration-1000"
+                      className="bg-[#E51C23] h-full transition-all duration-1000"
                       style={{ width: `${decayProgress}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-mono text-stone-500">
+                  <div className="flex justify-between text-[10px] font-mono text-[#555] font-bold">
                     <span>Départ : {formatTND(currentOffer.startPriceMillimes || currentOffer.originalPriceMillimes)}</span>
-                    <span className="text-[#EE3124] font-bold">Plancher garanti : {formatTND(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
+                    <span className="text-[#E51C23]">Plancher : {formatTND(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
                   </div>
                 </div>
               )}
             </DepthCard>
 
             {/* Fiche d'impact écologique */}
-            <div className="p-4 rounded-3xl bg-[#161412] border border-white/10 grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+            <div className="p-4 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] grid grid-cols-2 gap-3 text-center">
+              <div className="p-3 rounded-lg bg-white border-2 border-[#141210]">
                 <span className="text-xl">🥗</span>
-                <p className="font-oswald text-lg font-black text-emerald-400 mt-1">
+                <p className="font-anton text-lg text-[#15803D] mt-1">
                   {impact.foodSavedGrams} g
                 </p>
-                <p className="text-[10px] font-mono uppercase text-stone-400">Nourriture Sauvée</p>
+                <p className="text-[10px] font-bold uppercase text-[#555]">Nourriture Sauvée</p>
               </div>
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+              <div className="p-3 rounded-lg bg-white border-2 border-[#141210]">
                 <span className="text-xl">🌱</span>
-                <p className="font-oswald text-lg font-black text-[#F5C400] mt-1">
+                <p className="font-anton text-lg text-[#C2410C] mt-1">
                   {impact.co2SavedGrams} g
                 </p>
-                <p className="text-[10px] font-mono uppercase text-stone-400">CO2 Évité ({equivalences.kmCarAvoided} km auto)</p>
+                <p className="text-[10px] font-bold uppercase text-[#555]">CO2 Évité ({equivalences.kmCarAvoided} km)</p>
               </div>
             </div>
           </div>
@@ -278,51 +263,51 @@ export default function OfferDetailPage() {
               COLONNE DROITE : TICKET DE RÉSERVATION PHYSIQUE & COMMANDE
               ========================================================================= */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 sm:p-8 rounded-3xl bg-[#F6F1E7] text-[#161412] shadow-2xl border border-black/10 relative overflow-hidden">
+            <div className="p-6 sm:p-8 rounded-xl bg-[#FAF6EE] text-[#141210] shadow-[6px_6px_0px_#141210] border-2 border-[#141210] relative overflow-hidden">
               
               {/* En-tête ticket */}
-              <div className="flex items-center justify-between pb-3 border-b-2 border-dashed border-[#161412]/20">
-                <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase font-bold text-[#EE3124]">
+              <div className="flex items-center justify-between pb-3 border-b-2 border-dashed border-[#141210]/25">
+                <div className="flex items-center gap-1.5 text-[11px] font-anton uppercase text-[#E51C23]">
                   <Flame className="w-3.5 h-3.5" />
                   <span>{currentOffer.category} · LOT OFFICIEL</span>
                 </div>
-                <div className="text-[11px] font-mono text-stone-600 font-bold">
+                <div className="text-[11px] font-mono text-[#555] font-bold">
                   {distanceM}m (~{walkingMin} min à pied)
                 </div>
               </div>
 
               {/* Titre & Description */}
               <div className="pt-4 pb-2">
-                <h1 className="font-oswald uppercase text-2xl sm:text-3xl font-black text-[#161412] leading-tight">
+                <h1 className="font-anton uppercase text-2xl sm:text-3xl font-black text-[#141210] leading-tight">
                   {currentOffer.title}
                 </h1>
-                <div className="flex items-center gap-2 text-xs text-stone-600 mt-1 mb-3">
-                  <Store className="w-4 h-4 text-stone-500" />
-                  <span className="font-bold">{currentOffer.merchantName}</span>
+                <div className="flex items-center gap-2 text-xs text-[#555] mt-1 mb-3 font-bold">
+                  <Store className="w-4 h-4 text-[#888]" />
+                  <span>{currentOffer.merchantName}</span>
                 </div>
-                <p className="text-xs text-stone-700 leading-relaxed font-sans">
+                <p className="text-xs text-[#555] leading-relaxed font-sans font-medium">
                   {currentOffer.description}
                 </p>
               </div>
 
               {/* Horaires de retrait */}
-              <div className="my-4 p-3.5 rounded-2xl bg-stone-200/70 border border-stone-300 flex items-center justify-between text-xs">
+              <div className="my-4 p-3.5 rounded-lg bg-white border-2 border-[#141210] flex items-center justify-between text-xs font-bold">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#EE3124]" />
-                  <span className="font-bold">Créneau de retrait :</span>
+                  <Clock className="w-4 h-4 text-[#E51C23]" />
+                  <span>Créneau de retrait :</span>
                 </div>
-                <span className="font-mono font-black text-[#161412]">
-                  {formatTime(currentOffer.pickupStartAt)} — {formatTime(currentOffer.pickupEndAt)}
+                <span className="font-mono text-[#141210]">
+                  {formatTunisTime(currentOffer.pickupStartAt)} — {formatTunisTime(currentOffer.pickupEndAt)}
                 </span>
               </div>
 
               {/* Sélecteur de Quantité */}
               <div className="my-4 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-mono uppercase font-bold text-stone-600 block">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#141210] block">
                     Quantité à sauver :
                   </span>
-                  <span className="text-[10px] text-stone-500">
+                  <span className="text-[10px] text-[#666] font-bold">
                     Max. {maxAllowed} par étudiant
                   </span>
                 </div>
@@ -331,18 +316,18 @@ export default function OfferDetailPage() {
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={quantity <= 1}
-                    className="w-8 h-8 rounded-full bg-[#161412] text-white flex items-center justify-center font-bold disabled:opacity-30"
+                    className="w-8 h-8 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="w-8 text-center font-oswald text-lg font-black text-[#161412]">
+                  <span className="w-8 text-center font-anton text-xl text-[#141210]">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.min(maxAllowed, quantity + 1))}
                     disabled={quantity >= maxAllowed}
-                    className="w-8 h-8 rounded-full bg-[#161412] text-white flex items-center justify-center font-bold disabled:opacity-30"
+                    className="w-8 h-8 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -350,21 +335,21 @@ export default function OfferDetailPage() {
               </div>
 
               {/* Récapitulatif Prix & Hold 10 min */}
-              <div className="mt-6 pt-4 border-t-2 border-dashed border-[#161412]/20 space-y-3">
+              <div className="mt-6 pt-4 border-t-2 border-dashed border-[#141210]/25 space-y-3">
                 <div className="flex justify-between items-end">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-mono uppercase text-stone-500 font-bold">
+                    <span className="text-[10px] font-bold uppercase text-[#666]">
                       Prix Total Réservé :
                     </span>
-                    <span className="font-oswald text-3xl font-black text-[#EE3124]">
+                    <span className="font-anton text-4xl text-[#E51C23]">
                       {formatTND(totalPrice)}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-mono text-stone-500 line-through block">
+                    <span className="text-[10px] font-mono text-[#777] line-through block font-bold">
                       {formatTND((currentOffer.originalPriceMillimes || 7800) * quantity)}
                     </span>
-                    <span className="text-xs font-mono font-bold text-[#2E6F40]">
+                    <span className="text-xs font-mono font-black text-[#15803D]">
                       Économie : {formatTND(((currentOffer.originalPriceMillimes || 7800) - unitPrice) * quantity)}
                     </span>
                   </div>
@@ -375,13 +360,13 @@ export default function OfferDetailPage() {
                   type="button"
                   onClick={handleReserve}
                   disabled={isSubmitting || maxAvailable <= 0}
-                  className="w-full py-4 px-6 rounded-2xl bg-[#0E0D0C] text-[#F6F1E7] font-oswald uppercase text-base font-black tracking-wider hover:bg-[#EE3124] hover:text-white active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+                  className="w-full btn-griddle-primary py-3.5 cursor-pointer mt-2"
                 >
-                  <span>{isSubmitting ? 'Verrouillage en cours...' : 'Bloquer mon prix pendant 10 min →'}</span>
+                  <span>{isSubmitting ? 'Verrouillage en cours...' : 'BLOQUER MON PRIX PENDANT 10 MIN →'}</span>
                 </button>
 
-                <p className="text-[10px] text-center font-mono text-stone-500">
-                  🔒 Transaction atomique : Votre prix et votre portion sont scellés pendant 10 minutes pour le paiement.
+                <p className="text-[10px] text-center font-mono text-[#666] font-bold">
+                  🔒 Transaction atomique : Votre prix et portion sont scellés 10 minutes pour le paiement.
                 </p>
               </div>
             </div>

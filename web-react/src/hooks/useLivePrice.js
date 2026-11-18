@@ -36,7 +36,7 @@ export function useLivePrice(offer) {
       currentPriceMillimes: 0,
       formattedPrice: '0.000 DT',
       discountPercent: 0,
-      urgency: { minutesLeft: 0, color: '#CCFF00', level: 'LOW' },
+      urgency: { minutesLeft: 0, color: '#15803D', level: 'LOW' },
       now,
     };
   }

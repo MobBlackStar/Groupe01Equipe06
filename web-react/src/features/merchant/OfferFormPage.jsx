@@ -13,8 +13,7 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import AiAutoFillBox from './AiAutoFillBox.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
-import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
-import { getFramerFoodImage } from '../../lib/framerAssets.js';
+import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
 import {
   Flame,
   Sparkles,
@@ -97,7 +96,7 @@ export default function OfferFormPage() {
       originalPriceMillimes: aiData.originalPriceMillimes || prev.originalPriceMillimes,
       startPriceMillimes: aiData.startPriceMillimes || prev.startPriceMillimes,
       floorPriceMillimes: aiData.floorPriceMillimes || prev.floorPriceMillimes,
-      fixedDiscountedMillimes: aiData.fixedDiscountedMillimes || prev.fixedDiscountedMillimes,
+      fixedDiscountedPriceMillimes: aiData.fixedDiscountedMillimes || prev.fixedDiscountedMillimes,
       quantityTotal: aiData.quantityTotal || prev.quantityTotal,
       weightGramsPerUnit: aiData.weightGramsPerUnit || prev.weightGramsPerUnit,
       isSurpriseBasket: aiData.isSurpriseBasket ?? prev.isSurpriseBasket,
@@ -179,24 +178,24 @@ export default function OfferFormPage() {
     }
   }
 
-  // Image d'illustration en direct
-  const previewImage = getFramerFoodImage(formData.title || formData.category);
+  // Image d'illustration en direct déterministe
+  const previewImage = getDistinctGriddleFoodImage(formData.category, 0);
 
   return (
-    <div className="min-h-screen bg-[#0E0D0C] text-[#F6F1E7] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* En-tête */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5C400]/10 text-[#F5C400] text-xs font-mono font-bold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD000] border-2 border-[#141210] text-[#141210] text-xs font-mono font-bold uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
               <Store className="w-3.5 h-3.5" />
               <span>Espace Commerçant Partenaire</span>
             </div>
-            <h1 className="font-oswald uppercase text-3xl sm:text-5xl font-black tracking-tight text-white leading-none">
-              BUILD YOUR <span className="text-[#EE3124]">TICKET.</span>
+            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#141210] leading-none">
+              BUILD YOUR <span className="text-[#E51C23]">TICKET.</span>
             </h1>
-            <p className="text-xs sm:text-sm text-stone-400 font-sans mt-2">
+            <p className="text-xs sm:text-sm text-[#141210]/70 font-sans mt-2">
               Composez votre offre anti-gaspi en 4 étapes numérotées. Observez le ticket se générer en direct à droite.
             </p>
           </div>
@@ -204,7 +203,7 @@ export default function OfferFormPage() {
           <button
             type="button"
             onClick={() => navigate('/merchant/offers')}
-            className="px-4 py-2 rounded-full bg-white/5 border border-white/15 text-stone-300 hover:text-white text-xs font-mono font-bold transition-colors self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-[#141210] text-xs font-mono font-bold transition-all self-start sm:self-auto"
           >
             ← Annuler
           </button>
@@ -214,7 +213,7 @@ export default function OfferFormPage() {
         <AiAutoFillBox onAutoFill={handleAiAutoFill} />
 
         {toastMsg && (
-          <div className="p-4 rounded-2xl bg-[#F5C400]/15 border border-[#F5C400]/40 text-[#F5C400] text-xs font-bold flex items-center gap-2">
+          <div className="p-4 rounded-2xl bg-[#DCFCE7] border-2 border-[#141210] text-[#15803D] text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_#141210]">
             <Sparkles className="w-4 h-4" />
             <span>{toastMsg}</span>
           </div>
@@ -229,15 +228,15 @@ export default function OfferFormPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               
               {/* ÉTAPE 01 : CATÉGORIE (image7.png 01 NOODLES / PICK 1) */}
-              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
-                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
+                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">01</span>
-                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
+                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">01</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
                       CATÉGORIE DU PLAT
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#F5C400] font-bold">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#E51C23] font-black">
                     CHOIX UNIQUE
                   </span>
                 </div>
@@ -250,14 +249,14 @@ export default function OfferFormPage() {
                         key={cat.id}
                         type="button"
                         onClick={() => handleChange('category', cat.id)}
-                        className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-2.5 ${
+                        className={`p-3 rounded-2xl border-2 border-[#141210] text-left transition-all flex items-center gap-2.5 ${
                           isSelected
-                            ? 'bg-[#EE3124] text-white border-[#EE3124] shadow-md shadow-[#EE3124]/20 scale-[1.02]'
-                            : 'bg-white/5 border-white/10 text-stone-300 hover:bg-white/10'
+                            ? 'bg-[#E51C23] text-white shadow-[3px_3px_0px_#141210] scale-[1.02]'
+                            : 'bg-white text-[#141210] shadow-[2px_2px_0px_#141210] hover:bg-[#FFD000]'
                         }`}
                       >
                         <span className="text-xl">{cat.icon}</span>
-                        <span className="text-xs font-bold truncate">{cat.label}</span>
+                        <span className="text-xs font-black truncate">{cat.label}</span>
                       </button>
                     );
                   })}
@@ -265,22 +264,22 @@ export default function OfferFormPage() {
               </div>
 
               {/* ÉTAPE 02 : DÉTAILS & PRIX (image7.png 02 BROTH / PICK 1) */}
-              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
-                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
+                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">02</span>
-                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
-                      DÉTAILS & TARIFICATION
+                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">02</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                      DÉTAILS &amp; TARIFICATION
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-bold">
-                    PRIX & DESCRIPTION
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#141210]/60 font-black">
+                    PRIX &amp; DESCRIPTION
                   </span>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-widest text-stone-400 mb-1.5">
+                    <label className="block text-[11px] font-mono font-black uppercase tracking-widest text-[#141210]/70 mb-1.5">
                       Intitulé du Plat ou Panier *
                     </label>
                     <input
@@ -288,21 +287,21 @@ export default function OfferFormPage() {
                       value={formData.title}
                       onChange={(e) => handleChange('title', e.target.value)}
                       placeholder="ex: Baguette Farcie Escalope & Fromage"
-                      className="w-full px-4 py-3 rounded-2xl bg-black/60 border border-white/15 text-white text-sm outline-none focus:border-[#F5C400]"
+                      className="w-full px-4 py-3 rounded-2xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-sm outline-none focus:shadow-[4px_4px_0px_#141210] font-sans font-bold"
                     />
-                    {errors.title && <p className="text-xs text-[#EE3124] mt-1">{errors.title}</p>}
+                    {errors.title && <p className="text-xs font-bold text-[#E51C23] mt-1">{errors.title}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-widest text-stone-400 mb-1.5">
-                      Description & Ingrédients
+                    <label className="block text-[11px] font-mono font-black uppercase tracking-widest text-[#141210]/70 mb-1.5">
+                      Description &amp; Ingrédients
                     </label>
                     <textarea
                       rows={2}
                       value={formData.description}
                       onChange={(e) => handleChange('description', e.target.value)}
                       placeholder="Détaillez la fraîcheur et les accompagnements..."
-                      className="w-full px-4 py-2.5 rounded-2xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                      className="w-full px-4 py-2.5 rounded-2xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none focus:shadow-[4px_4px_0px_#141210] font-sans"
                     />
                   </div>
 
@@ -324,22 +323,22 @@ export default function OfferFormPage() {
               </div>
 
               {/* ÉTAPE 03 : HORAIRES & QUANTITÉ (image7.png 03 PROTEIN) */}
-              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
-                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
+                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">03</span>
-                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
-                      HORAIRES DE RETRAIT & STOCKS
+                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">03</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                      HORAIRES DE RETRAIT &amp; STOCKS
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-bold">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#141210]/60 font-black">
                     CRÉNEAU DU SOIR
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-stone-400 mb-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#141210]/70 mb-1 font-black">
                       Portions en vente :
                     </label>
                     <input
@@ -347,71 +346,71 @@ export default function OfferFormPage() {
                       min="1"
                       value={formData.quantityTotal}
                       onChange={(e) => handleChange('quantityTotal', Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none font-bold"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-stone-400 mb-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#141210]/70 mb-1 font-black">
                       Début Retrait :
                     </label>
                     <input
                       type="time"
                       value={formData.pickupStartAt}
                       onChange={(e) => handleChange('pickupStartAt', e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none font-bold"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-stone-400 mb-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#141210]/70 mb-1 font-black">
                       Fin Retrait :
                     </label>
                     <input
                       type="time"
                       value={formData.pickupEndAt}
                       onChange={(e) => handleChange('pickupEndAt', e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none focus:border-[#F5C400]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none font-bold"
                     />
                   </div>
                 </div>
               </div>
 
               {/* ÉTAPE 04 : OPTION PANIER MYSTÈRE (image7.png 04 TOPPINGS) */}
-              <div className="p-6 rounded-3xl bg-[#161412] border border-white/10 space-y-4">
-                <div className="flex items-baseline justify-between border-b border-white/10 pb-3">
+              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
+                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-oswald text-sm font-black text-[#EE3124] tracking-widest">04</span>
-                    <h3 className="font-oswald uppercase text-base sm:text-lg font-black tracking-wider text-white">
-                      OPTION PANIER SURPRISE & RARETÉ
+                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">04</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                      OPTION PANIER SURPRISE &amp; RARETÉ
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#F5C400] font-bold">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#E51C23] font-black">
                     BOÎTE MYSTÈRE
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/10">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
                   <div className="flex items-center gap-2.5">
-                    <Gift className="w-5 h-5 text-[#F5C400]" />
+                    <Gift className="w-5 h-5 text-[#E51C23]" />
                     <div>
-                      <p className="text-xs font-bold text-white">Activer le mode Panier Surprise (Scellé)</p>
-                      <p className="text-[10px] text-stone-400">Le contenu sera masqué et révélé par animation Unboxing</p>
+                      <p className="text-xs font-black text-[#141210]">Activer le mode Panier Surprise (Scellé)</p>
+                      <p className="text-[10px] text-[#141210]/60 font-sans">Le contenu sera masqué et révélé par animation Unboxing</p>
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={formData.isSurpriseBasket}
                     onChange={(e) => handleChange('isSurpriseBasket', e.target.checked)}
-                    className="w-5 h-5 accent-[#EE3124] rounded cursor-pointer"
+                    className="w-5 h-5 accent-[#E51C23] rounded cursor-pointer"
                   />
                 </div>
 
                 {formData.isSurpriseBasket && (
-                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/30 space-y-2 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-[#FEF08A] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] space-y-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-amber-300 font-bold">Rareté Calculée Automatiquement :</span>
-                      <span className="px-2 py-0.5 rounded-full bg-[#161412] text-[#F5C400] font-mono font-bold">
+                      <span className="font-black text-[#141210]">Rareté Calculée Automatiquement :</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#141210] text-[#FFD000] font-mono font-bold">
                         {rarityResult.rarity} (Score {(rarityResult.score * 100).toFixed(0)}%)
                       </span>
                     </div>
@@ -423,7 +422,7 @@ export default function OfferFormPage() {
                         surprise: { ...prev.surprise, teaser: e.target.value }
                       }))}
                       placeholder="Indice secret pour l étudiant (ex: 3 viennoiseries pur beurre)"
-                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white text-xs outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-white border-2 border-[#141210] text-[#141210] text-xs outline-none"
                     />
                   </div>
                 )}
@@ -433,7 +432,7 @@ export default function OfferFormPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#EE3124] to-[#F5C400] text-black font-oswald uppercase text-lg font-black tracking-wider shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-4 px-6 rounded-2xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[4px_4px_0px_#141210] hover:shadow-[2px_2px_0px_#141210] font-anton uppercase text-xl tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <span>{loading ? 'Publication en cours...' : 'PUBLIER CETTE OFFRE SUR LE CATALOGUE →'}</span>
               </button>
@@ -445,11 +444,11 @@ export default function OfferFormPage() {
               ========================================================================= */}
           <div className="lg:col-span-5 sticky top-20 space-y-4">
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-mono uppercase tracking-widest text-[#F5C400] font-bold flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-[#EE3124]" />
+              <span className="text-xs font-mono uppercase tracking-widest text-[#E51C23] font-black flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
                 <span>APERÇU EN DIRECT DU TICKET :</span>
               </span>
-              <span className="text-[10px] font-mono text-stone-500">#CS-048</span>
+              <span className="text-[10px] font-mono font-black text-[#141210]/60">#CS-048</span>
             </div>
 
             {/* Ticket Suspendu Reçu Crème Live Preview */}
@@ -457,29 +456,29 @@ export default function OfferFormPage() {
               {/* Pince métallique supérieure */}
               <div
                 aria-hidden="true"
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-3.5 bg-gradient-to-b from-stone-300 via-stone-100 to-stone-400 rounded-b-md shadow-md border-x border-b border-black/40 z-30 flex items-center justify-center pointer-events-none"
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-3.5 bg-gradient-to-b from-stone-300 via-stone-100 to-stone-400 rounded-b-md shadow-md border-x-2 border-b-2 border-[#141210] z-30 flex items-center justify-center pointer-events-none"
               >
-                <div className="w-4 h-1 bg-black/40 rounded-full" />
+                <div className="w-4 h-1 bg-[#141210] rounded-full" />
               </div>
 
-              <div className="relative rounded-2xl bg-[#F6F1E7] text-[#161412] shadow-2xl border border-black/10 overflow-hidden pb-4">
+              <div className="relative rounded-2xl bg-[#FAF6EE] text-[#141210] shadow-[6px_6px_0px_#141210] border-2 border-[#141210] overflow-hidden pb-4">
                 {/* Photo de l'aliment */}
-                <div className="relative h-48 w-full overflow-hidden bg-[#0E0D0C]">
+                <div className="relative h-48 w-full overflow-hidden bg-[#F4EFE6] border-b-2 border-[#141210]">
                   <img
                     src={previewImage}
                     alt={formData.title}
+                    onError={(e) => { e.currentTarget.onerror = null; }}
                     className="w-full h-full object-cover transition-all duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                   
                   <div className="absolute top-2.5 right-2.5">
-                    <span className="px-2.5 py-1 rounded-full bg-black/80 text-[#F5C400] text-[10px] font-mono font-bold border border-white/10">
+                    <span className="px-2.5 py-1 rounded-full bg-white text-[#141210] text-[10px] font-mono font-black border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
                       {formData.pickupStartAt} – {formData.pickupEndAt}
                     </span>
                   </div>
 
                   <div className="absolute bottom-2.5 left-3">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#EE3124] text-white text-[9px] font-oswald uppercase tracking-wider font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#E51C23] text-white text-[9px] font-anton uppercase tracking-wider font-bold shadow-[2px_2px_0px_#141210]">
                       {formData.quantityTotal} RESTANTS
                     </span>
                   </div>
@@ -487,38 +486,38 @@ export default function OfferFormPage() {
 
                 {/* Détails du Ticket */}
                 <div className="p-5 space-y-3 font-mono text-xs">
-                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-stone-500">
-                    <span className="text-[#EE3124] font-bold">{formData.category}</span>
-                    <span>ESSECT MONTFLEURY</span>
+                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-[#141210]/60">
+                    <span className="text-[#E51C23] font-black">{formData.category}</span>
+                    <span className="font-bold">ESSECT MONTFLEURY</span>
                   </div>
 
-                  <h3 className="font-oswald uppercase text-xl font-black text-[#161412] leading-tight line-clamp-2">
+                  <h3 className="font-anton uppercase text-xl text-[#141210] leading-tight line-clamp-2">
                     {formData.title || 'Votre Plat Anti-Gaspillage'}
                   </h3>
 
-                  <p className="text-[11px] text-stone-600 font-sans line-clamp-2">
+                  <p className="text-[11px] text-[#141210]/70 font-sans line-clamp-2">
                     {formData.description || 'Description du plat détaillée...'}
                   </p>
 
-                  <div className="my-2 border-t-2 border-dashed border-[#161412]/20" />
+                  <div className="my-2 border-t-2 border-dashed border-[#141210]/30" />
 
                   {/* Décomposition Prix */}
                   <div className="space-y-1 text-[11px]">
-                    <div className="flex justify-between text-stone-500">
+                    <div className="flex justify-between text-[#141210]/60">
                       <span>PRIX ORIGINAL :</span>
                       <span className="line-through">{formatTND(Number(formData.originalPriceMillimes) || 0)}</span>
                     </div>
-                    <div className="flex justify-between text-stone-700">
+                    <div className="flex justify-between text-[#141210]">
                       <span>MODE :</span>
                       <span className="font-bold">{formData.pricingMode === PRICING_MODES.DUTCH_AUCTION ? 'SMART DECAY (ENCHÈRE)' : 'PRIX FIXE'}</span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-[#161412]/15 flex items-baseline justify-between">
-                    <span className="font-oswald uppercase text-xs font-black text-stone-600">
+                  <div className="pt-2 border-t-2 border-[#141210]/15 flex items-baseline justify-between">
+                    <span className="font-anton uppercase text-xs font-black text-[#141210]/60">
                       PRIX PLANCHER :
                     </span>
-                    <span className="font-oswald text-2xl font-black text-[#EE3124]">
+                    <span className="font-anton text-2xl font-black text-[#E51C23]">
                       {formatTND(referencePrice)}
                     </span>
                   </div>
@@ -529,7 +528,7 @@ export default function OfferFormPage() {
                   aria-hidden="true"
                   className="w-full h-3 bg-repeat-x pointer-events-none mt-1"
                   style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23F6F1E7'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23FAF6EE'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
                     backgroundSize: '16px 10px',
                     filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))',
                   }}
@@ -537,7 +536,7 @@ export default function OfferFormPage() {
               </div>
             </div>
 
-            <p className="text-[10px] text-center font-mono text-stone-500">
+            <p className="text-[10px] text-center font-mono text-[#141210]/60 font-bold">
               💡 Le ticket suspendu se synchronise instantanément avec vos modifications.
             </p>
           </div>

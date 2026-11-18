@@ -4,7 +4,7 @@
 
 import React from 'react';
 
-export default function Spinner({ size = 'md', variant = 'lime', className = '' }) {
+export default function Spinner({ size = 'md', variant = 'red', className = '' }) {
   const sizes = {
     sm: 'w-4 h-4 border-2',
     md: 'w-6 h-6 border-2',
@@ -12,9 +12,10 @@ export default function Spinner({ size = 'md', variant = 'lime', className = '' 
   };
 
   const variants = {
-    lime: 'border-[#CCFF00]/20 border-t-[#CCFF00]',
+    red: 'border-[#E51C23]/20 border-t-[#E51C23]',
+    lime: 'border-[#E51C23]/20 border-t-[#E51C23]', // backward-compat alias
     white: 'border-white/20 border-t-white',
-    dark: 'border-black/20 border-t-black',
+    dark: 'border-[#141210]/20 border-t-[#141210]',
     orange: 'border-[#FF5500]/20 border-t-[#FF5500]',
   };
 
@@ -22,7 +23,7 @@ export default function Spinner({ size = 'md', variant = 'lime', className = '' 
     <div
       role="status"
       aria-label="Chargement"
-      className={`inline-block rounded-full animate-spin ${sizes[size] || sizes.md} ${variants[variant] || variants.lime} ${className}`}
+      className={`inline-block rounded-full animate-spin ${sizes[size] || sizes.md} ${variants[variant] || variants.red} ${className}`}
     />
   );
 }

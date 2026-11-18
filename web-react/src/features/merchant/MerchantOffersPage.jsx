@@ -8,6 +8,7 @@ import { OFFER_STATUS, PRICING_MODES } from '@shared/constants.js';
 import { formatTND } from '@shared/money.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
+import { formatTunisDate } from '../../lib/formatters.js';
 import {
   Button,
   Card,
@@ -31,8 +32,9 @@ const DEMO_OFFERS = [
       currentPriceMillimes: 4200,
     },
     originalPriceMillimes: 7500,
-    quantityTotal: 5,
-    quantityAvailable: 2,
+    quantityTotal: 6,
+    quantityAvailable: 4,
+    quantitySold: 2,
     status: OFFER_STATUS.ACTIVE,
     isSurpriseBasket: false,
     pickupEndAt: 'Ce soir à 20h00',
@@ -47,8 +49,9 @@ const DEMO_OFFERS = [
       discountedPriceMillimes: 4000,
     },
     originalPriceMillimes: 6800,
-    quantityTotal: 4,
-    quantityAvailable: 1,
+    quantityTotal: 5,
+    quantityAvailable: 2,
+    quantitySold: 3,
     status: OFFER_STATUS.ACTIVE,
     isSurpriseBasket: false,
     pickupEndAt: 'Ce soir à 19h30',
@@ -63,8 +66,9 @@ const DEMO_OFFERS = [
       discountedPriceMillimes: 5000,
     },
     originalPriceMillimes: 12000,
-    quantityTotal: 3,
+    quantityTotal: 4,
     quantityAvailable: 0,
+    quantitySold: 4,
     status: OFFER_STATUS.SOLD_OUT,
     isSurpriseBasket: true,
     surpriseRarity: 'RARE',
@@ -140,16 +144,18 @@ export default function MerchantOffersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#262A33]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-white">Catalogue des Offres Commerçant</h1>
-              <Badge variant="lime" size="md">Boutique Active</Badge>
+              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#141210]">
+                Catalogue des Offres Commerçant
+              </h1>
+              <Badge variant="green" size="md">Boutique Active</Badge>
             </div>
-            <p className="text-xs text-[#8A92A6] mt-1">
+            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
               Gérez vos portions, vos enchères dégressives et vos paniers surprises du jour.
             </p>
           </div>
@@ -162,9 +168,12 @@ export default function MerchantOffersPage() {
         </div>
 
         {/* Onglets de filtrage */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-          <Link to="/merchant/store" className="text-xs text-[#8A92A6] hover:text-[#CCFF00] transition-colors">
+          <Link
+            to="/merchant/store"
+            className="text-xs font-black text-[#141210] hover:text-[#E51C23] transition-colors"
+          >
             ⚙️ Modifier l'Établissement
           </Link>
         </div>
@@ -191,14 +200,16 @@ export default function MerchantOffersPage() {
                 ? offer.pricing.currentPriceMillimes || offer.pricing.startPriceMillimes
                 : offer.pricing.discountedPriceMillimes;
 
-              const percentSold = Math.round(
-                ((offer.quantityTotal - offer.quantityAvailable) / offer.quantityTotal) * 100
-              );
+              // Formula ensuring 0 NaN% vendus and accurate portions display
+              const total = offer.quantityTotal ?? offer.totalQuantity ?? offer.quantityAvailable ?? 1;
+              const available = offer.quantityAvailable ?? offer.remainingQuantity ?? total;
+              const sold = offer.quantitySold ?? Math.max(0, total - available);
+              const percentSold = total > 0 ? Math.round((sold / total) * 100) : 0;
 
               return (
                 <Card
                   key={offer.id}
-                  className={`p-5 bg-[#161920] border-[#262A33] relative flex flex-col justify-between ${
+                  className={`p-5 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] relative flex flex-col justify-between ${
                     offer.status === OFFER_STATUS.DELETED ? 'opacity-40 pointer-events-none' : ''
                   }`}
                 >
@@ -207,19 +218,19 @@ export default function MerchantOffersPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {isDutch ? (
-                          <Badge variant="orange" size="sm" dot>⚡ SMART DECAY</Badge>
+                          <Badge variant="griddle" size="sm" dot>⚡ SMART DECAY</Badge>
                         ) : (
-                          <Badge variant="lime" size="sm">🏷️ PRIX FIXE</Badge>
+                          <Badge variant="yellow" size="sm">🏷️ PRIX FIXE</Badge>
                         )}
                         {offer.isSurpriseBasket && (
-                          <Badge variant="purple" size="sm">🎁 MYSTÈRE</Badge>
+                          <Badge variant="yellow" size="sm">🎁 MYSTÈRE</Badge>
                         )}
                       </div>
 
                       <Badge
                         variant={
                           offer.status === OFFER_STATUS.ACTIVE
-                            ? 'lime'
+                            ? 'green'
                             : offer.status === OFFER_STATUS.SOLD_OUT
                             ? 'muted'
                             : 'red'
@@ -232,39 +243,45 @@ export default function MerchantOffersPage() {
 
                     {/* Titre & Catégorie */}
                     <div>
-                      <h3 className="text-base font-bold text-white line-clamp-1">{offer.title}</h3>
-                      <p className="text-xs text-[#8A92A6] mt-0.5">
-                        Catégorie : {offer.category} • Retrait : {offer.pickupEndAt}
+                      <h3 className="font-anton uppercase text-lg text-[#141210] line-clamp-1">
+                        {offer.title}
+                      </h3>
+                      <p className="text-xs text-[#141210]/60 mt-0.5 font-sans">
+                        Catégorie : <strong>{offer.category}</strong> • Retrait : {offer.pickupEndAt?.includes('T') ? formatTunisDate(offer.pickupEndAt) : offer.pickupEndAt}
                       </p>
                     </div>
 
                     {/* Tarifs */}
-                    <div className="p-3 rounded-xl bg-[#0D0F12] border border-[#262A33] flex items-center justify-between">
+                    <div className="p-3 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] uppercase text-[#8A92A6] block">Prix Étudiant</span>
-                        <span className="text-lg font-black text-[#CCFF00]">
+                        <span className="text-[10px] uppercase font-black text-[#141210]/60 block">
+                          Prix Étudiant
+                        </span>
+                        <span className="font-anton text-2xl text-[#E51C23]">
                           {formatTND(displayPrice)}
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] uppercase text-[#8A92A6] block">Prix Initial</span>
-                        <span className="text-xs text-[#8A92A6] line-through">
+                        <span className="text-[10px] uppercase font-black text-[#141210]/60 block">
+                          Prix Initial
+                        </span>
+                        <span className="text-xs font-mono text-[#141210]/50 line-through">
                           {formatTND(offer.originalPriceMillimes)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Barre de stock */}
+                    {/* Barre de stock sans NaN */}
                     <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-[#8A92A6]">
-                          Portions restantes : <strong className="text-white">{offer.quantityAvailable} / {offer.quantityTotal}</strong>
+                      <div className="flex justify-between text-xs font-mono">
+                        <span className="text-[#141210]/70">
+                          Portions restantes : <strong className="text-[#141210] font-black">{available} / {total}</strong>
                         </span>
-                        <span className="text-xs text-[#CCFF00] font-semibold">{percentSold}% vendus</span>
+                        <span className="text-xs text-[#E51C23] font-black">{percentSold}% vendus</span>
                       </div>
-                      <div className="w-full h-2 bg-[#0D0F12] rounded-full overflow-hidden border border-[#262A33]">
+                      <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-[#141210]">
                         <div
-                          className="h-full bg-[#CCFF00] rounded-full transition-all"
+                          className="h-full bg-[#E51C23] rounded-full transition-all"
                           style={{ width: `${percentSold}%` }}
                         />
                       </div>
@@ -272,11 +289,11 @@ export default function MerchantOffersPage() {
                   </div>
 
                   {/* Boutons d'action */}
-                  <div className="pt-4 mt-4 border-t border-[#262A33] flex items-center justify-end gap-2">
+                  <div className="pt-4 mt-4 border-t-2 border-[#141210]/15 flex items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => navigate(`/merchant/offers/${offer.id}/edit`)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[#0D0F12] border border-[#262A33] text-gray-300 hover:text-white hover:border-[#383e4c] transition-colors"
+                      className="text-xs font-black px-3 py-1.5 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-[#141210] transition-all"
                     >
                       ✏️ Modifier
                     </button>
@@ -284,7 +301,7 @@ export default function MerchantOffersPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteModalOffer(offer)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[#FF1744]/10 border border-[#FF1744]/30 text-[#FF1744] hover:bg-[#FF1744]/20 transition-colors"
+                      className="text-xs font-black px-3 py-1.5 rounded-lg bg-[#FEE2E2] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-[#991B1B] transition-all"
                     >
                       🗑️ Supprimer
                     </button>
@@ -321,17 +338,17 @@ export default function MerchantOffersPage() {
           }
         >
           {deleteModalOffer && (
-            <div className="space-y-3 py-2 text-xs text-gray-300">
+            <div className="space-y-3 py-2 text-xs text-[#141210]">
               <p>
                 Vous êtes sur le point de retirer :{' '}
-                <strong className="text-white">{deleteModalOffer.title}</strong>
+                <strong className="text-[#E51C23]">{deleteModalOffer.title}</strong>
               </p>
               {deleteModalOffer.hasOrders ? (
-                <div className="p-3 rounded-xl bg-[#FF5500]/10 border border-[#FF5500]/30 text-[#FF5500]">
+                <div className="p-3 rounded-xl bg-[#FEF08A] border-2 border-[#141210] text-[#141210] font-medium shadow-[2px_2px_0px_#141210]">
                   ℹ️ <strong>Règle d'intégrité comptable :</strong> Des réservations ou paiements sont déjà enregistrés sur cette offre. Le système appliquera un <em>soft-delete</em> (statut <code>DELETED</code>) pour maintenir l'historique financier et les tickets déjà émis.
                 </div>
               ) : (
-                <p className="text-[#8A92A6]">
+                <p className="text-[#141210]/70">
                   Aucune commande n'étant en cours, cette offre sera retirée sans impact.
                 </p>
               )}

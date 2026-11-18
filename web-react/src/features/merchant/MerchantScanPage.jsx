@@ -150,221 +150,229 @@ export default function MerchantScanPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* En-tête */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-black text-white tracking-tight mb-2">
-          Validation des Retraits
-        </h1>
-        <p className="text-sm text-gray-400">
-          Vérifiez le Living Ticket de l'étudiant pour lui remettre son panier anti-gaspi.
-        </p>
-      </div>
-
-      {/* Onglets de mode de scan */}
-      {!result && (
-        <div className="flex bg-gray-900 border border-gray-800 p-1 rounded-2xl mb-6">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('camera');
-              setErrorDetails(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === 'camera'
-                ? 'bg-[#CCFF00] text-gray-950 shadow-lg font-bold'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <QrCode className="w-4 h-4" />
-            Scanner Caméra
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('manual');
-              setErrorDetails(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === 'manual'
-                ? 'bg-[#CCFF00] text-gray-950 shadow-lg font-bold'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <KeyRound className="w-4 h-4" />
-            Saisie de Secours (6 chiffres)
-          </button>
-        </div>
-      )}
-
-      {/* AFFICHAGE DU RÉSULTAT DU RETRAIT */}
-      {result ? (
-        <div className="bg-gray-900 border-2 border-emerald-500/80 rounded-3xl p-6 shadow-2xl text-center animate-in fade-in zoom-in-95 duration-300">
-          <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40">
-            <CheckCircle2 className="w-10 h-10" />
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
+        {/* En-tête */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E51C23] text-white text-xs font-black uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+            <QrCode className="w-3.5 h-3.5" />
+            <span>Contrôle &amp; Validation</span>
           </div>
-
-          <h2 className="text-2xl font-bold text-white mb-1">Retrait Validé !</h2>
-          <p className="text-emerald-400 font-medium text-sm mb-6">
-            Remettre la commande à l'étudiant dès maintenant.
+          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210] mb-2">
+            Validation des Retraits
+          </h1>
+          <p className="text-xs sm:text-sm text-[#141210]/70 font-sans">
+            Vérifiez le Living Ticket de l'étudiant pour lui remettre son panier anti-gaspi.
           </p>
-
-          <div className="bg-gray-950/70 rounded-2xl p-4 border border-gray-800 text-left space-y-3 mb-6">
-            <div className="flex justify-between items-center text-sm border-b border-gray-800/80 pb-2">
-              <span className="text-gray-400">N° Commande :</span>
-              <span className="font-mono font-bold text-white tracking-wider">
-                {result.order?.orderCode}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm border-b border-gray-800/80 pb-2">
-              <span className="text-gray-400">Étudiant :</span>
-              <span className="font-semibold text-white">
-                {result.order?.studentSnapshot?.displayName || 'Étudiant ESSECT'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm border-b border-gray-800/80 pb-2">
-              <span className="text-gray-400">Quantité :</span>
-              <span className="font-bold text-[#CCFF00]">
-                {result.order?.quantity} portion(s)
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-400">EcoPoints attribués :</span>
-              <span className="font-bold text-emerald-400">
-                +{result.pointsAwarded} pts
-              </span>
-            </div>
-
-            {/* Révélation du panier surprise */}
-            {result.isSurprise && result.reveal && (
-              <div className="mt-4 pt-3 border-t border-gray-800">
-                <span className="text-xs font-semibold uppercase tracking-wider text-amber-400 block mb-2">
-                  🎁 Contenu Mystery Box Dévoilé :
-                </span>
-                <ul className="space-y-1">
-                  {result.reveal.items?.map((item, idx) => (
-                    <li key={idx} className="text-xs text-gray-300 flex justify-between">
-                      <span>• {item.name}</span>
-                      <span className="font-bold text-amber-300">x{item.qty}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleReset}
-            className="w-full flex items-center justify-center gap-2 bg-[#CCFF00] hover:bg-[#b8e600] text-gray-950 font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg"
-          >
-            <RotateCcw className="w-5 h-5" />
-            Scanner la commande suivante
-          </button>
         </div>
-      ) : (
-        <>
-          {/* AFFICHAGE DES ERREURS DE VALIDATION */}
-          {errorDetails && (
-            <div className="bg-red-950/60 border border-red-500/80 rounded-2xl p-5 mb-6 text-center animate-in fade-in duration-200">
-              <div className="w-12 h-12 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto mb-2">
-                <XCircle className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">Refus du Billet</h3>
-              <p className="text-red-300 text-sm mb-4">{errorDetails.message}</p>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="inline-flex items-center gap-2 bg-red-900/60 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Réessayer
-              </button>
+
+        {/* Onglets de mode de scan */}
+        {!result && (
+          <div className="flex bg-[#FAF6EE] border-2 border-[#141210] p-1 rounded-2xl mb-6 shadow-[3px_3px_0px_#141210]">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('camera');
+                setErrorDetails(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs sm:text-sm transition-all ${
+                activeTab === 'camera'
+                  ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
+                  : 'text-[#141210]/70 hover:text-[#141210]'
+              }`}
+            >
+              <QrCode className="w-4 h-4" />
+              Scanner Caméra
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('manual');
+                setErrorDetails(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs sm:text-sm transition-all ${
+                activeTab === 'manual'
+                  ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
+                  : 'text-[#141210]/70 hover:text-[#141210]'
+              }`}
+            >
+              <KeyRound className="w-4 h-4" />
+              Saisie de Secours (6 chiffres)
+            </button>
+          </div>
+        )}
+
+        {/* AFFICHAGE DU RÉSULTAT DU RETRAIT */}
+        {result ? (
+          <div className="bg-[#FAF6EE] border-2 border-[#15803D] rounded-3xl p-6 shadow-[6px_6px_0px_#141210] text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 bg-[#DCFCE7] text-[#15803D] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
-          )}
 
-          {/* VUE SCANNER CAMÉRA */}
-          {activeTab === 'camera' && (
-            <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-xl text-center">
-              <div className="relative mx-auto rounded-2xl overflow-hidden bg-black max-w-[320px] aspect-square flex items-center justify-center border border-gray-800">
-                <div id="qr-reader" className="w-full h-full" />
-                {loading && (
-                  <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white z-10">
-                    <div className="w-8 h-8 border-3 border-[#CCFF00] border-t-transparent rounded-full animate-spin mb-2" />
-                    <span className="text-xs font-medium">Vérification cryptographique...</span>
-                  </div>
-                )}
+            <h2 className="font-anton uppercase text-2xl sm:text-3xl text-[#141210] mb-1">
+              Retrait Validé !
+            </h2>
+            <p className="text-[#15803D] font-black text-sm mb-6">
+              Remettre la commande à l'étudiant dès maintenant.
+            </p>
+
+            <div className="bg-white rounded-2xl p-4 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-left space-y-3 mb-6">
+              <div className="flex justify-between items-center text-sm border-b border-[#141210]/15 pb-2">
+                <span className="text-[#141210]/60 font-mono text-xs">N° Commande :</span>
+                <span className="font-mono font-black text-[#141210] tracking-wider">
+                  {result.order?.orderCode}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm border-b border-[#141210]/15 pb-2">
+                <span className="text-[#141210]/60 font-mono text-xs">Étudiant :</span>
+                <span className="font-bold text-[#141210]">
+                  {result.order?.studentSnapshot?.displayName || 'Étudiant ESSECT'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm border-b border-[#141210]/15 pb-2">
+                <span className="text-[#141210]/60 font-mono text-xs">Quantité :</span>
+                <span className="font-black text-[#E51C23]">
+                  {result.order?.quantity} portion(s)
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-[#141210]/60 font-mono text-xs">EcoPoints attribués :</span>
+                <span className="font-black text-[#15803D]">
+                  +{result.pointsAwarded} pts
+                </span>
               </div>
 
-              {cameraError ? (
-                <div className="mt-4 flex items-center gap-2 text-amber-400 text-xs bg-amber-950/40 border border-amber-800/60 p-3 rounded-xl text-left">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{cameraError}</span>
+              {/* Révélation du panier surprise */}
+              {result.isSurprise && result.reveal && (
+                <div className="mt-4 pt-3 border-t-2 border-dashed border-[#141210]/20">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#E51C23] block mb-2 font-mono">
+                    🎁 Contenu Mystery Box Dévoilé :
+                  </span>
+                  <ul className="space-y-1">
+                    {result.reveal.items?.map((item, idx) => (
+                      <li key={idx} className="text-xs text-[#141210] flex justify-between font-mono">
+                        <span>• {item.name}</span>
+                        <span className="font-black text-[#141210]">x{item.qty}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              ) : (
-                <p className="text-xs text-gray-400 mt-4 flex items-center justify-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-[#CCFF00]" />
-                  Cadrez le QR code dynamique de l'étudiant dans le carré
-                </p>
               )}
             </div>
-          )}
 
-          {/* VUE SAISIE MANUELLE DE SECOURS */}
-          {activeTab === 'manual' && (
-            <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 shadow-xl">
-              <form onSubmit={handleManualSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                    Code Commande (ex : CS-7H9KZ)
-                  </label>
-                  <input
-                    type="text"
-                    value={orderCode}
-                    onChange={(e) => setOrderCode(e.target.value.toUpperCase())}
-                    placeholder="CS-XXXXX"
-                    maxLength={8}
-                    required
-                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white font-mono text-lg uppercase tracking-wider focus:outline-none focus:border-[#CCFF00] transition-colors"
-                  />
+            <button
+              type="button"
+              onClick={handleReset}
+              className="w-full flex items-center justify-center gap-2 bg-[#E51C23] text-white font-anton uppercase text-lg py-3.5 px-6 rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all"
+            >
+              <RotateCcw className="w-5 h-5" />
+              Scanner la commande suivante
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* AFFICHAGE DES ERREURS DE VALIDATION */}
+            {errorDetails && (
+              <div className="bg-[#FEE2E2] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] rounded-2xl p-5 mb-6 text-center animate-in fade-in duration-200">
+                <div className="w-12 h-12 bg-white text-[#991B1B] rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-[#141210]">
+                  <XCircle className="w-6 h-6" />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                    Code de Secours (6 chiffres affichés sous le QR)
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={code6}
-                    onChange={(e) => setCode6(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="123456"
-                    maxLength={6}
-                    required
-                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-[#CCFF00] font-mono text-2xl tracking-widest text-center focus:outline-none focus:border-[#CCFF00] transition-colors"
-                  />
-                </div>
-
+                <h3 className="font-anton uppercase text-lg text-[#991B1B] mb-1">Refus du Billet</h3>
+                <p className="text-[#141210] text-sm mb-4 font-sans">{errorDetails.message}</p>
                 <button
-                  type="submit"
-                  disabled={loading || orderCode.length < 5 || code6.length !== 6}
-                  className="w-full bg-[#CCFF00] hover:bg-[#b8e600] disabled:bg-gray-800 disabled:text-gray-600 text-gray-950 font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 mt-4"
+                  type="button"
+                  onClick={handleReset}
+                  className="inline-flex items-center gap-2 bg-white text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] px-4 py-2 rounded-lg text-xs font-black transition-all"
                 >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-gray-950 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      Valider le Retrait
-                    </>
-                  )}
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Réessayer
                 </button>
-              </form>
-            </div>
-          )}
-        </>
-      )}
+              </div>
+            )}
+
+            {/* VUE SCANNER CAMÉRA */}
+            {activeTab === 'camera' && (
+              <div className="bg-[#FAF6EE] border-2 border-[#141210] rounded-3xl p-6 shadow-[4px_4px_0px_#141210] text-center">
+                <div className="relative mx-auto rounded-2xl overflow-hidden bg-white max-w-[320px] aspect-square flex items-center justify-center border-2 border-[#141210] shadow-[3px_3px_0px_#141210]">
+                  <div id="qr-reader" className="w-full h-full" />
+                  {loading && (
+                    <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-[#141210] z-10">
+                      <div className="w-8 h-8 border-3 border-[#E51C23] border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="text-xs font-black font-mono">Vérification cryptographique...</span>
+                    </div>
+                  )}
+                </div>
+
+                {cameraError ? (
+                  <div className="mt-4 flex items-center gap-2 text-[#991B1B] text-xs bg-[#FEE2E2] border-2 border-[#141210] p-3 rounded-xl text-left shadow-[2px_2px_0px_#141210]">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{cameraError}</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#141210]/70 mt-4 flex items-center justify-center gap-1.5 font-sans font-medium">
+                    <ShieldCheck className="w-4 h-4 text-[#15803D]" />
+                    Cadrez le QR code dynamique de l'étudiant dans le carré
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* VUE SAISIE MANUELLE DE SECOURS */}
+            {activeTab === 'manual' && (
+              <div className="bg-[#FAF6EE] border-2 border-[#141210] rounded-3xl p-6 shadow-[4px_4px_0px_#141210]">
+                <form onSubmit={handleManualSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-[#141210]/70 mb-2 font-mono">
+                      Code Commande (ex : CS-7H9KZ)
+                    </label>
+                    <input
+                      type="text"
+                      value={orderCode}
+                      onChange={(e) => setOrderCode(e.target.value.toUpperCase())}
+                      placeholder="CS-XXXXX"
+                      maxLength={8}
+                      required
+                      className="w-full bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] rounded-xl px-4 py-3 text-[#141210] font-mono text-lg uppercase tracking-wider focus:outline-none focus:shadow-[4px_4px_0px_#141210] transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-[#141210]/70 mb-2 font-mono">
+                      Code de Secours (6 chiffres affichés sous le QR)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={code6}
+                      onChange={(e) => setCode6(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="123456"
+                      maxLength={6}
+                      required
+                      className="w-full bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] rounded-xl px-4 py-3 text-[#E51C23] font-mono text-2xl tracking-widest text-center focus:outline-none focus:shadow-[4px_4px_0px_#141210] font-black transition-all"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || orderCode.length < 5 || code6.length !== 6}
+                    className="w-full bg-[#E51C23] text-white font-anton uppercase text-lg py-3.5 rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-4"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        Valider le Retrait
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

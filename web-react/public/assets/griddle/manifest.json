@@ -1,0 +1,94 @@
+[
+  {
+    "name": "#1 Bestseller Starburst",
+    "path": "/assets/griddle/stickers/sticker-bestseller-framer.png",
+    "format": "PNG",
+    "size": [
+      800,
+      721
+    ]
+  },
+  {
+    "name": "New Badge Oval",
+    "path": "/assets/griddle/stickers/sticker-new-framer.png",
+    "format": "PNG",
+    "size": [
+      800,
+      517
+    ]
+  },
+  {
+    "name": "Hot Fire Badge",
+    "path": "/assets/griddle/stickers/sticker-hot-framer.png",
+    "format": "PNG",
+    "size": [
+      800,
+      562
+    ]
+  },
+  {
+    "name": "sticker-number-one",
+    "path": "/assets/griddle/stickers/sticker-number-one.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-new-badge",
+    "path": "/assets/griddle/stickers/sticker-new-badge.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-hot-flame",
+    "path": "/assets/griddle/stickers/sticker-hot-flame.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-crown",
+    "path": "/assets/griddle/stickers/sticker-crown.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-flame-icon",
+    "path": "/assets/griddle/stickers/sticker-flame-icon.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-starburst-yellow",
+    "path": "/assets/griddle/stickers/sticker-starburst-yellow.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-starburst-red",
+    "path": "/assets/griddle/stickers/sticker-starburst-red.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "sticker-starburst-cream",
+    "path": "/assets/griddle/stickers/sticker-starburst-cream.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "diner-checker-black",
+    "path": "/assets/griddle/patterns/diner-checker-black.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "diner-checker-red",
+    "path": "/assets/griddle/patterns/diner-checker-red.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "diner-checker-subtle",
+    "path": "/assets/griddle/patterns/diner-checker-subtle.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "polaroid-tape-straight",
+    "path": "/assets/griddle/tape/polaroid-tape-straight.svg",
+    "format": "SVG"
+  },
+  {
+    "name": "polaroid-tape-corner-left",
+    "path": "/assets/griddle/tape/polaroid-tape-corner-left.svg",
+    "format": "SVG"
+  }
+]

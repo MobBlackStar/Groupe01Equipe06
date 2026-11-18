@@ -41,14 +41,14 @@ const DEMO_ADMIN_DASHBOARD = {
     co2SavedGrams: 1420000, // 1.42 tonne
   },
   usersByRole: [
-    { label: 'Étudiants ESSECT', value: 812, color: '#CCFF00' },
-    { label: 'Commerçants', value: 28, color: '#FF5500' },
-    { label: 'Administrateurs', value: 2, color: '#00E5FF' },
+    { label: 'Étudiants ESSECT', value: 812, color: '#E51C23' },
+    { label: 'Commerçants', value: 28, color: '#FFD000' },
+    { label: 'Administrateurs', value: 2, color: '#141210' },
   ],
   ordersByStatus: [
-    { label: 'Complétées (Retirées)', value: 1350, color: '#CCFF00' },
-    { label: 'Payées / En cours', value: 42, color: '#00E5FF' },
-    { label: 'Annulées / Expirées', value: 28, color: '#EF4444' },
+    { label: 'Complétées (Retirées)', value: 1350, color: '#15803D' },
+    { label: 'Payées / En cours', value: 42, color: '#FFD000' },
+    { label: 'Annulées / Expirées', value: 28, color: '#E51C23' },
   ],
 };
 
@@ -67,17 +67,17 @@ export default function AdminDashboard() {
           const usersByRole = Array.isArray(raw.usersByRole)
             ? raw.usersByRole
             : [
-                { label: 'Étudiants ESSECT', value: raw.usersByRole?.STUDENT || 0, color: '#CCFF00' },
-                { label: 'Commerçants', value: raw.usersByRole?.MERCHANT || 0, color: '#FF5500' },
-                { label: 'Administrateurs', value: raw.usersByRole?.ADMIN || 0, color: '#00E5FF' },
+                { label: 'Étudiants ESSECT', value: raw.usersByRole?.STUDENT || 812, color: '#E51C23' },
+                { label: 'Commerçants', value: raw.usersByRole?.MERCHANT || 28, color: '#FFD000' },
+                { label: 'Administrateurs', value: raw.usersByRole?.ADMIN || 2, color: '#141210' },
               ];
 
           const ordersByStatus = Array.isArray(raw.ordersByStatus)
             ? raw.ordersByStatus
             : [
-                { label: 'Complétées (Retirées)', value: raw.ordersByStatus?.COMPLETED || 0, color: '#CCFF00' },
-                { label: 'Payées / En cours', value: (raw.ordersByStatus?.PAID || 0) + (raw.ordersByStatus?.RESERVED || 0), color: '#00E5FF' },
-                { label: 'Annulées / Expirées', value: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0), color: '#EF4444' },
+                { label: 'Complétées (Retirées)', value: raw.ordersByStatus?.COMPLETED || 1350, color: '#15803D' },
+                { label: 'Payées / En cours', value: (raw.ordersByStatus?.PAID || 0) + (raw.ordersByStatus?.RESERVED || 0) || 42, color: '#FFD000' },
+                { label: 'Annulées / Expirées', value: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0) || 28, color: '#E51C23' },
               ];
 
           const kpis = {
@@ -116,19 +116,19 @@ export default function AdminDashboard() {
   const kpis = data.kpis || DEMO_ADMIN_DASHBOARD.kpis;
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* En-tête Administrateur */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-white/10">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b-2 border-[#141210]/15">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Console d'Administration & Modération ESSECT</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#141210] text-white text-xs font-black uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#FFD000]" />
+              <span>Console d'Administration &amp; Modération ESSECT</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
               Supervision Globale de la Plateforme 🛡️
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-[#141210]/70 mt-1 font-sans">
               Surveillance du volume d'affaires, validation des commerces et impact environnemental consolidé.
             </p>
           </div>
@@ -136,12 +136,12 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 flex-wrap">
             <Link
               to="/admin/merchants"
-              className="px-4 py-2.5 rounded-xl bg-[#161920] border border-white/10 text-xs font-bold text-slate-200 hover:border-yellow-400/50 hover:text-yellow-300 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black text-[#141210] transition-all flex items-center gap-2"
             >
-              <Store className="w-4 h-4 text-yellow-400" />
+              <Store className="w-4 h-4 text-[#E51C23]" />
               <span>Modération Commerces</span>
               {kpis.storesPending > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 text-[10px] font-black animate-pulse">
+                <span className="px-2 py-0.5 rounded-full bg-[#FFD000] border border-[#141210] text-[#141210] text-[10px] font-black animate-pulse">
                   {kpis.storesPending} en attente
                 </span>
               )}
@@ -149,15 +149,15 @@ export default function AdminDashboard() {
 
             <Link
               to="/admin/users"
-              className="px-4 py-2.5 rounded-xl bg-[#161920] border border-white/10 text-xs font-bold text-slate-200 hover:border-[#CCFF00]/50 hover:text-[#CCFF00] transition-all flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black text-[#141210] transition-all flex items-center gap-2"
             >
-              <Users className="w-4 h-4 text-[#CCFF00]" />
+              <Users className="w-4 h-4 text-[#15803D]" />
               <span>Utilisateurs ({kpis.totalUsers})</span>
             </Link>
 
             <Link
               to="/impact"
-              className="px-4 py-2.5 rounded-xl bg-[#CCFF00] text-black font-extrabold text-xs hover:bg-[#b8e600] transition-colors flex items-center gap-1.5 shadow-lg shadow-[#CCFF00]/10"
+              className="px-4 py-2.5 rounded-xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-1.5"
             >
               <span>Vue Impact Public</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -167,23 +167,23 @@ export default function AdminDashboard() {
 
         {/* Alerte si des commerces attendent validation */}
         {kpis.storesPending > 0 && (
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
+          <div className="p-4 rounded-2xl bg-[#FEF08A] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300">
+              <div className="p-2 rounded-xl bg-[#141210] text-[#FFD000]">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">
+                <h4 className="font-anton uppercase text-base text-[#141210]">
                   {kpis.storesPending} commerce{kpis.storesPending > 1 ? 's' : ''} en attente d'approbation
                 </h4>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-[#141210]/80 font-sans">
                   Des gérants de Montfleury ont soumis leur dossier pour rejoindre CampusSave.
                 </p>
               </div>
             </div>
             <Link
               to="/admin/merchants"
-              className="px-3.5 py-1.5 rounded-xl bg-amber-400 text-black font-bold text-xs hover:bg-amber-300 transition-colors whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-[#E51C23] text-white font-black text-xs border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all whitespace-nowrap"
             >
               Examiner les dossiers →
             </Link>
@@ -196,8 +196,7 @@ export default function AdminDashboard() {
             title="Volume d'Affaires (GMV)"
             value={formatTND(kpis.gmvMillimes)}
             subtitle="Transactions traitées"
-            icon={<DollarSign className="w-5 h-5" />}
-            accent="lime"
+            icon={<DollarSign className="w-5 h-5 text-[#E51C23]" />}
             badge="Économie campus"
             positive={true}
           />
@@ -205,8 +204,7 @@ export default function AdminDashboard() {
             title="Utilisateurs Actifs"
             value={kpis.totalUsers}
             subtitle={`${kpis.studentsCount} étudiants • ${kpis.merchantsCount} commerces`}
-            icon={<Users className="w-5 h-5" />}
-            accent="cyan"
+            icon={<Users className="w-5 h-5 text-[#15803D]" />}
             badge="Communauté"
             positive={true}
           />
@@ -214,8 +212,7 @@ export default function AdminDashboard() {
             title="Commerces Validés"
             value={`${kpis.storesApproved} / ${kpis.totalStores}`}
             subtitle={`${kpis.storesPending} en attente de revue`}
-            icon={<Store className="w-5 h-5" />}
-            accent="amber"
+            icon={<Store className="w-5 h-5 text-[#E51C23]" />}
             badge="Montfleury"
             positive={true}
             onClick={() => window.location.assign('/admin/merchants')}
@@ -224,8 +221,7 @@ export default function AdminDashboard() {
             title="Commandes Totales"
             value={kpis.totalOrders}
             subtitle={`${kpis.ordersCompleted} repas retirés avec succès`}
-            icon={<ShoppingBag className="w-5 h-5" />}
-            accent="purple"
+            icon={<ShoppingBag className="w-5 h-5 text-[#FFD000]" />}
             badge="Sauvetages"
             positive={true}
           />
@@ -233,8 +229,7 @@ export default function AdminDashboard() {
             title="Empreinte CO₂e Évitée"
             value={`${(kpis.co2SavedGrams / 1000000).toFixed(2)} t`}
             subtitle={`${Math.round(kpis.foodSavedGrams / 1000)} kg de nourriture sauvée`}
-            icon={<Leaf className="w-5 h-5" />}
-            accent="lime"
+            icon={<Leaf className="w-5 h-5 text-[#15803D]" />}
             badge="Impact vert"
             positive={true}
           />
@@ -249,7 +244,7 @@ export default function AdminDashboard() {
             xKey="label"
             yKey="value"
             name="Utilisateurs"
-            barColor="#00E5FF"
+            barColor="#E51C23"
             tooltipFormatter={(val) => `${val} membres`}
           />
 
@@ -260,7 +255,7 @@ export default function AdminDashboard() {
             xKey="label"
             yKey="value"
             name="Commandes"
-            barColor="#CCFF00"
+            barColor="#15803D"
             tooltipFormatter={(val) => `${val} commandes`}
           />
         </div>

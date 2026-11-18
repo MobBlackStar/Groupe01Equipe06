@@ -1,0 +1,307 @@
+/**
+ * Griddle Total Visual Theme & Utility Classes
+ * CampusSave - ESSECT Anti-Gaspillage Platform
+ * 
+ * Palette:
+ * - Canvas: #F4EFE6 (Warm Butcher-Paper Cream)
+ * - Cards: #FAF6EE (Warm Ivory), #FFFFFF (Pure Paper)
+ * - Ink & Borders: #141210 (2px solid #141210, shadow: 4px 4px 0px #141210)
+ * - Accents: #E51C23 (Griddle Crimson Red), #FFD000 (Mustard Yellow)
+ */
+
+:root {
+  --griddle-canvas: #F4EFE6;
+  --griddle-card: #FAF6EE;
+  --griddle-pure: #FFFFFF;
+  --griddle-ink: #141210;
+  --griddle-red: #E51C23;
+  --griddle-yellow: #FFD000;
+  --griddle-border: 2px solid #141210;
+  --griddle-shadow: 4px 4px 0px #141210;
+  --griddle-shadow-hover: 2px 2px 0px #141210;
+  --griddle-shadow-lg: 6px 6px 0px #141210;
+}
+
+/* ==========================================================================
+   1. GRIDDLE CARDS & CONTAINERS
+   ========================================================================== */
+
+.griddle-canvas {
+  background-color: var(--griddle-canvas);
+  color: var(--griddle-ink);
+}
+
+.griddle-card {
+  background-color: var(--griddle-card);
+  color: var(--griddle-ink);
+  border: 2px solid var(--griddle-ink);
+  box-shadow: 4px 4px 0px var(--griddle-ink);
+  border-radius: 8px;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.griddle-card-white {
+  background-color: var(--griddle-pure);
+  color: var(--griddle-ink);
+  border: 2px solid var(--griddle-ink);
+  box-shadow: 4px 4px 0px var(--griddle-ink);
+  border-radius: 8px;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.griddle-card-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--griddle-ink);
+}
+
+.griddle-card-active:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--griddle-ink);
+}
+
+/* ==========================================================================
+   2. BUTTONS (.btn-griddle-primary, .btn-griddle-secondary)
+   ========================================================================== */
+
+.btn-griddle-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #E51C23;
+  color: #FFFFFF;
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.4rem;
+  border: 2px solid #141210;
+  box-shadow: 4px 4px 0px #141210;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.btn-griddle-primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px #141210;
+  background-color: #d1141b;
+}
+
+.btn-griddle-primary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px #141210;
+}
+
+.btn-griddle-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #F4EFE6;
+  color: #141210;
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.4rem;
+  border: 2px solid #141210;
+  box-shadow: 4px 4px 0px #141210;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.btn-griddle-secondary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px #141210;
+  background-color: #eae3d5;
+}
+
+.btn-griddle-secondary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px #141210;
+}
+
+.btn-griddle-yellow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #FFD000;
+  color: #141210;
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.4rem;
+  border: 2px solid #141210;
+  box-shadow: 4px 4px 0px #141210;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.btn-griddle-yellow:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px #141210;
+  background-color: #eec200;
+}
+
+.btn-griddle-yellow:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px #141210;
+}
+
+/* ==========================================================================
+   3. STICKERS & BADGES (.sticker-yellow, .sticker-red)
+   ========================================================================== */
+
+.sticker-yellow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FFD000;
+  color: #141210;
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.75rem;
+  border: 2px solid #141210;
+  box-shadow: 2.5px 2.5px 0px #141210;
+  border-radius: 9999px;
+  transform: rotate(-3deg);
+  user-select: none;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+
+.sticker-yellow:hover {
+  transform: rotate(1deg) scale(1.05);
+}
+
+.sticker-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #E51C23;
+  color: #FFFFFF;
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.75rem;
+  border: 2px solid #141210;
+  box-shadow: 2.5px 2.5px 0px #141210;
+  border-radius: 9999px;
+  transform: rotate(4deg);
+  user-select: none;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+
+.sticker-red:hover {
+  transform: rotate(0deg) scale(1.05);
+}
+
+.sticker-starburst {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 0.9rem;
+  color: #141210;
+  transform: rotate(-6deg);
+}
+
+.sticker-tilt-left {
+  transform: rotate(-6deg);
+}
+
+.sticker-tilt-right {
+  transform: rotate(5deg);
+}
+
+/* ==========================================================================
+   4. POLAROID TAPE (.polaroid-tape)
+   ========================================================================== */
+
+.polaroid-tape-wrap {
+  position: relative;
+}
+
+.polaroid-tape-top-left {
+  position: absolute;
+  top: -8px;
+  left: -12px;
+  width: 54px;
+  height: 18px;
+  background: rgba(255, 236, 170, 0.82);
+  box-shadow: 0 1px 3px rgba(20, 18, 16, 0.15);
+  transform: rotate(-35deg);
+  border: 1px dashed rgba(220, 195, 120, 0.6);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.polaroid-tape-top-right {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  width: 54px;
+  height: 18px;
+  background: rgba(255, 236, 170, 0.82);
+  box-shadow: 0 1px 3px rgba(20, 18, 16, 0.15);
+  transform: rotate(35deg);
+  border: 1px dashed rgba(220, 195, 120, 0.6);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   5. DINER CHECKERBOARD PATTERNS
+   ========================================================================== */
+
+.bg-diner-checker-subtle {
+  background-image: url('/assets/griddle/patterns/diner-checker-subtle.svg');
+  background-repeat: repeat;
+  background-size: 20px 20px;
+}
+
+.bg-diner-checker-red {
+  background-image: url('/assets/griddle/patterns/diner-checker-red.svg');
+  background-repeat: repeat;
+  background-size: 24px 24px;
+}
+
+.bg-diner-checker-black {
+  background-image: url('/assets/griddle/patterns/diner-checker-black.svg');
+  background-repeat: repeat;
+  background-size: 24px 24px;
+}
+
+/* ==========================================================================
+   6. HANDWRITTEN & DINER MARQUEES
+   ========================================================================== */
+
+.font-handwritten {
+  font-family: 'Permanent Marker', 'Caveat', cursive;
+}
+
+.font-diner-headline {
+  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+}

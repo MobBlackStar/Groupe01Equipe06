@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
+import { formatTunisDate } from '../../lib/formatters.js';
 import { EmptyState, Spinner } from '../../components/ui/index.js';
 
 // Commandes commerçant de démonstration
@@ -92,36 +93,36 @@ export default function MerchantOrdersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* En-tête commerçant */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b-2 border-[#141210]/15">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">
-              Commandes & Retraits des Étudiants
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
+              Commandes &amp; Retraits des Étudiants
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
               Gérez les retraits d'invendus au comptoir et vérifiez les Living Tickets.
             </p>
           </div>
 
           <Link
             to="/merchant/scan"
-            className="px-5 py-2.5 rounded-2xl bg-[#CCFF00] text-black font-black text-xs hover:bg-[#b8e600] transition-colors shadow-lg shadow-[#CCFF00]/15 flex items-center gap-2 self-start sm:self-auto"
+            className="px-5 py-2.5 rounded-2xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-2 self-start sm:self-auto"
           >
             <span>📷 Scanner un QR Code</span>
           </Link>
         </div>
 
         {/* Onglets statut */}
-        <div className="flex rounded-2xl bg-[#161920] p-1.5 border border-white/5 text-xs">
+        <div className="flex rounded-2xl bg-[#FAF6EE] p-1.5 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-xs">
           <button
             type="button"
             onClick={() => setActiveTab('PAID')}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
+            className={`flex-1 py-2.5 rounded-xl font-black transition-all ${
               activeTab === 'PAID'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
+                : 'text-[#141210]/70 hover:text-[#141210]'
             }`}
           >
             🎟️ Payées — À Remettre ({orders.filter((o) => o.status === 'PAID').length})
@@ -129,10 +130,10 @@ export default function MerchantOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('RESERVED')}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
+            className={`flex-1 py-2.5 rounded-xl font-black transition-all ${
               activeTab === 'RESERVED'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#FFD000] text-[#141210] shadow-[2px_2px_0px_#141210]'
+                : 'text-[#141210]/70 hover:text-[#141210]'
             }`}
           >
             ⏳ Réservées (10 min) ({orders.filter((o) => o.status === 'RESERVED').length})
@@ -140,10 +141,10 @@ export default function MerchantOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('COMPLETED')}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
+            className={`flex-1 py-2.5 rounded-xl font-black transition-all ${
               activeTab === 'COMPLETED'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#DCFCE7] text-[#15803D] shadow-[2px_2px_0px_#141210]'
+                : 'text-[#141210]/70 hover:text-[#141210]'
             }`}
           >
             ✓ Remises sur place ({orders.filter((o) => o.status === 'COMPLETED').length})
@@ -154,7 +155,7 @@ export default function MerchantOrdersPage() {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <Spinner size="lg" />
-            <p className="text-xs text-slate-400">Synchronisation des retraits en direct...</p>
+            <p className="text-xs text-[#141210]/60 font-mono">Synchronisation des retraits en direct...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <EmptyState
@@ -167,26 +168,28 @@ export default function MerchantOrdersPage() {
             {filteredOrders.map((o) => (
               <div
                 key={o.id}
-                className="p-5 rounded-2xl bg-[#161920] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-5 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-sm text-[#CCFF00] px-2 py-0.5 rounded bg-black/50 border border-[#CCFF00]/30">
+                    <span className="font-mono font-black text-sm text-[#141210] px-2.5 py-0.5 rounded bg-[#FFD000] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
                       {o.orderCode}
                     </span>
-                    <span className="text-xs text-slate-300 font-medium">
+                    <span className="text-xs text-[#141210] font-bold">
                       👤 {o.customerName || 'Étudiant ESSECT'}
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-white text-base pt-1">{o.offerTitle}</h3>
+                  <h3 className="font-anton uppercase text-lg text-[#141210] pt-1">{o.offerTitle}</h3>
 
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span>Quantité : <strong className="text-white">{o.quantity}</strong></span>
+                  <div className="flex items-center gap-3 text-xs text-[#141210]/70 font-sans flex-wrap">
+                    <span>Quantité : <strong className="text-[#141210] font-bold">{o.quantity}</strong></span>
                     <span>•</span>
-                    <span>Total réglé : <strong className="text-[#CCFF00] font-mono">{formatTND(o.totalPriceMillimes)}</strong></span>
+                    <span>Total réglé : <strong className="text-[#E51C23] font-mono font-bold">{formatTND(o.totalPriceMillimes)}</strong></span>
                     <span>•</span>
                     <span>Créneau : {o.pickupSlot}</span>
+                    <span>•</span>
+                    <span className="font-mono text-[11px] text-[#141210]/50">{o.createdAt?.includes('T') ? formatTunisDate(o.createdAt) : o.createdAt}</span>
                   </div>
                 </div>
 
@@ -194,20 +197,20 @@ export default function MerchantOrdersPage() {
                   {o.status === 'PAID' && (
                     <Link
                       to="/merchant/scan"
-                      className="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-bold text-xs hover:bg-[#b8e600] transition-colors shadow-md shadow-[#CCFF00]/10 flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-1.5"
                     >
                       <span>Valider le retrait →</span>
                     </Link>
                   )}
 
                   {o.status === 'RESERVED' && (
-                    <span className="text-xs text-amber-400 font-medium animate-pulse">
+                    <span className="text-xs text-amber-700 font-bold px-3 py-1 rounded-full bg-[#FEF08A] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] animate-pulse">
                       ⏳ En attente de règlement Konnect
                     </span>
                   )}
 
                   {o.status === 'COMPLETED' && (
-                    <span className="text-xs text-emerald-400 font-medium">
+                    <span className="text-xs text-[#15803D] font-bold px-3 py-1 rounded-full bg-[#DCFCE7] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
                       ✓ Remis avec succès
                     </span>
                   )}

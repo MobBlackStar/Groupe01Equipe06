@@ -1,4 +1,4 @@
-// 💡 Concept & Analogie : Ticket de caisse thermique de restaurant (Thermal Receipt) avec papier crème texturé, découpe crantée, encoches latérales et typographie monospace officielle.
+// 💡 Concept & Analogie : Ticket de caisse thermique de restaurant Griddle (Thermal Receipt) avec papier ivoire (#FAF6EE), découpe crantée, encoches latérales et typographie monospace officielle.
 // 🔄 Comparaison React / Flutter : En Flutter, le ticket utilise `ThermalReceiptClipper` et `QrImageView` avec rafraîchissement local par Timer ; en React, ce composant correspond à `BoardingPass.jsx`.
 // 🎯 À retenir pour la soutenance : "Ce ticket thermique matérialise la preuve d'achat avec un tampon d'authenticité et un jeton HMAC-SHA256 dynamique infalsifiable recalculé toutes les 30s."
 
@@ -146,7 +146,7 @@ class _BoardingPassState extends State<BoardingPass> {
       clipper: const ThermalReceiptClipper(punchRadius: 10, punchPosition: 0.36, toothWidth: 8, toothHeight: 6),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.warmCream,
+          color: AppTheme.warmIvory,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.35),
@@ -159,10 +159,10 @@ class _BoardingPassState extends State<BoardingPass> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Liseré supérieur aux couleurs CampusSave
+            // Liseré supérieur aux couleurs Griddle
             Container(
-              height: 4,
-              color: AppTheme.streetFlameRed,
+              height: 5,
+              color: AppTheme.griddleRed,
             ),
 
             // En-tête officiel Ticket Thermique
@@ -173,8 +173,8 @@ class _BoardingPassState extends State<BoardingPass> {
                   const Text(
                     '★ CAMPUSSAVE • ESSECT MONTFLEURY ★',
                     style: TextStyle(
-                      color: AppTheme.deepEspresso,
-                      fontSize: 10.5,
+                      color: AppTheme.deepInk,
+                      fontSize: 11,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'monospace',
                       letterSpacing: 0.8,
@@ -184,7 +184,7 @@ class _BoardingPassState extends State<BoardingPass> {
                   Text(
                     'TICKET DE RETRAIT ANTI-GASPI EN DIRECT',
                     style: TextStyle(
-                      color: AppTheme.deepEspresso.withValues(alpha: 0.65),
+                      color: AppTheme.deepInk.withValues(alpha: 0.65),
                       fontSize: 9.5,
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.w600,
@@ -199,9 +199,9 @@ class _BoardingPassState extends State<BoardingPass> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppTheme.streetFlameRed.withValues(alpha: 0.12),
+                          color: AppTheme.griddleRed.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppTheme.streetFlameRed.withValues(alpha: 0.3)),
+                          border: Border.all(color: AppTheme.griddleRed.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -209,7 +209,7 @@ class _BoardingPassState extends State<BoardingPass> {
                               width: 6,
                               height: 6,
                               decoration: const BoxDecoration(
-                                color: AppTheme.streetFlameRed,
+                                color: AppTheme.griddleRed,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -217,7 +217,7 @@ class _BoardingPassState extends State<BoardingPass> {
                             Text(
                               'LIVE • $timeStr',
                               style: const TextStyle(
-                                color: AppTheme.streetFlameRed,
+                                color: AppTheme.griddleRed,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
                                 fontFamily: 'monospace',
@@ -229,7 +229,7 @@ class _BoardingPassState extends State<BoardingPass> {
                       Text(
                         '#${widget.orderCode}',
                         style: const TextStyle(
-                          color: AppTheme.deepEspresso,
+                          color: AppTheme.deepInk,
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'monospace',
@@ -271,13 +271,13 @@ class _BoardingPassState extends State<BoardingPass> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppTheme.streetFlameRed, width: 2),
+                          border: Border.all(color: AppTheme.griddleRed, width: 2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
                           'PAYÉ • ESSECT',
                           style: TextStyle(
-                            color: AppTheme.streetFlameRed,
+                            color: AppTheme.griddleRed,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,
@@ -305,12 +305,12 @@ class _BoardingPassState extends State<BoardingPass> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFDED8CE)),
+                      border: Border.all(color: AppTheme.deepInk, width: 2),
                       boxShadow: const [
                         BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
+                          color: AppTheme.deepInk,
+                          offset: Offset(3, 3),
+                          blurRadius: 0,
                         ),
                       ],
                     ),
@@ -330,7 +330,7 @@ class _BoardingPassState extends State<BoardingPass> {
                       Text(
                         'ROTATION JETON SÉCURISÉ :',
                         style: TextStyle(
-                          color: AppTheme.deepEspresso.withValues(alpha: 0.65),
+                          color: AppTheme.deepInk.withValues(alpha: 0.65),
                           fontSize: 9.5,
                           fontFamily: 'monospace',
                           fontWeight: FontWeight.bold,
@@ -339,7 +339,7 @@ class _BoardingPassState extends State<BoardingPass> {
                       Text(
                         '${secondsRemaining}s',
                         style: const TextStyle(
-                          color: AppTheme.streetFlameRed,
+                          color: AppTheme.griddleRed,
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'monospace',
@@ -353,7 +353,7 @@ class _BoardingPassState extends State<BoardingPass> {
                     child: LinearProgressIndicator(
                       value: progress,
                       backgroundColor: const Color(0xFFDED8CE),
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.streetFlameRed),
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.griddleRed),
                       minHeight: 4,
                     ),
                   ),
@@ -364,15 +364,16 @@ class _BoardingPassState extends State<BoardingPass> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppTheme.deepEspresso,
+                      color: AppTheme.deepInk,
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white12),
                     ),
                     child: Column(
                       children: [
                         Text(
                           'CODE DE SECOURS (SAISIE MANUELLE)',
                           style: TextStyle(
-                            color: AppTheme.warmCream.withValues(alpha: 0.6),
+                            color: AppTheme.warmCream.withValues(alpha: 0.7),
                             fontSize: 8.5,
                             letterSpacing: 1,
                             fontFamily: 'monospace',
@@ -383,7 +384,7 @@ class _BoardingPassState extends State<BoardingPass> {
                         Text(
                           formattedCode6,
                           style: const TextStyle(
-                            color: AppTheme.mustardGold,
+                            color: AppTheme.mustardYellow,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 5,
@@ -403,7 +404,7 @@ class _BoardingPassState extends State<BoardingPass> {
                       Text(
                         'Présentez ce reçu au comptoir avant expiration',
                         style: TextStyle(
-                          color: AppTheme.deepEspresso.withValues(alpha: 0.6),
+                          color: AppTheme.deepInk.withValues(alpha: 0.6),
                           fontSize: 9.5,
                           fontFamily: 'monospace',
                         ),
@@ -428,8 +429,8 @@ class _BoardingPassState extends State<BoardingPass> {
           (index) => Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 1),
-              color: index % 2 == 0 ? const Color(0xFFC7BEB1) : Colors.transparent,
-              height: 1.2,
+              color: index % 2 == 0 ? AppTheme.deepInk.withValues(alpha: 0.3) : Colors.transparent,
+              height: 1.5,
             ),
           ),
         ),
@@ -446,19 +447,19 @@ class _BoardingPassState extends State<BoardingPass> {
           child: Text(
             label,
             style: TextStyle(
-              color: AppTheme.deepEspresso.withValues(alpha: 0.55),
+              color: AppTheme.deepInk.withValues(alpha: 0.55),
               fontSize: 10,
               fontFamily: 'monospace',
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        const Text(': ', style: TextStyle(color: AppTheme.deepEspresso, fontSize: 10, fontFamily: 'monospace')),
+        const Text(': ', style: TextStyle(color: AppTheme.deepInk, fontSize: 10, fontFamily: 'monospace')),
         Expanded(
           child: Text(
             value,
             style: const TextStyle(
-              color: AppTheme.deepEspresso,
+              color: AppTheme.deepInk,
               fontSize: 10.5,
               fontFamily: 'monospace',
               fontWeight: FontWeight.bold,

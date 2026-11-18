@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 80" width="130" height="80">
+  <g transform="rotate(5 65 40)">
+    <!-- Oval with hard retro shadow -->
+    <ellipse cx="65" cy="42" rx="55" ry="32" fill="#141210"/>
+    <ellipse cx="65" cy="38" rx="55" ry="32" fill="#E51C23" stroke="#141210" stroke-width="3"/>
+    <ellipse cx="65" cy="38" rx="49" ry="26" fill="none" stroke="#FAF6EE" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="65" y="47" font-family="'Anton', 'Bebas Neue', sans-serif" font-size="28" font-weight="900" fill="#FAF6EE" text-anchor="middle" letter-spacing="3">NEW!</text>
+  </g>
+</svg>

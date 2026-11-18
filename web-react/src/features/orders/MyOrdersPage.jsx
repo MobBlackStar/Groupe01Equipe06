@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Comme le classeur de vos billets de train ou concerts où vos réservations actives sont prêtes à être compostées et vos voyages passés archivés.
-// 🔄 Comparaison React / Flutter : En React, les onglets filtrent l'état local avec `useState` ; en Flutter, `MyOrdersScreen` utilise un `DefaultTabController` avec des vues `TabBarView`.
-// 🎯 À retenir pour la soutenance : "Une vision claire scindée en 3 états : En cours (retraits imminents), Terminées (historique d'impact) et Annulées (transparence totale)."
+// 💡 Concept & Analogie : Comme le classeur de vos tickets où vos réservations actives sont prêtes à être compostées et vos repas passés archivés.
+// 🔄 Comparaison React / Flutter : En React, les onglets filtrent l'état local avec `useState` ; en Flutter, `MyOrdersScreen` utilise un `DefaultTabController`.
+// 🎯 À retenir pour la soutenance : "Une vision claire scindée en 3 états : En cours, Terminées et Annulées."
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -57,7 +57,7 @@ const DEMO_ORDERS = [
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('ACTIVE'); // 'ACTIVE', 'COMPLETED', 'ARCHIVED'
+  const [activeTab, setActiveTab] = useState('ACTIVE');
   const [unboxingOrder, setUnboxingOrder] = useState(null);
   const [ratingOrder, setRatingOrder] = useState(null);
 
@@ -114,15 +114,15 @@ export default function MyOrdersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* En-tête */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b-2 border-[#141210]">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">
-              Mes Commandes & Sauvetages
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase text-[#141210] tracking-wide">
+              Mes Commandes &amp; Sauvetages
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[#555] font-bold mt-1">
               Retrouvez vos réservations en cours et vos Living Tickets pour retrait sur place à Montfleury.
             </p>
           </div>
@@ -131,15 +131,15 @@ export default function MyOrdersPage() {
             <button
               type="button"
               onClick={() => setUnboxingOrder({ id: 'demo-unboxing', reveal: null })}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-yellow-400/40 text-yellow-300 font-bold text-xs hover:bg-yellow-400/30 transition-all flex items-center gap-1.5 shadow-sm"
+              className="btn-griddle-yellow text-xs py-2 px-3.5"
             >
               <span>🎁</span>
-              <span>Déballer Panier Surprise</span>
+              <span>Déballer Panier</span>
             </button>
 
             <Link
               to="/app/explore"
-              className="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-bold text-xs hover:bg-[#b8e600] transition-colors"
+              className="btn-griddle-primary text-xs py-2 px-4"
             >
               + Sauver un repas
             </Link>
@@ -147,14 +147,14 @@ export default function MyOrdersPage() {
         </div>
 
         {/* Onglets */}
-        <div className="flex rounded-2xl bg-[#161920] p-1.5 border border-white/5 text-xs">
+        <div className="flex rounded-xl bg-[#FAF6EE] p-1.5 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-xs">
           <button
             type="button"
             onClick={() => setActiveTab('ACTIVE')}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
+            className={`flex-1 py-2 rounded-lg font-anton uppercase tracking-wide transition-all cursor-pointer ${
               activeTab === 'ACTIVE'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210]'
+                : 'text-[#141210] hover:bg-[#F4EFE6]'
             }`}
           >
             ⚡ En cours ({orders.filter((o) => ['RESERVED', 'PAID'].includes(o.status)).length})
@@ -162,10 +162,10 @@ export default function MyOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('COMPLETED')}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
+            className={`flex-1 py-2 rounded-lg font-anton uppercase tracking-wide transition-all cursor-pointer ${
               activeTab === 'COMPLETED'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210]'
+                : 'text-[#141210] hover:bg-[#F4EFE6]'
             }`}
           >
             ✓ Terminées ({orders.filter((o) => o.status === 'COMPLETED').length})
@@ -173,10 +173,10 @@ export default function MyOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('ARCHIVED')}
-            className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${
+            className={`flex-1 py-2 rounded-lg font-anton uppercase tracking-wide transition-all cursor-pointer ${
               activeTab === 'ARCHIVED'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210]'
+                : 'text-[#141210] hover:bg-[#F4EFE6]'
             }`}
           >
             ✕ Annulées / Expirées
@@ -187,7 +187,7 @@ export default function MyOrdersPage() {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <Spinner size="lg" />
-            <p className="text-xs text-slate-400">Chargement de vos commandes...</p>
+            <p className="text-xs text-[#555] font-bold">Chargement de vos commandes...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <EmptyState
@@ -197,7 +197,7 @@ export default function MyOrdersPage() {
             action={
               <Link
                 to="/app/explore"
-                className="px-4 py-2 rounded-xl bg-[#CCFF00] text-black font-bold text-xs"
+                className="btn-griddle-primary text-xs"
               >
                 Explorer les offres actives
               </Link>
@@ -214,12 +214,14 @@ export default function MyOrdersPage() {
             ))}
           </div>
         )}
+
         {/* Modal Unboxing Reveal */}
         <UnboxingReveal
           isOpen={Boolean(unboxingOrder)}
           onClose={() => setUnboxingOrder(null)}
           order={unboxingOrder}
         />
+
         {/* Modal Notation Étoiles */}
         <RatingDialog
           isOpen={Boolean(ratingOrder)}

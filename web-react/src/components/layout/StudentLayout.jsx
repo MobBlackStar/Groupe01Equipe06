@@ -1,6 +1,6 @@
 // 💡 Concept & Analogie : Comme l'écrin complet d'une application native, ce layout enveloppe chaque écran étudiant de la navigation supérieure, de la barre tactile inférieure et du pied de page.
 // 🔄 Comparaison React / Flutter : En React, `StudentLayout` utilise un conteneur Flexbox avec une barre basse fixe sur mobile ; en Flutter, c'est l'équivalent du widget `Scaffold` avec `bottomNavigationBar`.
-// 🎯 À retenir pour la soutenance : "Ce layout assure une ergonomie responsive sans faille (de 360 px sur mobile à 1440 px sur écran de bureau) sans aucun défilement horizontal parasite."
+// 🎯 À retenir pour la soutenance : "Ce layout assure une ergonomie responsive sans faille sur fond warm cream #F4EFE6."
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -25,13 +25,13 @@ export default function StudentLayout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white flex flex-col">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] flex flex-col">
       <Navbar />
       <main className="flex-1 pb-20 lg:pb-8">{children}</main>
       <Footer />
 
       {/* Barre de navigation basse tactile (Mobile 360px - 768px) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#161920]/95 backdrop-blur-md border-t border-white/10 px-2 py-2 flex items-center justify-around">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF6EE] border-t-2 border-[#141210] px-2 py-2 flex items-center justify-around shadow-[0_-2px_10px_rgba(20,18,16,0.1)]">
         {navItems.map((item) => {
           const active = isCurrent(item.path);
           return (
@@ -39,7 +39,7 @@ export default function StudentLayout({ children }) {
               key={item.path}
               to={item.path}
               className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                active ? 'text-[#CCFF00]' : 'text-slate-400 hover:text-white'
+                active ? 'text-[#E51C23] font-black' : 'text-[#777] hover:text-[#141210]'
               }`}
             >
               <div className={active ? 'scale-110 transition-transform' : ''}>

@@ -18,14 +18,14 @@ export const ENDPOINTS = {
   MERCHANT_ORDERS: '/merchants/me/orders',
 
   // Offres & IA
-  OFFERS: '/offers',
+  OFFERS: Object.assign(new String('/offers'), { LIST: '/offers', toString() { return '/offers'; }, valueOf() { return '/offers'; } }),
   OFFER_BY_ID: (id) => `/offers/${id}`,
   AI_OFFER_AUTOFILL: '/ai/offer-autofill',
   UPLOAD_IMAGE: '/uploads/image',
   RADAR: '/radar',
 
   // Commandes & Paiements
-  ORDERS: '/orders',
+  ORDERS: Object.assign(new String('/orders'), { CREATE: '/orders', LIST: '/orders', toString() { return '/orders'; }, valueOf() { return '/orders'; } }),
   ORDER_BY_ID: (id) => `/orders/${id}`,
   CANCEL_ORDER: (id) => `/orders/${id}/cancel`,
   GET_TICKET: (id) => `/orders/${id}/ticket`,

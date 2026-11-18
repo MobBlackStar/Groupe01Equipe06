@@ -1,12 +1,11 @@
-// 💡 Concept & Analogie : Comme les onglets tactiles d'une carte de menu contemporaine (image5.png), ce panneau regroupe les filtres par pilules avec décompte d'articles en direct.
-// 🔄 Comparaison React / Flutter : En React, les pilules utilisent des classes Tailwind fluides et des compteurs dynamiques ; en Flutter, `filter_bottom_sheet.dart` présente des ChoiceChip arrondis.
-// 🎯 À retenir pour la soutenance : "Chaque pilule affiche le décompte réel d'offres disponibles dans la catégorie, évitant à l'étudiant de cliquer sur des filtres vides."
-// Module : Recherche & Filtres (M4)
+// 💡 Concept & Analogie : Comme les onglets tactiles d'une carte de menu, ce panneau regroupe les filtres par pilules avec décompte d'articles en direct.
+// 🔄 Comparaison React / Flutter : En React, les pilules utilisent des classes Tailwind Griddle ; en Flutter, `filter_bottom_sheet.dart` présente des ChoiceChip arrondis.
+// 🎯 À retenir pour la soutenance : "Chaque pilule affiche le décompte réel d'offres disponibles dans la catégorie."
 
 import React from 'react';
 import { OFFER_CATEGORIES } from '@shared/constants.js';
 import { formatTND } from '@shared/money.js';
-import { Flame, Sparkles, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Flame, Sparkles, RotateCcw } from 'lucide-react';
 
 const CATEGORY_DEFINITIONS = [
   { id: 'ALL', label: 'Tous', icon: '🍽️' },
@@ -35,17 +34,17 @@ export default function FilterPanel({
   className = '',
 }) {
   return (
-    <div className={`flex flex-col gap-4 p-4 sm:p-5 rounded-3xl bg-[#161412] border border-white/10 shadow-xl ${className}`}>
+    <div className={`flex flex-col gap-4 p-4 sm:p-5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] text-[#141210] ${className}`}>
       
-      {/* 1. Pill Category Bar avec compteurs (Inspiré de image5.png) */}
+      {/* 1. Pill Category Bar avec compteurs */}
       <div>
         <div className="flex items-center justify-between mb-2.5">
-          <label className="text-[10px] font-mono uppercase tracking-widest text-[#F6F1E7]/60 flex items-center gap-1.5 font-bold">
-            <Flame className="w-3.5 h-3.5 text-[#EE3124]" />
+          <label className="text-[11px] font-mono uppercase tracking-widest text-[#141210] flex items-center gap-1.5 font-black">
+            <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
             <span>Rayons du Marché (Catégories)</span>
           </label>
-          <span className="text-[10px] text-[#F5C400] font-mono">
-            Sélectionnez une catégorie pour filtrer les tickets
+          <span className="text-[11px] text-[#555] font-mono font-bold">
+            Sélectionnez un rayon
           </span>
         </div>
 
@@ -59,20 +58,20 @@ export default function FilterPanel({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectCategory(cat.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all shadow-sm ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border-2 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#F5C400] text-[#0E0D0C] shadow-md shadow-[#F5C400]/20 scale-[1.02]'
-                    : 'bg-white/5 text-[#F6F1E7]/80 hover:bg-white/10 border border-white/5'
+                    ? 'bg-[#E51C23] text-white border-[#141210] shadow-[2px_2px_0px_#141210]'
+                    : 'bg-white text-[#141210] border-[#141210] hover:bg-[#F4EFE6]'
                 }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
                 {count !== undefined && count > 0 && (
                   <span
-                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full font-black border ${
                       isSelected
-                        ? 'bg-[#0E0D0C] text-[#F5C400]'
-                        : 'bg-white/10 text-[#F6F1E7]/60'
+                        ? 'bg-white text-[#E51C23] border-[#141210]'
+                        : 'bg-[#FFD000] text-[#141210] border-[#141210]'
                     }`}
                   >
                     {count}
@@ -85,15 +84,15 @@ export default function FilterPanel({
       </div>
 
       {/* 2. Filtres secondaires : Budget, Tri, et Panier Surprise */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-3.5 border-t border-white/10 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-3.5 border-t-2 border-[#141210]/15 items-center">
         
         {/* Curseur Budget Max */}
         <div className="md:col-span-5">
           <div className="flex justify-between items-center text-xs mb-1.5">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[#F6F1E7]/70">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#666]">
               Budget Max :
             </span>
-            <span className="font-oswald text-sm font-black text-[#F5C400]">
+            <span className="font-anton text-base text-[#E51C23]">
               {formatTND(maxPriceMillimes)}
             </span>
           </div>
@@ -104,9 +103,9 @@ export default function FilterPanel({
             step={500}
             value={maxPriceMillimes}
             onChange={(e) => onChangeMaxPrice(Number(e.target.value))}
-            className="w-full accent-[#F5C400] bg-stone-800 h-1.5 rounded-lg cursor-pointer"
+            className="w-full accent-[#E51C23] bg-[#FAF6EE] h-2 rounded-lg cursor-pointer border border-[#141210]"
           />
-          <div className="flex justify-between text-[9px] font-mono text-[#F6F1E7]/40 mt-1">
+          <div className="flex justify-between text-[9px] font-mono text-[#777] mt-1 font-bold">
             <span>1.000 DT</span>
             <span>10.000 DT</span>
             <span>20.000 DT</span>
@@ -115,17 +114,17 @@ export default function FilterPanel({
 
         {/* Boutons de Tri */}
         <div className="md:col-span-4">
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-[#F6F1E7]/70 mb-1.5">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#666] mb-1.5">
             Trier les tickets par :
           </label>
-          <div className="flex rounded-xl bg-black/50 p-1 border border-white/10 text-xs">
+          <div className="flex rounded-lg bg-white p-1 border-2 border-[#141210] text-xs">
             <button
               type="button"
               onClick={() => onChangeSortBy('distance')}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all text-center ${
+              className={`flex-1 py-1 px-2 rounded-md font-bold transition-all text-center cursor-pointer ${
                 sortBy === 'distance'
-                  ? 'bg-[#EE3124] text-white shadow-sm'
-                  : 'text-[#F6F1E7]/70 hover:text-white'
+                  ? 'bg-[#E51C23] text-white shadow-sm'
+                  : 'text-[#141210] hover:bg-[#F4EFE6]'
               }`}
             >
               Proximité
@@ -133,10 +132,10 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={() => onChangeSortBy('price')}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all text-center ${
+              className={`flex-1 py-1 px-2 rounded-md font-bold transition-all text-center cursor-pointer ${
                 sortBy === 'price'
-                  ? 'bg-[#F5C400] text-[#0E0D0C] shadow-sm'
-                  : 'text-[#F6F1E7]/70 hover:text-white'
+                  ? 'bg-[#FFD000] text-[#141210] shadow-sm font-black'
+                  : 'text-[#141210] hover:bg-[#F4EFE6]'
               }`}
             >
               Prix bas
@@ -144,10 +143,10 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={() => onChangeSortBy('ending')}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all text-center ${
+              className={`flex-1 py-1 px-2 rounded-md font-bold transition-all text-center cursor-pointer ${
                 sortBy === 'ending'
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'text-[#F6F1E7]/70 hover:text-white'
+                  ? 'bg-[#C2410C] text-white shadow-sm font-black'
+                  : 'text-[#141210] hover:bg-[#F4EFE6]'
               }`}
             >
               Urgence
@@ -160,13 +159,13 @@ export default function FilterPanel({
           <button
             type="button"
             onClick={() => onToggleSurpriseOnly(!surpriseOnly)}
-            className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 border-[#141210] transition-all flex items-center gap-1.5 cursor-pointer ${
               surpriseOnly
-                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-md'
-                : 'bg-white/5 border-white/10 text-[#F6F1E7]/70 hover:bg-white/10'
+                ? 'bg-[#FFD000] text-[#141210] shadow-[2px_2px_0px_#141210]'
+                : 'bg-white text-[#141210] hover:bg-[#F4EFE6]'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#E51C23]" />
             <span>Paniers Mystères</span>
           </button>
 
@@ -174,7 +173,7 @@ export default function FilterPanel({
             type="button"
             onClick={onResetFilters}
             title="Réinitialiser tous les filtres"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[#F6F1E7]/60 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-white border-2 border-[#141210] text-[#141210] hover:bg-[#F4EFE6] transition-colors shadow-[2px_2px_0px_#141210] cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
           </button>

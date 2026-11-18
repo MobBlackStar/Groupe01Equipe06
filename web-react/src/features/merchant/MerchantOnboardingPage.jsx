@@ -147,22 +147,22 @@ export default function MerchantOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0F12] text-white py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/30 text-[#CCFF00] text-xs font-bold mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD000] border-2 border-[#141210] text-[#141210] text-xs font-black uppercase tracking-wider mb-3 shadow-[2px_2px_0px_#141210]">
             <span>🏪</span> ESPACE COMMERÇANT ESSECT
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
             Enregistrer votre Établissement Partenaire
           </h1>
-          <p className="text-xs sm:text-sm text-[#8A92A6] mt-1">
+          <p className="text-xs sm:text-sm text-[#141210]/70 mt-1 font-sans">
             Rejoignez le réseau anti-gaspillage de Montfleury et vendez vos invendus du soir aux étudiants.
           </p>
         </div>
 
-        <Card className="p-6 sm:p-8 bg-[#161920] border-[#262A33]">
+        <Card className="p-6 sm:p-8 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210]">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Nom & Type */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -187,131 +187,100 @@ export default function MerchantOnboardingPage() {
 
             {/* Description */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[#8A92A6]">
-                Description &amp; Spécialités <span className="text-[#FF5500]">*</span>
+              <label className="text-xs font-black uppercase tracking-wider text-[#141210]/70 font-mono">
+                Description &amp; Spécialités <span className="text-[#E51C23]">*</span>
               </label>
               <textarea
                 rows={3}
                 placeholder="Décrivez vos spécialités appréciées des étudiants (sandwichs, plats chauds, pâtisseries)..."
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
-                className={`w-full bg-[#161920] text-white placeholder-[#8A92A6]/60 text-sm rounded-xl p-3.5 border transition-colors outline-none ${
-                  errors.description ? 'border-[#FF1744]' : 'border-[#262A33] focus:border-[#CCFF00]'
+                className={`w-full bg-white text-[#141210] placeholder-[#141210]/40 text-sm rounded-xl p-3.5 border-2 border-[#141210] transition-all outline-none font-sans font-medium ${
+                  errors.description ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]' : 'shadow-[2px_2px_0px_#141210] focus:shadow-[4px_4px_0px_#141210]'
                 }`}
               />
               {errors.description && (
-                <p className="text-xs text-[#FF1744]">{errors.description}</p>
+                <p className="text-xs text-[#E51C23] font-bold mt-1">{errors.description}</p>
               )}
             </div>
 
             {/* Téléphone & Horaires */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Input
-                label="Téléphone Professionnel"
+                label="Téléphone Professionnel (Tunisie)"
                 required
                 placeholder="+21671390111"
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 error={errors.phone}
-                helperText="Pour joindre le gérant en cas de question commande"
                 leftIcon={<span>📞</span>}
+                helperText="Format standard : +216 suivi de 8 chiffres"
               />
 
               <Input
-                label="Horaires d'Ouverture"
+                label="Créneau d'Ouverture Habituel"
                 required
-                placeholder="ex: 08:00 - 21:00"
+                placeholder="08:00 - 21:00"
                 value={formData.openingHours}
                 onChange={(e) => handleChange('openingHours', e.target.value)}
                 leftIcon={<span>🕒</span>}
               />
             </div>
 
-            {/* ADRESSE & SÉLECTEUR GÉOGRAPHIQUE MONTFLEURY */}
-            <div className="pt-4 border-t border-[#262A33]">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>📍</span> Emplacement &amp; Rayon Piéton ESSECT
-                </h3>
-                <Badge variant={isEligible ? 'lime' : 'red'} size="sm" dot>
-                  {isEligible ? 'ÉLIGIBLE ≤ 3000M' : 'HORS ZONE'}
-                </Badge>
-              </div>
-              <p className="text-xs text-[#8A92A6] mb-4">
-                Sélectionnez une rue de Montfleury ou ajustez les coordonnées GPS. L'école ESSECT est située à ({ESSECT_COORDINATES.lat}, {ESSECT_COORDINATES.lng}).
-              </p>
-
-              {/* Raccourcis rues de Montfleury */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                {montfleuryPresets.map((preset) => {
-                  const isCurrent = formData.lat === preset.lat && formData.lng === preset.lng;
-                  return (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() => handleSelectPreset(preset)}
-                      className={`p-2.5 rounded-xl text-left border transition-all text-xs ${
-                        isCurrent
-                          ? 'bg-[#CCFF00]/15 border-[#CCFF00] text-white font-semibold'
-                          : 'bg-[#0D0F12] border-[#262A33] text-[#8A92A6] hover:text-white hover:border-[#383e4c]'
-                      }`}
-                    >
-                      <span className="block truncate">{preset.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Rue saisie */}
-              <Input
-                label="Adresse / Rue"
-                required
-                value={formData.street}
-                onChange={(e) => handleChange('street', e.target.value)}
-                leftIcon={<span>🏠</span>}
-              />
-
-              {/* Boîte d'indicateur de distance Haversine en direct */}
-              <div
-                className={`mt-4 p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-                  isEligible
-                    ? 'bg-[#CCFF00]/10 border-[#CCFF00]/30 text-white'
-                    : 'bg-[#FF1744]/10 border-[#FF1744]/40 text-[#FF1744]'
-                }`}
-              >
+            {/* Géolocalisation Montfleury */}
+            <div className="space-y-4 pt-4 border-t-2 border-[#141210]/15">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📏</span>
-                    <span className="text-sm font-bold">
-                      Distance de l'ESSECT : {distanceMeters} mètres (~{walkingMins} min à pied)
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#8A92A6] mt-0.5">
-                    Calcul trigonométrique de Haversine avec facteur de détour urbain piéton de 1.3
+                  <h4 className="font-anton uppercase text-base text-[#141210] tracking-wide">
+                    Localisation dans le Quartier de Montfleury
+                  </h4>
+                  <p className="text-xs text-[#141210]/70 font-sans">
+                    L'établissement doit être accessible à pied depuis l'ESSECT (rayon ≤ 3 000 m).
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs font-mono text-[#8A92A6]">
-                    Lat: {formData.lat} | Lng: {formData.lng}
-                  </span>
+
+                <Badge variant={isEligible ? 'green' : 'red'} size="md" dot>
+                  {isEligible ? `Éligible (${distanceMeters} m • ~${walkingMins} min à pied)` : `Non éligible (> 3 000 m)`}
+                </Badge>
+              </div>
+
+              {/* Raccourcis d'adresses Montfleury */}
+              <div>
+                <span className="text-[11px] font-black uppercase text-[#141210]/60 block mb-2 font-mono">
+                  Sélection rapide d'adresse à Montfleury :
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {montfleuryPresets.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectPreset(preset)}
+                      className={`p-2.5 rounded-xl border-2 border-[#141210] text-left text-xs transition-all ${
+                        formData.street === preset.name
+                          ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
+                          : 'bg-white text-[#141210] shadow-[1px_1px_0px_#141210] hover:bg-[#FFD000]'
+                      }`}
+                    >
+                      <span className="font-bold block truncate">{preset.name}</span>
+                      <span className="text-[10px] opacity-80 font-mono">
+                        {distanceFromEssect(preset.lat, preset.lng)}m ESSECT
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
-              {errors.location && (
-                <p className="text-xs text-[#FF1744] mt-2">{errors.location}</p>
-              )}
             </div>
 
             {/* Bouton de Soumission */}
-            <div className="pt-4 flex justify-end">
+            <div className="pt-4 border-t-2 border-[#141210]/15 flex justify-end">
               <Button
                 type="submit"
                 variant="primary"
                 size="lg"
                 isLoading={loading}
-                className="w-full sm:w-auto"
-                leftIcon={<span>📤</span>}
+                leftIcon={<span>🚀</span>}
               >
-                Soumettre mon dossier à l'administrateur ESSECT →
+                Déposer mon Dossier d'Agrément
               </Button>
             </div>
           </form>

@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Comme le panneau d'affichage électronique de la bourse qui pulse à chaque seconde, ce composant recalcule en temps réel le cours de l'offre et anime la baisse de prix vers le plancher.
-// 🔄 Comparaison React / Flutter : En React, un hook `useEffect` avec un `setInterval` à 1000 ms force le re-rendu localisé (uniquement pour les enchères dégressives) ; en Flutter, `LivePriceText` utilise un `Timer.periodic`.
-// 🎯 À retenir pour la soutenance : "Optimisation haute performance : seules les offres à enchère dégressive (Dutch Auction) activent l'intervalle d'horloge 1s, évitant tout gaspillage de cycles CPU sur les prix fixes."
+// 💡 Concept & Analogie : Comme le tableau de prix dynamique dans un diner vintage, ce composant recalcule en temps réel le cours de l'offre et anime la baisse de prix vers le plancher.
+// 🔄 Comparaison React / Flutter : En React, un hook `useEffect` avec un `setInterval` à 1000 ms force le re-rendu localisé ; en Flutter, `LivePriceText` utilise un `Timer.periodic`.
+// 🎯 À retenir pour la soutenance : "Optimisation haute performance : seules les offres à enchère dégressive activent l'horloge 1s."
 
 import React, { useState, useEffect, memo } from 'react';
 import { computeUnitPrice } from '@shared/pricing.js';
@@ -17,7 +17,6 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    // Si l'offre est à prix fixe, nul besoin de faire tourner une horloge 1s
     if (!isDutch) return;
 
     const timer = setInterval(() => {
@@ -43,8 +42,8 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
       <div className="flex items-baseline gap-2 flex-wrap">
         {/* Prix actuel en gros */}
         <span
-          className={`font-black tracking-tight ${
-            isLarge ? 'text-3xl md:text-4xl text-[#CCFF00]' : 'text-xl text-[#CCFF00]'
+          className={`font-anton tracking-tight text-[#E51C23] ${
+            isLarge ? 'text-3xl md:text-4xl' : 'text-2xl'
           }`}
         >
           {formatTND(currentPrice)}
@@ -52,7 +51,7 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
 
         {/* Prix d'origine barré */}
         {originalPrice > currentPrice && (
-          <span className={`text-slate-400 line-through ${isLarge ? 'text-lg' : 'text-xs'}`}>
+          <span className={`text-[#777] line-through font-mono font-bold ${isLarge ? 'text-lg' : 'text-xs'}`}>
             {formatTND(originalPrice)}
           </span>
         )}
@@ -60,8 +59,8 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
         {/* Badge réduction */}
         {discountPercent > 0 && (
           <span
-            className={`font-extrabold px-1.5 py-0.5 rounded-md bg-[#FF5500]/20 text-[#FF5500] border border-[#FF5500]/40 ${
-              isLarge ? 'text-sm' : 'text-[10px]'
+            className={`font-anton px-1.5 py-0.5 rounded-md bg-[#FFD000] text-[#141210] border border-[#141210] shadow-[1.5px_1.5px_0px_#141210] ${
+              isLarge ? 'text-sm' : 'text-[11px]'
             }`}
           >
             -{discountPercent}%
@@ -71,9 +70,9 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
 
       {/* Indicateur Smart Decay */}
       {isDutch && (
-        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#CCFF00]/90">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] animate-pulse" />
-          <span className="font-semibold tracking-wide">Smart Decay actif</span>
+        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#C2410C]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E51C23] animate-pulse" />
+          <span className="font-bold tracking-wide uppercase">Smart Decay actif</span>
         </div>
       )}
     </div>

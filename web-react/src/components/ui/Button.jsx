@@ -18,20 +18,21 @@ export default function Button({
   onClick,
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0D0F12] select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-[0.98]';
+  const baseStyles = 'inline-flex items-center justify-center font-bold tracking-wide transition-all duration-150 rounded-lg select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:translate-x-[2px] active:translate-y-[2px] cursor-pointer';
 
   const variants = {
-    primary: 'bg-[#CCFF00] text-black hover:bg-[#b8e600] focus:ring-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)] font-semibold',
-    secondary: 'bg-[#161920] text-white border border-[#262A33] hover:bg-[#20252e] hover:border-[#383e4c] focus:ring-[#383e4c]',
-    outline: 'bg-transparent text-[#CCFF00] border border-[#CCFF00] hover:bg-[#CCFF00]/10 focus:ring-[#CCFF00]',
-    danger: 'bg-[#FF1744] text-white hover:bg-[#d5002b] focus:ring-[#FF1744] shadow-[0_0_20px_rgba(255,23,68,0.25)]',
-    ghost: 'bg-transparent text-[#8A92A6] hover:text-white hover:bg-white/5 focus:ring-white/20',
+    primary: 'bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#d1141b] hover:shadow-[4px_4px_0px_#141210]',
+    secondary: 'bg-[#FAF6EE] text-[#141210] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#F4EFE6] hover:shadow-[4px_4px_0px_#141210]',
+    yellow: 'bg-[#FFD000] text-[#141210] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#e6bb00] hover:shadow-[4px_4px_0px_#141210]',
+    outline: 'bg-transparent text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:bg-[#FAF6EE]',
+    danger: 'bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#b8141a]',
+    ghost: 'bg-transparent text-[#666] hover:text-[#141210] hover:bg-black/5 border-none shadow-none',
   };
 
   const sizes = {
     sm: 'text-xs px-3 py-1.5 gap-1.5 h-8',
-    md: 'text-sm px-4 py-2.5 gap-2 h-11',
-    lg: 'text-base px-6 py-3.5 gap-2.5 h-13',
+    md: 'text-sm px-4 py-2 gap-2 h-10',
+    lg: 'text-base px-6 py-3 gap-2.5 h-12',
   };
 
   return (
@@ -44,7 +45,7 @@ export default function Button({
     >
       {isLoading ? (
         <>
-          <Spinner size="sm" variant={variant === 'primary' ? 'dark' : 'lime'} />
+          <Spinner size="sm" variant={variant === 'primary' || variant === 'danger' ? 'white' : 'dark'} />
           <span>Chargement...</span>
         </>
       ) : (
