@@ -10,6 +10,8 @@ dotenv.config();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // Jetons de démo (test-token:/mock-token:/demo-) : actifs hors production, désactivés en production sauf ALLOW_DEMO_TOKENS=true
+  ALLOW_DEMO_TOKENS: z.enum(['true', 'false']).optional(),
   PORT: z.coerce.number().default(4000),
   PUBLIC_BASE_URL: z.string().default('http://localhost:4000'),
   WEB_APP_URL: z.string().default('http://localhost:5173'),

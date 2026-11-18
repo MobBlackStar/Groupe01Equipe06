@@ -11,5 +11,5 @@ export const initPaymentSchema = z.object({
 
 export const verifyPaymentSchema = z.object({
   orderId: z.string().min(1, 'L identifiant de la commande est obligatoire'),
-  paymentRef: z.string().optional(),
+  paymentRef: z.string().nullish(), // absent en passerelle simulée ; le serveur retrouve alors la référence de la commande
 });

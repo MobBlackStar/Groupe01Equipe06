@@ -81,6 +81,16 @@ export function getNextRewardMilestone(ecoPoints) {
  * @param {number} afterPoints - Points après validation
  * @returns {Array<object>} Liste des nouvelles récompenses débloquées
  */
+/**
+ * Identifiant d'une récompense débloquée. Les récompenses créées au retrait portent `rewardId` ;
+ * celles des seeds portent `id`. Toujours comparer via cette fonction, jamais via `r.id` seul.
+ * @param {{ rewardId?: string, id?: string }} reward
+ * @returns {string|undefined}
+ */
+export function rewardKey(reward) {
+  return reward?.rewardId ?? reward?.id;
+}
+
 export function evaluateMilestones(beforePoints, afterPoints) {
   const newRewards = [];
   const start = Math.floor(beforePoints / 100) + 1;

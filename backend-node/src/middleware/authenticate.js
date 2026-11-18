@@ -6,6 +6,7 @@
 import { auth, db } from '../config/firebase.js';
 import { AppError } from '../utils/AppError.js';
 import { env } from '../config/env.js';
+import { demoTokensAllowed, ensureDemoStudent, DEMO_STUDENT_UID } from '../utils/demoAccounts.js';
 
 export async function authenticate(req, _res, next) {
   try {
@@ -20,7 +21,8 @@ export async function authenticate(req, _res, next) {
     }
 
     // Support des jetons de test et de simulation d'émulateur / démo
-    const isTestToken = token.startsWith('test-token:') || token.startsWith('mock-token:') || token.startsWith('demo-');
+    const isTestToken = demoTokensAllowed({ NODE_ENV: env.NODE_ENV, ALLOW_DEMO_TOKENS: env.ALLOW_DEMO_TOKENS }) &&
+      (token.startsWith('test-token:') || token.startsWith('mock-token:') || token.startsWith('demo-'));
     if (isTestToken || ((env.NODE_ENV === 'test' || process.env.NODE_ENV === 'test') && (token.startsWith('test-') || token.startsWith('mock-')))) {
       const parts = token.split(':');
       let uid = 'test-uid';
@@ -58,6 +60,9 @@ export async function authenticate(req, _res, next) {
         role: role === 'NONE' ? null : role,
         email_verified: true,
       };
+      // Le profil de l'étudiant démo est créé à la volée (les seeds ne contiennent que `student-demo-uid`)
+      if (uid === DEMO_STUDENT_UID) await ensureDemoStudent();
+
       return next();
     }
 

@@ -2,6 +2,7 @@
 // 🔄 Comparaison React / Flutter : Fournit la même interface de collections et documents Firestore que le SDK officiel, permettant un fonctionnement 100% autonome.
 // 🎯 À retenir pour la soutenance : "Ce module offre un mode de démonstration déconnecté pré-peuplé avec les 6 commerces de Montfleury, 20 offres et 8 étudiants pour garantir zéro plantage devant le jury."
 
+import { demoTokensAllowed } from '../utils/demoTokenPolicy.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -475,14 +476,38 @@ export class InMemoryFirestore {
       { id: 'off-8-mystery-legendary', merchantId: 'm-patisserie', title: 'Mystery Box Royale Pâtisserie & Gâteau', category: 'PATISSERIE', pricingType: 'FIXED', originalPriceMillimes: 16000, targetPriceMillimes: 5900, quantityAvailable: 1, pickupStartAt: new Date(nowMs - 1800000).toISOString(), pickupEndAt: new Date(nowMs + 7200000).toISOString(), isSurpriseBasket: true, rarity: 'LEGENDARY' },
     ];
 
+    // Les offres de démonstration référencent d'anciens identifiants (m-chaker, m-vert…) : on les rattache aux
+    // vrais commerces du jeu de données pour que commandes, scan, radar et noms de commerces restent cohérents.
+    const LEGACY_MERCHANT_IDS = {
+      'm-chaker': 'merchant-baguette-baguette',
+      'm-baguette': 'merchant-baguette-baguette',
+      'm-patisserie': 'merchant-patisserie-masmoudi',
+      'm-doyen': 'merchant-le-dome',
+      'm-vert': 'merchant-etoile-savoir',
+    };
+
     for (let i = 1; i <= 20; i++) {
       const cfg = offersConfig[(i - 1) % offersConfig.length];
       const offerId = `off-${i}`;
+      const merchantId = LEGACY_MERCHANT_IDS[cfg.merchantId] || cfg.merchantId;
+      const merchant = this._store.get(`merchants/${merchantId}`);
       this._store.set(`offers/${offerId}`, {
         ...cfg,
         id: offerId,
+        merchantId,
+        merchantSnapshot: merchant
+          ? {
+              id: merchant.id,
+              name: merchant.name,
+              phone: merchant.phone,
+              address: merchant.address,
+              location: merchant.location,
+              distanceFromEssectM: merchant.distanceFromEssectM,
+              walkingMinutes: merchant.walkingMinutes,
+            }
+          : { id: merchantId, name: '', location: null },
         status: 'ACTIVE',
-        description: `Panier anti-gaspillage de qualité préparé avec soin par ${cfg.merchantId}.`,
+        description: `Panier anti-gaspillage de qualité préparé avec soin par ${merchant?.name || 'un commerce partenaire'}.`,
         createdAt: new Date(nowMs - 3600000 * i).toISOString(),
         updatedAt: now.toISOString(),
       });
@@ -585,6 +610,12 @@ export class InMemoryFirestore {
 export function createInMemoryAuth(db) {
   return {
     async verifyIdToken(token, checkRevoked = false) {
+      // Auth mémoire permissive = démo uniquement : jamais en production (sauf ALLOW_DEMO_TOKENS=true explicite)
+      if (!demoTokensAllowed(process.env)) {
+        const err = new Error('Jeton invalide : le mode démo est désactivé en production');
+        err.code = 'auth/argument-error';
+        throw err;
+      }
       // Si jeton de test formalisé
       if (typeof token === 'string' && (token.startsWith('test-token:') || token.startsWith('mock-token:'))) {
         const parts = token.split(':');

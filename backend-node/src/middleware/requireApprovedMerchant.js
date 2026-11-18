@@ -6,6 +6,7 @@
 import { db } from '../config/firebase.js';
 import { AppError } from '../utils/AppError.js';
 import { MERCHANT_STATUS } from '../../../shared/constants.js';
+import { DEMO_MERCHANT_UID, findDemoMerchant } from '../utils/demoAccounts.js';
 
 export async function requireApprovedMerchant(req, _res, next) {
   try {
@@ -22,10 +23,9 @@ export async function requireApprovedMerchant(req, _res, next) {
       if (!snap.empty) {
         merchantData = snap.docs[0].data();
       } else {
-        // 2. Repli de secours pour les comptes démo
-        const defaultDoc = await db.collection('merchants').doc('m-baguette').get();
-        if (defaultDoc.exists) {
-          merchantData = defaultDoc.data();
+        // 2. Repli réservé au compte démo (jamais pour un vrai commerçant sans boutique)
+        if (req.user.uid === DEMO_MERCHANT_UID) {
+          merchantData = await findDemoMerchant();
         }
       }
     }

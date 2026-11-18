@@ -8,13 +8,13 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 export const ticketsController = {
   scanTicket: asyncHandler(async (req, res) => {
-    const result = await ticketsService.scanTicket(req.user.uid, req.body.qrPayload);
+    const result = await ticketsService.scanTicket(req.merchant?.id || req.user.uid, req.body.qrPayload);
     res.json(result);
   }),
 
   redeemCode: asyncHandler(async (req, res) => {
     const result = await ticketsService.redeemCode(
-      req.user.uid,
+      req.merchant?.id || req.user.uid,
       req.body.orderCode,
       req.body.code6
     );

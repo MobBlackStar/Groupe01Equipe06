@@ -10,6 +10,7 @@ import { AppError } from '../../utils/AppError.js';
 import { konnectClient } from './konnect.client.js';
 import { fcmService } from '../notifications/fcm.service.js';
 import { ORDER_STATUS, PAYMENT_STATUS, REWARD_STATUS } from '../../../../shared/constants.js';
+import { rewardKey } from '../../../../shared/loyalty.js';
 import { getTunisDayKey } from '../../utils/tunisTime.js';
 import { logger } from '../../utils/logger.js';
 
@@ -179,7 +180,7 @@ export const paymentsService = {
       if (userRef && userDoc?.exists) {
         const userData = userDoc.data();
         const updatedRewards = (userData.unlockedRewards || []).map((r) => {
-          if (r.id === order.pricing.reward.rewardId) {
+          if (rewardKey(r) === order.pricing.reward.rewardId) {
             return {
               ...r,
               status: REWARD_STATUS.USED,
@@ -383,7 +384,7 @@ export const paymentsService = {
         const userDoc = await transaction.get(userRef);
         if (userDoc.exists) {
           const updatedRewards = (userDoc.data().unlockedRewards || []).map((r) => {
-            if (r.id === order.pricing.reward.rewardId && r.status === REWARD_STATUS.LOCKED) {
+            if (rewardKey(r) === order.pricing.reward.rewardId && r.status === REWARD_STATUS.LOCKED) {
               return { ...r, status: REWARD_STATUS.AVAILABLE, lockedAt: null };
             }
             return r;

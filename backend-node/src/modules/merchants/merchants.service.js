@@ -8,6 +8,7 @@ import { db } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { MERCHANT_STATUS } from '../../../../shared/constants.js';
 import { distanceFromEssect, calculateWalkingMinutes } from '../../../../shared/geo.js';
+import { DEMO_MERCHANT_UID, findDemoMerchant } from '../../utils/demoAccounts.js';
 
 export const merchantsService = {
   /**
@@ -90,14 +91,10 @@ export const merchantsService = {
       if (!snap.empty) {
         return { merchant: snap.docs[0].data() };
       }
-      // 2. Repli gracieux en mode démo / développement sur le premier commerce approuvé (m-baguette)
-      const defaultDoc = await db.collection('merchants').doc('m-baguette').get();
-      if (defaultDoc.exists) {
-        return { merchant: defaultDoc.data() };
-      }
-      const anyApproved = await db.collection('merchants').where('status', '==', 'APPROVED').limit(1).get();
-      if (!anyApproved.empty) {
-        return { merchant: anyApproved.docs[0].data() };
+      // 2. Repli réservé au compte démo (m-baguette) : un vrai commerçant sans boutique doit recevoir un 404
+      if (uid === DEMO_MERCHANT_UID) {
+        const demoStore = await findDemoMerchant();
+        if (demoStore) return { merchant: demoStore };
       }
       throw new AppError('Commerce introuvable', 404, 'MERCHANT_NOT_FOUND');
     }

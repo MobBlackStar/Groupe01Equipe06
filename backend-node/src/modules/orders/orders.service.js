@@ -9,6 +9,7 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import { ORDER_STATUS, OFFER_STATUS, BUSINESS_RULES, REWARD_STATUS } from '../../../../shared/constants.js';
 import { computeUnitPrice } from '../../../../shared/pricing.js';
+import { rewardKey } from '../../../../shared/loyalty.js';
 import { generateOrderCode } from '../../utils/orderCode.js';
 import { deriveTicketKey } from '../tickets/ticket.crypto.js';
 
@@ -81,7 +82,7 @@ export const ordersService = {
 
       if (rewardId) {
         const unlockedRewards = userData?.unlockedRewards || [];
-        const rewardIndex = unlockedRewards.findIndex((r) => r.id === rewardId);
+        const rewardIndex = unlockedRewards.findIndex((r) => rewardKey(r) === rewardId);
 
         if (rewardIndex === -1) {
           throw new AppError('Récompense introuvable dans votre profil', 422, 'INVALID_REWARD');
@@ -110,15 +111,19 @@ export const ordersService = {
               'REWARD_NOT_APPLICABLE'
             );
           }
-          // Offre une portion gratuite
+          // Offre une portion gratuite, plafonnée (plan : cap 4000 millimes)
           discountMillimes = lockedUnitPriceMillimes;
         } else if (reward.type === 'PERCENT_OFF') {
           const percent = reward.percentOff || 10;
           discountMillimes = Math.round((subtotalMillimes * percent) / 100);
         }
+        // ALG-LOYALTY : chaque récompense porte un plafond (PERCENT_OFF 2000, FREE_SURPRISE 4000 millimes)
+        if (Number.isInteger(reward.maxDiscountMillimes)) {
+          discountMillimes = Math.min(discountMillimes, reward.maxDiscountMillimes);
+        }
 
         rewardSnapshot = {
-          rewardId: reward.id,
+          rewardId: rewardKey(reward),
           type: reward.type,
           discountMillimes,
         };
@@ -295,7 +300,7 @@ export const ordersService = {
       // Déverrouillage de la récompense
       if (userRef && userData?.unlockedRewards) {
         const updatedRewards = userData.unlockedRewards.map((r) => {
-          if (r.id === order.pricing.reward.rewardId && r.status === REWARD_STATUS.LOCKED) {
+          if (rewardKey(r) === order.pricing.reward.rewardId && r.status === REWARD_STATUS.LOCKED) {
             return {
               ...r,
               status: REWARD_STATUS.AVAILABLE,

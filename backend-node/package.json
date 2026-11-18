@@ -10,7 +10,8 @@
     "test": "node --test tests/*.test.js",
     "seed": "node scripts/seed.js",
     "create-admin": "node scripts/createAdmin.js",
-    "reset-demo": "node scripts/resetDemo.js"
+    "reset-demo": "node scripts/resetDemo.js",
+    "qa:sweep": "node scripts/qa-sweep.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
