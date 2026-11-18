@@ -130,7 +130,13 @@ export default function MerchantStorePage() {
 
   const hasDistance = Number.isFinite(Number(distanceMeters));
   const hasWalk = Number.isFinite(Number(walkingMins));
-  const addressLine = [store.street, store.area, store.city].filter(Boolean).join(', ');
+  // Adresse sans doublons ("…, Montfleury, Montfleury" → une seule fois)
+  const addressLine = [store.street, store.area, store.city]
+    .flatMap((part) => String(part || '').split(','))
+    .map((part) => part.trim())
+    .filter((part, idx, arr) => part && arr.findIndex((p) => p.toLowerCase() === part.toLowerCase()) === idx)
+    .join(', ');
+  const typeLabel = merchantTypeOptions.find((o) => o.value === store.type)?.label || store.type;
 
   return (
     <div className="cs-container cs-page">
@@ -144,21 +150,10 @@ export default function MerchantStorePage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 shrink-0">
-          <Link to="/merchant/offers" className="cs-btn cs-btn-cream">
-            <span aria-hidden="true">📦</span>
-            <span>Mes offres</span>
-          </Link>
-          <button
-            type="button"
-            onClick={toggleDemoStatus}
-            className="cs-btn cs-btn-mustard"
-            title="Tester les 3 états d'agrément pour la soutenance"
-          >
-            <span aria-hidden="true">🎭</span>
-            <span>Démo statut</span>
-          </button>
-        </div>
+        <Link to="/merchant/offers" className="cs-btn cs-btn-cream shrink-0 self-start lg:self-auto">
+          <span aria-hidden="true">📦</span>
+          <span>Mes offres</span>
+        </Link>
       </header>
 
       {/* BANDEAU D'AGRÉMENT TEMPS RÉEL */}
@@ -184,8 +179,9 @@ export default function MerchantStorePage() {
         </div>
       </section>
 
-      {/* Formulaire de Modification */}
-      <section className="max-w-4xl">
+      {/* Formulaire de Modification + aperçu public */}
+      <section className="mb-16 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+       <div className="lg:col-span-8 min-w-0">
         <h2 className="cs-title mb-8">Fiche établissement</h2>
 
         <form onSubmit={handleSave} className="cs-card p-6 sm:p-10 space-y-7">
@@ -250,6 +246,58 @@ export default function MerchantStorePage() {
             </Button>
           </div>
         </form>
+       </div>
+
+        {/* Aperçu en direct de la fiche vue par les étudiants */}
+        <aside className="lg:col-span-4 lg:sticky lg:top-24" aria-label="Aperçu de la fiche">
+          <h2 className="cs-title mb-8">Aperçu</h2>
+          <div className="cs-card-ink p-6 sm:p-8">
+            <p className="font-semibold uppercase tracking-[0.08em] text-[15px] text-[#FFD000] mb-3">
+              Vu par les étudiants
+            </p>
+            <h3 className="cs-h3 !text-2xl break-words">{store.name || 'Mon établissement'}</h3>
+            {typeLabel && <p className="text-base mt-2 text-[#FAF3E6]/80">{typeLabel}</p>}
+            {store.description && (
+              <p className="text-base mt-4 leading-relaxed line-clamp-4">{store.description}</p>
+            )}
+            <dl className="mt-6 space-y-4 text-base">
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Adresse</dt>
+                <dd className="mt-1">{addressLine || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Horaires</dt>
+                <dd className="mt-1">{store.openingHours || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Téléphone</dt>
+                <dd className="mt-1 cs-mono">{store.phone || '—'}</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+      </section>
+
+      {/* Démo jury : bascule des 3 statuts d'agrément */}
+      <section
+        className="rounded-[1.25rem] border-2 border-dashed border-[#111111] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        aria-label="Démo jury"
+      >
+        <div>
+          <p className="cs-label !text-[#111111]">Démo jury</p>
+          <p className="text-base text-[#5E5850] mt-1">
+            Simule les statuts d'agrément (approuvé, en attente, rejeté). Statut actuel : {STATUS_LABEL[store.status] || store.status}.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleDemoStatus}
+          className="cs-btn cs-btn-mustard cs-btn-sm min-h-[44px] shrink-0"
+          title="Tester les 3 états d'agrément pour la soutenance"
+        >
+          <span aria-hidden="true">🎭</span>
+          <span>Changer le statut</span>
+        </button>
       </section>
 
       {toast && (

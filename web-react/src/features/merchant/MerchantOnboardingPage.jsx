@@ -157,7 +157,8 @@ export default function MerchantOnboardingPage() {
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="max-w-4xl space-y-14">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+      <form onSubmit={handleSubmit} className="lg:col-span-8 min-w-0 space-y-14">
         {/* 01 — Identité */}
         <section>
           <div className="flex items-baseline gap-4 mb-6">
@@ -302,6 +303,56 @@ export default function MerchantOnboardingPage() {
           </Button>
         </div>
       </form>
+
+        {/* Récapitulatif en direct du dossier */}
+        <aside className="lg:col-span-4 lg:sticky lg:top-24" aria-label="Récapitulatif du dossier">
+          <div className="cs-card-ink p-6 sm:p-8">
+            <p className="font-semibold uppercase tracking-[0.08em] text-[15px] text-[#FFD000] mb-3">Votre dossier</p>
+            <h2 className="cs-h3 !text-2xl break-words">{formData.name.trim() || 'Nom de l\'enseigne'}</h2>
+            <p className="text-base mt-2 text-[#FAF3E6]/80">
+              {merchantTypeOptions.find((o) => o.value === formData.type)?.label || formData.type}
+            </p>
+
+            <dl className="mt-6 space-y-4 text-base">
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Adresse</dt>
+                <dd className="mt-1">{[formData.street, formData.area].filter(Boolean).join(', ') || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Horaires</dt>
+                <dd className="mt-1">{formData.openingHours || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Téléphone</dt>
+                <dd className="mt-1 cs-mono">{formData.phone || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[#FAF3E6]/60">Distance ESSECT</dt>
+                <dd className="mt-1 flex flex-wrap items-center gap-3">
+                  <span className="cs-figure text-[36px]">{hasDistance ? `${Math.round(distanceMeters)} m` : '—'}</span>
+                  <span className={`cs-pill ${isEligible ? 'cs-pill-leaf' : 'cs-pill-red'}`}>
+                    {isEligible ? 'Éligible' : 'Hors zone'}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          <h3 className="cs-h3 mt-10 mb-4">Après le dépôt</h3>
+          <ol className="space-y-4">
+            {[
+              "L'administrateur ESSECT vérifie votre dossier et votre distance au campus.",
+              'Vous suivez le statut en temps réel depuis « Ma boutique ».',
+              'Une fois approuvé, vous publiez vos premières offres anti-gaspi.',
+            ].map((text, i) => (
+              <li key={i} className="flex items-start gap-4">
+                <span className="cs-dot-badge shrink-0">{i + 1}</span>
+                <p className="text-base text-[#5E5850] leading-relaxed pt-2">{text}</p>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </div>
 
       {toast && (
         <Toast

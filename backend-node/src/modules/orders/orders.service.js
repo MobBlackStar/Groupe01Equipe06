@@ -186,7 +186,7 @@ export const ordersService = {
         offerId,
         offerSnapshot: {
           title: offer.title,
-          photoUrl: offer.photoUrl || null,
+          photoUrl: offer.photoUrl || offer.imageUrl || null,
           category: offer.category,
           isSurpriseBasket: !!offer.isSurpriseBasket,
           rarity: offer.rarity || null,

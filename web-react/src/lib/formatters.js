@@ -165,9 +165,29 @@ export function formatMillimes(millimes) {
   return `${dinars.toFixed(3)} DT`;
 }
 
+const FILIERE_LABELS = {
+  EBUSINESS_3A: '3A E-Business',
+  FINANCE: 'Finance',
+  MARKETING: 'Marketing',
+  GESTION: 'Gestion',
+  COMPTABILITE: 'Comptabilité',
+};
+
+/**
+ * Libellé lisible d'une filière ESSECT ("EBUSINESS_3A" -> "3A E-Business").
+ * Laisse passer tel quel un libellé déjà lisible.
+ * @param {string} filiereId
+ * @returns {string}
+ */
+export function formatFiliere(filiereId) {
+  if (!filiereId) return '—';
+  return FILIERE_LABELS[filiereId] || filiereId;
+}
+
 export default {
   formatTunisDate,
   formatTunisTime,
   formatTunisTimeWindow,
   formatMillimes,
+  formatFiliere,
 };

@@ -4,6 +4,7 @@
 // Module : Espace Commerçant React
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
@@ -170,7 +171,8 @@ export default function MerchantScanPage() {
         </p>
       </header>
 
-      <div className="max-w-2xl">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+      <div className="lg:col-span-7 min-w-0">
         {/* Onglets de mode de scan */}
         {!result && (
           <div className="flex flex-wrap gap-3 mb-8" role="group" aria-label="Mode de validation">
@@ -409,6 +411,39 @@ export default function MerchantScanPage() {
             )}
           </>
         )}
+      </div>
+
+        {/* Mode d'emploi du guichet */}
+        <aside className="lg:col-span-5 lg:sticky lg:top-24" aria-label="Comment valider un retrait">
+          <h2 className="cs-title mb-8">Comment ça marche</h2>
+          <ol className="space-y-6">
+            {[
+              {
+                title: "L'étudiant présente son ticket",
+                text: 'Le Living Ticket affiche un QR code qui change toutes les 30 secondes : une capture d\'écran ne passe pas.',
+              },
+              {
+                title: 'Scannez ou saisissez le code',
+                text: 'Caméra par défaut. Si la lumière manque, utilisez le code commande et les 6 chiffres affichés sous le QR.',
+              },
+              {
+                title: 'Remettez la commande',
+                text: 'Dès le tampon « Validé », donnez le panier. Les EcoPoints de l\'étudiant sont crédités automatiquement.',
+              },
+            ].map((step, i) => (
+              <li key={step.title} className="flex items-start gap-4">
+                <span className="cs-dot-badge shrink-0">{i + 1}</span>
+                <div className="min-w-0">
+                  <p className="cs-h3 !text-lg">{step.title}</p>
+                  <p className="text-base text-[#5E5850] mt-1 leading-relaxed">{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <Link to="/merchant/orders" className="cs-btn cs-btn-cream mt-8">
+            Voir les retraits du jour →
+          </Link>
+        </aside>
       </div>
     </div>
   );

@@ -55,6 +55,9 @@ const DEFAULT_FILIERES_DATA = [
   },
 ];
 
+// Format français déterministe (espace insécable tous les 3 chiffres)
+const frInt = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
 const safeNum = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -139,10 +142,10 @@ export default function FiliereLeaderboard({ leaderboard = DEFAULT_FILIERES_DATA
 
               <div className="col-start-2 sm:col-start-3 sm:text-right">
                 <p className="cs-figure text-[clamp(2.25rem,3.6vw,3.25rem)] whitespace-nowrap">
-                  {co2.toLocaleString('fr-FR')} <span className="text-[0.55em] text-[#5E5850]">kg CO₂</span>
+                  {frInt(co2)} <span className="text-[0.55em] text-[#5E5850]">kg CO₂</span>
                 </p>
                 <p className="text-[15px] text-[#5E5850] mt-1 whitespace-nowrap">
-                  {safeNum(item.studentsCount).toLocaleString('fr-FR')} étudiants · {safeNum(item.ecoPoints).toLocaleString('fr-FR')} pts
+                  {frInt(item.studentsCount)} étudiants · {frInt(item.ecoPoints)} pts
                 </p>
               </div>
             </li>

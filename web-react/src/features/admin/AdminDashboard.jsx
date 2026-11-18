@@ -64,38 +64,49 @@ export default function AdminDashboard() {
         const res = await apiClient.get(ENDPOINTS.DASHBOARD_ADMIN);
         if (isMounted && res.data) {
           const raw = res.data;
+
+          // Valeurs réelles uniquement : un 0 reste 0, une valeur absente devient null ("—" à l'écran)
+          const real = (v) => {
+            const x = Number(v);
+            return v === null || v === undefined || v === '' || !Number.isFinite(x) ? null : x;
+          };
+          const sumReal = (...vals) => {
+            const present = vals.map(real).filter((x) => x !== null);
+            return present.length ? present.reduce((a, b) => a + b, 0) : null;
+          };
+
           const usersByRole = Array.isArray(raw.usersByRole)
             ? raw.usersByRole
             : [
-                { label: 'Étudiants ESSECT', value: raw.usersByRole?.STUDENT || 812, color: '#DA0711' },
-                { label: 'Commerçants', value: raw.usersByRole?.MERCHANT || 28, color: '#FFD000' },
-                { label: 'Administrateurs', value: raw.usersByRole?.ADMIN || 2, color: '#111111' },
-              ];
+                { label: 'Étudiants ESSECT', value: real(raw.usersByRole?.STUDENT), color: '#DA0711' },
+                { label: 'Commerçants', value: real(raw.usersByRole?.MERCHANT), color: '#FFD000' },
+                { label: 'Administrateurs', value: real(raw.usersByRole?.ADMIN), color: '#111111' },
+              ].filter((d) => d.value !== null);
 
           const ordersByStatus = Array.isArray(raw.ordersByStatus)
             ? raw.ordersByStatus
             : [
-                { label: 'Complétées (Retirées)', value: raw.ordersByStatus?.COMPLETED || 1350, color: '#111111' },
-                { label: 'Payées / En cours', value: (raw.ordersByStatus?.PAID || 0) + (raw.ordersByStatus?.RESERVED || 0) || 42, color: '#FFD000' },
-                { label: 'Annulées / Expirées', value: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0) || 28, color: '#DA0711' },
-              ];
+                { label: 'Complétées (Retirées)', value: real(raw.ordersByStatus?.COMPLETED), color: '#111111' },
+                { label: 'Payées / En cours', value: sumReal(raw.ordersByStatus?.PAID, raw.ordersByStatus?.RESERVED), color: '#FFD000' },
+                { label: 'Annulées / Expirées', value: sumReal(raw.ordersByStatus?.CANCELLED, raw.ordersByStatus?.EXPIRED, raw.ordersByStatus?.NO_SHOW), color: '#DA0711' },
+              ].filter((d) => d.value !== null);
 
           const kpis = {
-            gmvMillimes: raw.kpis?.gmvMillimes ?? raw.globalImpact?.moneySavedMillimes ?? 12450000,
-            totalUsers: raw.usersByRole?.total ?? 842,
-            studentsCount: raw.usersByRole?.STUDENT ?? 812,
-            merchantsCount: raw.usersByRole?.MERCHANT ?? 28,
-            adminsCount: raw.usersByRole?.ADMIN ?? 2,
-            totalStores: raw.merchantsByStatus?.total ?? 6,
-            storesPending: raw.merchantsByStatus?.PENDING ?? 1,
-            storesApproved: raw.merchantsByStatus?.APPROVED ?? 5,
-            storesRejected: raw.merchantsByStatus?.REJECTED ?? 0,
-            totalOrders: raw.ordersByStatus?.total ?? 248,
-            ordersCompleted: raw.ordersByStatus?.COMPLETED ?? 248,
-            ordersActive: (raw.ordersByStatus?.RESERVED || 0) + (raw.ordersByStatus?.PAID || 0),
-            ordersCancelled: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0),
-            foodSavedGrams: raw.globalImpact?.foodSavedGrams ?? 114000,
-            co2SavedGrams: raw.globalImpact?.co2SavedGrams ?? 285000,
+            gmvMillimes: real(raw.kpis?.gmvMillimes ?? raw.globalImpact?.moneySavedMillimes),
+            totalUsers: real(raw.usersByRole?.total ?? raw.kpis?.totalUsers),
+            studentsCount: real(raw.usersByRole?.STUDENT),
+            merchantsCount: real(raw.usersByRole?.MERCHANT),
+            adminsCount: real(raw.usersByRole?.ADMIN),
+            totalStores: real(raw.merchantsByStatus?.total),
+            storesPending: real(raw.merchantsByStatus?.PENDING),
+            storesApproved: real(raw.merchantsByStatus?.APPROVED),
+            storesRejected: real(raw.merchantsByStatus?.REJECTED),
+            totalOrders: real(raw.ordersByStatus?.total),
+            ordersCompleted: real(raw.ordersByStatus?.COMPLETED),
+            ordersActive: sumReal(raw.ordersByStatus?.RESERVED, raw.ordersByStatus?.PAID),
+            ordersCancelled: sumReal(raw.ordersByStatus?.CANCELLED, raw.ordersByStatus?.EXPIRED),
+            foodSavedGrams: real(raw.globalImpact?.foodSavedGrams),
+            co2SavedGrams: real(raw.globalImpact?.co2SavedGrams),
           };
 
           setData({ kpis, usersByRole, ordersByStatus });

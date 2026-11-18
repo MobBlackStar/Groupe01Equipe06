@@ -1,10 +1,10 @@
-// Module : Holo-Radar 3D WebGL - Dark Obsidian & Amber Street Map Engine
+// Module : Holo-Radar 3D WebGL - Carte crème Griddle (papier boucher, bâtiments sable, tracé rouge)
 // Directives : Inspiré des dashboards Griddlecar (image6.png) et Fika (image3.png)
 // Rendu 3D temps réel avec pitch à 62° et extrusion volumétrique des îlots de Montfleury.
 
 export const MAP_CONFIG = {
   // Style sombre haute performance sans clé propriétaire requise
-  DEFAULT_STYLE: import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/dark',
+  DEFAULT_STYLE: import.meta.env.VITE_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/positron',
   ESSECT_COORDS: [10.1748, 36.7871], // [Longitude, Latitude] ESSECT Montfleury
   DEFAULT_CAMERA: {
     center: [10.1748, 36.7871],
@@ -13,18 +13,18 @@ export const MAP_CONFIG = {
     bearing: -22,
   },
   COLORS: {
-    BACKGROUND: '#0E0D0C', // Night market carbon obsidian
-    ESSECT_PILLAR: '#FF5500', // Flamme orange campus repère
-    BUILDINGS: '#181615', // Ardoise obsidienne sombre
-    BUILDINGS_HOVER: '#2C2520', // Reflet ambré au survol
-    BUILDINGS_OUTLINE: '#2B2622',
-    ROUTE_GLOW: '#FF5500', // Tracé néon orange vif Griddlecar
-    ROUTE_CORE: '#FF8833',
-    AMBER_GOLD: '#F5C400', // Jaune moutarde Fika
-    RED_FLAME: '#EE3124',
-    URGENCY_LOW: '#F5C400', // > 60 min (Jaune moutarde)
-    URGENCY_MEDIUM: '#FF5500', // 20 - 60 min (Orange vif)
-    URGENCY_HIGH: '#EE3124', // < 20 min (Rouge alerte)
+    BACKGROUND: '#FAF3E6', // Crème papier boucher Griddle
+    ESSECT_PILLAR: '#DA0711', // Rouge Griddle : repère campus
+    BUILDINGS: '#E2D8C5', // Sable chaud extrudé
+    BUILDINGS_HOVER: '#FFD000', // Moutarde au survol
+    BUILDINGS_OUTLINE: '#CFC3AB',
+    ROUTE_GLOW: '#DA0711', // Tracé rouge Griddle
+    ROUTE_CORE: '#FF5A60',
+    AMBER_GOLD: '#FFD000', // Jaune moutarde
+    RED_FLAME: '#DA0711',
+    URGENCY_LOW: '#FFD000', // > 60 min (Jaune moutarde)
+    URGENCY_MEDIUM: '#FF8A00', // 20 - 60 min (Orange)
+    URGENCY_HIGH: '#DA0711', // < 20 min (Rouge alerte)
   },
 };
 
@@ -85,7 +85,7 @@ export function add3DBuildingsLayer(map) {
               15.2,
               ['coalesce', ['get', 'render_min_height'], 0],
             ],
-            'fill-extrusion-opacity': 0.88,
+            'fill-extrusion-opacity': 0.92,
           },
         },
         labelLayerId
@@ -93,6 +93,11 @@ export function add3DBuildingsLayer(map) {
     }
 
     // Ambiance lumineuse ambrée/crépusculaire sur les facettes 3D
+    // Fond de carte crème Griddle (indépendant du style de base chargé)
+    layers
+      .filter((l) => l.type === 'background')
+      .forEach((l) => map.setPaintProperty(l.id, 'background-color', MAP_CONFIG.COLORS.BACKGROUND));
+
     if (map.setLight) {
       map.setLight({
         anchor: 'viewport',

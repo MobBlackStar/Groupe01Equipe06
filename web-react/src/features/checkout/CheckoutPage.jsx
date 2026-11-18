@@ -17,24 +17,46 @@ import {
   Gift,
   AlertTriangle,
   ArrowLeft,
+  Ticket,
 } from 'lucide-react';
 
-const MOCK_ORDER = {
-  id: 'ord-demo-essectx',
-  orderCode: 'CS-8K4M9',
-  offerId: 'off-baguette-01',
-  offerTitle: 'Baguette Farcie Escalope Panée & Fromage',
-  merchantName: 'Baguette & Baguette Montfleury',
-  merchantAddress: '14 Rue Abou El Kacem Chebbi, Montfleury, Tunis',
-  distanceFromEssectM: 180,
-  quantity: 2,
-  lockedUnitPriceMillimes: 3800,
-  originalUnitPriceMillimes: 7800,
-  pickupStartAt: Date.now() - 10 * 60 * 1000,
-  pickupEndAt: Date.now() + 60 * 60 * 1000,
-  reservationExpiresAt: Date.now() + 10 * 60 * 1000,
-  status: 'RESERVED',
-};
+const MOCK_ORDER_ID = 'ord-demo-essectx';
+
+/** Commande de démonstration : les horaires sont calculés au moment de l'utilisation, pas au chargement du module. */
+function buildMockOrder(id = MOCK_ORDER_ID) {
+  const t = Date.now();
+  return {
+    id,
+    orderCode: 'CS-8K4M9',
+    offerId: 'off-baguette-01',
+    offerTitle: 'Baguette Farcie Escalope Panée & Fromage',
+    merchantName: 'Baguette & Baguette Montfleury',
+    merchantAddress: '14 Rue Abou El Kacem Chebbi, Montfleury, Tunis',
+    distanceFromEssectM: 180,
+    quantity: 2,
+    lockedUnitPriceMillimes: 3800,
+    originalUnitPriceMillimes: 7800,
+    pickupStartAt: t - 10 * 60 * 1000,
+    pickupEndAt: t + 60 * 60 * 1000,
+    reservationExpiresAt: t + 10 * 60 * 1000,
+    createdAt: t,
+    status: 'RESERVED',
+  };
+}
+
+/** Seuls les identifiants de démo (ou la route sans identifiant) peuvent retomber sur la commande fictive. */
+function isDemoOrderId(id) {
+  return !id || id.startsWith('demo-') || id.startsWith('ord-demo');
+}
+
+/** Extrait la commande de la réponse API : `{ order: {...} }` ou l'objet commande directement. */
+function extractOrder(data) {
+  const candidate = data?.order || data;
+  if (candidate && typeof candidate === 'object' && (candidate.id || candidate.orderId || candidate.orderCode)) {
+    return candidate;
+  }
+  return null;
+}
 
 /** Convertit une date (ms, ISO, Date, Timestamp Firestore sérialisé) en millisecondes, ou null. */
 function toMillis(value) {
@@ -60,6 +82,7 @@ export default function CheckoutPage() {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedReward, setSelectedReward] = useState('NONE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -73,25 +96,41 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let isMounted = true;
+    const demo = isDemoOrderId(orderId);
 
     async function fetchOrder() {
       setLoading(true);
+      setLoadError(false);
       if (!orderId) {
         if (isMounted) {
-          setOrder(MOCK_ORDER);
+          setOrder(buildMockOrder());
           setLoading(false);
         }
         return;
       }
       try {
         const response = await apiClient.get(ENDPOINTS.ORDER_BY_ID(orderId));
+        const fetched = extractOrder(response.data);
         if (isMounted) {
-          setOrder(response.data?.order || response.data || MOCK_ORDER);
+          if (fetched) {
+            setOrder(fetched);
+          } else if (demo) {
+            setOrder(buildMockOrder(orderId));
+          } else {
+            setOrder(null);
+            setLoadError(true);
+          }
         }
       } catch (err) {
-        console.warn('API non disponible, utilisation de la commande démo :', err.message);
         if (isMounted) {
-          setOrder({ ...MOCK_ORDER, id: orderId || MOCK_ORDER.id });
+          if (demo) {
+            console.warn('API non disponible, utilisation de la commande démo :', err.message);
+            setOrder(buildMockOrder(orderId));
+          } else {
+            console.warn('Commande introuvable :', err.message);
+            setOrder(null);
+            setLoadError(true);
+          }
         }
       } finally {
         if (isMounted) {
@@ -116,13 +155,42 @@ export default function CheckoutPage() {
     );
   }
 
-  const currentOrder = order || MOCK_ORDER;
+  if (loadError || !order) {
+    return (
+      <div className="cs-container cs-page text-[#111111]">
+        <header className="max-w-3xl">
+          <p className="cs-eyebrow mb-3">Réservation</p>
+          <h1 className="cs-display">
+            Commande <span className="text-[#DA0711]">introuvable.</span>
+          </h1>
+          <p className="cs-lead mt-5 max-w-2xl">
+            Nous n'avons pas pu charger cette réservation. Elle a peut-être expiré, été annulée, ou le lien est incorrect.
+          </p>
+          {orderId && (
+            <p className="cs-mono text-base text-[#5E5850] mt-4 break-all">Référence : {orderId}</p>
+          )}
+        </header>
+        <div className="mt-10 flex flex-col sm:flex-row gap-4">
+          <Link to="/app/orders" className="cs-btn cs-btn-red cs-btn-lg whitespace-normal text-center">
+            <Ticket className="w-5 h-5 shrink-0" aria-hidden="true" />
+            <span>Mes tickets</span>
+          </Link>
+          <Link to="/app/explore" className="cs-btn cs-btn-cream cs-btn-lg whitespace-normal text-center">
+            <ArrowLeft className="w-5 h-5 shrink-0" aria-hidden="true" />
+            <span>Retour au catalogue</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const currentOrder = order;
 
   // Normalisation d'affichage : l'API renvoie `pricing`, `offerSnapshot`, `merchantSnapshot`
   // alors que la démo utilise des champs à plat.
   const pricing = currentOrder.pricing || {};
   const offerSnap = currentOrder.offerSnapshot || {};
-  const orderRef = currentOrder.id || currentOrder.orderId || orderId || MOCK_ORDER.id;
+  const orderRef = currentOrder.id || currentOrder.orderId || orderId || MOCK_ORDER_ID;
   const quantity = Number(currentOrder.quantity) || 1;
   const lockedUnit = Number(currentOrder.lockedUnitPriceMillimes ?? pricing.lockedUnitPriceMillimes);
   const originalUnit = Number(currentOrder.originalUnitPriceMillimes ?? pricing.originalUnitPriceMillimes);
@@ -134,6 +202,7 @@ export default function CheckoutPage() {
     currentOrder.offerPhotoUrl ||
     currentOrder.photoUrl ||
     offerSnap.photoUrl ||
+    offerSnap.imageUrl ||
     getDistinctGriddleFoodImage(offerSnap.category || currentOrder.category || 'fast-food', currentOrder.offerId || orderRef);
 
   const expiresAtMs = toMillis(currentOrder.reservationExpiresAt) ?? (Date.now() + 600000);
@@ -239,11 +308,36 @@ export default function CheckoutPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+      {/* Mobile : décompte → reçu → paiement. Desktop : reçu à gauche, décompte + paiement à droite. */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-8 lg:gap-x-14 lg:gap-y-6 items-start">
         {/* =========================================================================
-            COLONNE GAUCHE : REÇU THERMIQUE (cs-receipt)
+            DÉCOMPTE 10 MINUTES
             ========================================================================= */}
-        <div className="lg:col-span-7 order-2 lg:order-1">
+        <div
+          className={`lg:col-start-8 lg:col-span-5 lg:row-start-1 rounded-[1.25rem] p-7 sm:p-8 transition-colors ${timerPanelClass}`}
+          role="timer"
+          aria-label="Temps restant pour payer"
+        >
+          <p className="flex items-center gap-2 font-semibold uppercase tracking-wide text-base">
+            <Clock className="w-5 h-5 shrink-0" aria-hidden="true" />
+            {isExpired ? 'Réservation expirée' : 'Prix et stock verrouillés'}
+          </p>
+          <p
+            className={`cs-figure text-[clamp(5.5rem,14vw,9rem)] mt-2 ${!isExpired && secondsLeft < 180 ? 'animate-pulse' : ''}`}
+          >
+            {minStr}:{secStr}
+          </p>
+          <p className="text-base mt-2 opacity-90">
+            {isExpired
+              ? 'Le créneau de 10 min est dépassé. Le stock a été libéré.'
+              : 'Finalisez votre paiement avant la fin du décompte.'}
+          </p>
+        </div>
+
+        {/* =========================================================================
+            REÇU THERMIQUE (cs-receipt)
+            ========================================================================= */}
+        <div className="lg:col-start-1 lg:col-span-7 lg:row-start-1 lg:row-span-2">
           <article className="cs-receipt rounded-t-[1.25rem] p-5 sm:p-10 text-[15px] leading-relaxed" aria-label="Reçu de commande">
             {/* Photo de l'offre */}
             <div className="cs-photo aspect-[16/9] rounded-xl">
@@ -270,8 +364,8 @@ export default function CheckoutPage() {
               <p className="text-[13px] uppercase tracking-[0.18em] text-[#5E5850] mt-2">
                 Reçu de caisse · ESSECT Montfleury
               </p>
-              <p className="mt-4 inline-flex items-center rounded-full bg-[#111111] text-[#FAF3E6] px-4 py-1.5 text-[14px] font-bold">
-                CODE #{currentOrder.orderCode || 'CS-8K4M9'}
+              <p className="mt-4 inline-flex items-center rounded-full bg-[#111111] text-[#FAF3E6] px-4 py-1.5 text-[14px] font-bold break-all">
+                CODE #{currentOrder.orderCode || orderRef}
               </p>
             </div>
 
@@ -298,7 +392,7 @@ export default function CheckoutPage() {
             {/* Lignes d'articles */}
             <div className="space-y-3">
               <div className="flex justify-between items-start gap-4">
-                <span className="font-bold text-[17px] line-clamp-2">
+                <span className="font-bold text-[17px] break-words min-w-0">
                   {quantity}× {offerTitle}
                 </span>
                 <span className="font-bold text-[17px] whitespace-nowrap">{money(subtotalMillimes)}</span>
@@ -351,27 +445,9 @@ export default function CheckoutPage() {
         </div>
 
         {/* =========================================================================
-            COLONNE DROITE : DÉCOMPTE + RÉCOMPENSE + PAIEMENT
+            RÉCOMPENSE + PAIEMENT
             ========================================================================= */}
-        <aside className="lg:col-span-5 order-1 lg:order-2 space-y-6 lg:sticky lg:top-24">
-          {/* Décompte 10 minutes */}
-          <div className={`rounded-[1.25rem] p-7 sm:p-8 transition-colors ${timerPanelClass}`} role="timer" aria-label="Temps restant pour payer">
-            <p className="flex items-center gap-2 font-semibold uppercase tracking-wide text-base">
-              <Clock className="w-5 h-5 shrink-0" aria-hidden="true" />
-              {isExpired ? 'Réservation expirée' : 'Prix et stock verrouillés'}
-            </p>
-            <p
-              className={`cs-figure text-[clamp(5.5rem,14vw,9rem)] mt-2 ${!isExpired && secondsLeft < 180 ? 'animate-pulse' : ''}`}
-            >
-              {minStr}:{secStr}
-            </p>
-            <p className="text-base mt-2 opacity-90">
-              {isExpired
-                ? 'Le créneau de 10 min est dépassé. Le stock a été libéré.'
-                : 'Finalisez votre paiement avant la fin du décompte.'}
-            </p>
-          </div>
-
+        <aside className="lg:col-start-8 lg:col-span-5 lg:row-start-2 space-y-6">
           {errorMessage && (
             <div
               role="alert"

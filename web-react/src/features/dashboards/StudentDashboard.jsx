@@ -20,6 +20,7 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
 import { getLoyaltyTier } from '@shared/loyalty.js';
+import { ORDER_STATUS } from '@shared/constants.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 // Données de démonstration réalistes pour la soutenance ESSECT
@@ -181,7 +182,43 @@ export default function StudentDashboard() {
     value: metricMode === 'money' ? Math.round(Number(item.value || 0) / 1000) : Number(item.co2 || 0),
   }));
 
-  const recentOrders = data.recentOrders || [];
+  // Seules les commandes retirées (COMPLETED) sont des "repas récupérés" : on écarte
+  // les réservations en cours, expirées ou annulées (pas d'économie ni de notation possibles).
+  const recentOrders = (data.recentOrders || [])
+    .filter((order) => order.status === ORDER_STATUS.COMPLETED)
+    .map((order) => {
+      const price =
+        finiteOrNull(order.priceMillimes) ??
+        finiteOrNull(order.pricing?.totalMillimes) ??
+        finiteOrNull(order.pricing?.lockedUnitPriceMillimes) ??
+        finiteOrNull(order.totalPriceMillimes);
+      const original = finiteOrNull(order.pricing?.originalUnitPriceMillimes);
+      const saved =
+        finiteOrNull(order.savedMillimes) ??
+        finiteOrNull(order.pricing?.savedMillimes) ??
+        finiteOrNull(order.pricing?.moneySavedMillimes) ??
+        (price !== null && original !== null ? Math.max(0, original - price) : null);
+      return {
+        order,
+        title: order.offerTitle || order.offerSnapshot?.title || order.title || 'Panier Anti-Gaspi',
+        merchant: order.merchantName || order.merchantSnapshot?.name || 'Commerçant Montfleury',
+        priceLabel: moneyOrDash(price),
+        savedLabel: saved === null || saved <= 0 ? '—' : `+${formatTND(saved)}`,
+      };
+    });
+
+  const renderRating = (order, block) =>
+    order.rating ? (
+      <span className="cs-pill cs-pill-mustard">⭐ {order.rating}/5</span>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setRatingOrder(order)}
+        className={`cs-btn cs-btn-mustard ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}
+      >
+        ⭐ Noter
+      </button>
+    );
 
   return (
     <div className="bg-[#FAF3E6] text-[#111111] min-h-screen">
@@ -378,74 +415,71 @@ export default function StudentDashboard() {
 
           {recentOrders.length === 0 ? (
             <div className="cs-card p-8 text-center">
-              <p className="cs-h3">Aucune commande pour l'instant</p>
-              <p className="cs-body text-[#5E5850] mt-2">Votre premier repas sauvé apparaîtra ici.</p>
+              <p className="cs-h3">Aucun repas récupéré pour l'instant</p>
+              <p className="cs-body text-[#5E5850] mt-2">Votre premier repas sauvé apparaîtra ici dès son retrait.</p>
             </div>
           ) : (
-            <div className="cs-card p-2 overflow-x-auto">
-              <table className="cs-table min-w-[720px]">
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Repas sauvé</th>
-                    <th>Commerce</th>
-                    <th className="!text-right">Payé</th>
-                    <th className="!text-right">Économie</th>
-                    <th className="!text-center">Évaluation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => {
-                    const title = order.offerTitle || order.offerSnapshot?.title || order.title || 'Panier Anti-Gaspi';
-                    const merchant = order.merchantName || order.merchantSnapshot?.name || 'Commerçant Montfleury';
-                    const price =
-                      finiteOrNull(order.priceMillimes) ??
-                      finiteOrNull(order.pricing?.totalMillimes) ??
-                      finiteOrNull(order.pricing?.lockedUnitPriceMillimes) ??
-                      finiteOrNull(order.totalPriceMillimes);
-                    const original = finiteOrNull(order.pricing?.originalUnitPriceMillimes);
-                    const saved =
-                      finiteOrNull(order.savedMillimes) ??
-                      finiteOrNull(order.pricing?.savedMillimes) ??
-                      finiteOrNull(order.pricing?.moneySavedMillimes) ??
-                      (price !== null && original !== null ? Math.max(0, original - price) : null);
+            <>
+              {/* Mobile (< md) : cartes empilées */}
+              <ul className="md:hidden flex flex-col gap-4">
+                {recentOrders.map((row) => (
+                  <li key={row.order.id} className="cs-card p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-[18px] font-semibold uppercase leading-tight line-clamp-2 min-w-0">{row.title}</h3>
+                      <span className="cs-mono font-bold text-[14px] shrink-0">{row.order.orderCode || '—'}</span>
+                    </div>
+                    <p className="text-[15px] text-[#5E5850] mt-1 line-clamp-2">{row.merchant}</p>
+                    <dl className="mt-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <dt className="cs-label">Payé</dt>
+                        <dd className="cs-figure text-[1.75rem] mt-1">{row.priceLabel}</dd>
+                      </div>
+                      <div>
+                        <dt className="cs-label">Économie</dt>
+                        <dd className="cs-figure text-[1.75rem] mt-1 text-[#1F7A3A]">{row.savedLabel}</dd>
+                      </div>
+                    </dl>
+                    <div className="mt-5">{renderRating(row.order, true)}</div>
+                  </li>
+                ))}
+              </ul>
 
-                    return (
-                      <tr key={order.id}>
-                        <td className="cs-mono font-bold whitespace-nowrap">{order.orderCode || '—'}</td>
-                        <td className="font-semibold text-[17px] min-w-[200px]">
-                          <span className="line-clamp-2">{title}</span>
+              {/* Desktop (≥ md) : table */}
+              <div className="hidden md:block cs-card p-2 overflow-x-auto">
+                <table className="cs-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Repas sauvé</th>
+                      <th>Commerce</th>
+                      <th className="!text-right">Payé</th>
+                      <th className="!text-right">Économie</th>
+                      <th className="!text-center">Évaluation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((row) => (
+                      <tr key={row.order.id}>
+                        <td className="cs-mono font-bold whitespace-nowrap">{row.order.orderCode || '—'}</td>
+                        <td className="font-semibold text-[17px] min-w-[180px]">
+                          <span className="line-clamp-2">{row.title}</span>
                         </td>
-                        <td className="text-[#5E5850] min-w-[160px]">
-                          <span className="line-clamp-2">{merchant}</span>
+                        <td className="text-[#5E5850] min-w-[140px]">
+                          <span className="line-clamp-2">{row.merchant}</span>
                         </td>
                         <td className="text-right whitespace-nowrap">
-                          <span className="cs-figure text-2xl">{moneyOrDash(price)}</span>
+                          <span className="cs-figure text-2xl">{row.priceLabel}</span>
                         </td>
                         <td className="text-right whitespace-nowrap">
-                          <span className="cs-figure text-2xl text-[#1F7A3A]">
-                            {saved === null ? '—' : `+${formatTND(saved)}`}
-                          </span>
+                          <span className="cs-figure text-2xl text-[#1F7A3A]">{row.savedLabel}</span>
                         </td>
-                        <td className="text-center whitespace-nowrap">
-                          {order.rating ? (
-                            <span className="cs-pill cs-pill-mustard">⭐ {order.rating}/5</span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setRatingOrder(order)}
-                              className="cs-btn cs-btn-mustard cs-btn-sm"
-                            >
-                              ⭐ Noter
-                            </button>
-                          )}
-                        </td>
+                        <td className="text-center whitespace-nowrap">{renderRating(row.order, false)}</td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </section>
 

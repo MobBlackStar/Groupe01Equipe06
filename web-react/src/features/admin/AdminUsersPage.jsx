@@ -177,6 +177,41 @@ export default function AdminUsersPage() {
     u?.status === 'active' ||
     !u?.status;
 
+  // Fragments d'affichage partagés entre la table desktop et les cartes mobiles
+  const renderRolePill = (user) => {
+    const roleUi = ROLE_UI[user.role] || { label: user.role || '—', pill: 'cs-pill-outline' };
+    return <span className={`cs-pill ${roleUi.pill}`}>{roleUi.label}</span>;
+  };
+
+  const renderStatusPill = (user) => {
+    const isActive = isUserActive(user);
+    return (
+      <span className={`cs-pill shrink-0 ${isActive ? 'cs-pill-leaf' : 'cs-pill-red'}`}>
+        {isActive && <span className="w-2 h-2 rounded-full bg-[#1F7A3A]" aria-hidden="true" />}
+        {isActive ? 'Actif' : 'Suspendu'}
+      </span>
+    );
+  };
+
+  const filiereLabel = (user) =>
+    user.filiereId ? FILIERE_LABELS[user.filiereId] || user.filiereId : <span className="text-[#5E5850]">—</span>;
+
+  const renderAction = (user, block) => {
+    if (user.role === ROLES.ADMIN) {
+      return <span className="cs-pill cs-pill-outline">Protégé</span>;
+    }
+    const isActive = isUserActive(user);
+    return (
+      <button
+        type="button"
+        onClick={() => setSuspendModalUser(user)}
+        className={`cs-btn ${block ? 'cs-btn-block' : 'cs-btn-sm'} ${isActive ? 'cs-btn-cream !text-[#DA0711]' : 'cs-btn-ink'}`}
+      >
+        {isActive ? 'Suspendre' : 'Réactiver'}
+      </button>
+    );
+  };
+
   return (
     <div className="bg-[#FAF3E6] text-[#111111] min-h-screen">
       <div className="cs-container cs-page">
@@ -215,63 +250,70 @@ export default function AdminUsersPage() {
             <p className="cs-body text-[#5E5850] mt-2">Essayez un autre filtre ou une autre recherche.</p>
           </div>
         ) : (
-          <div className="cs-card p-2 overflow-x-auto">
-            <table className="cs-table min-w-[860px]">
-              <thead>
-                <tr>
-                  <th>Utilisateur</th>
-                  <th>Rôle</th>
-                  <th>Filière</th>
-                  <th>Statut</th>
-                  <th>Inscrit le</th>
-                  <th className="!text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => {
-                  const isActive = isUserActive(user);
-                  const roleUi = ROLE_UI[user.role] || { label: user.role || '—', pill: 'cs-pill-outline' };
+          <>
+            {/* Mobile (< md) : une carte empilée par compte */}
+            <ul className="md:hidden flex flex-col gap-4">
+              {filteredUsers.map((user) => (
+                <li key={user.uid} className="cs-card p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-[18px] font-semibold uppercase leading-tight line-clamp-2 min-w-0">
+                      {user.displayName || '—'}
+                    </h3>
+                    {renderStatusPill(user)}
+                  </div>
+                  <p className="text-[15px] text-[#5E5850] mt-1 break-all">{user.email || '—'}</p>
+                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-[15px]">
+                    <div>
+                      <dt className="cs-label">Rôle</dt>
+                      <dd className="mt-1">{renderRolePill(user)}</dd>
+                    </div>
+                    <div>
+                      <dt className="cs-label">Filière</dt>
+                      <dd className="font-semibold mt-1">{filiereLabel(user)}</dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="cs-label">Inscrit le</dt>
+                      <dd>{createdLabel(user)}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-5">{renderAction(user, true)}</div>
+                </li>
+              ))}
+            </ul>
 
-                  return (
+            {/* Desktop (≥ md) : table */}
+            <div className="hidden md:block cs-card p-2 overflow-x-auto">
+              <table className="cs-table">
+                <thead>
+                  <tr>
+                    <th>Utilisateur</th>
+                    <th>Rôle</th>
+                    <th>Filière</th>
+                    <th>Statut</th>
+                    <th>Inscrit le</th>
+                    <th className="!text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
                     <tr key={user.uid}>
-                      <td className="min-w-[240px]">
+                      <td className="min-w-[200px]">
                         <span className="block text-[17px] font-semibold uppercase leading-tight line-clamp-2">
                           {user.displayName || '—'}
                         </span>
                         <span className="block text-[15px] text-[#5E5850] mt-1 break-all">{user.email || '—'}</span>
                       </td>
-                      <td>
-                        <span className={`cs-pill ${roleUi.pill}`}>{roleUi.label}</span>
-                      </td>
-                      <td className="whitespace-nowrap font-semibold">
-                        {user.filiereId ? FILIERE_LABELS[user.filiereId] || user.filiereId : <span className="text-[#5E5850]">—</span>}
-                      </td>
-                      <td>
-                        <span className={`cs-pill ${isActive ? 'cs-pill-leaf' : 'cs-pill-red'}`}>
-                          {isActive && <span className="w-2 h-2 rounded-full bg-[#1F7A3A]" aria-hidden="true" />}
-                          {isActive ? 'Actif' : 'Suspendu'}
-                        </span>
-                      </td>
+                      <td>{renderRolePill(user)}</td>
+                      <td className="whitespace-nowrap font-semibold">{filiereLabel(user)}</td>
+                      <td>{renderStatusPill(user)}</td>
                       <td className="whitespace-nowrap text-[#5E5850]">{createdLabel(user)}</td>
-                      <td className="text-right">
-                        {user.role !== ROLES.ADMIN ? (
-                          <button
-                            type="button"
-                            onClick={() => setSuspendModalUser(user)}
-                            className={`cs-btn cs-btn-sm ${isActive ? 'cs-btn-cream !text-[#DA0711]' : 'cs-btn-ink'}`}
-                          >
-                            {isActive ? 'Suspendre' : 'Réactiver'}
-                          </button>
-                        ) : (
-                          <span className="cs-pill cs-pill-outline">Protégé</span>
-                        )}
-                      </td>
+                      <td className="text-right">{renderAction(user, false)}</td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Modal de Confirmation Suspension / Réactivation */}

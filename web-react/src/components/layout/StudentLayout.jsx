@@ -20,9 +20,9 @@ const NAV_ITEMS = [
 
 export default function StudentLayout({ children }) {
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex flex-col">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex flex-col pb-[calc(68px+env(safe-area-inset-bottom))] lg:pb-0">
       <Navbar />
-      <main className="flex-1 pb-24 lg:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
       <Footer />
       <MobileTabBar items={NAV_ITEMS} />
     </div>

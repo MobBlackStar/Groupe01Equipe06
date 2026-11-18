@@ -132,7 +132,9 @@ export default function OfferDetailPage() {
         quantity,
       });
 
-      const orderId = response.data?.order?.id || response.data?.id || 'ord-demo-essectx';
+      // L'API renvoie { order: { orderId, ... } } ; on accepte aussi `id` par compatibilité
+      const created = response.data?.order || response.data || {};
+      const orderId = created.orderId || created.id || 'ord-demo-essectx';
       navigate(`/app/checkout/${orderId}`);
     } catch (err) {
       if (err.response?.status === 409) {

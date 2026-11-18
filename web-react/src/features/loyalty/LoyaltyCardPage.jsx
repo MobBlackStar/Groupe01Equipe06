@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Quatre paliers végétaux vivants (GRAINE ➔ POUSSE ➔ ARBRE ➔ FORET) avec simulation interactive 1-clic pour démontrer le passage de seuils devant le jury."
 // Module : Gamification & Fidélité (B3, I4)
 
+import { formatFiliere } from '../../lib/formatters.js';
 import React, { useState, useEffect } from 'react';
 import StampGrid from './StampGrid.jsx';
 import RewardWallet from './RewardWallet.jsx';
@@ -49,7 +50,7 @@ export default function LoyaltyCardPage() {
   ]);
 
   const displayName = profile?.displayName || user?.displayName || 'Yassine Trabelsi';
-  const filiere = profile?.filiereId || user?.filiereId || '3A E-Business';
+  const filiere = formatFiliere(profile?.filiereId || user?.filiereId || 'EBUSINESS_3A');
 
   const safePoints = Number.isFinite(ecoPoints) ? ecoPoints : 0;
   const safeMeals = Number.isFinite(mealsRescued) ? mealsRescued : 0;
@@ -190,15 +191,15 @@ export default function LoyaltyCardPage() {
       {/* Coupons et Récompenses Débloqués */}
       <RewardWallet rewards={rewards} className="mb-16 lg:mb-24" />
 
-      {/* Panneau de Simulation Démo pour le Jury */}
-      <section className="pt-8 border-t-2 border-[#111111] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div className="flex items-center gap-3">
-          <Sparkles className="w-6 h-6 text-[#DA0711] shrink-0" aria-hidden="true" />
-          <div>
-            <p className="cs-h3">Simulation démo</p>
-            <p className="text-base text-[#5E5850]">Contrôles réservés à la soutenance (jury).</p>
-          </div>
-        </div>
+      {/* Panneau de Simulation Démo pour le Jury (secondaire, replié) */}
+      <details className="group pt-6 border-t-2 border-dashed border-[#111111]/25">
+        <summary className="inline-flex items-center gap-2 min-h-[44px] cursor-pointer select-none cs-label hover:text-[#111111] [&::-webkit-details-marker]:hidden list-none">
+          <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>Démo jury</span>
+          <span className="transition-transform group-open:rotate-90" aria-hidden="true">›</span>
+        </summary>
+
+        <p className="text-base text-[#5E5850] mt-3 mb-5">Contrôles de simulation réservés à la soutenance.</p>
 
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={() => handleAddPoints(20)} className="cs-btn cs-btn-red">
@@ -221,7 +222,7 @@ export default function LoyaltyCardPage() {
             <RotateCcw className="w-5 h-5" />
           </button>
         </div>
-      </section>
+      </details>
     </div>
   );
 }

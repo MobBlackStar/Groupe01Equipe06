@@ -13,7 +13,28 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import AiAutoFillBox from './AiAutoFillBox.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
-import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
+import { getDistinctGriddleFoodImage, GRIDDLE_FOOD_POOLS } from '../../lib/griddleAssets.js';
+
+// Catégorie d'offre → famille de photos Griddle (l'aperçu suit la catégorie choisie)
+const CATEGORY_POOL = {
+  SANDWICH: 'fast-food',
+  SNACK: 'fast-food',
+  PLAT_CHAUD: 'restaurant',
+  SALADE: 'restaurant',
+  PIZZA: 'pizza',
+  PATISSERIE: 'patisserie',
+  VIENNOISERIE: 'cafeteria',
+  BOISSON: 'cafeteria',
+  MIXTE: 'patisserie',
+};
+
+function categoryImage(category, title) {
+  if (category === 'SANDWICH') {
+    const wrap = (GRIDDLE_FOOD_POOLS['fast-food'] || []).find((it) => /makloub/i.test(it.name));
+    if (wrap) return wrap.src;
+  }
+  return getDistinctGriddleFoodImage(CATEGORY_POOL[category] || 'fast-food', title || category || 0);
+}
 import { Sparkles, Clock, ArrowRight, Gift, Leaf } from 'lucide-react';
 
 // Affichage sûr : jamais de NaN / 0,000 DT à l'écran
@@ -186,7 +207,7 @@ export default function OfferFormPage() {
   }
 
   // Image d'illustration en direct déterministe
-  const previewImage = getDistinctGriddleFoodImage(formData.category, 0);
+  const previewImage = categoryImage(formData.category, formData.title);
 
   const isDutch = formData.pricingMode === PRICING_MODES.DUTCH_AUCTION;
   const previewPhoto = formData.photoUrl || previewImage;

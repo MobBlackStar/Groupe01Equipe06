@@ -25,8 +25,60 @@ function displayMoney(millimes) {
   return Number.isFinite(n) && n > 0 ? formatTND(Math.round(n)) : '—';
 }
 
+// Vignettes ciblées par catégorie d'offre (OFFER_CATEGORIES) — évite burger/frites pour une baguette.
+const CATEGORY_IMAGES = {
+  SANDWICH: ['/assets/griddle/food/sandwich-hot-chicken.png', '/assets/griddle/food/sandwich-crispy-chicken.png'],
+  VIENNOISERIE: [
+    '/assets/griddle/food/croissant-amande.png',
+    '/assets/griddle/food/croissant-beurre.png',
+    '/assets/griddle/food/morning-bun.png',
+    '/assets/griddle/food/cinnamon-bun.png',
+  ],
+  PATISSERIE: [
+    '/assets/griddle/food/tarte-citron-meringuee.png',
+    '/assets/griddle/food/burnt-cheesecake.png',
+    '/assets/griddle/food/gateau-chocolat-drip.png',
+    '/assets/griddle/food/layer-cake-fraise.png',
+  ],
+  PIZZA: ['/assets/griddle/food/pain-campagne-levain.png'],
+};
+
+// Catégorie déduite du titre quand l'offre n'en fournit pas.
+function inferCategory(title = '') {
+  const t = String(title).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  if (/baguette|sandwich|panini|wrap|chapati|libanais/.test(t)) return 'SANDWICH';
+  if (/viennoiserie|croissant|pain au chocolat|brioche|chausson/.test(t)) return 'VIENNOISERIE';
+  if (/pizza|calzone/.test(t)) return 'PIZZA';
+  if (/patisserie|gateau|tarte|cheesecake|baklava|cake/.test(t)) return 'PATISSERIE';
+  if (/ojja|couscous|plat|lablabi|riz|pates/.test(t)) return 'PLAT_CHAUD';
+  return null;
+}
+
+function hashKey(key) {
+  const str = String(key ?? '');
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function fallbackImage(category, key) {
+  const pool = CATEGORY_IMAGES[String(category || '').toUpperCase()];
+  if (pool) return pool[hashKey(key) % pool.length];
+  const helperCategory = String(category || '').toUpperCase() === 'PLAT_CHAUD' ? 'restaurant' : category || 'fast-food';
+  return getDistinctGriddleFoodImage(helperCategory, key);
+}
+
+// Minutes restantes avant expiration de la réservation (null si inconnu).
+function minutesLeft(expiresAt) {
+  const input = toDateInput(expiresAt);
+  if (!input) return null;
+  const ms = new Date(input).getTime();
+  if (!Number.isFinite(ms)) return null;
+  return Math.max(0, Math.ceil((ms - Date.now()) / 60000));
+}
+
 const STATUS_PILLS = {
-  RESERVED: { className: 'cs-pill-mustard', label: 'À payer · 10 min' },
+  RESERVED: { className: 'cs-pill-mustard', label: 'À payer' },
   PAID: { className: 'cs-pill-red', label: 'Prêt pour retrait' },
   COMPLETED: { className: 'cs-pill-leaf', label: '✓ Récupéré' },
   CANCELLED: { className: 'cs-pill-outline', label: 'Annulé' },
@@ -61,11 +113,21 @@ export default function OrderRow({ order, onRate }) {
     toDateInput(order.pickupEndAt || snapshot.pickupEndAt)
   );
 
-  const category = order.category || snapshot.category || title;
-  const photo =
-    order.photoUrl || order.offerPhotoUrl || snapshot.photoUrl || getDistinctGriddleFoodImage(category, id || title);
+  const offer = order.offer || {};
+  const category = snapshot.category || order.category || offer.category || inferCategory(title);
+  const imageKey = order.offerId || offer.id || title;
+  const fallbackPhoto = fallbackImage(category, imageKey);
+  const photo = snapshot.photoUrl || offer.photoUrl || offer.imageUrl || order.photoUrl || fallbackPhoto;
 
-  const pill = STATUS_PILLS[status] || { className: 'cs-pill-outline', label: status };
+  const basePill = STATUS_PILLS[status] || { className: 'cs-pill-outline', label: status };
+  let pill = basePill;
+  if (status === 'RESERVED') {
+    const mins = minutesLeft(order.reservationExpiresAt);
+    pill = {
+      ...basePill,
+      label: mins === null ? 'À payer' : mins > 0 ? `À payer · ${mins} min` : 'À payer · délai écoulé',
+    };
+  }
 
   return (
     <article className="cs-card cs-card-hover group p-4 sm:p-6 grid grid-cols-[96px_minmax(0,1fr)] sm:grid-cols-[120px_minmax(0,1fr)] lg:grid-cols-[120px_minmax(0,1fr)_auto] gap-x-5 sm:gap-x-7 gap-y-5 items-center text-[#111111]">
@@ -77,7 +139,7 @@ export default function OrderRow({ order, onRate }) {
           loading="lazy"
           onError={(e) => {
             e.currentTarget.onerror = null;
-            e.currentTarget.src = getDistinctGriddleFoodImage(category, id || title);
+            e.currentTarget.src = fallbackPhoto;
           }}
         />
       </div>
@@ -89,7 +151,7 @@ export default function OrderRow({ order, onRate }) {
           <span className="cs-mono text-[14px] font-bold text-[#5E5850]">#{orderCode}</span>
         </div>
 
-        <h3 className="cs-h3 line-clamp-2">{title}</h3>
+        <h3 className="cs-h3 line-clamp-3 sm:line-clamp-2 break-words">{title}</h3>
 
         <p className="text-base sm:text-lg font-medium text-[#5E5850] mt-1.5 line-clamp-2">{merchantName}</p>
 

@@ -125,6 +125,16 @@ export default function MerchantOrdersPage() {
     };
   }, []);
 
+  // Onglet par défaut : le premier qui contient des commandes (une seule fois, au premier chargement)
+  const [autoTabDone, setAutoTabDone] = useState(false);
+  useEffect(() => {
+    if (autoTabDone || loading) return;
+    setAutoTabDone(true);
+    if (orders.some((o) => o.status === activeTab)) return;
+    const firstWithData = ['PAID', 'RESERVED', 'COMPLETED'].find((s) => orders.some((o) => o.status === s));
+    if (firstWithData) setActiveTab(firstWithData);
+  }, [autoTabDone, loading, orders, activeTab]);
+
   const filteredOrders = orders.filter((o) => {
     if (activeTab === 'PAID') return o.status === 'PAID';
     if (activeTab === 'RESERVED') return o.status === 'RESERVED';

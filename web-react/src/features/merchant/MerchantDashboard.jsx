@@ -33,6 +33,24 @@ function toDateInput(v) {
   return v ?? null;
 }
 
+// Libellé d'axe lisible : "2026-11-12" ou "11-12" → "12 nov." ; "Lun" / "Sem 1" inchangés
+const DAY_FMT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+function dayLabel(item) {
+  const iso = typeof item.date === 'string' ? item.date.match(/^(\d{4})-(\d{2})-(\d{2})/) : null;
+  const short = !iso && typeof item.label === 'string' ? item.label.match(/^(\d{2})-(\d{2})$/) : null;
+  let y; let m; let d;
+  if (iso) [, y, m, d] = iso;
+  else if (short) {
+    [, m, d] = short;
+    y = new Date().getFullYear();
+  }
+  if (m && d) {
+    const date = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+    if (!Number.isNaN(date.getTime())) return DAY_FMT.format(date);
+  }
+  return item.label || 'Jour';
+}
+
 const PICKUP_STATUS = {
   PAID: { label: 'Payée · à remettre', cls: 'cs-pill-mustard' },
   RESERVED: { label: 'Paiement en attente', cls: 'cs-pill-outline' },
@@ -197,7 +215,7 @@ export default function MerchantDashboard() {
       : (range === '7d' ? DEMO_MERCHANT_7D.dailySeries : DEMO_MERCHANT_30D.dailySeries);
 
   const chartData = currentSeries.map((item) => ({
-    label: item.label || item.date?.slice(5) || 'Jour',
+    label: dayLabel(item),
     value:
       metric === 'revenue'
         ? Math.round((item.value ?? item.revenueMillimes ?? 0) / 1000)
@@ -361,14 +379,12 @@ export default function MerchantDashboard() {
                 <li key={item.id || idx} className="flex items-start gap-4 py-4 first:pt-0">
                   <span className="cs-dot-badge shrink-0">#{idx + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="cs-h3 !text-lg line-clamp-2">{item.title || 'Offre anti-gaspi'}</p>
+                    <p className="cs-h3 !text-lg line-clamp-2 break-words">{item.title || 'Offre anti-gaspi'}</p>
                     <p className="text-[15px] text-[#5E5850] mt-1">
                       {rescued} repas sauvés · {item.decayType || 'Smart Decay'}
                     </p>
+                    <p className="cs-figure text-[30px] text-[#DA0711] mt-2">{money(itemRevenue)}</p>
                   </div>
-                  <span className="cs-figure text-[30px] text-[#DA0711] whitespace-nowrap">
-                    {money(itemRevenue)}
-                  </span>
                 </li>
               );
             })}

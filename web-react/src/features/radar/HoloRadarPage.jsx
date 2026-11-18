@@ -262,25 +262,21 @@ export default function HoloRadarPage() {
   return (
     <div className="relative w-full h-[calc(100vh-82px)] min-h-[560px] bg-[#FAF3E6] overflow-hidden flex flex-col font-sans text-[#111111]">
       {/* 1. BARRE DE COMMANDE SUPÉRIEURE */}
-      <div className="z-30 bg-[#FAF3E6] border-b-2 border-[#111111] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+      <div className="z-30 bg-[#FAF3E6] border-b-2 border-[#111111] px-4 sm:px-6 py-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         {/* Titre & Statut */}
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="w-11 h-11 shrink-0 rounded-full bg-[#DA0711] text-[#FAF3E6] flex items-center justify-center" aria-hidden="true">
-            <Compass className="w-5 h-5" />
-          </span>
-          <div className="min-w-0">
-            <h1 className="cs-figure text-[2rem] sm:text-[2.4rem] uppercase flex items-center gap-3">
-              Holo-Radar Montfleury
-              <span className="cs-pill cs-pill-ink font-sans">3D</span>
-            </h1>
-            <p className="text-[15px] text-[#5E5850]">
-              Campus ESSECT · {sortedMerchants.length} relais actifs à portée
-            </p>
-          </div>
+        <div className="min-w-0">
+          <p className="cs-eyebrow mb-2 flex items-center gap-2">
+            <Compass className="w-4 h-4" aria-hidden="true" />
+            Campus ESSECT · {sortedMerchants.length} relais actifs à portée
+          </p>
+          <h1 className="cs-display !text-[clamp(3.25rem,6vw,5.5rem)] flex flex-wrap items-center gap-x-4 gap-y-1">
+            Holo-Radar
+            <span className="cs-sticker cs-sticker-red !text-lg">3D live</span>
+          </h1>
         </div>
 
         {/* Sélecteur de rayon d'exploration */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none max-w-full -mx-1 px-1" role="group" aria-label="Rayon d'exploration">
+        <div className="flex flex-wrap items-center gap-2 max-w-full" role="group" aria-label="Rayon d'exploration">
           <span className="cs-label shrink-0 mr-1">Rayon</span>
           {RADIUS_OPTIONS.map((r) => (
             <button
@@ -376,13 +372,13 @@ export default function HoloRadarPage() {
 
         {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}
         {viewMode === '3D' && (
-          <div className="hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-md">
-            <div className="cs-card-ink p-6 lg:p-7">
+          <div className="hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-sm">
+            <div className="cs-card-ink p-6">
               <p className="cs-eyebrow !text-[#FFD000] mb-3 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711] animate-pulse" aria-hidden="true" />
                 Direct Montfleury · {sortedMerchants.length || 5} arrêts
               </p>
-              <h2 className="cs-display !text-[#FAF3E6] !text-[clamp(2.75rem,4.5vw,4.25rem)]">
+              <h2 className="cs-title !text-[#FAF3E6]">
                 Autour de l’ESSECT, <span className="text-[#DA0711]">heure par heure.</span>
               </h2>
               <p className="text-lg text-[#FAF3E6]/85 mt-3 leading-snug">
@@ -509,10 +505,11 @@ export default function HoloRadarPage() {
                     </div>
 
                     <div className="px-1 pt-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="text-[17px] font-bold uppercase leading-tight line-clamp-2">{merchant.name}</h3>
-                        <span className="cs-figure text-[1.6rem] text-[#DA0711] whitespace-nowrap">{priceOrDash(minPrice)}</span>
-                      </div>
+                      <h3 className="text-[17px] font-bold uppercase leading-tight line-clamp-2 min-h-[2.5em]">{merchant.name}</h3>
+                      <p className="cs-figure text-[1.6rem] text-[#DA0711] mt-1">
+                        {priceOrDash(minPrice) !== '—' && <span className="cs-label mr-2 align-middle">Dès</span>}
+                        {priceOrDash(minPrice)}
+                      </p>
                       <div className="flex items-center justify-between mt-2 text-[14px] font-semibold text-[#5E5850]">
                         <span className="flex items-center gap-1.5 uppercase text-[#111111]">
                           <Footprints className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />

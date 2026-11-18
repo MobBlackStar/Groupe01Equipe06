@@ -6,8 +6,14 @@ import React from 'react';
 import { Smartphone, Car, Utensils } from 'lucide-react';
 import { calculateEquivalences } from '@shared/impact.js';
 
-const frNumber = (n, digits = 0) =>
-  Number(n).toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+// Format français déterministe : espace insécable tous les 3 chiffres (y compris 4 chiffres : "1 168"),
+// virgule décimale. Évite les différences d'Intl selon les navigateurs.
+const frNumber = (n, digits = 0) => {
+  const fixed = Math.abs(Number(n)).toFixed(digits);
+  const [int, dec] = fixed.split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${Number(n) < 0 ? '-' : ''}${grouped}${dec ? `,${dec}` : ''}`;
+};
 
 /**
  * Tuiles d'équivalences écologiques basées sur les sources officielles FAO et US EPA
@@ -22,7 +28,7 @@ export default function EquivalenceTiles({ co2SavedGrams = 1450000, foodSavedGra
   const hasFood = Number.isFinite(food);
 
   const equivalences = calculateEquivalences(hasCo2 ? co2 : 0);
-  const foodSavedKg = hasFood ? frNumber(food / 1000, 1) : '—';
+  const foodSavedKg = hasFood ? frNumber(food / 1000, food >= 100000 ? 0 : 1) : '—';
   const roundTrips = hasCo2 ? Math.round(equivalences.kmCarAvoided / 140) : null;
 
   const tiles = [

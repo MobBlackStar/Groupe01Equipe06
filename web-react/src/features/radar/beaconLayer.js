@@ -203,15 +203,15 @@ export function createFikaNumberedMarkers(map, merchants = [], onSelectMerchant)
     el.style.transformOrigin = 'bottom center';
 
     el.innerHTML = `
-      <div class="relative flex items-center shadow-2xl filter drop-shadow(0 6px 12px rgba(0,0,0,0.6))">
-        <!-- Badge Numéroté circulaire Moutarde Fika -->
-        <div class="w-8 h-8 rounded-full bg-[#F5C400] text-black font-extrabold text-sm flex items-center justify-center border-2 border-black shadow-lg z-10">
+      <div class="relative flex items-center drop-shadow-[0_8px_14px_rgba(17,17,17,0.25)]">
+        <!-- Pastille numérotée rouge Griddle -->
+        <div class="w-9 h-9 rounded-full bg-[#DA0711] text-white font-bold text-base flex items-center justify-center border-2 border-[#111111] z-10">
           ${num}
         </div>
-        <!-- Étiquette textuelle d'accompagnement -->
-        <div class="ml-1.5 px-2.5 py-1 bg-[#0E0D0C]/90 backdrop-blur-md text-white border border-white/20 rounded-lg text-[10px] font-bold tracking-wider uppercase whitespace-nowrap shadow-md flex items-center gap-1.5">
-          <span class="text-amber-300">${m.name}</span>
-          <span class="text-gray-400 font-mono text-[9px]">• ${walkMin} MIN À PIED</span>
+        <!-- Étiquette crème, contour encre -->
+        <div class="-ml-2 pl-4 pr-3 py-1 bg-[#FAF3E6] text-[#111111] border-2 border-[#111111] rounded-full text-[13px] font-semibold uppercase whitespace-nowrap flex items-center gap-2">
+          <span>${m.name}</span>
+          <span class="text-[#DA0711]">${walkMin} min</span>
         </div>
       </div>
     `;
@@ -235,11 +235,11 @@ export function createFikaNumberedMarkers(map, merchants = [], onSelectMerchant)
   essectEl.className = 'flex items-center group cursor-pointer transition-transform hover:scale-105';
   essectEl.innerHTML = `
     <div class="flex items-center shadow-2xl">
-      <div class="w-9 h-9 rounded-full bg-[#FF5500] text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xl animate-pulse">
+      <div class="w-10 h-10 rounded-full bg-[#FFD000] text-[#111111] font-bold text-lg flex items-center justify-center border-2 border-[#111111] z-10">
         ★
       </div>
-      <div class="ml-1.5 px-3 py-1 bg-[#161412]/95 backdrop-blur-md text-[#FF5500] border border-[#FF5500]/40 rounded-lg text-[10px] font-black tracking-widest uppercase whitespace-nowrap shadow-lg">
-        CAMPUS ESSECT MONTFLEURY
+      <div class="-ml-2 pl-4 pr-3 py-1 bg-[#111111] text-[#FAF3E6] border-2 border-[#111111] rounded-full text-[13px] font-semibold uppercase whitespace-nowrap">
+        Campus ESSECT
       </div>
     </div>
   `;

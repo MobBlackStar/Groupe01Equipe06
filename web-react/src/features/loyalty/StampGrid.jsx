@@ -30,7 +30,7 @@ export default function StampGrid({ ecoPoints = 0, className = '' }) {
         {/* En-tête de la carte : règle + compteur */}
         <div className="flex items-end justify-between gap-4">
           <p className="text-base sm:text-lg leading-snug max-w-[18rem]">
-            1 repas sauvé = 1 tampon rouge. Le 10<sup>e</sup> est offert par le club.
+            1 repas sauvé = 1 tampon rouge. Le 10e est offert par le club.
           </p>
           <div className="text-right shrink-0">
             <span className="cs-figure block text-[48px] sm:text-[60px] text-[#DA0711]">

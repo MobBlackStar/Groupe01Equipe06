@@ -201,6 +201,67 @@ export default function AdminMerchantsPage() {
     setRejectModalData(null);
   }
 
+  // Données d'affichage par ligne (partagées entre la table desktop et les cartes mobiles)
+  const merchantRows = filteredMerchants.map((merchant) => {
+    const lat = merchant.location?.lat ?? merchant.lat;
+    const lng = merchant.location?.lng ?? merchant.lng;
+    const street = merchant.address?.street ?? merchant.street ?? 'Montfleury';
+    const dist = (lat != null && lng != null) ? distanceFromEssect(lat, lng) : (merchant.distanceM ?? 500);
+    const walk = calculateWalkingMinutes(dist);
+    return {
+      merchant,
+      street,
+      typeLabel: TYPE_LABELS[merchant.type] || merchant.type || '—',
+      distLabel: Number.isFinite(Number(dist)) ? `${Number(dist).toLocaleString('fr-FR')} m` : '—',
+      walkLabel: Number.isFinite(Number(walk)) ? `${walk} min à pied` : '',
+      isPending: merchant.status === MERCHANT_STATUS.PENDING,
+      isApproved: merchant.status === MERCHANT_STATUS.APPROVED,
+      statusUi: STATUS_UI[merchant.status] || { label: merchant.status || '—', pill: 'cs-pill-outline' },
+    };
+  });
+
+  const renderStatusPill = (row) => (
+    <span className={`cs-pill shrink-0 ${row.statusUi.pill}`}>
+      {row.isApproved && <span className="w-2 h-2 rounded-full bg-[#1F7A3A]" aria-hidden="true" />}
+      {row.statusUi.label}
+    </span>
+  );
+
+  const renderActions = (row, block) => {
+    const { merchant, isApproved } = row;
+    const canReject = merchant.status !== MERCHANT_STATUS.REJECTED;
+    if (isApproved && !canReject) return null;
+    return (
+      <div className={block ? 'mt-5 grid gap-3' : 'inline-flex flex-wrap justify-end items-center gap-2'}>
+        {!isApproved && (
+          <button
+            type="button"
+            onClick={() => handleApprove(merchant)}
+            className={`cs-btn cs-btn-ink ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}
+          >
+            ✓ Approuver
+          </button>
+        )}
+
+        {canReject && (
+          <button
+            type="button"
+            onClick={() =>
+              setRejectModalData({
+                merchant,
+                reason: '',
+                newStatus: MERCHANT_STATUS.REJECTED,
+              })
+            }
+            className={`cs-btn cs-btn-cream !text-[#DA0711] ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}
+          >
+            ✕ Rejeter
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-[#FAF3E6] text-[#111111] min-h-screen">
       <div className="cs-container cs-page">
@@ -225,91 +286,79 @@ export default function AdminMerchantsPage() {
             <p className="cs-body text-[#5E5850] mt-2">Changez de filtre pour voir les autres dossiers.</p>
           </div>
         ) : (
-          <div className="cs-card p-2 overflow-x-auto">
-            <table className="cs-table min-w-[880px]">
-              <thead>
-                <tr>
-                  <th>Établissement</th>
-                  <th>Type</th>
-                  <th>Distance ESSECT</th>
-                  <th>Statut</th>
-                  <th>Dossier</th>
-                  <th className="!text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMerchants.map((merchant) => {
-                  const lat = merchant.location?.lat ?? merchant.lat;
-                  const lng = merchant.location?.lng ?? merchant.lng;
-                  const street = merchant.address?.street ?? merchant.street ?? 'Montfleury';
-                  const dist = (lat != null && lng != null) ? distanceFromEssect(lat, lng) : (merchant.distanceM ?? 500);
-                  const walk = calculateWalkingMinutes(dist);
-                  const isPending = merchant.status === MERCHANT_STATUS.PENDING;
-                  const isApproved = merchant.status === MERCHANT_STATUS.APPROVED;
-                  const statusUi = STATUS_UI[merchant.status] || { label: merchant.status || '—', pill: 'cs-pill-outline' };
+          <>
+            {/* Mobile (< md) : une carte empilée par commerce */}
+            <ul className="md:hidden flex flex-col gap-4">
+              {merchantRows.map((row) => (
+                <li key={row.merchant.id} className="cs-card p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-[18px] font-semibold uppercase leading-tight line-clamp-2 min-w-0">{row.merchant.name}</h3>
+                    {renderStatusPill(row)}
+                  </div>
+                  <p className="text-[15px] text-[#5E5850] mt-1 line-clamp-2">{row.street}</p>
+                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-[15px]">
+                    <div>
+                      <dt className="cs-label">Type</dt>
+                      <dd className="font-semibold">{row.typeLabel}</dd>
+                    </div>
+                    <div>
+                      <dt className="cs-label">Distance</dt>
+                      <dd className="font-semibold">{row.distLabel}{row.walkLabel ? ` · ${row.walkLabel}` : ''}</dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="cs-label">Dossier</dt>
+                      <dd>{submittedLabel(row.merchant)}</dd>
+                    </div>
+                  </dl>
+                  {row.merchant.statusReason && !row.isPending && (
+                    <p className="text-[15px] text-[#5E5850] mt-3 line-clamp-2">{row.merchant.statusReason}</p>
+                  )}
+                  {renderActions(row, true)}
+                </li>
+              ))}
+            </ul>
 
-                  return (
-                    <tr key={merchant.id}>
-                      <td className="min-w-[240px]">
-                        <span className="block text-[17px] font-semibold uppercase leading-tight line-clamp-2">{merchant.name}</span>
-                        <span className="block text-[15px] text-[#5E5850] mt-1 line-clamp-2">{street}</span>
+            {/* Desktop (≥ md) : table */}
+            <div className="hidden md:block cs-card p-2 overflow-x-auto">
+              <table className="cs-table">
+                <thead>
+                  <tr>
+                    <th>Établissement</th>
+                    <th>Type</th>
+                    <th>Distance ESSECT</th>
+                    <th>Statut</th>
+                    <th>Dossier</th>
+                    <th className="!text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {merchantRows.map((row) => (
+                    <tr key={row.merchant.id}>
+                      <td className="min-w-[200px]">
+                        <span className="block text-[17px] font-semibold uppercase leading-tight line-clamp-2">{row.merchant.name}</span>
+                        <span className="block text-[15px] text-[#5E5850] mt-1 line-clamp-2">{row.street}</span>
                       </td>
-                      <td className="whitespace-nowrap font-semibold">
-                        {TYPE_LABELS[merchant.type] || merchant.type || '—'}
-                      </td>
+                      <td className="whitespace-nowrap font-semibold">{row.typeLabel}</td>
                       <td className="whitespace-nowrap">
-                        <span className="cs-figure text-[1.75rem] block">{Number.isFinite(Number(dist)) ? `${dist} m` : '—'}</span>
-                        <span className="text-[14px] text-[#5E5850]">
-                          {Number.isFinite(Number(walk)) ? `~${walk} min à pied` : ''}
-                        </span>
+                        <span className="cs-figure text-[1.75rem] block">{row.distLabel}</span>
+                        {row.walkLabel && <span className="text-[14px] text-[#5E5850]">~{row.walkLabel}</span>}
                       </td>
                       <td>
-                        <span className={`cs-pill ${statusUi.pill}`}>
-                          {isApproved && <span className="w-2 h-2 rounded-full bg-[#1F7A3A]" aria-hidden="true" />}
-                          {statusUi.label}
-                        </span>
-                        {merchant.statusReason && !isPending && (
+                        {renderStatusPill(row)}
+                        {row.merchant.statusReason && !row.isPending && (
                           <span className="block text-[14px] text-[#5E5850] mt-1.5 max-w-[220px] line-clamp-2">
-                            {merchant.statusReason}
+                            {row.merchant.statusReason}
                           </span>
                         )}
                       </td>
-                      <td className="whitespace-nowrap text-[#5E5850]">{submittedLabel(merchant)}</td>
-                      <td className="text-right">
-                        <div className="inline-flex flex-wrap justify-end items-center gap-2">
-                          {!isApproved && (
-                            <button
-                              type="button"
-                              onClick={() => handleApprove(merchant)}
-                              className="cs-btn cs-btn-ink cs-btn-sm"
-                            >
-                              ✓ Approuver
-                            </button>
-                          )}
-
-                          {merchant.status !== MERCHANT_STATUS.REJECTED && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setRejectModalData({
-                                  merchant,
-                                  reason: '',
-                                  newStatus: MERCHANT_STATUS.REJECTED,
-                                })
-                              }
-                              className="cs-btn cs-btn-cream cs-btn-sm !text-[#DA0711]"
-                            >
-                              ✕ Rejeter
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                      <td className="whitespace-nowrap text-[#5E5850]">{submittedLabel(row.merchant)}</td>
+                      <td className="text-right">{renderActions(row, false)}</td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Modal Rejet */}

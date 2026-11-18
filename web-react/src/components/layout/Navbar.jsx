@@ -117,7 +117,7 @@ export default function Navbar() {
                 key={link.path}
                 to={link.path}
                 aria-current={active ? 'page' : undefined}
-                className={`relative px-3.5 py-2 font-semibold uppercase text-[1.0625rem] tracking-[0.01em] transition-colors ${
+                className={`relative px-3.5 py-2 whitespace-nowrap font-semibold uppercase text-[1.0625rem] tracking-[0.01em] transition-colors ${
                   active ? 'text-[#DA0711]' : 'text-[#111111] hover:text-[#DA0711]'
                 }`}
               >

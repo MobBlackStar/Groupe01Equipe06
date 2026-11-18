@@ -99,8 +99,13 @@ export default function ImpactDashboardPage() {
     const n = Number(v);
     return v === null || v === undefined || v === '' || !Number.isFinite(n) ? null : n;
   };
-  const fr = (n, digits = 0) =>
-    n === null ? '—' : n.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  // Format français déterministe (espace insécable tous les 3 chiffres, virgule décimale)
+  const fr = (n, digits = 0) => {
+    if (n === null) return '—';
+    const [int, dec] = Math.abs(n).toFixed(digits).split('.');
+    const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return `${n < 0 ? '-' : ''}${grouped}${dec ? `,${dec}` : ''}`;
+  };
 
   const foodG = num(stats.foodSavedGrams);
   const co2G = num(stats.co2SavedGrams);

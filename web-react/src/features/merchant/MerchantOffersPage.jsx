@@ -21,6 +21,19 @@ import {
 
 const SAFE_FALLBACK_IMG = getDistinctGriddleFoodImage('fast-food', 0);
 
+// Catégorie d'offre → famille de photos Griddle
+const CATEGORY_POOL = {
+  SANDWICH: 'fast-food',
+  SNACK: 'fast-food',
+  PLAT_CHAUD: 'restaurant',
+  SALADE: 'restaurant',
+  PIZZA: 'pizza',
+  PATISSERIE: 'patisserie',
+  VIENNOISERIE: 'cafeteria',
+  BOISSON: 'cafeteria',
+  MIXTE: 'patisserie',
+};
+
 // Affichage sûr : jamais de NaN / 0,000 DT à l'écran
 function money(millimes) {
   const n = Number(millimes);
@@ -219,15 +232,21 @@ export default function MerchantOffersPage() {
               : offer.pricing?.discountedPriceMillimes) || offer.discountedPriceMillimes;
 
             // Formula ensuring 0 NaN% vendus and accurate portions display
-            const total = offer.quantityTotal ?? offer.totalQuantity ?? offer.quantityAvailable ?? 1;
-            const available = offer.quantityAvailable ?? offer.remainingQuantity ?? total;
-            const sold = offer.quantitySold ?? Math.max(0, total - available);
-            const percentSold = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
+            const toNum = (v) => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);
+            const soldRaw = toNum(offer.quantitySold);
+            const availRaw = toNum(offer.quantityAvailable ?? offer.remainingQuantity);
+            const total =
+              toNum(offer.quantityTotal ?? offer.totalQuantity) ??
+              toNum(offer.quantity) ??
+              ((availRaw ?? 0) + (soldRaw ?? 0));
+            const available = availRaw ?? Math.max(0, total - (soldRaw ?? 0));
+            const sold = soldRaw ?? Math.max(0, total - available);
+            const percentSold = total > 0 ? Math.min(100, Math.max(0, Math.round((sold / total) * 100))) : 0;
 
             const isDeleted = offer.status === OFFER_STATUS.DELETED;
             const st = STATUS_VIEW[offer.status] || { label: offer.status || 'Brouillon', cls: '' };
             const imageUrl =
-              offer.photoUrl || offer.imageUrl || getDistinctGriddleFoodImage(offer.category || 'fast-food', offer.id || offer.title);
+              offer.photoUrl || offer.imageUrl || getDistinctGriddleFoodImage(CATEGORY_POOL[offer.category] || 'fast-food', offer.id || offer.title);
             const original = money(offer.originalPriceMillimes);
 
             return (

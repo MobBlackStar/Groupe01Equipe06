@@ -156,7 +156,7 @@ export function LoginPage() {
                 Plateforme officielle ESSECT Montfleury
               </p>
               <h1 className="cs-hero text-[clamp(4rem,8vw,8.5rem)]">
-                FAIT POUR
+                {'FAIT POUR '}
                 <br />
                 ÊTRE <span className="text-[#DA0711]">PARTAGÉ.</span>
               </h1>
