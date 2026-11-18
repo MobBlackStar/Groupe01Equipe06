@@ -1,218 +1,191 @@
-// Module : Holo-Radar 3D WebGL - Glowing Circuit & Walking Navigation
-// Esthétique : Tracé néon orange vibrant (#FF5500) avec halo diffus façon Griddlecar (image6.png)
-// Règle d'or : ZÉRO boucle 60fps de setData ! Les calques GPU MapLibre assurent la fluidité sans saturer le bus CPU-GPU.
+// Module : Holo-Radar 3D WebGL - Circuit des commerces & navigation piétonne sur les RUES réelles
+// Esthétique : trait rouge Griddle avec pointillé crème ; le chemin sélectionné est moutarde cerné d'encre.
+// Règle d'or : ZÉRO boucle 60fps de setData ! Chaque tracé est calculé une fois puis confié aux calques GPU MapLibre.
+// Règle de justesse : un itinéraire suit les rues (OpenStreetMap, profil piéton). Jamais de ligne droite ni de "L" à travers les bâtiments.
 
-import { MAP_CONFIG } from './mapStyle.js';
+import { MAP_CONFIG, isMapReady } from './mapStyle.js';
+import { getKnownStreetRoute, getStreetRoute } from './streetRoutes.js';
 
-/**
- * Génère un chemin urbain façon grille (Manhattan / rues de Montfleury) entre deux points
- * pour éviter les lignes obliques coupant les pâtés de maisons de manière irréaliste.
- */
-function createGridStepPath(start, end) {
-  const [lng1, lat1] = start;
-  const [lng2, lat2] = end;
+const CIRCUIT_SRC = 'radar-circuit-src';
+const PATH_SRC = 'walking-path-src';
 
-  // Point intermédiaire en angle droit pour suivre les axes de Montfleury
-  const midLng = lng2;
-  const midLat = lat1;
+let circuitToken = 0; // invalide les réponses réseau périmées quand la liste des commerces change
+let pathToken = 0; // idem quand l'étudiant change de commerce plus vite que le routeur ne répond
 
-  return [
-    [lng1, lat1],
-    [midLng, midLat],
-    [lng2, lat2],
-  ];
-}
+const coordsOf = (m) => [m.location?.lng ?? MAP_CONFIG.ESSECT_COORDS[0], m.location?.lat ?? MAP_CONFIG.ESSECT_COORDS[1]];
 
-/**
- * Construit la collection GeoJSON du circuit complet reliant l'ESSECT à tous les commerces.
- * @param {Array<object>} merchants
- */
-export function buildCircuitGeoJson(merchants = []) {
-  const essect = MAP_CONFIG.ESSECT_COORDS;
-  const lines = [];
-
-  // Trie les commerces par distance pour tracer un circuit cohérent
+/** Segments du circuit : ESSECT → 1 → 2 → … → n → ESSECT (ordre = numéros des pastilles). */
+function circuitLegs(merchants) {
   const sorted = [...merchants].sort(
     (a, b) => (a.distanceM || a.distanceFromEssectM || 0) - (b.distanceM || b.distanceFromEssectM || 0)
   );
-
-  let prevPoint = essect;
+  const legs = [];
+  let prev = MAP_CONFIG.ESSECT_COORDS;
   for (const m of sorted) {
-    const coords = [m.location?.lng ?? essect[0], m.location?.lat ?? essect[1]];
-    const segment = createGridStepPath(prevPoint, coords);
-    lines.push(segment);
-    prevPoint = coords;
+    const c = coordsOf(m);
+    legs.push([prev, c]);
+    prev = c;
   }
+  if (sorted.length >= 2) legs.push([prev, MAP_CONFIG.ESSECT_COORDS]);
+  return legs;
+}
 
-  // Boucle de fermeture vers l'ESSECT si au moins 2 commerces
-  if (sorted.length >= 2) {
-    lines.push(createGridStepPath(prevPoint, essect));
-  }
-
+/** Un segment : trait de rue si l'itinéraire est connu, sinon trait "à vol d'oiseau" explicitement distinct. */
+function legFeature(from, to, route) {
   return {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: { role: 'circuit-glow' },
-        geometry: {
-          type: 'MultiLineString',
-          coordinates: lines,
-        },
-      },
-    ],
+    type: 'Feature',
+    properties: { kind: route ? 'street' : 'crow' },
+    geometry: { type: 'LineString', coordinates: route ? route.coordinates : [from, to] },
   };
 }
 
 /**
- * Configure et injecte les calques du circuit néon orange reliant l'ESSECT aux commerces.
+ * Collection GeoJSON du circuit à partir des itinéraires déjà connus (embarqués / cache).
+ * @param {Array<object>} merchants
+ * @param {Map<string, object|null>} [resolved] itinéraires obtenus en direct (clé "lng,lat>lng,lat")
+ */
+export function buildCircuitGeoJson(merchants = [], resolved = new Map()) {
+  const features = circuitLegs(merchants).map(([from, to]) => {
+    const route = getKnownStreetRoute(from, to) || resolved.get(`${from}>${to}`) || null;
+    return legFeature(from, to, route);
+  });
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * Injecte (ou met à jour) le circuit reliant l'ESSECT aux commerces, sur les rues réelles.
+ * Les segments inconnus sont routés en direct, puis la source GeoJSON est mise à jour UNE fois.
  * @param {object} map - Instance MapLibre GL
  * @param {Array<object>} merchants
  */
 export function setupCircuitRoute(map, merchants = []) {
-  if (!map || !map.isStyleLoaded()) return;
+  if (!isMapReady(map)) return;
 
-  const sourceId = 'radar-circuit-src';
-  const glowLayerId = 'radar-circuit-glow';
-  const coreLayerId = 'radar-circuit-core';
-  const dashLayerId = 'radar-circuit-dash';
+  const token = ++circuitToken;
+  const resolved = new Map();
+  const data = buildCircuitGeoJson(merchants, resolved);
 
-  const data = buildCircuitGeoJson(merchants);
+  if (map.getSource(CIRCUIT_SRC)) {
+    map.getSource(CIRCUIT_SRC).setData(data);
+  } else {
+    map.addSource(CIRCUIT_SRC, { type: 'geojson', data });
 
-  if (map.getSource(sourceId)) {
-    map.getSource(sourceId).setData(data);
-    return;
+    const street = ['==', ['get', 'kind'], 'street'];
+    const crow = ['==', ['get', 'kind'], 'crow'];
+    const roundLine = { 'line-join': 'round', 'line-cap': 'round' };
+
+    map.addLayer({
+      id: 'radar-circuit-glow',
+      type: 'line',
+      source: CIRCUIT_SRC,
+      filter: street,
+      layout: roundLine,
+      paint: { 'line-color': MAP_CONFIG.COLORS.ROUTE_GLOW, 'line-width': 10, 'line-opacity': 0.22, 'line-blur': 5 },
+    });
+    map.addLayer({
+      id: 'radar-circuit-core',
+      type: 'line',
+      source: CIRCUIT_SRC,
+      filter: street,
+      layout: roundLine,
+      paint: { 'line-color': MAP_CONFIG.COLORS.ROUTE_CORE, 'line-width': 3.5, 'line-opacity': 0.95 },
+    });
+    map.addLayer({
+      id: 'radar-circuit-dash',
+      type: 'line',
+      source: CIRCUIT_SRC,
+      filter: street,
+      layout: roundLine,
+      paint: { 'line-color': '#FAF3E6', 'line-width': 1.4, 'line-dasharray': [1.5, 3], 'line-opacity': 0.9 },
+    });
+    // Repli honnête : trait fin pointillé encre « à vol d'oiseau », visuellement distinct d'un vrai itinéraire
+    map.addLayer({
+      id: 'radar-circuit-crow',
+      type: 'line',
+      source: CIRCUIT_SRC,
+      filter: crow,
+      layout: roundLine,
+      paint: { 'line-color': '#5E5850', 'line-width': 1.6, 'line-dasharray': [0.6, 2.4], 'line-opacity': 0.8 },
+    });
   }
 
-  map.addSource(sourceId, {
-    type: 'geojson',
-    data,
-  });
+  // Segments pas encore connus : routage en direct, puis une seule mise à jour de la source
+  const pending = circuitLegs(merchants).filter(([f, t]) => !getKnownStreetRoute(f, t));
+  if (pending.length === 0) return;
 
-  // 1. Halo lumineux diffus orange (#FF5500)
-  map.addLayer({
-    id: glowLayerId,
-    type: 'line',
-    source: sourceId,
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
-    paint: {
-      'line-color': MAP_CONFIG.COLORS.ROUTE_GLOW,
-      'line-width': 10,
-      'line-opacity': 0.35,
-      'line-blur': 6,
-    },
-  });
-
-  // 2. Trait néon intermédiaire
-  map.addLayer({
-    id: coreLayerId,
-    type: 'line',
-    source: sourceId,
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
-    paint: {
-      'line-color': MAP_CONFIG.COLORS.ROUTE_CORE,
-      'line-width': 3.5,
-      'line-opacity': 0.95,
-    },
-  });
-
-  // 3. Filet pointillé central pour le look télémétrie de navigation
-  map.addLayer({
-    id: dashLayerId,
-    type: 'line',
-    source: sourceId,
-    layout: {
-      'line-join': 'round',
-      'line-cap': 'round',
-    },
-    paint: {
-      'line-color': '#FFFFFF',
-      'line-width': 1.5,
-      'line-dasharray': [1.5, 3],
-      'line-opacity': 0.8,
-    },
+  Promise.all(
+    pending.map(async ([f, t]) => {
+      resolved.set(`${f}>${t}`, await getStreetRoute(f, t));
+    })
+  ).then(() => {
+    if (token !== circuitToken || !map.getSource(CIRCUIT_SRC)) return; // liste de commerces changée entre-temps
+    map.getSource(CIRCUIT_SRC).setData(buildCircuitGeoJson(merchants, resolved));
   });
 }
 
 /**
- * Trace le chemin piéton ciblé directement vers le commerce sélectionné.
+ * Trace le chemin piéton réel (par les rues) de l'ESSECT vers le commerce sélectionné.
  * @param {object} map - Instance MapLibre GL
- * @param {[number, number]|null} merchantCoords - [Longitude, Latitude] ou null
+ * @param {[number, number]|null} merchantCoords - [Longitude, Latitude] ou null pour effacer
+ * @returns {Promise<{distanceM:number, durationS:number, source:string}|null>} infos de trajet réelles (ou null)
  */
-export function updateWalkingPath(map, merchantCoords) {
-  if (!map || !map.isStyleLoaded()) return;
+export async function updateWalkingPath(map, merchantCoords) {
+  if (!isMapReady(map)) return null;
 
-  const sourceId = 'walking-path-src';
   const targetGlowId = 'walking-target-glow';
+  const targetCaseId = 'walking-target-case';
   const targetCoreId = 'walking-target-core';
+  const token = ++pathToken;
 
   if (!merchantCoords) {
-    if (map.getLayer(targetCoreId)) map.removeLayer(targetCoreId);
-    if (map.getLayer(targetGlowId)) map.removeLayer(targetGlowId);
-    if (map.getSource(sourceId)) map.removeSource(sourceId);
-    return;
+    [targetCoreId, targetCaseId, targetGlowId].forEach((id) => map.getLayer(id) && map.removeLayer(id));
+    if (map.getSource(PATH_SRC)) map.removeSource(PATH_SRC);
+    return null;
   }
 
-  const pathCoords = createGridStepPath(MAP_CONFIG.ESSECT_COORDS, merchantCoords);
+  const from = MAP_CONFIG.ESSECT_COORDS;
+  const route = getKnownStreetRoute(from, merchantCoords) || (await getStreetRoute(from, merchantCoords));
+  if (token !== pathToken) return null; // un autre commerce a été choisi pendant le calcul
 
-  const lineGeoJson = {
+  const data = {
     type: 'FeatureCollection',
     features: [
       {
         type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: pathCoords,
-        },
+        properties: { kind: route ? 'street' : 'crow' },
+        geometry: { type: 'LineString', coordinates: route ? route.coordinates : [from, merchantCoords] },
       },
     ],
   };
 
-  if (map.getSource(sourceId)) {
-    map.getSource(sourceId).setData(lineGeoJson);
+  if (map.getSource(PATH_SRC)) {
+    map.getSource(PATH_SRC).setData(data);
   } else {
-    map.addSource(sourceId, {
-      type: 'geojson',
-      data: lineGeoJson,
-    });
-
-    // Halo d'accentuation haute intensité
+    map.addSource(PATH_SRC, { type: 'geojson', data });
+    const roundLine = { 'line-join': 'round', 'line-cap': 'round' };
     map.addLayer({
       id: targetGlowId,
       type: 'line',
-      source: sourceId,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#FF3300',
-        'line-width': 14,
-        'line-opacity': 0.5,
-        'line-blur': 8,
-      },
+      source: PATH_SRC,
+      layout: roundLine,
+      paint: { 'line-color': MAP_CONFIG.COLORS.ROUTE_GLOW, 'line-width': 16, 'line-opacity': 0.28, 'line-blur': 8 },
     });
-
-    // Ligne directrice blanche et or
+    // Cerne encre + cœur moutarde : lisible sur la carte crème et dans le même langage que les stickers
+    map.addLayer({
+      id: targetCaseId,
+      type: 'line',
+      source: PATH_SRC,
+      layout: roundLine,
+      paint: { 'line-color': '#111111', 'line-width': 9 },
+    });
     map.addLayer({
       id: targetCoreId,
       type: 'line',
-      source: sourceId,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#FFD700',
-        'line-width': 4,
-        'line-opacity': 1.0,
-      },
+      source: PATH_SRC,
+      layout: roundLine,
+      paint: { 'line-color': '#FFD000', 'line-width': 5 },
     });
   }
+
+  return route ? { distanceM: route.distanceM, durationS: route.durationS, source: route.source } : null;
 }

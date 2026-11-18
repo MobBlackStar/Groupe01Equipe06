@@ -12,7 +12,7 @@ import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
 import { mockMerchants, mockOffers } from '../../mocks/index.js';
 import { getFramerFoodImage } from '../../lib/framerAssets.js';
-import { MAP_CONFIG, add3DBuildingsLayer } from './mapStyle.js';
+import { MAP_CONFIG, add3DBuildingsLayer, isMapReady } from './mapStyle.js';
 import { setupBeaconLayers, createFikaNumberedMarkers } from './beaconLayer.js';
 import { setupCircuitRoute, updateWalkingPath } from './walkingPath.js';
 import { droneSwoopToMerchant, resetToCampusHome } from './cameraFx.js';
@@ -60,6 +60,8 @@ export default function HoloRadarPage() {
   const [radiusM, setRadiusM] = useState(1500);
   const [radarData, setRadarData] = useState(null);
   const [selectedMerchant, setSelectedMerchant] = useState(null);
+  // Trajet piéton réel (par les rues) vers le commerce sélectionné : { distanceM, durationS, source } | null
+  const [routeInfo, setRouteInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('3D'); // '3D' | '2D'
@@ -145,19 +147,23 @@ export default function HoloRadarPage() {
   // Gestion de la sélection d'un commerçant
   const handleSelectMerchant = useCallback((merchant) => {
     setSelectedMerchant(merchant);
+    setRouteInfo(null);
 
     if (mapRef.current && merchant?.location) {
       const coords = [merchant.location.lng, merchant.location.lat];
       // Drone Swoop cinématique vers la cible
       droneSwoopToMerchant(mapRef.current, coords);
-      // Met à jour la ligne de trajectoire d'approche piétonne
-      updateWalkingPath(mapRef.current, coords);
+      // Trace le chemin piéton par les rues réelles ; les infos de trajet (distance/temps) alimentent la fiche
+      updateWalkingPath(mapRef.current, coords).then((info) => {
+        if (info) setRouteInfo(info);
+      });
     }
   }, []);
 
   // Désélection et recentrage vers le Campus ESSECT
   const handleCloseDrawer = useCallback(() => {
     setSelectedMerchant(null);
+    setRouteInfo(null);
     if (mapRef.current) {
       resetToCampusHome(mapRef.current);
       updateWalkingPath(mapRef.current, null);
@@ -186,11 +192,34 @@ export default function HoloRadarPage() {
     [handleSelectMerchant]
   );
 
+  // Dernière liste de commerces, lisible depuis les callbacks MapLibre sans dépendance périmée
+  const merchantsRef = useRef([]);
+  merchantsRef.current = sortedMerchants;
+
+  /**
+   * Applique bâtiments 3D, balises, circuit sur les rues et marqueurs.
+   * MapLibre refuse d'ajouter des calques tant que le style n'est pas prêt ; or les commerces (API) et
+   * le style (tuiles) arrivent dans un ordre imprévisible. Si le style n'est pas prêt, on réessaie à 'idle'.
+   */
+  const applyOverlays = useCallback(
+    (map, attempt = 0) => {
+      const merchants = merchantsRef.current;
+      if (!map || !merchants.length) return;
+      if (!isMapReady(map)) {
+        if (attempt < 6) map.once('idle', () => applyOverlays(map, attempt + 1));
+        return;
+      }
+      add3DBuildingsLayer(map);
+      setupBeaconLayers(map, merchants, handleSelectMerchant);
+      setupCircuitRoute(map, merchants);
+      refreshMarkers(map, merchants);
+    },
+    [handleSelectMerchant, refreshMarkers]
+  );
+
   // Initialisation du moteur MapLibre 3D WebGL
   useEffect(() => {
     if (viewMode !== '3D' || !mapContainerRef.current) return;
-
-    const merchants = sortedMerchants;
 
     if (!mapRef.current) {
       try {
@@ -208,15 +237,8 @@ export default function HoloRadarPage() {
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
         map.on('load', () => {
-          // Bâtiments 3D extrudés ambrés/obsidienne
-          add3DBuildingsLayer(map);
-
-          // Injection des balises 3D et du circuit néon orange (image6.png)
-          if (merchants.length > 0) {
-            setupBeaconLayers(map, merchants, handleSelectMerchant);
-            setupCircuitRoute(map, merchants);
-            refreshMarkers(map, merchants);
-          }
+          // Les commerces peuvent arriver avant ou après le style : applyOverlays gère les deux ordres
+          applyOverlays(map);
         });
 
         map.on('error', (e) => {
@@ -224,17 +246,14 @@ export default function HoloRadarPage() {
         });
 
         mapRef.current = map;
+        if (import.meta.env.DEV) window.__radarMap = map; // hook QA : inspection de la caméra et des calques (absent en production)
       } catch (e) {
         console.warn('Initialisation WebGL impossible, bascule en vue 2D :', e);
         setViewMode('2D');
       }
     } else {
       // Carte déjà existante : mise à jour sans rechargement lourd (ZÉRO boucle 60fps)
-      if (mapRef.current.isStyleLoaded() && merchants.length > 0) {
-        setupBeaconLayers(mapRef.current, merchants, handleSelectMerchant);
-        setupCircuitRoute(mapRef.current, merchants);
-        refreshMarkers(mapRef.current, merchants);
-      }
+      applyOverlays(mapRef.current);
     }
 
     return () => {
@@ -244,7 +263,7 @@ export default function HoloRadarPage() {
         markersRef.current = [];
       }
     };
-  }, [viewMode, sortedMerchants, handleSelectMerchant, refreshMarkers]);
+  }, [viewMode, sortedMerchants, applyOverlays]);
 
   // Gardes d'affichage (jamais de "0,000 DT" ni de NaN)
   const priceOrDash = (millimes) => {
@@ -562,9 +581,11 @@ export default function HoloRadarPage() {
             <div className="cs-card-ink mt-5 mb-8 px-5 py-4 flex items-center justify-between gap-3">
               <span className="flex items-center gap-2 font-semibold uppercase text-base text-[#FFD000]">
                 <Footprints className="w-5 h-5" aria-hidden="true" />
-                {selectedMerchant.walkingMinutes || 3} min à pied
+                {routeInfo ? Math.max(1, Math.round(routeInfo.durationS / 60)) : selectedMerchant.walkingMinutes || 3} min à pied
               </span>
-              <span className="text-[15px] text-[#FAF3E6]/80">{distanceLabel(selectedMerchant)} de l'ESSECT</span>
+              <span className="text-[15px] text-[#FAF3E6]/80">
+                {routeInfo ? `${routeInfo.distanceM} m par les rues` : `${distanceLabel(selectedMerchant)} de l'ESSECT`}
+              </span>
             </div>
 
             {/* Paniers d'invendus disponibles */}

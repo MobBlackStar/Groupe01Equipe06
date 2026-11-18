@@ -19,7 +19,7 @@ export const MAP_CONFIG = {
     BUILDINGS_HOVER: '#FFD000', // Moutarde au survol
     BUILDINGS_OUTLINE: '#CFC3AB',
     ROUTE_GLOW: '#DA0711', // Tracé rouge Griddle
-    ROUTE_CORE: '#FF5A60',
+    ROUTE_CORE: '#DA0711',
     AMBER_GOLD: '#FFD000', // Jaune moutarde
     RED_FLAME: '#DA0711',
     URGENCY_LOW: '#FFD000', // > 60 min (Jaune moutarde)
@@ -27,6 +27,19 @@ export const MAP_CONFIG = {
     URGENCY_HIGH: '#DA0711', // < 20 min (Rouge alerte)
   },
 };
+
+/**
+ * Le style est-il assez chargé pour accepter addSource/addLayer ?
+ * `map.isStyleLoaded()` est trop strict : il repasse à false dès qu'une source ou un calque vient d'être ajouté
+ * (le helper suivant abandonnait alors en silence). `getStyle()` n'est défini qu'une fois le style chargé.
+ */
+export function isMapReady(map) {
+  try {
+    return Boolean(map && map.getStyle());
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Injecte la couche d'extrusion 3D des bâtiments urbains dans le style MapLibre.

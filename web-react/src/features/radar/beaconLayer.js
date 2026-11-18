@@ -3,7 +3,7 @@
 // Prismes 3D polygonaux extrudés et marqueurs HTML avec temps de marche.
 
 import maplibregl from 'maplibre-gl';
-import { MAP_CONFIG } from './mapStyle.js';
+import { MAP_CONFIG, isMapReady } from './mapStyle.js';
 
 /**
  * Génère un polygone régulier à 6 côtés (hexagone) centré sur des coordonnées géographiques.
@@ -103,7 +103,7 @@ export function buildMerchantBeaconsGeoJson(merchants = []) {
  * @param {Function} onSelectMerchant - Callback lors du clic sur un prisme
  */
 export function setupBeaconLayers(map, merchants, onSelectMerchant) {
-  if (!map || !map.isStyleLoaded()) return;
+  if (!isMapReady(map)) return;
 
   // 1. Source & Calque pour le Pilier Central ESSECT
   const essectData = buildEssectPillarGeoJson();
