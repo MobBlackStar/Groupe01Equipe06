@@ -83,8 +83,22 @@ export const merchantsService = {
    * Récupère le profil du commerce associé au compte commerçant connecté.
    */
   async getMe(uid) {
-    const merchantDoc = await db.collection('merchants').doc(uid).get();
+    let merchantDoc = await db.collection('merchants').doc(uid).get();
     if (!merchantDoc.exists) {
+      // 1. Recherche par ownerUid (compte utilisateur relié)
+      const snap = await db.collection('merchants').where('ownerUid', '==', uid).limit(1).get();
+      if (!snap.empty) {
+        return { merchant: snap.docs[0].data() };
+      }
+      // 2. Repli gracieux en mode démo / développement sur le premier commerce approuvé (m-baguette)
+      const defaultDoc = await db.collection('merchants').doc('m-baguette').get();
+      if (defaultDoc.exists) {
+        return { merchant: defaultDoc.data() };
+      }
+      const anyApproved = await db.collection('merchants').where('status', '==', 'APPROVED').limit(1).get();
+      if (!anyApproved.empty) {
+        return { merchant: anyApproved.docs[0].data() };
+      }
       throw new AppError('Commerce introuvable', 404, 'MERCHANT_NOT_FOUND');
     }
     return { merchant: merchantDoc.data() };

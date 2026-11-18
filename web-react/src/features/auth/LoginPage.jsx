@@ -1,5 +1,5 @@
-// 💡 Concept & Analogie : Comme la porte d'entrée d'un diner rétro-futuriste, cette page plonge immédiatement l'utilisateur dans l'ambiance street-food tactile avec son Polaroid 3D et son ticket de caisse vintage.
-// 🔄 Comparaison React / Flutter : En React, la page utilise un agencement 2 colonnes avec DepthCard 3D et Polaroid tactile ; en Flutter, `login_screen.dart` adapte la mise en page en colonne simple scrollable.
+// 💡 Concept & Analogie : Comme la porte d'entrée d'un diner rétro-futuriste, cette page plonge immédiatement l'utilisateur dans l'ambiance street-food tactile avec son Polaroid et son ticket de caisse vintage.
+// 🔄 Comparaison React / Flutter : En React, la page utilise un agencement 2 colonnes avec Polaroid tactile et reçu thermique ; en Flutter, `login_screen.dart` adapte la mise en page en colonne simple scrollable.
 // 🎯 À retenir pour la soutenance : "Le panneau d'accès intègre le 1-Click Demo Bar (Étudiant, Commerçant, Admin) pour démarrer l'évaluation du jury instantanément sans aucune saisie."
 // Module : Authentification & Sécurité (M1)
 
@@ -7,7 +7,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLES } from '@shared/constants.js';
-import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
 import {
   Flame,
   GraduationCap,
@@ -96,77 +95,65 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
-      {/* Ruban Damier Diner en arrière-plan */}
-      <div className="absolute top-0 left-0 right-0 h-4 bg-diner-checker-subtle border-b-2 border-[#141210] opacity-40 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-4 bg-diner-checker-subtle border-t-2 border-[#141210] opacity-40 pointer-events-none" />
-
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
+      
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center relative z-10">
         
         {/* =========================================================================
-            COLONNE GAUCHE : 3D POLAROID FRAME + TICKET THERMIQUE
+            COLONNE GAUCHE : POLAROID AUTHENTIQUE + REÇU THERMIQUE (IMAGE 3)
             ========================================================================= */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center space-y-6">
-          <DepthCard
-            maxTilt={10}
-            perspective={1200}
-            className="w-full max-w-md relative p-4"
-          >
+        <div className="lg:col-span-6 flex flex-col items-center justify-center">
+          <div className="relative w-full max-w-md">
+            
             {/* Ticket de caisse thermique en arrière-plan décalé */}
-            <div className="absolute -top-3 -right-3 sm:-right-6 w-72 sm:w-80 rounded-xl bg-[#FAF6EE] text-[#141210] p-4 font-mono text-[11px] shadow-[6px_6px_0px_#141210] rotate-3 border-2 border-[#141210] hidden sm:block pointer-events-none select-none">
-              <div className="text-center font-black text-xs uppercase tracking-wider pb-2 border-b-2 border-dashed border-[#141210]/30">
+            <div className="absolute -top-6 -right-4 sm:-right-8 w-68 sm:w-76 rounded-xl bg-white text-[#111111] p-5 font-mono text-[11px] shadow-xl rotate-4 border border-[#111111]/8 hidden sm:block pointer-events-none select-none z-0">
+              <div className="text-center font-anton text-xs uppercase tracking-wider pb-2 border-b border-dashed border-[#111111]/25">
                 CAMPUSSAVE · MONTFLEURY
-                <div className="text-[9px] font-normal text-[#555]">ESSECT 2026 · SERVICE MIDI & SOIR</div>
+                <div className="text-[9px] font-sans font-normal text-[#666]">ESSECT 2026 · SERVICE MIDI & SOIR</div>
               </div>
-              <div className="flex justify-between py-1 text-[10px] text-[#666] font-bold">
+              <div className="flex justify-between py-1 text-[10px] text-[#777]">
                 <span>18/11/2026</span>
                 <span>TABLE 07 · SERVEUR: FEDI</span>
               </div>
-              <div className="space-y-1 py-2 border-t-2 border-b-2 border-dashed border-[#141210]/30 font-bold">
+              <div className="space-y-1.5 py-2.5 border-t border-b border-dashed border-[#111111]/25 font-bold">
                 <div className="flex justify-between">
                   <span>1x BAGUETTE FARCIE</span>
-                  <span className="font-anton">3.800 DT</span>
+                  <span className="font-anton text-[#DA0711]">3.800 DT</span>
                 </div>
                 <div className="flex justify-between">
                   <span>1x PANIER MYSTÈRE</span>
-                  <span className="font-anton">2.500 DT</span>
+                  <span className="font-anton text-[#DA0711]">2.500 DT</span>
                 </div>
-                <div className="flex justify-between line-through text-[#888]">
+                <div className="flex justify-between line-through text-[#999]">
                   <span>0x GASPILLAGE ALIMENTAIRE</span>
                   <span>0 DÉCHET</span>
                 </div>
               </div>
-              <div className="flex justify-between items-center pt-2 font-black text-xs">
-                <span>TOTAL SAUVÉ :</span>
-                <span className="text-[#E51C23] font-anton text-base">6.300 DT</span>
+              <div className="flex justify-between items-center pt-2.5 font-bold text-xs">
+                <span>TOTAL :</span>
+                <span className="text-[#DA0711] font-anton text-sm">A BRIGHTER DAY</span>
               </div>
               {/* Tampon Caoutchouc Rouge PAYÉ */}
-              <div className="absolute bottom-10 right-4">
-                <span className="font-anton text-xs uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#B91C1C] border-2 border-[#DC2626] rotate-[-8deg] shadow-sm">
-                  [SAUVÉ & PAYÉ]
+              <div className="mt-2 text-center">
+                <span className="griddle-stamp text-[10px] py-0.5 px-2">
+                  PAID
                 </span>
               </div>
               {/* Code-barres simulé en bas */}
-              <div className="mt-3 pt-2 border-t-2 border-dashed border-[#141210]/30 flex flex-col items-center">
-                <div className="h-6 w-full bg-[repeating-linear-gradient(90deg,#141210,#141210_2px,transparent_2px,transparent_4px)] opacity-80" />
-                <span className="text-[8px] font-bold tracking-widest text-[#555] mt-1">MERCI · SOUTENEZ L'ANTI-GASPI</span>
+              <div className="mt-3 pt-2 border-t border-dashed border-[#111111]/25 flex flex-col items-center">
+                <div className="h-6 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_4px)] opacity-70" />
+                <span className="text-[8px] font-bold tracking-widest text-[#777] mt-1">THANK YOU · COME HUNGRY</span>
               </div>
             </div>
 
             {/* Cadre Polaroid Avant-Plan Tilted -3deg */}
-            <div className="relative z-10 w-full rounded-xl bg-white p-4 pb-6 shadow-[8px_8px_0px_#141210] rotate-[-3deg] border-2 border-[#141210]">
-              {/* Morceaux de ruban adhésif jaune */}
-              <div
-                aria-hidden="true"
-                className="absolute -top-3 left-6 w-16 h-6 bg-[#FFD000]/80 border border-[#141210] shadow-sm rotate-[-15deg] pointer-events-none z-20"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute -top-3 right-6 w-16 h-6 bg-[#FFD000]/80 border border-[#141210] shadow-sm rotate-[18deg] pointer-events-none z-20"
-              />
+            <div className="relative z-10 w-full rs-polaroid rotate-[-3deg] cursor-pointer hover:rotate-0 transition-transform duration-300">
+              {/* Morceaux de ruban adhésif jaune Griddle */}
+              <span className="rs-tape-tl" />
+              <span className="rs-tape-tr" />
 
-              {/* Photo du Polaroid avec profondeur 3D */}
-              <DepthLayer depth={25} shadow className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#141210] border-2 border-[#141210] relative">
+              {/* Photo du Polaroid */}
+              <div className="w-full aspect-[4/3] rounded overflow-hidden bg-[#EDE6D7] relative">
                 <img
                   src="/assets/griddle/food/hero-double-smash-tray.png"
                   alt="Repas frais sauvé"
@@ -176,7 +163,7 @@ export function LoginPage() {
                     e.currentTarget.src = '/assets/griddle/food/burger-smash-classic.png';
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                 
                 {/* Badge street food sur la photo */}
                 <div className="absolute top-3 left-3">
@@ -185,23 +172,18 @@ export function LoginPage() {
                   </span>
                 </div>
                 <div className="absolute bottom-3 right-3">
-                  <span className="px-2.5 py-1 rounded-md bg-[#FFD000] text-[#141210] text-[10px] font-anton border border-[#141210] shadow-[1px_1px_0px_#141210]">
+                  <span className="px-3 py-1 rounded-full bg-[#FFD000] text-[#111111] text-[10px] font-anton shadow-sm">
                     ESSECT MONTFLEURY
                   </span>
                 </div>
-              </DepthLayer>
+              </div>
 
               {/* Légende manuscrite sous le Polaroid */}
-              <div className="mt-4 text-center">
-                <p className="font-anton uppercase text-xl font-bold tracking-wider text-[#141210]">
-                  FIRST BITE, BEST BITE ♥
-                </p>
-                <p className="text-[11px] text-[#555] font-bold">
-                  Repas artisanaux sauvés minute chez vos commerçants favoris
-                </p>
-              </div>
+              <figcaption>
+                first bite, best bite ♥
+              </figcaption>
             </div>
-          </DepthCard>
+          </div>
         </div>
 
         {/* =========================================================================
@@ -210,12 +192,12 @@ export function LoginPage() {
         <div className="lg:col-span-6 flex flex-col justify-center space-y-6">
           {/* Titre éditorial percutant */}
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E51C23] text-white text-xs font-anton tracking-wider mb-3 border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider mb-3 shadow-sm">
               <Flame className="w-3.5 h-3.5" />
               <span>Plateforme Officielle ESSECT</span>
             </div>
-            <h1 className="font-anton uppercase text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#141210] leading-none">
-              FAIT POUR ÊTRE <span className="text-[#E51C23]">PARTAGÉ.</span>
+            <h1 className="font-anton uppercase text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#111111] leading-none">
+              FAIT POUR ÊTRE <span className="text-[#DA0711]">PARTAGÉ.</span>
             </h1>
             <p className="mt-2 text-sm text-[#555] font-medium leading-relaxed">
               Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.
@@ -224,7 +206,7 @@ export function LoginPage() {
 
           {/* Erreur serveur éventuelle */}
           {serverError && (
-            <div className="p-3.5 rounded-lg bg-[#FEE2E2] border-2 border-[#DC2626] text-[#B91C1C] text-xs font-bold flex items-center gap-2.5 shadow-[2px_2px_0px_#DC2626]">
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2.5">
               <span className="text-base">⚠️</span>
               <span>{serverError}</span>
             </div>
@@ -233,7 +215,7 @@ export function LoginPage() {
           {/* Formulaire d'authentification tactile */}
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1.5">
+              <label className="block text-xs font-anton uppercase tracking-wider text-[#111111] mb-1.5">
                 Adresse Email Universitaire
               </label>
               <input
@@ -244,19 +226,19 @@ export function LoginPage() {
                   if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
                 }}
                 placeholder="nom@essect.u-tunis.tn"
-                className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 text-[#141210] text-sm outline-none transition-all font-medium ${
+                className={`w-full px-5 py-3 rounded-full bg-white border text-[#111111] text-sm outline-none transition-all font-medium ${
                   errors.email
-                    ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]'
-                    : 'border-[#141210] shadow-[2px_2px_0px_#141210] focus:border-[#E51C23] focus:shadow-[3px_3px_0px_#141210]'
+                    ? 'border-[#DA0711] ring-1 ring-[#DA0711]'
+                    : 'border-[#111111]/10 focus:border-[#DA0711] focus:ring-1 focus:ring-[#DA0711]'
                 }`}
               />
               {errors.email && (
-                <p className="text-xs text-[#E51C23] font-bold mt-1">⚠️ {errors.email}</p>
+                <p className="text-xs text-[#DA0711] font-bold mt-1">⚠️ {errors.email}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1.5">
+              <label className="block text-xs font-anton uppercase tracking-wider text-[#111111] mb-1.5">
                 Mot de Passe
               </label>
               <div className="relative">
@@ -268,29 +250,29 @@ export function LoginPage() {
                     if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
                   }}
                   placeholder="••••••••"
-                  className={`w-full px-4 py-2.5 pr-11 rounded-lg bg-white border-2 text-[#141210] text-sm outline-none transition-all font-medium ${
+                  className={`w-full px-5 py-3 pr-12 rounded-full bg-white border text-[#111111] text-sm outline-none transition-all font-medium ${
                     errors.password
-                      ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]'
-                      : 'border-[#141210] shadow-[2px_2px_0px_#141210] focus:border-[#E51C23] focus:shadow-[3px_3px_0px_#141210]'
+                      ? 'border-[#DA0711] ring-1 ring-[#DA0711]'
+                      : 'border-[#111111]/10 focus:border-[#DA0711] focus:ring-1 focus:ring-[#DA0711]'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#777] hover:text-[#141210]"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#777] hover:text-[#111111]"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-[#E51C23] font-bold mt-1">⚠️ {errors.password}</p>
+                <p className="text-xs text-[#DA0711] font-bold mt-1">⚠️ {errors.password}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full btn-griddle-primary py-3 cursor-pointer"
+              className="w-full btn-griddle-primary py-3.5 cursor-pointer shadow-md"
             >
               <span>{isSubmitting ? 'Connexion en cours...' : 'SE CONNECTER'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -298,25 +280,25 @@ export function LoginPage() {
           </form>
 
           {/* 1-Click Demo Bar (Jury Soutenance) */}
-          <div className="pt-4 border-t-2 border-[#141210]/20 space-y-2.5">
+          <div className="pt-4 border-t border-[#111111]/10 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-anton uppercase tracking-wider text-[#141210]">
+              <span className="text-[11px] font-anton uppercase tracking-wider text-[#111111]">
                 ⚡ ACCÈS RAPIDE 1-CLIC (JURY ESSECT) :
               </span>
-              <span className="text-[10px] text-[#777] font-bold">Sans mot de passe</span>
+              <span className="text-[10px] text-[#777] font-medium">Sans mot de passe</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => handleDemoLogin('student')}
                 disabled={isSubmitting}
-                className="p-2.5 rounded-lg bg-[#FAF6EE] hover:bg-[#FEE2E2] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex flex-col items-center gap-1 transition-all text-center cursor-pointer group active:translate-x-[2px] active:translate-y-[2px]"
+                className="p-3 rounded-2xl bg-[#EDE6D7] hover:bg-[#e2d9c7] border border-[#111111]/8 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer group active:scale-95 shadow-sm"
               >
-                <div className="w-7 h-7 rounded-full bg-[#E51C23] text-white flex items-center justify-center border border-[#141210]">
+                <div className="w-8 h-8 rounded-full bg-[#DA0711] text-white flex items-center justify-center shadow-sm">
                   <GraduationCap className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-anton text-[#141210]">Étudiant</span>
+                <span className="text-xs font-anton uppercase tracking-wider text-[#111111]">Étudiant</span>
                 <span className="text-[9px] text-[#666] font-mono">Yassine</span>
               </button>
 
@@ -324,12 +306,12 @@ export function LoginPage() {
                 type="button"
                 onClick={() => handleDemoLogin('merchant')}
                 disabled={isSubmitting}
-                className="p-2.5 rounded-lg bg-[#FAF6EE] hover:bg-[#FEF08A] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex flex-col items-center gap-1 transition-all text-center cursor-pointer group active:translate-x-[2px] active:translate-y-[2px]"
+                className="p-3 rounded-2xl bg-[#EDE6D7] hover:bg-[#e2d9c7] border border-[#111111]/8 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer group active:scale-95 shadow-sm"
               >
-                <div className="w-7 h-7 rounded-full bg-[#FFD000] text-[#141210] flex items-center justify-center border border-[#141210]">
+                <div className="w-8 h-8 rounded-full bg-[#FFD000] text-[#111111] flex items-center justify-center shadow-sm">
                   <Store className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-anton text-[#141210]">Commerçant</span>
+                <span className="text-xs font-anton uppercase tracking-wider text-[#111111]">Commerçant</span>
                 <span className="text-[9px] text-[#666] font-mono">Baguette</span>
               </button>
 
@@ -337,12 +319,12 @@ export function LoginPage() {
                 type="button"
                 onClick={() => handleDemoLogin('admin')}
                 disabled={isSubmitting}
-                className="p-2.5 rounded-lg bg-[#FAF6EE] hover:bg-[#DCFCE7] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex flex-col items-center gap-1 transition-all text-center cursor-pointer group active:translate-x-[2px] active:translate-y-[2px]"
+                className="p-3 rounded-2xl bg-[#EDE6D7] hover:bg-[#e2d9c7] border border-[#111111]/8 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer group active:scale-95 shadow-sm"
               >
-                <div className="w-7 h-7 rounded-full bg-[#15803D] text-white flex items-center justify-center border border-[#141210]">
+                <div className="w-8 h-8 rounded-full bg-[#15803D] text-white flex items-center justify-center shadow-sm">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-anton text-[#141210]">Admin</span>
+                <span className="text-xs font-anton uppercase tracking-wider text-[#111111]">Admin</span>
                 <span className="text-[9px] text-[#666] font-mono">ESSECT</span>
               </button>
             </div>
@@ -350,12 +332,12 @@ export function LoginPage() {
 
           {/* Lien d'inscription */}
           <div className="text-center pt-2">
-            <span className="text-xs text-[#555] font-medium">
+            <span className="text-xs text-[#666] font-medium">
               Pas encore inscrit sur CampusSave ?{' '}
             </span>
             <Link
               to="/register"
-              className="text-xs font-black text-[#E51C23] hover:underline"
+              className="text-xs font-anton uppercase tracking-wider text-[#DA0711] hover:underline"
             >
               Créer un compte étudiant ou commerçant →
             </Link>

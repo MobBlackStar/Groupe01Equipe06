@@ -1,5 +1,5 @@
-// 💡 Concept & Analogie : Comme la traversée d'un diner vintage américain croisé avec un marché de producteurs locaux.
-// 🔄 Comparaison React / Flutter : En React, la page intègre la frise chronologique dégressive Fika interactive avec calcul en direct de Dutch Auction (`computeUnitPrice`) ; en Flutter, `explore_screen.dart` adapte la timeline.
+// 💡 Concept & Analogie : Comme la traversée d'un diner vintage américain croisé avec un marché de producteurs locaux, le héros full-bleed respire sur la toile crème #FAF3E6.
+// 🔄 Comparaison React / Flutter : En React, la page intègre le Time Scrubber dégressif interactif avec calcul en direct de Dutch Auction (`computeUnitPrice`) ; en Flutter, `explore_screen.dart` adapte la timeline.
 // 🎯 À retenir pour la soutenance : "Le Time Scrubber Hero permet au jury de voyager dans le temps (12h-20h) et de constater la baisse progressive des prix et l'apposition du tampon PARTI À HH:MM sur les invendus expirés."
 // Module : Catalogue & Exploration (M4, I1)
 
@@ -10,12 +10,12 @@ import {
   MapPin,
   Clock,
   Flame,
+  ArrowRight,
 } from 'lucide-react';
 import SearchBar from './SearchBar.jsx';
 import FilterPanel from './FilterPanel.jsx';
 import { OfferCard, MysteryBoxCard } from '../../components/offers/index.js';
 import { EmptyState, Spinner } from '../../components/ui/index.js';
-import { DepthCard, DepthLayer } from '../../components/common/DepthCard.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { computeUnitPrice } from '@shared/pricing.js';
@@ -118,28 +118,9 @@ const DEFAULT_MONTFLEURY_OFFERS = [
     quantityAvailable: 2,
     distanceFromEssectM: 210,
     pickupStartAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 50 * 60 * 1000).toISOString(),
+    pickupEndAt: new Date(Date.now() + 35 * 60 * 1000).toISOString(),
     isSurpriseBasket: false,
-    weightGramsPerUnit: 380,
-  },
-  {
-    id: 'off-oasis-06',
-    merchantId: 'merchant-oasis-fraicheur',
-    merchantName: "L'Oasis de Fraîcheur",
-    title: 'Salade Composée Croquante & Jus Citron',
-    description: 'Quinoa, avocat frais, grenade, roquette, vinaigrette citronnée et pain grillé.',
-    category: OFFER_CATEGORIES.SALADE,
-    pricingType: 'FIXED',
-    originalPriceMillimes: 6500,
-    discountedPriceMillimes: 3200,
-    targetPriceMillimes: 3200,
-    quantityTotal: 4,
-    quantityAvailable: 4,
-    distanceFromEssectM: 310,
-    pickupStartAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 80 * 60 * 1000).toISOString(),
-    isSurpriseBasket: false,
-    weightGramsPerUnit: 300,
+    weightGramsPerUnit: 420,
   },
 ];
 
@@ -152,32 +133,28 @@ export default function BrowsePage() {
   const [surpriseOnly, setSurpriseOnly] = useState(false);
   const [sortBy, setSortBy] = useState('distance');
 
-  // Time Scrubber interactif (12.0 à 20.0 heures)
+  // Time Scrubber state (12h à 20h)
   const [scrubberHour, setScrubberHour] = useState(18.0);
 
-  // Chargement des offres depuis l'API
+  // Chargement des offres depuis le backend
   useEffect(() => {
     let isMounted = true;
-
     async function fetchOffers() {
       setLoading(true);
       try {
         const res = await apiClient.get(ENDPOINTS.OFFERS);
-        const fetched = res.data?.data || res.data?.offers || res.data;
-        if (isMounted && Array.isArray(fetched) && fetched.length > 0) {
-          setOffers(fetched);
+        if (isMounted && res.data && Array.isArray(res.data.offers)) {
+          if (res.data.offers.length > 0) {
+            setOffers(res.data.offers);
+          }
         }
       } catch (err) {
-        console.warn('Utilisation des offres démo Montfleury :', err.message);
+        console.warn('API Offres indisponible, fallback offres Montfleury actives :', err.message);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     }
-
     fetchOffers();
-
     return () => {
       isMounted = false;
     };
@@ -294,155 +271,181 @@ export default function BrowsePage() {
   const activeScrubberItemsCount = scrubberShowcaseItems.filter((i) => !i.isGone).length;
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-10">
-
-        {/* =========================================================================
-            SECTION A : GRIDDLE HERO & SMART DECAY TIME SCRUBBER
-            ========================================================================= */}
-        <section className="relative rounded-2xl bg-[#FAF6EE] text-[#141210] p-6 sm:p-10 border-2 border-[#141210] shadow-[6px_6px_0px_#141210] overflow-hidden">
-          
-          {/* Griddle Stickers Floating Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-2">
-              <span className="sticker-yellow">
-                👑 #1 ESSECT MONTFLEURY
-              </span>
-              <span className="sticker-red">
-                ⚡ SMART DECAY ACTIF
-              </span>
-              <span className="sticker-yellow">
-                🔥 JUSQU'À -70%
-              </span>
-            </div>
-            <span className="text-xs font-mono text-[#666] font-bold hidden sm:inline">
-              Glissez le curseur pour simuler les prix
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] pb-16">
+      
+      {/* =========================================================================
+          SECTION A : OPEN FULL-BLEED GRIDDLE HERO (NO ENCLOSING BOX)
+          ========================================================================= */}
+      <section className="pt-8 sm:pt-14 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        
+        {/* Griddle Floating Badges Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-2">
+            <span className="sticker-yellow">
+              👑 #1 ESSECT MONTFLEURY
+            </span>
+            <span className="sticker-red">
+              ⚡ SMART DECAY ACTIF
+            </span>
+            <span className="sticker-yellow">
+              🔥 JUSQU'À -70%
             </span>
           </div>
+          <span className="text-xs font-mono text-[#777] font-bold hidden sm:inline">
+            Glissez le curseur pour simuler les prix
+          </span>
+        </div>
 
-          {/* Grand Titre Griddle : CUISINÉ. BRADÉ. SAUVÉ. */}
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6">
-            <div>
-              <div className="font-anton uppercase text-4xl sm:text-6xl lg:text-7xl tracking-wide text-[#141210] leading-none mb-3">
-                CUISINÉ. BRADÉ. <span className="text-[#E51C23]">SAUVÉ.</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-[#141210]">
-                Passe à {formatScrubberTime(scrubberHour)}.{' '}
-                <span className="relative inline-block">
-                  <span className="relative z-10">{activeScrubberItemsCount} portions sont encore là.</span>
-                  {/* Surlignage jaune moutarde */}
-                  <span
-                    aria-hidden="true"
-                    className="absolute -bottom-1 left-0 right-0 h-3 bg-[#FFD000] -rotate-1 rounded-sm -z-0"
-                  />
-                </span>
-              </h2>
-              <p className="mt-2 text-sm text-[#555] max-w-2xl font-medium leading-relaxed">
-                Une fournée par jour chez les artisans de Montfleury. Glisse la ligne d'heure pour prévisualiser la baisse de prix en direct et réserver avant épuisement.
-              </p>
-            </div>
+        {/* Grand Titre Griddle : CUISINÉ. BRADÉ. SAUVÉ. */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6">
+          <div>
+            <h1 className="font-anton uppercase text-5xl sm:text-7xl lg:text-8xl tracking-tight text-[#111111] leading-none mb-3">
+              CUISINÉ. <span className="text-[#DA0711]">BRADÉ.</span> SAUVÉ.
+            </h1>
+            <h2 className="text-xl sm:text-2xl font-black text-[#111111]">
+              Passe à {formatScrubberTime(scrubberHour)}.{' '}
+              <span className="relative inline-block">
+                <span className="relative z-10">{activeScrubberItemsCount} portions sont encore là.</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-1 left-0 right-0 h-3 bg-[#FFD000] -rotate-1 rounded-sm -z-0"
+                />
+              </span>
+            </h2>
+            <p className="mt-2 text-sm text-[#555] max-w-2xl font-medium leading-relaxed">
+              Une fournée par jour chez les artisans de Montfleury. Glisse la ligne d'heure pour prévisualiser la baisse de prix en direct et réserver avant épuisement.
+            </p>
+          </div>
 
-            <div className="shrink-0 flex items-center gap-2">
-              <Link
-                to="/app/radar"
-                className="btn-griddle-primary text-xs font-anton"
+          <div className="shrink-0 flex items-center gap-3">
+            <a
+              href="#bestsellers"
+              className="btn-griddle-primary"
+            >
+              <span>Commander</span>
+              <ArrowRight className="w-4 h-4 text-white" />
+            </a>
+            <Link
+              to="/app/radar"
+              className="btn-griddle-outline"
+            >
+              <MapPin className="w-4 h-4 text-[#111111]" />
+              <span>Voir le Radar</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Vitrine des aliments sur la ligne de temps */}
+        <div className="relative pt-6 pb-4 overflow-x-auto scrollbar-none">
+          <div className="min-w-[700px] flex items-end justify-around gap-4 relative z-10">
+            {scrubberShowcaseItems.map((item, idx) => (
+              <div
+                key={item.offer.id || idx}
+                className="flex flex-col items-center group relative cursor-pointer"
+                onClick={() => {
+                  setSelectedCategory(item.offer.category || 'ALL');
+                }}
               >
-                <MapPin className="w-4 h-4 text-white" />
-                <span>Voir le Radar 3D</span>
-              </Link>
-            </div>
-          </div>
+                {/* Carte étiquette du produit */}
+                <div className="mb-3 px-3.5 py-1.5 rounded-full bg-[#EDE6D7] border border-[#111111]/8 text-center pointer-events-none transition-transform group-hover:-translate-y-1 shadow-sm">
+                  <p className="font-anton text-xs text-[#111111] truncate max-w-[130px]">
+                    {item.offer.title}
+                  </p>
+                  <p className="font-anton text-sm font-black text-[#DA0711]">
+                    {formatTND(item.simulatedPrice)}
+                    <span className="text-[10px] text-[#777] font-normal font-sans ml-1">
+                      · fin {item.endFormatted}
+                    </span>
+                  </p>
+                </div>
 
-          {/* Vitrine des aliments sur la ligne de temps */}
-          <div className="relative pt-6 pb-8 overflow-x-auto scrollbar-none">
-            <div className="min-w-[700px] flex items-end justify-around gap-4 relative z-10">
-              {scrubberShowcaseItems.map((item, idx) => (
-                <div
-                  key={item.offer.id || idx}
-                  className="flex flex-col items-center group relative cursor-pointer"
-                  onClick={() => {
-                    setSelectedCategory(item.offer.category || 'ALL');
-                  }}
-                >
-                  {/* Carte étiquette du produit */}
-                  <div className="mb-3 px-3 py-1.5 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-center pointer-events-none transition-transform group-hover:-translate-y-1">
-                    <p className="font-mono text-[11px] font-black text-[#141210] truncate max-w-[120px]">
-                      {item.offer.title}
-                    </p>
-                    <p className="font-anton text-sm font-black text-[#E51C23]">
-                      {formatTND(item.simulatedPrice)}
-                      <span className="text-[10px] text-[#777] font-normal font-sans ml-1">
-                        · fin {item.endFormatted}
-                      </span>
-                    </p>
-                  </div>
-
-                  {/* Photo de l'aliment avec ombre ou tampon PARTI */}
-                  <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
-                    {item.isGone ? (
-                      <div className="flex flex-col items-center justify-center">
-                        <span className="text-3xl opacity-30">🍞</span>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="font-anton text-xs uppercase px-2 py-1 rounded bg-[#FEE2E2] text-[#B91C1C] border-2 border-[#DC2626] rotate-[-6deg] shadow-md whitespace-nowrap">
-                            PARTI À {item.endFormatted}
-                          </span>
-                        </div>
+                {/* Photo de l'aliment */}
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
+                  {item.isGone ? (
+                    <div className="flex flex-col items-center justify-center">
+                      <span className="text-3xl opacity-30">🍞</span>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-anton text-xs uppercase px-2 py-1 rounded-full bg-[#DA0711] text-white rotate-[-6deg] shadow-md whitespace-nowrap">
+                          PARTI À {item.endFormatted}
+                        </span>
                       </div>
-                    ) : (
-                      <DepthCard maxTilt={15} glare={false} className="w-full h-full">
-                        <DepthLayer depth={20} shadow className="w-full h-full flex items-center justify-center">
-                          <img
-                            src={item.image}
-                            alt={item.offer.title}
-                            className="w-full h-full object-contain filter drop-shadow-[0_8px_16px_rgba(20,18,16,0.25)] group-hover:scale-110 transition-transform duration-300"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = getDistinctGriddleFoodImage(item.offer.category);
-                            }}
-                          />
-                        </DepthLayer>
-                      </DepthCard>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={item.image}
+                      alt={item.offer.title}
+                      className="w-full h-full object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getDistinctGriddleFoodImage(item.offer.category);
+                      }}
+                    />
+                  )}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Ligne chronologique du Scrubber Draggable */}
+          <div className="relative mt-8 pt-4 border-t border-[#111111]/10 max-w-4xl mx-auto">
+            <input
+              type="range"
+              min={12}
+              max={20}
+              step={0.25}
+              value={scrubberHour}
+              onChange={(e) => setScrubberHour(parseFloat(e.target.value))}
+              className="w-full accent-[#DA0711] bg-[#EDE6D7] h-2.5 rounded-full cursor-ew-resize relative z-20"
+            />
+
+            {/* Repères d'heures en bas */}
+            <div className="flex justify-between text-[11px] font-mono text-[#555] mt-2 font-bold">
+              <span>12:00 Midi</span>
+              <span>14:00</span>
+              <span>16:00 Pause</span>
+              <span>18:00 Sortie cours</span>
+              <span>20:00 Clôture</span>
             </div>
 
-            {/* Ligne chronologique du Scrubber Draggable */}
-            <div className="relative mt-8 pt-4 border-t-2 border-[#141210]/20">
-              {/* Curseur de contrôle interactif */}
-              <input
-                type="range"
-                min={12}
-                max={20}
-                step={0.25}
-                value={scrubberHour}
-                onChange={(e) => setScrubberHour(parseFloat(e.target.value))}
-                className="w-full accent-[#E51C23] bg-[#F4EFE6] h-3 rounded-lg cursor-ew-resize relative z-20 border-2 border-[#141210]"
-              />
-
-              {/* Repères d'heures en bas */}
-              <div className="flex justify-between text-[11px] font-mono text-[#555] mt-2 font-bold">
-                <span>12:00 Midi</span>
-                <span>14:00</span>
-                <span>16:00 Pause</span>
-                <span>18:00 Sortie cours</span>
-                <span>20:00 Clôture</span>
-              </div>
-
-              {/* Curseur badge interactif sous la barre */}
-              <div className="mt-3 flex justify-center">
-                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#141210] text-[#FFD000] font-mono text-xs font-bold border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
-                  <Clock className="w-3.5 h-3.5 text-[#FFD000]" />
-                  <span>Tu passes à {formatScrubberTime(scrubberHour)} · glisser pour simuler</span>
-                </div>
+            {/* Curseur badge interactif sous la barre */}
+            <div className="mt-3 flex justify-center">
+              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#111111] text-[#FFD000] font-mono text-xs font-bold shadow-md">
+                <Clock className="w-3.5 h-3.5 text-[#FFD000]" />
+                <span>Tu passes à {formatScrubberTime(scrubberHour)} · glisser pour simuler</span>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION B : FULL-BLEED RED TICKER RIBBON (MARQUEE)
+          ========================================================================= */}
+      <div className="griddle-ticker my-6 shadow-sm">
+        <div className="griddle-ticker-track">
+          <div className="griddle-ticker-item">
+            <span>ANTI-GASPILLAGE</span><span className="griddle-ticker-star">★</span>
+            <span>PLATS DU JOUR DU MONTFLEURY</span><span className="griddle-ticker-star">★</span>
+            <span>JUSQU'À -70% DE RÉDUCTION</span><span className="griddle-ticker-star">★</span>
+            <span>ÉCONOMIES ÉTUDIANTES ESSECT</span><span className="griddle-ticker-star">★</span>
+            <span>SMART DECAY DYNAMIQUE</span><span className="griddle-ticker-star">★</span>
+            <span>REPAS FRAIS DU SOIR</span><span className="griddle-ticker-star">★</span>
+          </div>
+          <div className="griddle-ticker-item" aria-hidden="true">
+            <span>ANTI-GASPILLAGE</span><span className="griddle-ticker-star">★</span>
+            <span>PLATS DU JOUR DU MONTFLEURY</span><span className="griddle-ticker-star">★</span>
+            <span>JUSQU'À -70% DE RÉDUCTION</span><span className="griddle-ticker-star">★</span>
+            <span>ÉCONOMIES ÉTUDIANTES ESSECT</span><span className="griddle-ticker-star">★</span>
+            <span>SMART DECAY DYNAMIQUE</span><span className="griddle-ticker-star">★</span>
+            <span>REPAS FRAIS DU SOIR</span><span className="griddle-ticker-star">★</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pt-4">
 
         {/* =========================================================================
-            SECTION B : RECHERCHE & PILL CATEGORY BAR
+            SECTION C : RECHERCHE & PILL CATEGORY BAR
             ========================================================================= */}
         <section className="space-y-4">
           <SearchBar
@@ -466,19 +469,30 @@ export default function BrowsePage() {
         </section>
 
         {/* =========================================================================
-            SECTION C : BONS DE COMMANDE SUSPENDUS
+            SECTION D : NOS PÉPITES ANTI-GASPI (AUTHENTIC GRIDDLE BESTSELLERS)
             ========================================================================= */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b-2 border-[#141210]">
-            <div className="flex items-center gap-2">
-              <Flame className="w-6 h-6 text-[#E51C23]" />
-              <h2 className="font-anton uppercase text-2xl sm:text-3xl font-black tracking-wide text-[#141210]">
-                Bons de Commande Suspendus
+        <section id="bestsellers" className="space-y-6">
+          <div className="flex items-center justify-between pb-2 border-b border-[#111111]/8">
+            <div>
+              <h2 className="font-anton uppercase text-3xl sm:text-4xl tracking-wide text-[#111111]">
+                NOS PÉPITES ANTI-GASPI
               </h2>
+              <p className="text-xs text-[#666] font-medium mt-0.5">
+                Plats cuisinés du jour sauvés chez les artisans voisins de l'ESSECT
+              </p>
             </div>
-            <span className="text-xs font-mono px-3 py-1 rounded-full bg-[#FFD000] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] font-black">
-              ⚡ {filteredOffers.length} ticket{filteredOffers.length > 1 ? 's' : ''} disponible{filteredOffers.length > 1 ? 's' : ''}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-anton uppercase px-3 py-1.5 rounded-full bg-[#EDE6D7] text-[#111111]">
+                ⚡ {filteredOffers.length} OFFRE{filteredOffers.length > 1 ? 'S' : ''} DISPONIBLE{filteredOffers.length > 1 ? 'S' : ''}
+              </span>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn-griddle-outline text-xs py-1.5 px-4 hidden sm:inline-flex"
+              >
+                TOUT LE MENU →
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -489,7 +503,7 @@ export default function BrowsePage() {
           ) : filteredOffers.length === 0 ? (
             <EmptyState
               icon="🔍"
-              title="Aucun ticket ne correspond à ces critères"
+              title="Aucun plat ne correspond à ces critères"
               description="Essayez d'élargir votre budget maximal, de sélectionner une autre catégorie ou de réinitialiser vos filtres."
               action={
                 <button
@@ -502,12 +516,12 @@ export default function BrowsePage() {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-              {filteredOffers.map((offer) =>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+              {filteredOffers.map((offer, idx) =>
                 offer.isSurpriseBasket ? (
-                  <MysteryBoxCard key={offer.id} offer={offer} />
+                  <MysteryBoxCard key={offer.id} offer={offer} index={idx} />
                 ) : (
-                  <OfferCard key={offer.id} offer={offer} />
+                  <OfferCard key={offer.id} offer={offer} index={idx} />
                 )
               )}
             </div>

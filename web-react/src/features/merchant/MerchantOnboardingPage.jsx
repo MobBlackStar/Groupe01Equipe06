@@ -147,22 +147,22 @@ export default function MerchantOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD000] border-2 border-[#141210] text-[#141210] text-xs font-black uppercase tracking-wider mb-3 shadow-[2px_2px_0px_#141210]">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD000] text-[#111111] text-xs font-black uppercase tracking-wider mb-3 shadow-sm border border-[#111111]/10">
             <span>🏪</span> ESPACE COMMERÇANT ESSECT
           </div>
-          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
+          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111]">
             Enregistrer votre Établissement Partenaire
           </h1>
-          <p className="text-xs sm:text-sm text-[#141210]/70 mt-1 font-sans">
+          <p className="text-xs sm:text-sm text-[#111111]/70 mt-1 font-sans">
             Rejoignez le réseau anti-gaspillage de Montfleury et vendez vos invendus du soir aux étudiants.
           </p>
         </div>
 
-        <Card className="p-6 sm:p-8 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210]">
+        <Card className="p-6 sm:p-8 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Nom & Type */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -187,20 +187,20 @@ export default function MerchantOnboardingPage() {
 
             {/* Description */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-black uppercase tracking-wider text-[#141210]/70 font-mono">
-                Description &amp; Spécialités <span className="text-[#E51C23]">*</span>
+              <label className="text-xs font-black uppercase tracking-wider text-[#111111]/70 font-mono">
+                Description &amp; Spécialités <span className="text-[#DA0711]">*</span>
               </label>
               <textarea
                 rows={3}
                 placeholder="Décrivez vos spécialités appréciées des étudiants (sandwichs, plats chauds, pâtisseries)..."
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
-                className={`w-full bg-white text-[#141210] placeholder-[#141210]/40 text-sm rounded-xl p-3.5 border-2 border-[#141210] transition-all outline-none font-sans font-medium ${
-                  errors.description ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]' : 'shadow-[2px_2px_0px_#141210] focus:shadow-[4px_4px_0px_#141210]'
+                className={`w-full bg-[#FAF3E6] text-[#111111] placeholder-[#111111]/40 text-sm rounded-2xl p-4 border border-[#111111]/15 transition-all outline-none font-sans font-medium ${
+                  errors.description ? 'border-[#DA0711] ring-1 ring-[#DA0711]' : 'focus:border-[#111111] focus:ring-1 focus:ring-[#111111]'
                 }`}
               />
               {errors.description && (
-                <p className="text-xs text-[#E51C23] font-bold mt-1">{errors.description}</p>
+                <p className="text-xs text-[#DA0711] font-bold mt-1">{errors.description}</p>
               )}
             </div>
 
@@ -228,13 +228,13 @@ export default function MerchantOnboardingPage() {
             </div>
 
             {/* Géolocalisation Montfleury */}
-            <div className="space-y-4 pt-4 border-t-2 border-[#141210]/15">
+            <div className="space-y-4 pt-4 border-t border-[#111111]/10">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h4 className="font-anton uppercase text-base text-[#141210] tracking-wide">
+                  <h4 className="font-anton uppercase text-base text-[#111111] tracking-wide">
                     Localisation dans le Quartier de Montfleury
                   </h4>
-                  <p className="text-xs text-[#141210]/70 font-sans">
+                  <p className="text-xs text-[#111111]/70 font-sans">
                     L'établissement doit être accessible à pied depuis l'ESSECT (rayon ≤ 3 000 m).
                   </p>
                 </div>
@@ -246,7 +246,7 @@ export default function MerchantOnboardingPage() {
 
               {/* Raccourcis d'adresses Montfleury */}
               <div>
-                <span className="text-[11px] font-black uppercase text-[#141210]/60 block mb-2 font-mono">
+                <span className="text-[11px] font-black uppercase text-[#111111]/60 block mb-2 font-mono">
                   Sélection rapide d'adresse à Montfleury :
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -255,10 +255,10 @@ export default function MerchantOnboardingPage() {
                       key={idx}
                       type="button"
                       onClick={() => handleSelectPreset(preset)}
-                      className={`p-2.5 rounded-xl border-2 border-[#141210] text-left text-xs transition-all ${
+                      className={`p-3 rounded-2xl border text-left text-xs transition-all ${
                         formData.street === preset.name
-                          ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
-                          : 'bg-white text-[#141210] shadow-[1px_1px_0px_#141210] hover:bg-[#FFD000]'
+                          ? 'bg-[#DA0711] text-white border-[#DA0711] shadow-sm'
+                          : 'bg-[#FAF3E6] text-[#111111] border-[#111111]/10 hover:border-[#111111]/30 hover:bg-white shadow-sm'
                       }`}
                     >
                       <span className="font-bold block truncate">{preset.name}</span>
@@ -272,7 +272,7 @@ export default function MerchantOnboardingPage() {
             </div>
 
             {/* Bouton de Soumission */}
-            <div className="pt-4 border-t-2 border-[#141210]/15 flex justify-end">
+            <div className="pt-4 border-t border-[#111111]/10 flex justify-end">
               <Button
                 type="submit"
                 variant="primary"

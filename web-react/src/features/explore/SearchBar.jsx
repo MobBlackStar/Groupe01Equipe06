@@ -42,9 +42,9 @@ export default function SearchBar({
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div className="relative flex items-center bg-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] rounded-xl overflow-hidden">
+      <div className="relative flex items-center bg-white border border-[#111111]/10 shadow-[0_4px_20px_rgba(17,17,17,0.04)] rounded-full overflow-hidden transition-all focus-within:ring-2 focus-within:ring-[#DA0711]/20">
         {/* Icône Loupe */}
-        <Search className="absolute left-4 w-5 h-5 text-[#141210] pointer-events-none" />
+        <Search className="absolute left-4.5 w-5 h-5 text-[#888] pointer-events-none" />
 
         {/* Input de recherche */}
         <input
@@ -52,7 +52,7 @@ export default function SearchBar({
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-12 pr-11 py-3 text-[#141210] placeholder-[#777] text-sm focus:outline-none bg-transparent font-medium"
+          className="w-full pl-12 pr-11 py-3 text-[#111111] placeholder-[#888] text-sm focus:outline-none bg-transparent font-medium"
         />
 
         {/* Bouton Effacer (X) */}
@@ -60,7 +60,7 @@ export default function SearchBar({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3.5 p-1 rounded-md text-[#141210] hover:bg-[#F4EFE6] transition-colors"
+            className="absolute right-3.5 p-1 rounded-full text-[#888] hover:text-[#111111] hover:bg-black/5 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

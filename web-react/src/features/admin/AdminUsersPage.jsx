@@ -111,7 +111,13 @@ export default function AdminUsersPage() {
   });
 
   async function toggleUserStatus(targetUser) {
-    const isCurrentlyActive = targetUser.status === USER_STATUS.ACTIVE || targetUser.status === 'ACTIVE' || targetUser.status === 'ACTIF';
+    const isCurrentlyActive =
+      targetUser.status === USER_STATUS.ACTIVE ||
+      targetUser.status === 'ACTIVE' ||
+      targetUser.status === 'ACTIF' ||
+      targetUser.status === 'active' ||
+      !targetUser.status;
+
     const nextStatus = isCurrentlyActive ? USER_STATUS.SUSPENDED : USER_STATUS.ACTIVE;
 
     try {
@@ -138,18 +144,18 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#111111]/10">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#141210]">
+              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#111111]">
                 Gestion des Comptes Utilisateurs
               </h1>
               <Badge variant="griddle" size="md">CONSOLE ADMIN</Badge>
             </div>
-            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
+            <p className="text-xs text-[#666] mt-1 font-medium">
               Supervision des rôles, filières ESSECT et contrôle d'accès au système.
             </p>
           </div>
@@ -165,41 +171,43 @@ export default function AdminUsersPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Filtrer par nom ou email..."
-              className="w-full bg-white text-[#141210] text-xs rounded-xl px-3.5 py-2.5 border-2 border-[#141210] shadow-[2px_2px_0px_#141210] focus:shadow-[4px_4px_0px_#141210] outline-none font-bold"
+              className="w-full bg-white text-[#111111] text-xs rounded-full px-4 py-2.5 border border-[#111111]/10 shadow-sm focus:ring-1 focus:ring-[#DA0711] outline-none font-medium"
             />
           </div>
         </div>
 
         {/* Users Table */}
-        <Card className="bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] overflow-hidden">
+        <div className="rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#141210] text-white uppercase tracking-wider font-mono">
+              <thead className="bg-[#111111] text-white uppercase tracking-wider font-anton text-xs">
                 <tr>
-                  <th className="py-3.5 px-4 font-bold">Utilisateur</th>
-                  <th className="py-3.5 px-4 font-bold">Rôle Système</th>
-                  <th className="py-3.5 px-4 font-bold">Filière ESSECT</th>
-                  <th className="py-3.5 px-4 font-bold">Statut</th>
-                  <th className="py-3.5 px-4 font-bold">Inscrit le</th>
-                  <th className="py-3.5 px-4 font-bold text-right">Actions</th>
+                  <th className="py-3.5 px-4">Utilisateur</th>
+                  <th className="py-3.5 px-4">Rôle Système</th>
+                  <th className="py-3.5 px-4">Filière ESSECT</th>
+                  <th className="py-3.5 px-4">Statut</th>
+                  <th className="py-3.5 px-4">Inscrit le</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y-2 divide-[#141210]/15">
+              <tbody className="divide-y divide-[#111111]/8">
                 {filteredUsers.map((user) => {
                   const isActive =
                     user.status === USER_STATUS.ACTIVE ||
                     user.status === 'ACTIVE' ||
-                    user.status === 'ACTIF';
+                    user.status === 'ACTIF' ||
+                    user.status === 'active' ||
+                    !user.status;
 
                   return (
                     <tr
                       key={user.uid}
-                      className="hover:bg-white/50 transition-colors"
+                      className="hover:bg-white/40 transition-colors"
                     >
-                      <td className="py-4 px-4 font-bold text-[#141210]">
+                      <td className="py-4 px-4 font-bold text-[#111111]">
                         <div>
-                          <span className="font-black text-sm">{user.displayName}</span>
-                          <span className="block text-[11px] text-[#141210]/60 font-normal font-mono">
+                          <span className="font-bold text-sm">{user.displayName}</span>
+                          <span className="block text-[11px] text-[#666] font-normal font-mono">
                             {user.email}
                           </span>
                         </div>
@@ -218,13 +226,13 @@ export default function AdminUsersPage() {
                           {user.role}
                         </Badge>
                       </td>
-                      <td className="py-4 px-4 text-[#141210]/70">
+                      <td className="py-4 px-4 text-[#555]">
                         {user.filiereId ? (
-                          <span className="font-bold text-[#141210]">
+                          <span className="font-bold text-[#111111]">
                             {user.filiereId}
                           </span>
                         ) : (
-                          <span className="text-[#141210]/40 font-mono">—</span>
+                          <span className="text-[#999] font-mono">—</span>
                         )}
                       </td>
                       <td className="py-4 px-4">
@@ -236,7 +244,7 @@ export default function AdminUsersPage() {
                           {isActive ? 'ACTIF' : 'SUSPENDU'}
                         </Badge>
                       </td>
-                      <td className="py-4 px-4 text-[#141210]/70 font-mono">
+                      <td className="py-4 px-4 text-[#666] font-mono">
                         {user.createdAt?.includes('T') ? formatTunisDate(user.createdAt) : user.createdAt}
                       </td>
                       <td className="py-4 px-4 text-right">
@@ -244,16 +252,16 @@ export default function AdminUsersPage() {
                           <button
                             type="button"
                             onClick={() => setSuspendModalUser(user)}
-                            className={`px-3 py-1.5 rounded-lg border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black transition-all ${
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-anton uppercase tracking-wider transition-all shadow-sm ${
                               isActive
-                                ? 'bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FCA5A5]'
-                                : 'bg-[#DCFCE7] text-[#15803D] hover:bg-[#86EFAC]'
+                                ? 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                                : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                             }`}
                           >
                             {isActive ? 'Suspendre' : 'Réactiver'}
                           </button>
                         ) : (
-                          <span className="text-[11px] text-[#141210]/50 font-mono font-bold">
+                          <span className="text-[11px] text-[#888] font-mono font-medium">
                             Protégé
                           </span>
                         )}
@@ -264,14 +272,14 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-        </Card>
+        </div>
 
         {/* Modal de Confirmation Suspension / Réactivation */}
         <Modal
           isOpen={Boolean(suspendModalUser)}
           onClose={() => setSuspendModalUser(null)}
           title={`Confirmer la ${
-            suspendModalUser?.status === USER_STATUS.ACTIVE || suspendModalUser?.status === 'ACTIVE' || suspendModalUser?.status === 'ACTIF'
+            suspendModalUser?.status === USER_STATUS.ACTIVE || suspendModalUser?.status === 'ACTIVE' || suspendModalUser?.status === 'ACTIF' || suspendModalUser?.status === 'active' || !suspendModalUser?.status
               ? 'suspension'
               : 'réactivation'
           } du compte`}
@@ -287,7 +295,7 @@ export default function AdminUsersPage() {
               </Button>
               <Button
                 variant={
-                  suspendModalUser?.status === USER_STATUS.ACTIVE || suspendModalUser?.status === 'ACTIVE' || suspendModalUser?.status === 'ACTIF'
+                  suspendModalUser?.status === USER_STATUS.ACTIVE || suspendModalUser?.status === 'ACTIVE' || suspendModalUser?.status === 'ACTIF' || suspendModalUser?.status === 'active' || !suspendModalUser?.status
                     ? 'danger'
                     : 'primary'
                 }
@@ -300,13 +308,13 @@ export default function AdminUsersPage() {
           }
         >
           {suspendModalUser && (
-            <p className="text-xs text-[#141210] py-2 font-sans">
+            <p className="text-xs text-[#111111] py-2 font-medium">
               Êtes-vous certain de vouloir{' '}
-              {suspendModalUser.status === USER_STATUS.ACTIVE || suspendModalUser.status === 'ACTIVE' || suspendModalUser.status === 'ACTIF'
+              {suspendModalUser.status === USER_STATUS.ACTIVE || suspendModalUser.status === 'ACTIVE' || suspendModalUser.status === 'ACTIF' || suspendModalUser.status === 'active' || !suspendModalUser.status
                 ? 'suspendre temporairement'
                 : 'réactiver'}{' '}
               le compte de{' '}
-              <strong className="text-[#E51C23]">{suspendModalUser.displayName}</strong> (
+              <strong className="text-[#DA0711]">{suspendModalUser.displayName}</strong> (
               {suspendModalUser.email}) ?
             </p>
           )}

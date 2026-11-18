@@ -156,14 +156,14 @@ export default function OfferDetailPage() {
   const foodImage = currentOffer.imageUrl || currentOffer.photoUrl || getDistinctGriddleFoodImage(currentOffer.category || 'fast-food', currentOffer.id);
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Navigation retour & Badge urgence */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/explore"
-            className="inline-flex items-center gap-2 text-xs font-anton uppercase tracking-wider text-[#141210] hover:text-[#E51C23] transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-anton uppercase tracking-wider text-[#111111] hover:text-[#DA0711] transition-colors"
           >
             ← Retour au catalogue des offres
           </Link>
@@ -172,7 +172,7 @@ export default function OfferDetailPage() {
 
         {/* Alerte Concurrence 409 */}
         {errorMessage && (
-          <div className="p-4 rounded-xl bg-[#FEE2E2] border-2 border-[#DC2626] text-[#B91C1C] text-xs flex items-center gap-3 shadow-[2px_2px_0px_#DC2626]">
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-[#DA0711] text-xs flex items-center gap-3 shadow-sm">
             <span className="text-xl">⚠️</span>
             <p className="flex-1 font-bold leading-relaxed">{errorMessage}</p>
           </div>
@@ -187,14 +187,14 @@ export default function OfferDetailPage() {
             <DepthCard
               maxTilt={12}
               perspective={1100}
-              className="w-full relative rounded-xl bg-[#FAF6EE] border-2 border-[#141210] p-6 sm:p-8 shadow-[4px_4px_0px_#141210] overflow-hidden"
+              className="w-full relative rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] overflow-hidden"
             >
-              <div className="relative aspect-square flex items-center justify-center bg-white border-2 border-[#141210] rounded-xl overflow-hidden shadow-inner">
+              <div className="relative aspect-square flex items-center justify-center bg-white border border-[#111111]/10 rounded-2xl overflow-hidden shadow-sm">
                 <DepthLayer depth={30} shadow className="w-4/5 h-4/5 relative z-10 flex items-center justify-center">
                   <img
                     src={foodImage}
                     alt={currentOffer.title}
-                    className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_24px_rgba(20,18,16,0.3)]"
+                    className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_24px_rgba(20,18,16,0.2)]"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = getDistinctGriddleFoodImage(currentOffer.category);
@@ -204,13 +204,13 @@ export default function OfferDetailPage() {
 
                 {/* Badges d'angle */}
                 {currentOffer.isSurpriseBasket && (
-                  <div className="absolute top-2.5 left-2.5 z-20">
+                  <div className="absolute top-3 left-3 z-20">
                     <RarityBadge rarity={currentOffer.surprise?.rarity || 'RARE'} score={0.75} />
                   </div>
                 )}
 
-                <div className="absolute top-2.5 right-2.5 z-20">
-                  <span className="px-3 py-1 rounded-md bg-[#E51C23] text-white text-[10px] font-anton uppercase tracking-wider shadow-[1.5px_1.5px_0px_#141210] border border-[#141210]">
+                <div className="absolute top-3 right-3 z-20">
+                  <span className="sticker-red">
                     ANTI-GASPI 🔥
                   </span>
                 </div>
@@ -218,43 +218,43 @@ export default function OfferDetailPage() {
 
               {/* Barre de progression Enchère Inversée (Dutch Auction Decay) */}
               {isDutch && (
-                <div className="mt-6 pt-4 border-t-2 border-[#141210]/20 space-y-2">
+                <div className="mt-6 pt-4 border-t border-[#111111]/10 space-y-2">
                   <div className="flex justify-between items-center text-xs font-mono font-bold">
-                    <span className="text-[#C2410C] flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
+                    <span className="text-[#DA0711] flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 text-[#DA0711]" />
                       <span>Smart Decay : Baisse de prix en cours</span>
                     </span>
-                    <span className="text-[#141210]">{decayProgress}% écoulé</span>
+                    <span className="text-[#111111]">{decayProgress}% écoulé</span>
                   </div>
-                  <div className="w-full bg-white h-3 rounded-full overflow-hidden border-2 border-[#141210]">
+                  <div className="w-full bg-white h-3 rounded-full overflow-hidden border border-[#111111]/15">
                     <div
-                      className="bg-[#E51C23] h-full transition-all duration-1000"
+                      className="bg-[#DA0711] h-full transition-all duration-1000"
                       style={{ width: `${decayProgress}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-mono text-[#555] font-bold">
+                  <div className="flex justify-between text-[10px] font-mono text-[#666] font-bold">
                     <span>Départ : {formatTND(currentOffer.startPriceMillimes || currentOffer.originalPriceMillimes)}</span>
-                    <span className="text-[#E51C23]">Plancher : {formatTND(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
+                    <span className="text-[#DA0711]">Plancher : {formatTND(currentOffer.floorPriceMillimes || currentOffer.targetPriceMillimes)}</span>
                   </div>
                 </div>
               )}
             </DepthCard>
 
             {/* Fiche d'impact écologique */}
-            <div className="p-4 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 rounded-lg bg-white border-2 border-[#141210]">
-                <span className="text-xl">🥗</span>
-                <p className="font-anton text-lg text-[#15803D] mt-1">
+            <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] grid grid-cols-2 gap-3 text-center">
+              <div className="p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm">
+                <span className="text-2xl">🥗</span>
+                <p className="font-anton text-xl text-[#15803D] mt-1">
                   {impact.foodSavedGrams} g
                 </p>
-                <p className="text-[10px] font-bold uppercase text-[#555]">Nourriture Sauvée</p>
+                <p className="text-[10px] font-bold uppercase text-[#666]">Nourriture Sauvée</p>
               </div>
-              <div className="p-3 rounded-lg bg-white border-2 border-[#141210]">
-                <span className="text-xl">🌱</span>
-                <p className="font-anton text-lg text-[#C2410C] mt-1">
+              <div className="p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm">
+                <span className="text-2xl">🌱</span>
+                <p className="font-anton text-xl text-[#DA0711] mt-1">
                   {impact.co2SavedGrams} g
                 </p>
-                <p className="text-[10px] font-bold uppercase text-[#555]">CO2 Évité ({equivalences.kmCarAvoided} km)</p>
+                <p className="text-[10px] font-bold uppercase text-[#666]">CO2 Évité ({equivalences.kmCarAvoided} km)</p>
               </div>
             </div>
           </div>
@@ -263,40 +263,40 @@ export default function OfferDetailPage() {
               COLONNE DROITE : TICKET DE RÉSERVATION PHYSIQUE & COMMANDE
               ========================================================================= */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 sm:p-8 rounded-xl bg-[#FAF6EE] text-[#141210] shadow-[6px_6px_0px_#141210] border-2 border-[#141210] relative overflow-hidden">
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] text-[#111111] shadow-[0_4px_24px_rgba(17,17,17,0.06)] border border-[#111111]/8 relative overflow-hidden">
               
               {/* En-tête ticket */}
-              <div className="flex items-center justify-between pb-3 border-b-2 border-dashed border-[#141210]/25">
-                <div className="flex items-center gap-1.5 text-[11px] font-anton uppercase text-[#E51C23]">
+              <div className="flex items-center justify-between pb-3 border-b border-dashed border-[#111111]/20">
+                <div className="flex items-center gap-1.5 text-[11px] font-anton uppercase text-[#DA0711]">
                   <Flame className="w-3.5 h-3.5" />
                   <span>{currentOffer.category} · LOT OFFICIEL</span>
                 </div>
-                <div className="text-[11px] font-mono text-[#555] font-bold">
+                <div className="text-[11px] font-mono text-[#666] font-bold">
                   {distanceM}m (~{walkingMin} min à pied)
                 </div>
               </div>
 
               {/* Titre & Description */}
               <div className="pt-4 pb-2">
-                <h1 className="font-anton uppercase text-2xl sm:text-3xl font-black text-[#141210] leading-tight">
+                <h1 className="font-anton uppercase text-2xl sm:text-3xl font-black text-[#111111] leading-tight">
                   {currentOffer.title}
                 </h1>
-                <div className="flex items-center gap-2 text-xs text-[#555] mt-1 mb-3 font-bold">
+                <div className="flex items-center gap-2 text-xs text-[#666] mt-1 mb-3 font-medium">
                   <Store className="w-4 h-4 text-[#888]" />
                   <span>{currentOffer.merchantName}</span>
                 </div>
-                <p className="text-xs text-[#555] leading-relaxed font-sans font-medium">
+                <p className="text-xs text-[#666] leading-relaxed font-sans font-medium">
                   {currentOffer.description}
                 </p>
               </div>
 
               {/* Horaires de retrait */}
-              <div className="my-4 p-3.5 rounded-lg bg-white border-2 border-[#141210] flex items-center justify-between text-xs font-bold">
+              <div className="my-4 p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm flex items-center justify-between text-xs font-bold">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#E51C23]" />
+                  <Clock className="w-4 h-4 text-[#DA0711]" />
                   <span>Créneau de retrait :</span>
                 </div>
-                <span className="font-mono text-[#141210]">
+                <span className="font-mono text-[#111111]">
                   {formatTunisTime(currentOffer.pickupStartAt)} — {formatTunisTime(currentOffer.pickupEndAt)}
                 </span>
               </div>
@@ -304,10 +304,10 @@ export default function OfferDetailPage() {
               {/* Sélecteur de Quantité */}
               <div className="my-4 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-black uppercase tracking-wider text-[#141210] block">
+                  <span className="text-xs font-anton uppercase tracking-wider text-[#111111] block">
                     Quantité à sauver :
                   </span>
-                  <span className="text-[10px] text-[#666] font-bold">
+                  <span className="text-[10px] text-[#666] font-medium">
                     Max. {maxAllowed} par étudiant
                   </span>
                 </div>
@@ -316,18 +316,18 @@ export default function OfferDetailPage() {
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={quantity <= 1}
-                    className="w-8 h-8 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer"
+                    className="w-9 h-9 rounded-full bg-white border border-[#111111]/15 text-[#111111] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer shadow-sm hover:bg-[#FAF3E6] transition-colors"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="w-8 text-center font-anton text-xl text-[#141210]">
+                  <span className="w-8 text-center font-anton text-2xl text-[#111111]">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.min(maxAllowed, quantity + 1))}
                     disabled={quantity >= maxAllowed}
-                    className="w-8 h-8 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer"
+                    className="w-9 h-9 rounded-full bg-white border border-[#111111]/15 text-[#111111] flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer shadow-sm hover:bg-[#FAF3E6] transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -335,21 +335,21 @@ export default function OfferDetailPage() {
               </div>
 
               {/* Récapitulatif Prix & Hold 10 min */}
-              <div className="mt-6 pt-4 border-t-2 border-dashed border-[#141210]/25 space-y-3">
+              <div className="mt-6 pt-4 border-t border-dashed border-[#111111]/20 space-y-3">
                 <div className="flex justify-between items-end">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold uppercase text-[#666]">
                       Prix Total Réservé :
                     </span>
-                    <span className="font-anton text-4xl text-[#E51C23]">
+                    <span className="font-anton text-4xl text-[#DA0711]">
                       {formatTND(totalPrice)}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-mono text-[#777] line-through block font-bold">
+                    <span className="text-[10px] font-mono text-[#888] line-through block font-medium">
                       {formatTND((currentOffer.originalPriceMillimes || 7800) * quantity)}
                     </span>
-                    <span className="text-xs font-mono font-black text-[#15803D]">
+                    <span className="text-xs font-mono font-bold text-[#15803D]">
                       Économie : {formatTND(((currentOffer.originalPriceMillimes || 7800) - unitPrice) * quantity)}
                     </span>
                   </div>
@@ -365,7 +365,7 @@ export default function OfferDetailPage() {
                   <span>{isSubmitting ? 'Verrouillage en cours...' : 'BLOQUER MON PRIX PENDANT 10 MIN →'}</span>
                 </button>
 
-                <p className="text-[10px] text-center font-mono text-[#666] font-bold">
+                <p className="text-[10px] text-center font-mono text-[#666] font-medium">
                   🔒 Transaction atomique : Votre prix et portion sont scellés 10 minutes pour le paiement.
                 </p>
               </div>

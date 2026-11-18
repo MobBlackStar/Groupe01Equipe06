@@ -389,9 +389,9 @@ export async function runSeed() {
   for (const off of offersList) {
     const merchant = seededMerchants.find((m) => m.id === off.merchantId) || seededMerchants[0];
 
-    // Horodatages calés dynamiquement : début il y a 45 min, fin dans 105 min (créneau parfait pour la soutenance)
+    // Horodatages calés dynamiquement : début il y a 45 min, fin dans 24h (garantit des offres actives en continu pendant les tests)
     const pickupStartAt = new Date(nowMs - 45 * 60 * 1000).toISOString();
-    const pickupEndAt = new Date(nowMs + 105 * 60 * 1000).toISOString();
+    const pickupEndAt = new Date(nowMs + 24 * 60 * 60 * 1000).toISOString();
     const decayStartAt = new Date(nowMs - 15 * 60 * 1000).toISOString();
 
     const offerDoc = {

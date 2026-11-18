@@ -53,14 +53,14 @@ export default function PaymentReturnPage() {
   }, [orderId, paymentRef]);
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] flex items-center justify-center p-4 sm:p-6 text-[#141210]">
-      <div className="max-w-md w-full bg-[#FAF6EE] border-2 border-[#141210] rounded-xl p-8 text-center space-y-6 shadow-[6px_6px_0px_#141210]">
+    <div className="min-h-screen bg-[#FAF3E6] flex items-center justify-center p-4 sm:p-6 text-[#111111]">
+      <div className="max-w-md w-full bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-8 text-center space-y-6 shadow-[0_4px_24px_rgba(17,17,17,0.06)]">
         {/* État 1 : Vérification en cours */}
         {state === 'VERIFYING' && (
           <div className="space-y-4 py-8">
             <Spinner size="lg" />
-            <h2 className="text-xl font-anton uppercase text-[#141210]">Vérification du paiement en cours...</h2>
-            <p className="text-xs text-[#555] font-medium leading-relaxed">
+            <h2 className="text-xl font-anton uppercase text-[#111111]">Vérification du paiement en cours...</h2>
+            <p className="text-xs text-[#666] font-medium leading-relaxed">
               Nous validons la transaction sécurisée avec la passerelle Konnect. Veuillez patienter un instant.
             </p>
           </div>
@@ -69,30 +69,30 @@ export default function PaymentReturnPage() {
         {/* État 2 : Succès */}
         {state === 'SUCCESS' && (
           <div className="space-y-5">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] border-2 border-[#166534] text-[#15803D] flex items-center justify-center text-3xl shadow-[3px_3px_0px_#166534] font-black">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center text-3xl shadow-sm font-bold">
               ✓
             </div>
 
             <div>
-              <span className="text-xs font-black text-[#15803D] uppercase tracking-wider font-mono">
+              <span className="text-xs font-bold text-[#15803D] uppercase tracking-wider font-mono">
                 Paiement Confirmé
               </span>
-              <h1 className="text-3xl font-anton uppercase text-[#141210] mt-1">
+              <h1 className="text-3xl font-anton uppercase text-[#111111] mt-1">
                 Félicitations, Repas Sauvé !
               </h1>
-              <p className="text-xs text-[#555] mt-2 leading-relaxed font-medium">
+              <p className="text-xs text-[#666] mt-2 leading-relaxed font-medium">
                 Votre commande a été réglée avec succès. Votre ticket de retrait dynamique avec QR Code tournant est prêt.
               </p>
             </div>
 
-            <div className="p-4 rounded-lg bg-white border-2 border-[#141210] text-xs text-left space-y-2 shadow-[2px_2px_0px_#141210]">
+            <div className="p-4 rounded-2xl bg-white border border-[#111111]/10 text-xs text-left space-y-2 shadow-sm">
               <div className="flex justify-between">
-                <span className="text-[#666] font-bold">Identifiant commande :</span>
-                <span className="font-mono text-[#141210] font-bold">{orderId}</span>
+                <span className="text-[#666] font-medium">Identifiant commande :</span>
+                <span className="font-mono text-[#111111] font-bold">{orderId}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#666] font-bold">Statut du ticket :</span>
-                <span className="text-[#15803D] font-black uppercase">Actif • Prêt pour le retrait</span>
+                <span className="text-[#666] font-medium">Statut du ticket :</span>
+                <span className="text-[#15803D] font-bold uppercase">Actif • Prêt pour le retrait</span>
               </div>
             </div>
 
@@ -105,7 +105,7 @@ export default function PaymentReturnPage() {
               </Link>
               <Link
                 to="/app/orders"
-                className="text-xs font-bold text-[#555] hover:text-[#141210] block"
+                className="text-xs font-bold text-[#666] hover:text-[#DA0711] block"
               >
                 Voir l'historique de mes commandes
               </Link>
@@ -116,18 +116,18 @@ export default function PaymentReturnPage() {
         {/* État 3 : Échec */}
         {state === 'FAILED' && (
           <div className="space-y-5">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#FEE2E2] border-2 border-[#DC2626] text-[#B91C1C] flex items-center justify-center text-3xl shadow-[3px_3px_0px_#DC2626] font-black">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#FEE2E2] text-[#DA0711] flex items-center justify-center text-3xl shadow-sm font-bold">
               ✕
             </div>
 
             <div>
-              <span className="text-xs font-black text-[#B91C1C] uppercase tracking-wider font-mono">
+              <span className="text-xs font-bold text-[#DA0711] uppercase tracking-wider font-mono">
                 Échec du Paiement
               </span>
-              <h1 className="text-2xl font-anton uppercase text-[#141210] mt-1">
+              <h1 className="text-2xl font-anton uppercase text-[#111111] mt-1">
                 Transaction non finalisée
               </h1>
-              <p className="text-xs text-[#555] mt-2 leading-relaxed font-medium">
+              <p className="text-xs text-[#666] mt-2 leading-relaxed font-medium">
                 {errorMessage || 'Une anomalie est survenue lors de la confirmation bancaire. Aucun montant n a été débité.'}
               </p>
             </div>
@@ -142,7 +142,7 @@ export default function PaymentReturnPage() {
               </button>
               <Link
                 to="/app/explore"
-                className="text-xs font-bold text-[#555] hover:text-[#141210] block"
+                className="text-xs font-bold text-[#666] hover:text-[#DA0711] block"
               >
                 Retourner au catalogue des offres
               </Link>

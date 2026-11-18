@@ -182,20 +182,20 @@ export default function OfferFormPage() {
   const previewImage = getDistinctGriddleFoodImage(formData.category, 0);
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* En-tête */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#111111]/10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD000] border-2 border-[#141210] text-[#141210] text-xs font-mono font-bold uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD000] border border-[#111111]/15 text-[#111111] text-xs font-mono font-bold uppercase tracking-wider mb-2 shadow-sm">
               <Store className="w-3.5 h-3.5" />
               <span>Espace Commerçant Partenaire</span>
             </div>
-            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#141210] leading-none">
-              BUILD YOUR <span className="text-[#E51C23]">TICKET.</span>
+            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#111111] leading-none">
+              BUILD YOUR <span className="text-[#DA0711]">TICKET.</span>
             </h1>
-            <p className="text-xs sm:text-sm text-[#141210]/70 font-sans mt-2">
+            <p className="text-xs sm:text-sm text-[#666] font-sans mt-2">
               Composez votre offre anti-gaspi en 4 étapes numérotées. Observez le ticket se générer en direct à droite.
             </p>
           </div>
@@ -203,7 +203,7 @@ export default function OfferFormPage() {
           <button
             type="button"
             onClick={() => navigate('/merchant/offers')}
-            className="px-4 py-2 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-[#141210] text-xs font-mono font-bold transition-all self-start sm:self-auto"
+            className="px-4 py-2 rounded-full bg-white border border-[#111111]/15 text-[#111111] text-xs font-bold transition-all shadow-sm hover:bg-[#FAF3E6] self-start sm:self-auto"
           >
             ← Annuler
           </button>
@@ -213,7 +213,7 @@ export default function OfferFormPage() {
         <AiAutoFillBox onAutoFill={handleAiAutoFill} />
 
         {toastMsg && (
-          <div className="p-4 rounded-2xl bg-[#DCFCE7] border-2 border-[#141210] text-[#15803D] text-xs font-black flex items-center gap-2 shadow-[3px_3px_0px_#141210]">
+          <div className="p-4 rounded-2xl bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20 text-xs font-bold flex items-center gap-2 shadow-sm">
             <Sparkles className="w-4 h-4" />
             <span>{toastMsg}</span>
           </div>
@@ -228,15 +228,15 @@ export default function OfferFormPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               
               {/* ÉTAPE 01 : CATÉGORIE (image7.png 01 NOODLES / PICK 1) */}
-              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
-                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
+                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">01</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">01</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
                       CATÉGORIE DU PLAT
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#E51C23] font-black">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#DA0711] font-bold">
                     CHOIX UNIQUE
                   </span>
                 </div>
@@ -249,14 +249,14 @@ export default function OfferFormPage() {
                         key={cat.id}
                         type="button"
                         onClick={() => handleChange('category', cat.id)}
-                        className={`p-3 rounded-2xl border-2 border-[#141210] text-left transition-all flex items-center gap-2.5 ${
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex items-center gap-2.5 cursor-pointer ${
                           isSelected
-                            ? 'bg-[#E51C23] text-white shadow-[3px_3px_0px_#141210] scale-[1.02]'
-                            : 'bg-white text-[#141210] shadow-[2px_2px_0px_#141210] hover:bg-[#FFD000]'
+                            ? 'bg-[#DA0711] text-white border-[#DA0711] shadow-sm scale-[1.02]'
+                            : 'bg-white text-[#111111] border-[#111111]/10 hover:bg-[#FAF3E6]'
                         }`}
                       >
                         <span className="text-xl">{cat.icon}</span>
-                        <span className="text-xs font-black truncate">{cat.label}</span>
+                        <span className="text-xs font-bold truncate">{cat.label}</span>
                       </button>
                     );
                   })}
@@ -264,22 +264,22 @@ export default function OfferFormPage() {
               </div>
 
               {/* ÉTAPE 02 : DÉTAILS & PRIX (image7.png 02 BROTH / PICK 1) */}
-              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
-                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
+                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">02</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">02</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
                       DÉTAILS &amp; TARIFICATION
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#141210]/60 font-black">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#666] font-bold">
                     PRIX &amp; DESCRIPTION
                   </span>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[11px] font-mono font-black uppercase tracking-widest text-[#141210]/70 mb-1.5">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-widest text-[#666] mb-1.5">
                       Intitulé du Plat ou Panier *
                     </label>
                     <input
@@ -287,13 +287,13 @@ export default function OfferFormPage() {
                       value={formData.title}
                       onChange={(e) => handleChange('title', e.target.value)}
                       placeholder="ex: Baguette Farcie Escalope & Fromage"
-                      className="w-full px-4 py-3 rounded-2xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-sm outline-none focus:shadow-[4px_4px_0px_#141210] font-sans font-bold"
+                      className="w-full px-4 py-3 rounded-2xl bg-white border border-[#111111]/15 text-[#111111] text-sm outline-none font-sans font-bold shadow-sm focus:border-[#DA0711]"
                     />
-                    {errors.title && <p className="text-xs font-bold text-[#E51C23] mt-1">{errors.title}</p>}
+                    {errors.title && <p className="text-xs font-bold text-[#DA0711] mt-1">{errors.title}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono font-black uppercase tracking-widest text-[#141210]/70 mb-1.5">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-widest text-[#666] mb-1.5">
                       Description &amp; Ingrédients
                     </label>
                     <textarea
@@ -301,7 +301,7 @@ export default function OfferFormPage() {
                       value={formData.description}
                       onChange={(e) => handleChange('description', e.target.value)}
                       placeholder="Détaillez la fraîcheur et les accompagnements..."
-                      className="w-full px-4 py-2.5 rounded-2xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none focus:shadow-[4px_4px_0px_#141210] font-sans"
+                      className="w-full px-4 py-2.5 rounded-2xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-sans shadow-sm focus:border-[#DA0711]"
                     />
                   </div>
 
@@ -323,22 +323,22 @@ export default function OfferFormPage() {
               </div>
 
               {/* ÉTAPE 03 : HORAIRES & QUANTITÉ (image7.png 03 PROTEIN) */}
-              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
-                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
+                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">03</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">03</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
                       HORAIRES DE RETRAIT &amp; STOCKS
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#141210]/60 font-black">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#666] font-bold">
                     CRÉNEAU DU SOIR
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-[#141210]/70 mb-1 font-black">
+                    <label className="block text-[11px] font-mono uppercase text-[#666] mb-1 font-bold">
                       Portions en vente :
                     </label>
                     <input
@@ -346,71 +346,71 @@ export default function OfferFormPage() {
                       min="1"
                       value={formData.quantityTotal}
                       onChange={(e) => handleChange('quantityTotal', Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none font-bold"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-bold shadow-sm focus:border-[#DA0711]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-[#141210]/70 mb-1 font-black">
+                    <label className="block text-[11px] font-mono uppercase text-[#666] mb-1 font-bold">
                       Début Retrait :
                     </label>
                     <input
                       type="time"
                       value={formData.pickupStartAt}
                       onChange={(e) => handleChange('pickupStartAt', e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none font-bold"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-bold shadow-sm focus:border-[#DA0711]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-[#141210]/70 mb-1 font-black">
+                    <label className="block text-[11px] font-mono uppercase text-[#666] mb-1 font-bold">
                       Fin Retrait :
                     </label>
                     <input
                       type="time"
                       value={formData.pickupEndAt}
                       onChange={(e) => handleChange('pickupEndAt', e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs outline-none font-bold"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none font-bold shadow-sm focus:border-[#DA0711]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* ÉTAPE 04 : OPTION PANIER MYSTÈRE (image7.png 04 TOPPINGS) */}
-              <div className="p-6 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-4">
-                <div className="flex items-baseline justify-between border-b-2 border-[#141210]/15 pb-3">
+              <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] space-y-4">
+                <div className="flex items-baseline justify-between border-b border-[#111111]/10 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-anton text-lg font-black text-[#E51C23] tracking-widest">04</span>
-                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#141210]">
+                    <span className="font-anton text-lg font-black text-[#DA0711] tracking-widest">04</span>
+                    <h3 className="font-anton uppercase text-lg sm:text-xl tracking-wide text-[#111111]">
                       OPTION PANIER SURPRISE &amp; RARETÉ
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#E51C23] font-black">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#DA0711] font-bold">
                     BOÎTE MYSTÈRE
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-[#111111]/10 shadow-sm">
                   <div className="flex items-center gap-2.5">
-                    <Gift className="w-5 h-5 text-[#E51C23]" />
+                    <Gift className="w-5 h-5 text-[#DA0711]" />
                     <div>
-                      <p className="text-xs font-black text-[#141210]">Activer le mode Panier Surprise (Scellé)</p>
-                      <p className="text-[10px] text-[#141210]/60 font-sans">Le contenu sera masqué et révélé par animation Unboxing</p>
+                      <p className="text-xs font-bold text-[#111111]">Activer le mode Panier Surprise (Scellé)</p>
+                      <p className="text-[10px] text-[#666] font-sans">Le contenu sera masqué et révélé par animation Unboxing</p>
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={formData.isSurpriseBasket}
                     onChange={(e) => handleChange('isSurpriseBasket', e.target.checked)}
-                    className="w-5 h-5 accent-[#E51C23] rounded cursor-pointer"
+                    className="w-5 h-5 accent-[#DA0711] rounded cursor-pointer"
                   />
                 </div>
 
                 {formData.isSurpriseBasket && (
-                  <div className="p-3.5 rounded-2xl bg-[#FEF08A] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] space-y-2 text-xs">
+                  <div className="p-4 rounded-2xl bg-[#FEF08A] border border-[#A16207]/30 shadow-sm space-y-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-black text-[#141210]">Rareté Calculée Automatiquement :</span>
-                      <span className="px-2 py-0.5 rounded-full bg-[#141210] text-[#FFD000] font-mono font-bold">
+                      <span className="font-bold text-[#111111]">Rareté Calculée Automatiquement :</span>
+                      <span className="px-3 py-1 rounded-full bg-[#111111] text-[#FFD000] font-mono font-bold">
                         {rarityResult.rarity} (Score {(rarityResult.score * 100).toFixed(0)}%)
                       </span>
                     </div>
@@ -421,8 +421,8 @@ export default function OfferFormPage() {
                         ...prev,
                         surprise: { ...prev.surprise, teaser: e.target.value }
                       }))}
-                      placeholder="Indice secret pour l étudiant (ex: 3 viennoiseries pur beurre)"
-                      className="w-full px-3 py-2 rounded-xl bg-white border-2 border-[#141210] text-[#141210] text-xs outline-none"
+                      placeholder="Indice secret pour l'étudiant (ex: 3 viennoiseries pur beurre)"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#111111]/15 text-[#111111] text-xs outline-none focus:border-[#DA0711]"
                     />
                   </div>
                 )}
@@ -432,7 +432,7 @@ export default function OfferFormPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-6 rounded-2xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[4px_4px_0px_#141210] hover:shadow-[2px_2px_0px_#141210] font-anton uppercase text-xl tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full btn-griddle-primary py-4 cursor-pointer text-lg font-anton"
               >
                 <span>{loading ? 'Publication en cours...' : 'PUBLIER CETTE OFFRE SUR LE CATALOGUE →'}</span>
               </button>
@@ -444,26 +444,18 @@ export default function OfferFormPage() {
               ========================================================================= */}
           <div className="lg:col-span-5 sticky top-20 space-y-4">
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-mono uppercase tracking-widest text-[#E51C23] font-black flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
+              <span className="text-xs font-mono uppercase tracking-widest text-[#DA0711] font-bold flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-[#DA0711]" />
                 <span>APERÇU EN DIRECT DU TICKET :</span>
               </span>
-              <span className="text-[10px] font-mono font-black text-[#141210]/60">#CS-048</span>
+              <span className="text-[10px] font-mono font-bold text-[#666]">#CS-048</span>
             </div>
 
-            {/* Ticket Suspendu Reçu Crème Live Preview */}
-            <div className="relative pt-3 select-none">
-              {/* Pince métallique supérieure */}
-              <div
-                aria-hidden="true"
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-3.5 bg-gradient-to-b from-stone-300 via-stone-100 to-stone-400 rounded-b-md shadow-md border-x-2 border-b-2 border-[#141210] z-30 flex items-center justify-center pointer-events-none"
-              >
-                <div className="w-4 h-1 bg-[#141210] rounded-full" />
-              </div>
-
-              <div className="relative rounded-2xl bg-[#FAF6EE] text-[#141210] shadow-[6px_6px_0px_#141210] border-2 border-[#141210] overflow-hidden pb-4">
+            {/* Ticket Suspendu Reçu Blanc Live Preview */}
+            <div className="relative pt-2 select-none">
+              <div className="relative rounded-3xl bg-white text-[#111111] shadow-xl border border-[#111111]/10 overflow-hidden pb-4">
                 {/* Photo de l'aliment */}
-                <div className="relative h-48 w-full overflow-hidden bg-[#F4EFE6] border-b-2 border-[#141210]">
+                <div className="relative h-48 w-full overflow-hidden bg-[#EDE6D7] border-b border-[#111111]/10">
                   <img
                     src={previewImage}
                     alt={formData.title}
@@ -472,13 +464,13 @@ export default function OfferFormPage() {
                   />
                   
                   <div className="absolute top-2.5 right-2.5">
-                    <span className="px-2.5 py-1 rounded-full bg-white text-[#141210] text-[10px] font-mono font-black border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+                    <span className="px-3 py-1 rounded-full bg-white text-[#111111] text-[10px] font-mono font-bold border border-[#111111]/10 shadow-sm">
                       {formData.pickupStartAt} – {formData.pickupEndAt}
                     </span>
                   </div>
 
                   <div className="absolute bottom-2.5 left-3">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#E51C23] text-white text-[9px] font-anton uppercase tracking-wider font-bold shadow-[2px_2px_0px_#141210]">
+                    <span className="px-3 py-1 rounded-full bg-[#DA0711] text-white text-[9px] font-anton uppercase tracking-wider font-bold shadow-sm">
                       {formData.quantityTotal} RESTANTS
                     </span>
                   </div>
@@ -486,38 +478,38 @@ export default function OfferFormPage() {
 
                 {/* Détails du Ticket */}
                 <div className="p-5 space-y-3 font-mono text-xs">
-                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-[#141210]/60">
-                    <span className="text-[#E51C23] font-black">{formData.category}</span>
+                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-[#666]">
+                    <span className="text-[#DA0711] font-bold">{formData.category}</span>
                     <span className="font-bold">ESSECT MONTFLEURY</span>
                   </div>
 
-                  <h3 className="font-anton uppercase text-xl text-[#141210] leading-tight line-clamp-2">
+                  <h3 className="font-anton uppercase text-xl text-[#111111] leading-tight line-clamp-2">
                     {formData.title || 'Votre Plat Anti-Gaspillage'}
                   </h3>
 
-                  <p className="text-[11px] text-[#141210]/70 font-sans line-clamp-2">
+                  <p className="text-[11px] text-[#666] font-sans line-clamp-2">
                     {formData.description || 'Description du plat détaillée...'}
                   </p>
 
-                  <div className="my-2 border-t-2 border-dashed border-[#141210]/30" />
+                  <div className="my-2 border-t border-dashed border-[#111111]/20" />
 
                   {/* Décomposition Prix */}
                   <div className="space-y-1 text-[11px]">
-                    <div className="flex justify-between text-[#141210]/60">
+                    <div className="flex justify-between text-[#666]">
                       <span>PRIX ORIGINAL :</span>
                       <span className="line-through">{formatTND(Number(formData.originalPriceMillimes) || 0)}</span>
                     </div>
-                    <div className="flex justify-between text-[#141210]">
+                    <div className="flex justify-between text-[#111111]">
                       <span>MODE :</span>
                       <span className="font-bold">{formData.pricingMode === PRICING_MODES.DUTCH_AUCTION ? 'SMART DECAY (ENCHÈRE)' : 'PRIX FIXE'}</span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t-2 border-[#141210]/15 flex items-baseline justify-between">
-                    <span className="font-anton uppercase text-xs font-black text-[#141210]/60">
+                  <div className="pt-2 border-t border-[#111111]/10 flex items-baseline justify-between">
+                    <span className="font-anton uppercase text-xs font-bold text-[#666]">
                       PRIX PLANCHER :
                     </span>
-                    <span className="font-anton text-2xl font-black text-[#E51C23]">
+                    <span className="font-anton text-2xl font-bold text-[#DA0711]">
                       {formatTND(referencePrice)}
                     </span>
                   </div>
@@ -528,15 +520,15 @@ export default function OfferFormPage() {
                   aria-hidden="true"
                   className="w-full h-3 bg-repeat-x pointer-events-none mt-1"
                   style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23FAF6EE'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10' fill='%23FFFFFF'%3E%3Cpolygon points='0,0 8,10 16,0'/%3E%3C/svg%3E")`,
                     backgroundSize: '16px 10px',
-                    filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.15))',
+                    filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.08))',
                   }}
                 />
               </div>
             </div>
 
-            <p className="text-[10px] text-center font-mono text-[#141210]/60 font-bold">
+            <p className="text-[10px] text-center font-mono text-[#666] font-medium">
               💡 Le ticket suspendu se synchronise instantanément avec vos modifications.
             </p>
           </div>

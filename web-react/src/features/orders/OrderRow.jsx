@@ -21,47 +21,47 @@ export default function OrderRow({ order, onRate }) {
   const dateStr = formatTunisDate(order.createdAt || Date.now());
 
   // Configuration du badge de statut
-  let badgeClasses = 'bg-white text-[#141210] border border-[#141210]';
+  let badgeClasses = 'bg-white text-[#111111] border border-[#111111]/10';
   let badgeText = status;
 
   if (status === 'RESERVED') {
-    badgeClasses = 'bg-[#FEF08A] text-[#854D0E] border-[#A16207] animate-pulse';
+    badgeClasses = 'bg-[#FFD000]/20 text-[#854D0E] border-[#FFD000]/40 animate-pulse';
     badgeText = '⏳ Réservé (Paiement 10 min)';
   } else if (status === 'PAID') {
-    badgeClasses = 'bg-[#DCFCE7] text-[#15803D] border-[#166534]';
+    badgeClasses = 'bg-emerald-100 text-emerald-800 border-emerald-200';
     badgeText = '🎟️ Payé • Prêt pour retrait';
   } else if (status === 'COMPLETED') {
-    badgeClasses = 'bg-white text-[#15803D] border-[#166534]';
+    badgeClasses = 'bg-white text-[#15803D] border-emerald-200';
     badgeText = '✓ Récupéré sur place';
   } else if (['CANCELLED', 'EXPIRED', 'PAYMENT_FAILED', 'NO_SHOW'].includes(status)) {
-    badgeClasses = 'bg-[#FEE2E2] text-[#B91C1C] border-[#DC2626]';
+    badgeClasses = 'bg-rose-100 text-rose-800 border-rose-200';
     badgeText = status === 'CANCELLED' ? 'Annulé' : status === 'EXPIRED' ? 'Expiré (10 min)' : 'Non récupéré';
   }
 
   return (
-    <div className="p-4 sm:p-5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[5px_5px_0px_#141210] hover:-translate-y-0.5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[#141210]">
+    <div className="p-4 sm:p-5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_16px_rgba(17,17,17,0.03)] hover:shadow-[0_8px_24px_rgba(17,17,17,0.06)] hover:-translate-y-0.5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[#111111]">
       {/* Colonne Gauche : Données commande */}
       <div className="space-y-1 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono font-black text-xs text-[#141210] px-2 py-0.5 rounded bg-white border border-[#141210]">
+          <span className="font-mono font-bold text-xs text-[#111111] px-2.5 py-0.5 rounded-full bg-white border border-[#111111]/10">
             {orderCode}
           </span>
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${badgeClasses}`}>
+          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badgeClasses}`}>
             {badgeText}
           </span>
-          <span className="text-[10px] text-[#666] font-bold">
+          <span className="text-[10px] text-[#666] font-medium">
             {dateStr}
           </span>
         </div>
 
-        <h3 className="text-base font-anton uppercase text-[#141210] tracking-wide pt-1">{title}</h3>
+        <h3 className="text-base font-anton uppercase text-[#111111] tracking-wide pt-1">{title}</h3>
 
-        <div className="flex items-center gap-2 text-xs text-[#555] font-bold flex-wrap">
+        <div className="flex items-center gap-2 text-xs text-[#555] font-medium flex-wrap">
           <span>🏪 {merchantName}</span>
           <span>•</span>
           <span>Qté : {quantity}</span>
           <span>•</span>
-          <span className="font-anton text-sm text-[#E51C23]">{formatTND(price)}</span>
+          <span className="font-anton text-sm text-[#DA0711]">{formatTND(price)}</span>
         </div>
       </div>
 
@@ -70,7 +70,7 @@ export default function OrderRow({ order, onRate }) {
         {status === 'RESERVED' && (
           <Link
             to={`/app/checkout/${id}`}
-            className="btn-griddle-yellow text-xs py-2 px-4 cursor-pointer"
+            className="btn-griddle-yellow text-xs py-2 px-5 cursor-pointer shadow-sm"
           >
             Finaliser le paiement →
           </Link>
@@ -78,28 +78,26 @@ export default function OrderRow({ order, onRate }) {
 
         {status === 'PAID' && (
           <Link
-            to={`/app/orders/${id}/ticket`}
-            className="btn-griddle-primary text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer"
+            to={`/app/tickets/${id}`}
+            className="btn-griddle-primary text-xs py-2 px-5 cursor-pointer shadow-sm"
           >
-            <span>🎟️ Ouvrir Living Ticket</span>
+            Voir mon Living Ticket 🎟️
           </Link>
         )}
 
         {status === 'COMPLETED' && (
-          <div className="flex items-center gap-2">
+          <div>
             {userRating ? (
-              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FEF08A] border-2 border-[#141210] text-[#141210] font-bold text-xs shadow-[1.5px_1.5px_0px_#141210]">
-                <span>⭐</span>
-                <span>{userRating}/5 Noté</span>
+              <span className="text-xs font-bold text-[#15803D] bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+                ⭐ Noté {userRating}/5
               </span>
             ) : (
               <button
                 type="button"
-                onClick={() => onRate && onRate(order)}
-                className="btn-griddle-yellow text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer"
+                onClick={() => onRate(order)}
+                className="btn-griddle-outline text-xs py-1.5 px-4 cursor-pointer"
               >
-                <span>⭐</span>
-                <span>Noter le repas</span>
+                Laisser un avis ⭐
               </button>
             )}
           </div>

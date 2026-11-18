@@ -15,19 +15,19 @@ import {
 } from 'recharts';
 
 /**
- * Tooltip Griddle néo-brutaliste pour diagramme en barres
+ * Tooltip Griddle raffiné pour diagramme en barres
  */
 function CustomBarTooltip({ active, payload, label, formatter }) {
   if (active && payload && payload.length) {
     const item = payload[0];
     const displayVal = formatter ? formatter(item.value) : item.value;
     return (
-      <div className="bg-white border-2 border-[#141210] rounded-lg p-3 shadow-[3px_3px_0px_#141210]">
+      <div className="bg-white border border-[#111111]/10 rounded-xl p-3 shadow-lg">
         <p className="text-xs text-[#666] font-bold mb-1">{label}</p>
-        <p className="text-sm font-black text-[#141210] flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#E51C23]" />
+        <p className="text-sm font-bold text-[#111111] flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711]" />
           <span>{item.name || 'Total'} :</span>
-          <span className="text-[#E51C23] font-bold">{displayVal}</span>
+          <span className="text-[#DA0711] font-black">{displayVal}</span>
         </p>
       </div>
     );
@@ -42,7 +42,7 @@ export default function BarChartCard({
   xKey = 'label',
   yKey = 'value',
   name = 'Total',
-  barColor = '#E51C23',
+  barColor = '#DA0711',
   yFormatter,
   tooltipFormatter,
   headerAction,
@@ -64,11 +64,11 @@ export default function BarChartCard({
   }, [data]);
 
   return (
-    <div className="p-6 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col justify-between">
+    <div className="p-6 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_16px_rgba(17,17,17,0.03)] flex flex-col justify-between">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-base font-black text-[#141210] uppercase tracking-wide">{title}</h3>
+          <h3 className="text-lg font-anton uppercase text-[#111111] tracking-wide">{title}</h3>
           {subtitle && <p className="text-xs text-[#666] font-medium mt-0.5">{subtitle}</p>}
         </div>
         {headerAction && <div className="self-start sm:self-auto">{headerAction}</div>}
@@ -78,42 +78,36 @@ export default function BarChartCard({
       <div style={{ width: '100%', height }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#141210" strokeOpacity={0.12} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#111111" strokeOpacity={0.06} vertical={false} />
             <XAxis
               dataKey={xKey}
-              stroke="#141210"
+              stroke="#111111"
               fontSize={11}
               fontWeight={600}
               tickLine={false}
-              axisLine={{ stroke: '#141210', strokeWidth: 1.5 }}
+              axisLine={{ stroke: '#111111', strokeWidth: 1, strokeOpacity: 0.15 }}
             />
             <YAxis
-              stroke="#141210"
+              stroke="#111111"
               fontSize={11}
               fontWeight={600}
               tickLine={false}
-              axisLine={{ stroke: '#141210', strokeWidth: 1.5 }}
+              axisLine={{ stroke: '#111111', strokeWidth: 1, strokeOpacity: 0.15 }}
               tickFormatter={yFormatter}
             />
             <Tooltip
               content={
                 <CustomBarTooltip
-                  formatter={tooltipFormatter}
+                  formatter={tooltipFormatter || yFormatter}
                 />
               }
+              cursor={{ fill: 'rgba(218, 7, 17, 0.05)' }}
             />
-            <Bar
-              dataKey={yKey}
-              name={name}
-              fill={barColor}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={45}
-            >
+            <Bar dataKey={yKey} name={name} radius={[6, 6, 0, 0]} maxBarSize={48}>
               {normalizedData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.color || barColor}
-                  className="transition-opacity hover:opacity-85"
+                  fill={entry.color || (index % 3 === 2 ? '#FFD000' : barColor)}
                 />
               ))}
             </Bar>

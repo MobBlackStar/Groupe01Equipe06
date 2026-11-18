@@ -44,11 +44,11 @@ export default function SmartDecayToggle({
   const floorCalculatedPrice = computeUnitPrice(mockOffer, pickupEndMs);
 
   return (
-    <div className={`p-5 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-5 ${className}`}>
+    <div className={`p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 space-y-5 shadow-[0_4px_20px_rgba(17,17,17,0.04)] ${className}`}>
       {/* Switcher tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h4 className="font-anton uppercase text-base text-[#141210] flex items-center gap-2 tracking-wide">
+          <h4 className="font-anton uppercase text-base text-[#111111] flex items-center gap-2 tracking-wide">
             <span>⚡ Mode de Tarification</span>
             {isDutch ? (
               <Badge variant="griddle" size="sm" dot>ENCHÈRE DÉGRESSIVE</Badge>
@@ -56,19 +56,19 @@ export default function SmartDecayToggle({
               <Badge variant="yellow" size="sm">PRIX FIXE</Badge>
             )}
           </h4>
-          <p className="text-xs text-[#141210]/70 mt-0.5 font-sans">
+          <p className="text-xs text-[#666] mt-0.5 font-sans">
             Choisissez la méthode de fixation du prix pour cet article anti-gaspi.
           </p>
         </div>
 
-        <div className="inline-flex p-1 bg-white border-2 border-[#141210] rounded-xl gap-1 shadow-[2px_2px_0px_#141210]">
+        <div className="inline-flex p-1 bg-white/80 border border-[#111111]/10 rounded-full gap-1">
           <button
             type="button"
             onClick={() => onModeChange(PRICING_MODES.FIXED)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
               !isDutch
-                ? 'bg-[#FFD000] text-[#141210] shadow-sm'
-                : 'text-[#141210]/60 hover:text-[#141210]'
+                ? 'bg-[#FFD000] text-[#111111] shadow-sm'
+                : 'text-[#666] hover:text-[#111111]'
             }`}
           >
             🏷️ Prix Fixe
@@ -76,10 +76,10 @@ export default function SmartDecayToggle({
           <button
             type="button"
             onClick={() => onModeChange(PRICING_MODES.DUTCH_AUCTION)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
               isDutch
-                ? 'bg-[#E51C23] text-white shadow-sm'
-                : 'text-[#141210]/60 hover:text-[#141210]'
+                ? 'bg-[#DA0711] text-white shadow-sm'
+                : 'text-[#666] hover:text-[#111111]'
             }`}
           >
             ⚡ Smart Decay (Dégressif)
@@ -89,7 +89,7 @@ export default function SmartDecayToggle({
 
       {/* CAS 1 : PRIX FIXE */}
       {!isDutch ? (
-        <div className="p-4 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#111111]/10 shadow-sm space-y-4">
           <Input
             label="Prix Réduit Solidaire (en Dinars ou Millimes)"
             required
@@ -123,16 +123,16 @@ export default function SmartDecayToggle({
           </div>
 
           {/* VISUALISATION DE LA COURBE SVG EN DIRECT */}
-          <div className="p-4 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] space-y-3">
+          <div className="p-5 rounded-2xl bg-white border border-[#111111]/10 shadow-sm space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-black text-[#141210] flex items-center gap-1.5 uppercase font-mono">
+              <span className="font-bold text-[#111111] flex items-center gap-1.5 uppercase font-mono">
                 <span>📉</span> Prévisualisation de la Courbe Dégressive
               </span>
-              <span className="text-[#E51C23] font-black font-mono">Pas : 100 millimes</span>
+              <span className="text-[#DA0711] font-bold font-mono">Pas : 100 millimes</span>
             </div>
 
             {/* SVG Interactive Curve */}
-            <div className="w-full h-36 bg-[#F4EFE6] rounded-xl p-2 relative border border-[#141210]/20">
+            <div className="w-full h-36 bg-[#FAF3E6] rounded-xl p-2 relative border border-[#111111]/10">
               <svg viewBox="0 0 500 120" className="w-full h-full">
                 {/* Lignes de repère */}
                 <line x1="40" y1="20" x2="460" y2="20" stroke="#141210" strokeDasharray="3,3" strokeOpacity="0.2" />
@@ -163,7 +163,7 @@ export default function SmartDecayToggle({
                 <text x="50" y="14" fill="#E51C23" fontSize="10" fontWeight="bold">
                   Départ : {formatTND(currentCalculatedPrice)}
                 </text>
-                <text x="250" y="52" fill="#141210" fontSize="10" textAnchor="middle" fontWeight="bold">
+                <text x="250" y="52" fill="#111111" fontSize="10" textAnchor="middle" fontWeight="bold">
                   Mi-créneau : {formatTND(midCalculatedPrice)}
                 </text>
                 <text x="450" y="94" fill="#15803D" fontSize="10" textAnchor="end" fontWeight="bold">
@@ -172,7 +172,7 @@ export default function SmartDecayToggle({
               </svg>
             </div>
 
-            <p className="text-[11px] text-[#141210]/70 font-sans leading-relaxed">
+            <p className="text-[11px] text-[#111111]/70 font-sans leading-relaxed">
               Le prix s'ajustera automatiquement à chaque seconde sur les téléphones des étudiants sans nécessiter aucune action de votre part.
             </p>
           </div>

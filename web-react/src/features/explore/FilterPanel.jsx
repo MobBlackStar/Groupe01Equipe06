@@ -34,21 +34,21 @@ export default function FilterPanel({
   className = '',
 }) {
   return (
-    <div className={`flex flex-col gap-4 p-4 sm:p-5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] text-[#141210] ${className}`}>
+    <div className={`flex flex-col gap-4 p-5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] text-[#111111] ${className}`}>
       
       {/* 1. Pill Category Bar avec compteurs */}
       <div>
         <div className="flex items-center justify-between mb-2.5">
-          <label className="text-[11px] font-mono uppercase tracking-widest text-[#141210] flex items-center gap-1.5 font-black">
-            <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
+          <label className="text-[11px] font-anton uppercase tracking-wider text-[#111111] flex items-center gap-1.5">
+            <Flame className="w-3.5 h-3.5 text-[#DA0711]" />
             <span>Rayons du Marché (Catégories)</span>
           </label>
-          <span className="text-[11px] text-[#555] font-mono font-bold">
+          <span className="text-[11px] text-[#666] font-medium">
             Sélectionnez un rayon
           </span>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {CATEGORY_DEFINITIONS.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             const count = categoryCounts[cat.id] ?? (cat.id === 'ALL' ? Object.values(categoryCounts).reduce((a, b) => a + b, 0) : 0);
@@ -58,20 +58,20 @@ export default function FilterPanel({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectCategory(cat.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border-2 cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-anton uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#E51C23] text-white border-[#141210] shadow-[2px_2px_0px_#141210]'
-                    : 'bg-white text-[#141210] border-[#141210] hover:bg-[#F4EFE6]'
+                    ? 'bg-[#DA0711] text-white shadow-sm'
+                    : 'bg-white text-[#111111] hover:bg-[#FAF3E6] border border-[#111111]/8'
                 }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
                 {count !== undefined && count > 0 && (
                   <span
-                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full font-black border ${
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                       isSelected
-                        ? 'bg-white text-[#E51C23] border-[#141210]'
-                        : 'bg-[#FFD000] text-[#141210] border-[#141210]'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[#FFD000] text-[#111111]'
                     }`}
                   >
                     {count}
@@ -84,7 +84,7 @@ export default function FilterPanel({
       </div>
 
       {/* 2. Filtres secondaires : Budget, Tri, et Panier Surprise */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-3.5 border-t-2 border-[#141210]/15 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-3.5 border-t border-[#111111]/8 items-center">
         
         {/* Curseur Budget Max */}
         <div className="md:col-span-5">
@@ -92,7 +92,7 @@ export default function FilterPanel({
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#666]">
               Budget Max :
             </span>
-            <span className="font-anton text-base text-[#E51C23]">
+            <span className="font-anton text-base text-[#DA0711]">
               {formatTND(maxPriceMillimes)}
             </span>
           </div>
@@ -103,9 +103,9 @@ export default function FilterPanel({
             step={500}
             value={maxPriceMillimes}
             onChange={(e) => onChangeMaxPrice(Number(e.target.value))}
-            className="w-full accent-[#E51C23] bg-[#FAF6EE] h-2 rounded-lg cursor-pointer border border-[#141210]"
+            className="w-full accent-[#DA0711] bg-[#FAF3E6] h-2 rounded-full cursor-pointer"
           />
-          <div className="flex justify-between text-[9px] font-mono text-[#777] mt-1 font-bold">
+          <div className="flex justify-between text-[10px] font-medium text-[#777] mt-1">
             <span>1.000 DT</span>
             <span>10.000 DT</span>
             <span>20.000 DT</span>
@@ -117,14 +117,14 @@ export default function FilterPanel({
           <label className="block text-[11px] font-bold uppercase tracking-wider text-[#666] mb-1.5">
             Trier les tickets par :
           </label>
-          <div className="flex rounded-lg bg-white p-1 border-2 border-[#141210] text-xs">
+          <div className="flex rounded-full bg-white p-1 border border-[#111111]/8 text-xs font-anton uppercase tracking-wider">
             <button
               type="button"
               onClick={() => onChangeSortBy('distance')}
-              className={`flex-1 py-1 px-2 rounded-md font-bold transition-all text-center cursor-pointer ${
+              className={`flex-1 py-1 px-3 rounded-full transition-all text-center cursor-pointer ${
                 sortBy === 'distance'
-                  ? 'bg-[#E51C23] text-white shadow-sm'
-                  : 'text-[#141210] hover:bg-[#F4EFE6]'
+                  ? 'bg-[#DA0711] text-white shadow-sm'
+                  : 'text-[#111111] hover:bg-black/5'
               }`}
             >
               Proximité
@@ -132,10 +132,10 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={() => onChangeSortBy('price')}
-              className={`flex-1 py-1 px-2 rounded-md font-bold transition-all text-center cursor-pointer ${
+              className={`flex-1 py-1 px-3 rounded-full transition-all text-center cursor-pointer ${
                 sortBy === 'price'
-                  ? 'bg-[#FFD000] text-[#141210] shadow-sm font-black'
-                  : 'text-[#141210] hover:bg-[#F4EFE6]'
+                  ? 'bg-[#FFD000] text-[#111111] shadow-sm'
+                  : 'text-[#111111] hover:bg-black/5'
               }`}
             >
               Prix bas
@@ -143,10 +143,10 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={() => onChangeSortBy('ending')}
-              className={`flex-1 py-1 px-2 rounded-md font-bold transition-all text-center cursor-pointer ${
+              className={`flex-1 py-1 px-3 rounded-full transition-all text-center cursor-pointer ${
                 sortBy === 'ending'
-                  ? 'bg-[#C2410C] text-white shadow-sm font-black'
-                  : 'text-[#141210] hover:bg-[#F4EFE6]'
+                  ? 'bg-[#DA0711] text-white shadow-sm'
+                  : 'text-[#111111] hover:bg-black/5'
               }`}
             >
               Urgence
@@ -155,17 +155,17 @@ export default function FilterPanel({
         </div>
 
         {/* Toggle Panier Surprise & Reset */}
-        <div className="md:col-span-3 flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0">
+        <div className="md:col-span-3 flex items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0">
           <button
             type="button"
             onClick={() => onToggleSurpriseOnly(!surpriseOnly)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 border-[#141210] transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs font-anton uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
               surpriseOnly
-                ? 'bg-[#FFD000] text-[#141210] shadow-[2px_2px_0px_#141210]'
-                : 'bg-white text-[#141210] hover:bg-[#F4EFE6]'
+                ? 'bg-[#FFD000] text-[#111111] shadow-sm'
+                : 'bg-white text-[#111111] hover:bg-[#FAF3E6] border border-[#111111]/8'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#E51C23]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#DA0711]" />
             <span>Paniers Mystères</span>
           </button>
 
@@ -173,7 +173,7 @@ export default function FilterPanel({
             type="button"
             onClick={onResetFilters}
             title="Réinitialiser tous les filtres"
-            className="p-1.5 rounded-lg bg-white border-2 border-[#141210] text-[#141210] hover:bg-[#F4EFE6] transition-colors shadow-[2px_2px_0px_#141210] cursor-pointer"
+            className="p-2 rounded-full bg-white border border-[#111111]/8 text-[#111111] hover:bg-[#FAF3E6] transition-colors cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
           </button>

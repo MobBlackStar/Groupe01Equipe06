@@ -29,39 +29,39 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#F4EFE6] text-[#141210] flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-16 h-16 rounded-xl bg-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex items-center justify-center text-3xl mb-4">
+        <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-[#111111]/10 shadow-sm flex items-center justify-center text-3xl mb-4">
             🛡️
           </div>
-          <h1 className="text-2xl font-black mb-2 font-anton uppercase tracking-wide">
-            Campus<span className="text-[#E51C23]">Save</span> — Récupération Système
+          <h1 className="text-2xl sm:text-3xl font-black mb-2 font-anton uppercase tracking-wide">
+            Campus<span className="text-[#DA0711]">Save</span> — Récupération Système
           </h1>
-          <p className="text-sm text-[#555] max-w-md mb-6 font-medium">
+          <p className="text-sm text-[#666] max-w-md mb-6 font-medium">
             Une interruption temporaire a été interceptée par le bouclier d'erreur. Utilisez les options ci-dessous pour reprendre votre navigation.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mb-6">
             <button
               onClick={() => window.location.reload()}
-              className="px-5 py-2.5 bg-[#E51C23] text-white font-bold text-sm rounded-lg border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#d1141b] transition-transform"
+              className="px-6 py-2.5 bg-[#DA0711] text-white font-bold text-sm rounded-full shadow-sm hover:opacity-95 transition-all"
             >
               🔄 Recharger la page
             </button>
             <button
               onClick={this.handleReset}
-              className="px-5 py-2.5 bg-[#FFD000] text-[#141210] font-bold text-sm rounded-lg border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#e6bb00] transition-transform"
+              className="px-6 py-2.5 bg-[#FFD000] text-[#111111] font-bold text-sm rounded-full border border-[#111111]/15 shadow-sm hover:opacity-95 transition-all"
             >
               ⚡ Réinitialiser la session de démo
             </button>
             <button
               onClick={() => (window.location.href = '/app')}
-              className="px-5 py-2.5 bg-[#FAF6EE] text-[#141210] font-bold text-sm rounded-lg border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:bg-[#F4EFE6] transition-transform"
+              className="px-6 py-2.5 bg-[#EDE6D7] text-[#111111] font-bold text-sm rounded-full border border-[#111111]/10 shadow-sm hover:bg-[#E5DEC7] transition-all"
             >
               🏠 Retour à l'accueil
             </button>
           </div>
           {this.state.error && (
-            <details className="text-xs text-[#555] bg-white p-4 rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] max-w-lg text-left overflow-auto font-mono">
-              <summary className="cursor-pointer font-bold text-[#E51C23] mb-2">Détails techniques pour le développeur</summary>
+            <details className="text-xs text-[#666] bg-white p-5 rounded-2xl border border-[#111111]/10 shadow-sm max-w-lg text-left overflow-auto font-mono">
+              <summary className="cursor-pointer font-bold text-[#DA0711] mb-2">Détails techniques pour le développeur</summary>
               <pre className="text-xs whitespace-pre-wrap">{String(this.state.error?.stack || this.state.error?.message || this.state.error)}</pre>
             </details>
           )}

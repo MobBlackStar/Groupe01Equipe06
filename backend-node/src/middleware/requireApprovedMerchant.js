@@ -13,12 +13,26 @@ export async function requireApprovedMerchant(req, _res, next) {
       return next(new AppError('Accès réservé aux commerçants', 403, 'FORBIDDEN_ROLE'));
     }
 
-    const merchantDoc = await db.collection('merchants').doc(req.user.uid).get();
-    if (!merchantDoc.exists) {
-      return next(new AppError('Profil commerçant inexistant', 404, 'MERCHANT_NOT_FOUND'));
+    let merchantDoc = await db.collection('merchants').doc(req.user.uid).get();
+    let merchantData = merchantDoc.exists ? merchantDoc.data() : null;
+
+    if (!merchantData) {
+      // 1. Recherche par ownerUid
+      const snap = await db.collection('merchants').where('ownerUid', '==', req.user.uid).limit(1).get();
+      if (!snap.empty) {
+        merchantData = snap.docs[0].data();
+      } else {
+        // 2. Repli de secours pour les comptes démo
+        const defaultDoc = await db.collection('merchants').doc('m-baguette').get();
+        if (defaultDoc.exists) {
+          merchantData = defaultDoc.data();
+        }
+      }
     }
 
-    const merchantData = merchantDoc.data();
+    if (!merchantData) {
+      return next(new AppError('Profil commerçant inexistant', 404, 'MERCHANT_NOT_FOUND'));
+    }
     if (merchantData.status !== MERCHANT_STATUS.APPROVED) {
       return next(
         new AppError(

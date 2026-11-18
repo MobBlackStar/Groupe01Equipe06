@@ -98,18 +98,21 @@ export default function AdminMerchantsPage() {
     },
     {
       id: MERCHANT_STATUS.APPROVED,
-      label: 'Agréés',
+      label: 'Approuvés',
       count: merchants.filter((m) => m.status === MERCHANT_STATUS.APPROVED).length,
     },
     {
       id: MERCHANT_STATUS.REJECTED,
-      label: 'Rejetés',
-      count: merchants.filter((m) => m.status === MERCHANT_STATUS.REJECTED).length,
+      label: 'Rejetés / Suspendus',
+      count: merchants.filter((m) => [MERCHANT_STATUS.REJECTED, MERCHANT_STATUS.SUSPENDED].includes(m.status)).length,
     },
   ];
 
   const filteredMerchants = merchants.filter((m) => {
     if (activeTab === 'ALL') return true;
+    if (activeTab === MERCHANT_STATUS.REJECTED) {
+      return [MERCHANT_STATUS.REJECTED, MERCHANT_STATUS.SUSPENDED].includes(m.status);
+    }
     return m.status === activeTab;
   });
 
@@ -117,8 +120,7 @@ export default function AdminMerchantsPage() {
     try {
       await apiClient.patch(ENDPOINTS.ADMIN_MERCHANT_STATUS(merchant.id), {
         status: MERCHANT_STATUS.APPROVED,
-        statusReason: 'Dossier validé par la commission universitaire ESSECT',
-        reason: 'Dossier validé par la commission universitaire ESSECT',
+        statusReason: 'Agréé par l administration ESSECT',
       });
     } catch (err) {
       console.warn('API approve fallback:', err.message);
@@ -126,25 +128,24 @@ export default function AdminMerchantsPage() {
 
     setMerchants((prev) =>
       prev.map((m) =>
-        m.id === merchant.id
-          ? { ...m, status: MERCHANT_STATUS.APPROVED, statusReason: 'Approuvé par Admin' }
-          : m
+        m.id === merchant.id ? { ...m, status: MERCHANT_STATUS.APPROVED, statusReason: 'Agréé' } : m
       )
     );
 
     setToast({
       type: 'success',
-      message: `Le commerce ${merchant.name} a été approuvé avec succès !`,
+      message: `Le commerce "${merchant.name}" a été officiellement approuvé !`,
     });
   }
 
   async function handleConfirmReject() {
-    if (!rejectModalData || !rejectModalData.reason.trim()) {
-      setToast({ type: 'error', message: 'Le motif de rejet est obligatoire.' });
+    if (!rejectModalData) return;
+    const { merchant, reason, newStatus } = rejectModalData;
+
+    if (!reason.trim()) {
+      alert('Veuillez renseigner un motif pour justifier le refus.');
       return;
     }
-
-    const { merchant, reason, newStatus } = rejectModalData;
 
     try {
       await apiClient.patch(ENDPOINTS.ADMIN_MERCHANT_STATUS(merchant.id), {
@@ -173,18 +174,18 @@ export default function AdminMerchantsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#111111]/10">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#141210]">
+              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#111111]">
                 Validation des Commerces Partenaires
               </h1>
               <Badge variant="griddle" size="md">CONSOLE ADMIN</Badge>
             </div>
-            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
+            <p className="text-xs text-[#666] mt-1 font-medium">
               Contrôlez l'ancrage local (rayon ≤ 3 km de l'ESSECT) et délivrez les agréments de publication.
             </p>
           </div>
@@ -194,20 +195,20 @@ export default function AdminMerchantsPage() {
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
         {/* Table */}
-        <Card className="bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] overflow-hidden">
+        <div className="rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#141210] text-white uppercase tracking-wider font-mono">
+              <thead className="bg-[#111111] text-white uppercase tracking-wider font-anton text-xs">
                 <tr>
-                  <th className="py-3.5 px-4 font-bold">Établissement</th>
-                  <th className="py-3.5 px-4 font-bold">Type</th>
-                  <th className="py-3.5 px-4 font-bold">Distance ESSECT</th>
-                  <th className="py-3.5 px-4 font-bold">Statut</th>
-                  <th className="py-3.5 px-4 font-bold">Date Dossier</th>
-                  <th className="py-3.5 px-4 font-bold text-right">Actions Décisionnelles</th>
+                  <th className="py-3.5 px-4">Établissement</th>
+                  <th className="py-3.5 px-4">Type</th>
+                  <th className="py-3.5 px-4">Distance ESSECT</th>
+                  <th className="py-3.5 px-4">Statut</th>
+                  <th className="py-3.5 px-4">Date Dossier</th>
+                  <th className="py-3.5 px-4 text-right">Actions Décisionnelles</th>
                 </tr>
               </thead>
-              <tbody className="divide-y-2 divide-[#141210]/15">
+              <tbody className="divide-y divide-[#111111]/8">
                 {filteredMerchants.map((merchant) => {
                   const lat = merchant.location?.lat ?? merchant.lat;
                   const lng = merchant.location?.lng ?? merchant.lng;
@@ -220,27 +221,27 @@ export default function AdminMerchantsPage() {
                   return (
                     <tr
                       key={merchant.id}
-                      className="hover:bg-white/50 transition-colors"
+                      className="hover:bg-white/40 transition-colors"
                     >
-                      <td className="py-4 px-4 font-bold text-[#141210]">
-                        <div className="flex items-center gap-2">
+                      <td className="py-4 px-4 font-bold text-[#111111]">
+                        <div className="flex items-center gap-2.5">
                           <span className="text-xl">🏪</span>
                           <div>
-                            <span className="block font-black text-sm">{merchant.name}</span>
-                            <span className="text-[11px] text-[#141210]/60 font-sans">
+                            <span className="block font-bold text-sm">{merchant.name}</span>
+                            <span className="text-[11px] text-[#666] font-medium">
                               {street}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 font-mono font-bold text-[#141210]">
+                      <td className="py-4 px-4 font-anton uppercase tracking-wider text-[#111111]">
                         {merchant.type}
                       </td>
                       <td className="py-4 px-4">
-                        <span className="font-anton text-sm text-[#141210] block">
+                        <span className="font-anton text-sm text-[#111111] block">
                           {dist} m
                         </span>
-                        <span className="text-[10px] text-[#141210]/60 font-mono">
+                        <span className="text-[10px] text-[#666] font-mono">
                           ~{walk} min à pied
                         </span>
                       </td>
@@ -259,7 +260,7 @@ export default function AdminMerchantsPage() {
                           {merchant.status}
                         </Badge>
                       </td>
-                      <td className="py-4 px-4 text-[#141210]/70 font-mono">
+                      <td className="py-4 px-4 text-[#666] font-mono">
                         {merchant.submittedAt?.includes('T') ? formatTunisDate(merchant.submittedAt) : merchant.submittedAt}
                       </td>
                       <td className="py-4 px-4 text-right">
@@ -268,7 +269,7 @@ export default function AdminMerchantsPage() {
                             <button
                               type="button"
                               onClick={() => handleApprove(merchant)}
-                              className="px-3 py-1.5 rounded-lg bg-[#DCFCE7] text-[#15803D] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black transition-all"
+                              className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-anton uppercase tracking-wider hover:bg-emerald-200 transition-all shadow-sm"
                             >
                               ✓ Approuver
                             </button>
@@ -284,7 +285,7 @@ export default function AdminMerchantsPage() {
                                   newStatus: MERCHANT_STATUS.REJECTED,
                                 })
                               }
-                              className="px-3 py-1.5 rounded-lg bg-[#FEE2E2] text-[#991B1B] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black transition-all"
+                              className="px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-800 text-xs font-anton uppercase tracking-wider hover:bg-rose-200 transition-all shadow-sm"
                             >
                               ✕ Rejeter
                             </button>
@@ -297,7 +298,7 @@ export default function AdminMerchantsPage() {
               </tbody>
             </table>
           </div>
-        </Card>
+        </div>
 
         {/* Modal Rejet */}
         <Modal
@@ -326,7 +327,7 @@ export default function AdminMerchantsPage() {
         >
           {rejectModalData && (
             <div className="space-y-3 py-2 text-xs">
-              <label className="block text-xs font-black uppercase text-[#141210]/70 font-mono">
+              <label className="block text-xs font-anton uppercase tracking-wider text-[#666]">
                 Motif officiel communiqué au gérant :
               </label>
               <textarea
@@ -336,7 +337,7 @@ export default function AdminMerchantsPage() {
                   setRejectModalData((prev) => ({ ...prev, reason: e.target.value }))
                 }
                 placeholder="ex : Établissement situé au-delà de 3 000 m ou registre non conforme..."
-                className="w-full bg-white text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] rounded-xl p-3 outline-none font-sans font-medium"
+                className="w-full bg-white text-[#111111] border border-[#111111]/10 rounded-xl p-3 outline-none font-sans font-medium focus:ring-1 focus:ring-[#DA0711]"
               />
             </div>
           )}

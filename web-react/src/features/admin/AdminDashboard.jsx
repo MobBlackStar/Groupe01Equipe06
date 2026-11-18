@@ -41,14 +41,14 @@ const DEMO_ADMIN_DASHBOARD = {
     co2SavedGrams: 1420000, // 1.42 tonne
   },
   usersByRole: [
-    { label: 'Étudiants ESSECT', value: 812, color: '#E51C23' },
+    { label: 'Étudiants ESSECT', value: 812, color: '#DA0711' },
     { label: 'Commerçants', value: 28, color: '#FFD000' },
-    { label: 'Administrateurs', value: 2, color: '#141210' },
+    { label: 'Administrateurs', value: 2, color: '#111111' },
   ],
   ordersByStatus: [
     { label: 'Complétées (Retirées)', value: 1350, color: '#15803D' },
     { label: 'Payées / En cours', value: 42, color: '#FFD000' },
-    { label: 'Annulées / Expirées', value: 28, color: '#E51C23' },
+    { label: 'Annulées / Expirées', value: 28, color: '#DA0711' },
   ],
 };
 
@@ -67,9 +67,9 @@ export default function AdminDashboard() {
           const usersByRole = Array.isArray(raw.usersByRole)
             ? raw.usersByRole
             : [
-                { label: 'Étudiants ESSECT', value: raw.usersByRole?.STUDENT || 812, color: '#E51C23' },
+                { label: 'Étudiants ESSECT', value: raw.usersByRole?.STUDENT || 812, color: '#DA0711' },
                 { label: 'Commerçants', value: raw.usersByRole?.MERCHANT || 28, color: '#FFD000' },
-                { label: 'Administrateurs', value: raw.usersByRole?.ADMIN || 2, color: '#141210' },
+                { label: 'Administrateurs', value: raw.usersByRole?.ADMIN || 2, color: '#111111' },
               ];
 
           const ordersByStatus = Array.isArray(raw.ordersByStatus)
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
             : [
                 { label: 'Complétées (Retirées)', value: raw.ordersByStatus?.COMPLETED || 1350, color: '#15803D' },
                 { label: 'Payées / En cours', value: (raw.ordersByStatus?.PAID || 0) + (raw.ordersByStatus?.RESERVED || 0) || 42, color: '#FFD000' },
-                { label: 'Annulées / Expirées', value: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0) || 28, color: '#E51C23' },
+                { label: 'Annulées / Expirées', value: (raw.ordersByStatus?.CANCELLED || 0) + (raw.ordersByStatus?.EXPIRED || 0) || 28, color: '#DA0711' },
               ];
 
           const kpis = {
@@ -116,19 +116,19 @@ export default function AdminDashboard() {
   const kpis = data.kpis || DEMO_ADMIN_DASHBOARD.kpis;
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* En-tête Administrateur */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-[#111111]/10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#141210] text-white text-xs font-black uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#111111] text-white text-xs font-anton uppercase tracking-wider mb-2 shadow-sm">
               <ShieldCheck className="w-3.5 h-3.5 text-[#FFD000]" />
               <span>Console d'Administration &amp; Modération ESSECT</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111]">
               Supervision Globale de la Plateforme 🛡️
             </h1>
-            <p className="text-sm text-[#141210]/70 mt-1 font-sans">
+            <p className="text-sm text-[#666] mt-1 font-medium">
               Surveillance du volume d'affaires, validation des commerces et impact environnemental consolidé.
             </p>
           </div>
@@ -136,12 +136,12 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 flex-wrap">
             <Link
               to="/admin/merchants"
-              className="px-4 py-2.5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black text-[#141210] transition-all flex items-center gap-2"
+              className="btn-griddle-outline text-xs py-2 px-4 flex items-center gap-2"
             >
-              <Store className="w-4 h-4 text-[#E51C23]" />
+              <Store className="w-4 h-4 text-[#DA0711]" />
               <span>Modération Commerces</span>
               {kpis.storesPending > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-[#FFD000] border border-[#141210] text-[#141210] text-[10px] font-black animate-pulse">
+                <span className="px-2 py-0.5 rounded-full bg-[#FFD000] text-[#111111] text-[10px] font-anton animate-pulse">
                   {kpis.storesPending} en attente
                 </span>
               )}
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
 
             <Link
               to="/admin/users"
-              className="px-4 py-2.5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-xs font-black text-[#141210] transition-all flex items-center gap-2"
+              className="btn-griddle-outline text-xs py-2 px-4 flex items-center gap-2"
             >
               <Users className="w-4 h-4 text-[#15803D]" />
               <span>Utilisateurs ({kpis.totalUsers})</span>
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
 
             <Link
               to="/impact"
-              className="px-4 py-2.5 rounded-xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-1.5"
+              className="btn-griddle-primary text-xs py-2 px-4 flex items-center gap-1.5"
             >
               <span>Vue Impact Public</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -167,23 +167,23 @@ export default function AdminDashboard() {
 
         {/* Alerte si des commerces attendent validation */}
         {kpis.storesPending > 0 && (
-          <div className="p-4 rounded-2xl bg-[#FEF08A] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FFD000]/15 border border-[#FFD000]/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[#141210] text-[#FFD000]">
+              <div className="p-2.5 rounded-xl bg-[#111111] text-[#FFD000]">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-anton uppercase text-base text-[#141210]">
+                <h4 className="font-anton uppercase text-base text-[#111111]">
                   {kpis.storesPending} commerce{kpis.storesPending > 1 ? 's' : ''} en attente d'approbation
                 </h4>
-                <p className="text-xs text-[#141210]/80 font-sans">
+                <p className="text-xs text-[#666] font-medium">
                   Des gérants de Montfleury ont soumis leur dossier pour rejoindre CampusSave.
                 </p>
               </div>
             </div>
             <Link
               to="/admin/merchants"
-              className="px-4 py-2 rounded-xl bg-[#E51C23] text-white font-black text-xs border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all whitespace-nowrap"
+              className="btn-griddle-primary text-xs py-2 px-5 whitespace-nowrap"
             >
               Examiner les dossiers →
             </Link>
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
             title="Volume d'Affaires (GMV)"
             value={formatTND(kpis.gmvMillimes)}
             subtitle="Transactions traitées"
-            icon={<DollarSign className="w-5 h-5 text-[#E51C23]" />}
+            icon={<DollarSign className="w-5 h-5 text-[#DA0711]" />}
             badge="Économie campus"
             positive={true}
           />
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
             title="Commerces Validés"
             value={`${kpis.storesApproved} / ${kpis.totalStores}`}
             subtitle={`${kpis.storesPending} en attente de revue`}
-            icon={<Store className="w-5 h-5 text-[#E51C23]" />}
+            icon={<Store className="w-5 h-5 text-[#DA0711]" />}
             badge="Montfleury"
             positive={true}
             onClick={() => window.location.assign('/admin/merchants')}
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
             title="Commandes Totales"
             value={kpis.totalOrders}
             subtitle={`${kpis.ordersCompleted} repas retirés avec succès`}
-            icon={<ShoppingBag className="w-5 h-5 text-[#FFD000]" />}
+            icon={<ShoppingBag className="w-5 h-5 text-[#854D0E]" />}
             badge="Sauvetages"
             positive={true}
           />
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
             xKey="label"
             yKey="value"
             name="Utilisateurs"
-            barColor="#E51C23"
+            barColor="#DA0711"
             tooltipFormatter={(val) => `${val} membres`}
           />
 

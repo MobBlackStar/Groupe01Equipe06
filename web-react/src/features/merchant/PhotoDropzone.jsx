@@ -59,7 +59,7 @@ export default function PhotoDropzone({ photoUrl, onPhotoChange, className = '' 
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <label className="text-xs font-black uppercase tracking-wider text-[#141210]/70 block font-mono">
+      <label className="text-xs font-black uppercase tracking-wider text-[#111111]/70 block font-mono">
         Photo de Présentation du Plat
       </label>
 
@@ -69,12 +69,12 @@ export default function PhotoDropzone({ photoUrl, onPhotoChange, className = '' 
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`relative w-full h-44 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center cursor-pointer overflow-hidden ${
+        className={`relative w-full h-44 rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center cursor-pointer overflow-hidden ${
           dragActive
-            ? 'border-[#E51C23] bg-[#FEE2E2]'
+            ? 'border-[#DA0711] bg-[#FEE2E2]'
             : photoUrl
-            ? 'border-[#141210] bg-white shadow-[3px_3px_0px_#141210]'
-            : 'border-[#141210] bg-[#FAF6EE] hover:bg-white shadow-[3px_3px_0px_#141210]'
+            ? 'border-[#111111]/15 bg-white shadow-sm'
+            : 'border-[#111111]/20 bg-[#EDE6D7] hover:bg-white shadow-sm'
         }`}
       >
         <input
@@ -90,10 +90,10 @@ export default function PhotoDropzone({ photoUrl, onPhotoChange, className = '' 
               src={photoUrl}
               alt="Aperçu plat"
               onError={(e) => { e.currentTarget.onerror = null; }}
-              className="max-h-full max-w-full object-cover rounded-xl"
+              className="max-h-full max-w-full object-cover rounded-2xl"
             />
-            <div className="absolute inset-0 bg-[#141210]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl z-20 pointer-events-none">
-              <span className="text-xs font-black text-[#141210] bg-[#FFD000] px-3 py-1.5 rounded-lg border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+            <div className="absolute inset-0 bg-[#111111]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl z-20 pointer-events-none">
+              <span className="text-xs font-bold text-[#111111] bg-[#FFD000] px-4 py-2 rounded-full shadow-md">
                 Changer la photo (Glisser-déposer)
               </span>
             </div>
@@ -101,21 +101,21 @@ export default function PhotoDropzone({ photoUrl, onPhotoChange, className = '' 
         ) : (
           <div className="space-y-1.5 pointer-events-none">
             <span className="text-3xl block">📸</span>
-            <p className="text-xs font-black text-[#141210]">
+            <p className="text-xs font-bold text-[#111111]">
               Glissez-déposez une photo culinaire ou cliquez pour parcourir
             </p>
-            <p className="text-[10px] text-[#141210]/60 font-mono">
+            <p className="text-[10px] text-[#666] font-mono">
               JPEG, PNG ou WEBP jusqu'à 5 Mo
             </p>
           </div>
         )}
       </div>
 
-      {error && <p className="text-xs font-bold text-[#E51C23] mt-1">{error}</p>}
+      {error && <p className="text-xs font-bold text-[#DA0711] mt-1">{error}</p>}
 
       {/* Preset illustrations tunisiennes */}
       <div className="pt-1">
-        <span className="text-[10px] font-black uppercase text-[#141210]/60 block mb-1.5 font-mono">
+        <span className="text-[10px] font-bold uppercase text-[#666] block mb-1.5 font-mono">
           Ou choisissez une photo d'archive prête à l'emploi :
         </span>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -124,7 +124,7 @@ export default function PhotoDropzone({ photoUrl, onPhotoChange, className = '' 
               key={idx}
               type="button"
               onClick={() => onPhotoChange(preset.url)}
-              className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white border-2 border-[#141210] text-[#141210] hover:bg-[#FFD000] shadow-[1px_1px_0px_#141210] transition-colors flex items-center gap-1"
+              className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-white border border-[#111111]/15 text-[#111111] hover:bg-[#FFD000] shadow-sm transition-colors flex items-center gap-1"
             >
               <span>{preset.emoji}</span>
               <span>{preset.label}</span>

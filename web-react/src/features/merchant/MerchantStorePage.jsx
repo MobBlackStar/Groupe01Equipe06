@@ -124,7 +124,7 @@ export default function MerchantStorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* BANDEAU D'AGRÉMENT TEMPS RÉEL */}
         <PendingApprovalBanner
@@ -133,10 +133,10 @@ export default function MerchantStorePage() {
         />
 
         {/* Barre d'outils & Action de démonstration */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#111111]/10">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">{store.name}</h1>
-            <p className="text-xs text-[#141210]/70 mt-0.5 font-sans">
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111]">{store.name}</h1>
+            <p className="text-xs text-[#666] mt-0.5 font-sans">
               {store.street}, {store.area} • 📍 {distanceMeters}m de l'ESSECT (~{walkingMins} min à pied)
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function MerchantStorePage() {
             <button
               type="button"
               onClick={toggleDemoStatus}
-              className="text-xs font-black px-3 py-2 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:bg-[#FFD000] text-[#141210] transition-colors"
+              className="text-xs font-bold px-4 py-2 rounded-full bg-white border border-[#111111]/15 shadow-sm hover:bg-[#FFD000] text-[#111111] transition-colors cursor-pointer"
               title="Tester les 3 états d'agrément pour la soutenance"
             >
               🎭 Démo Statut ({store.status})
@@ -160,8 +160,8 @@ export default function MerchantStorePage() {
         </div>
 
         {/* Formulaire de Modification */}
-        <Card className="p-6 sm:p-8 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210]">
-          <h3 className="font-anton uppercase text-xl text-[#141210] mb-6 flex items-center gap-2 tracking-wide">
+        <Card className="p-6 sm:p-8 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
+          <h3 className="font-anton uppercase text-xl text-[#111111] mb-6 flex items-center gap-2 tracking-wide">
             <span>⚙️</span> Paramètres de l'Établissement &amp; Coordonnées
           </h3>
 
@@ -185,14 +185,14 @@ export default function MerchantStorePage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-black uppercase tracking-wider text-[#141210]/70 font-mono">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#666] font-mono">
                 Description &amp; Spécialités
               </label>
               <textarea
                 rows={3}
                 value={store.description}
                 onChange={(e) => handleChange('description', e.target.value)}
-                className="w-full bg-white text-[#141210] text-sm rounded-xl p-3.5 border-2 border-[#141210] shadow-[2px_2px_0px_#141210] focus:shadow-[4px_4px_0px_#141210] outline-none font-sans font-medium"
+                className="w-full bg-white text-[#111111] text-sm rounded-2xl p-4 border border-[#111111]/15 shadow-sm focus:border-[#DA0711] outline-none font-sans font-medium"
               />
             </div>
 

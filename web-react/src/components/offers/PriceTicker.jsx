@@ -59,7 +59,7 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
         {/* Badge réduction */}
         {discountPercent > 0 && (
           <span
-            className={`font-anton px-1.5 py-0.5 rounded-md bg-[#FFD000] text-[#141210] border border-[#141210] shadow-[1.5px_1.5px_0px_#141210] ${
+            className={`font-anton px-2 py-0.5 rounded-full bg-[#FFD000] text-[#111111] border border-[#111111]/10 shadow-sm ${
               isLarge ? 'text-sm' : 'text-[11px]'
             }`}
           >
@@ -70,9 +70,9 @@ function PriceTickerComponent({ offer, size = 'md', className = '' }) {
 
       {/* Indicateur Smart Decay */}
       {isDutch && (
-        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#C2410C]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#E51C23] animate-pulse" />
-          <span className="font-bold tracking-wide uppercase">Smart Decay actif</span>
+        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#DA0711]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#DA0711] animate-pulse" />
+          <span className="font-bold tracking-wide uppercase font-mono">Smart Decay actif</span>
         </div>
       )}
     </div>

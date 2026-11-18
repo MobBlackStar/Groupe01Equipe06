@@ -150,35 +150,35 @@ export default function MerchantScanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         {/* En-tête */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E51C23] text-white text-xs font-black uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider mb-2 shadow-sm">
             <QrCode className="w-3.5 h-3.5" />
             <span>Contrôle &amp; Validation</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210] mb-2">
+          <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111] mb-2">
             Validation des Retraits
           </h1>
-          <p className="text-xs sm:text-sm text-[#141210]/70 font-sans">
+          <p className="text-xs sm:text-sm text-[#666] font-sans">
             Vérifiez le Living Ticket de l'étudiant pour lui remettre son panier anti-gaspi.
           </p>
         </div>
 
         {/* Onglets de mode de scan */}
         {!result && (
-          <div className="flex bg-[#FAF6EE] border-2 border-[#141210] p-1 rounded-2xl mb-6 shadow-[3px_3px_0px_#141210]">
+          <div className="flex bg-[#EDE6D7] border border-[#111111]/8 p-1.5 rounded-full mb-6 shadow-sm">
             <button
               type="button"
               onClick={() => {
                 setActiveTab('camera');
                 setErrorDetails(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs sm:text-sm transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full font-anton uppercase text-xs sm:text-sm transition-all cursor-pointer ${
                 activeTab === 'camera'
-                  ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
-                  : 'text-[#141210]/70 hover:text-[#141210]'
+                  ? 'bg-[#DA0711] text-white shadow-sm'
+                  : 'text-[#666] hover:text-[#111111]'
               }`}
             >
               <QrCode className="w-4 h-4" />
@@ -190,10 +190,10 @@ export default function MerchantScanPage() {
                 setActiveTab('manual');
                 setErrorDetails(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs sm:text-sm transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full font-anton uppercase text-xs sm:text-sm transition-all cursor-pointer ${
                 activeTab === 'manual'
-                  ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
-                  : 'text-[#141210]/70 hover:text-[#141210]'
+                  ? 'bg-[#DA0711] text-white shadow-sm'
+                  : 'text-[#666] hover:text-[#111111]'
               }`}
             >
               <KeyRound className="w-4 h-4" />
@@ -204,55 +204,55 @@ export default function MerchantScanPage() {
 
         {/* AFFICHAGE DU RÉSULTAT DU RETRAIT */}
         {result ? (
-          <div className="bg-[#FAF6EE] border-2 border-[#15803D] rounded-3xl p-6 shadow-[6px_6px_0px_#141210] text-center animate-in fade-in zoom-in-95 duration-300">
-            <div className="w-20 h-20 bg-[#DCFCE7] text-[#15803D] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+          <div className="bg-[#EDE6D7] border border-[#15803D]/20 rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 bg-[#DCFCE7] text-[#15803D] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
               <CheckCircle2 className="w-10 h-10" />
             </div>
 
-            <h2 className="font-anton uppercase text-2xl sm:text-3xl text-[#141210] mb-1">
+            <h2 className="font-anton uppercase text-2xl sm:text-3xl text-[#111111] mb-1">
               Retrait Validé !
             </h2>
-            <p className="text-[#15803D] font-black text-sm mb-6">
+            <p className="text-[#15803D] font-bold text-sm mb-6">
               Remettre la commande à l'étudiant dès maintenant.
             </p>
 
-            <div className="bg-white rounded-2xl p-4 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-left space-y-3 mb-6">
-              <div className="flex justify-between items-center text-sm border-b border-[#141210]/15 pb-2">
-                <span className="text-[#141210]/60 font-mono text-xs">N° Commande :</span>
-                <span className="font-mono font-black text-[#141210] tracking-wider">
+            <div className="bg-white rounded-2xl p-5 border border-[#111111]/10 shadow-sm text-left space-y-3 mb-6">
+              <div className="flex justify-between items-center text-sm border-b border-[#111111]/10 pb-2">
+                <span className="text-[#666] font-mono text-xs">N° Commande :</span>
+                <span className="font-mono font-bold text-[#111111] tracking-wider">
                   {result.order?.orderCode}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-sm border-b border-[#141210]/15 pb-2">
-                <span className="text-[#141210]/60 font-mono text-xs">Étudiant :</span>
-                <span className="font-bold text-[#141210]">
+              <div className="flex justify-between items-center text-sm border-b border-[#111111]/10 pb-2">
+                <span className="text-[#666] font-mono text-xs">Étudiant :</span>
+                <span className="font-bold text-[#111111]">
                   {result.order?.studentSnapshot?.displayName || 'Étudiant ESSECT'}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-sm border-b border-[#141210]/15 pb-2">
-                <span className="text-[#141210]/60 font-mono text-xs">Quantité :</span>
-                <span className="font-black text-[#E51C23]">
+              <div className="flex justify-between items-center text-sm border-b border-[#111111]/10 pb-2">
+                <span className="text-[#666] font-mono text-xs">Quantité :</span>
+                <span className="font-bold text-[#DA0711]">
                   {result.order?.quantity} portion(s)
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-[#141210]/60 font-mono text-xs">EcoPoints attribués :</span>
-                <span className="font-black text-[#15803D]">
+                <span className="text-[#666] font-mono text-xs">EcoPoints attribués :</span>
+                <span className="font-bold text-[#15803D]">
                   +{result.pointsAwarded} pts
                 </span>
               </div>
 
               {/* Révélation du panier surprise */}
               {result.isSurprise && result.reveal && (
-                <div className="mt-4 pt-3 border-t-2 border-dashed border-[#141210]/20">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#E51C23] block mb-2 font-mono">
+                <div className="mt-4 pt-3 border-t border-dashed border-[#111111]/20">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#DA0711] block mb-2 font-mono">
                     🎁 Contenu Mystery Box Dévoilé :
                   </span>
                   <ul className="space-y-1">
                     {result.reveal.items?.map((item, idx) => (
-                      <li key={idx} className="text-xs text-[#141210] flex justify-between font-mono">
+                      <li key={idx} className="text-xs text-[#111111] flex justify-between font-mono">
                         <span>• {item.name}</span>
-                        <span className="font-black text-[#141210]">x{item.qty}</span>
+                        <span className="font-bold text-[#111111]">x{item.qty}</span>
                       </li>
                     ))}
                   </ul>
@@ -263,7 +263,7 @@ export default function MerchantScanPage() {
             <button
               type="button"
               onClick={handleReset}
-              className="w-full flex items-center justify-center gap-2 bg-[#E51C23] text-white font-anton uppercase text-lg py-3.5 px-6 rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all"
+              className="w-full btn-griddle-primary py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer font-anton uppercase text-base"
             >
               <RotateCcw className="w-5 h-5" />
               Scanner la commande suivante
@@ -273,16 +273,16 @@ export default function MerchantScanPage() {
           <>
             {/* AFFICHAGE DES ERREURS DE VALIDATION */}
             {errorDetails && (
-              <div className="bg-[#FEE2E2] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] rounded-2xl p-5 mb-6 text-center animate-in fade-in duration-200">
-                <div className="w-12 h-12 bg-white text-[#991B1B] rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-[#141210]">
+              <div className="bg-[#FEE2E2] border border-[#DA0711]/20 shadow-sm rounded-3xl p-6 mb-6 text-center animate-in fade-in duration-200">
+                <div className="w-12 h-12 bg-white text-[#DA0711] rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
                   <XCircle className="w-6 h-6" />
                 </div>
-                <h3 className="font-anton uppercase text-lg text-[#991B1B] mb-1">Refus du Billet</h3>
-                <p className="text-[#141210] text-sm mb-4 font-sans">{errorDetails.message}</p>
+                <h3 className="font-anton uppercase text-lg text-[#DA0711] mb-1">Refus du Billet</h3>
+                <p className="text-[#111111] text-sm mb-4 font-sans">{errorDetails.message}</p>
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="inline-flex items-center gap-2 bg-white text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] px-4 py-2 rounded-lg text-xs font-black transition-all"
+                  className="inline-flex items-center gap-2 bg-white text-[#111111] border border-[#111111]/15 shadow-sm px-5 py-2 rounded-full text-xs font-bold transition-all hover:bg-[#FAF3E6] cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Réessayer
@@ -292,24 +292,24 @@ export default function MerchantScanPage() {
 
             {/* VUE SCANNER CAMÉRA */}
             {activeTab === 'camera' && (
-              <div className="bg-[#FAF6EE] border-2 border-[#141210] rounded-3xl p-6 shadow-[4px_4px_0px_#141210] text-center">
-                <div className="relative mx-auto rounded-2xl overflow-hidden bg-white max-w-[320px] aspect-square flex items-center justify-center border-2 border-[#141210] shadow-[3px_3px_0px_#141210]">
+              <div className="bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.04)] text-center">
+                <div className="relative mx-auto rounded-2xl overflow-hidden bg-white max-w-[320px] aspect-square flex items-center justify-center border border-[#111111]/10 shadow-sm">
                   <div id="qr-reader" className="w-full h-full" />
                   {loading && (
-                    <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-[#141210] z-10">
-                      <div className="w-8 h-8 border-3 border-[#E51C23] border-t-transparent rounded-full animate-spin mb-2" />
-                      <span className="text-xs font-black font-mono">Vérification cryptographique...</span>
+                    <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center text-[#111111] z-10">
+                      <div className="w-8 h-8 border-3 border-[#DA0711] border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="text-xs font-bold font-mono">Vérification cryptographique...</span>
                     </div>
                   )}
                 </div>
 
                 {cameraError ? (
-                  <div className="mt-4 flex items-center gap-2 text-[#991B1B] text-xs bg-[#FEE2E2] border-2 border-[#141210] p-3 rounded-xl text-left shadow-[2px_2px_0px_#141210]">
+                  <div className="mt-4 flex items-center gap-2 text-[#DA0711] text-xs bg-[#FEE2E2] border border-[#DA0711]/20 p-3.5 rounded-2xl text-left shadow-sm">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{cameraError}</span>
                   </div>
                 ) : (
-                  <p className="text-xs text-[#141210]/70 mt-4 flex items-center justify-center gap-1.5 font-sans font-medium">
+                  <p className="text-xs text-[#666] mt-4 flex items-center justify-center gap-1.5 font-sans font-medium">
                     <ShieldCheck className="w-4 h-4 text-[#15803D]" />
                     Cadrez le QR code dynamique de l'étudiant dans le carré
                   </p>
@@ -319,10 +319,10 @@ export default function MerchantScanPage() {
 
             {/* VUE SAISIE MANUELLE DE SECOURS */}
             {activeTab === 'manual' && (
-              <div className="bg-[#FAF6EE] border-2 border-[#141210] rounded-3xl p-6 shadow-[4px_4px_0px_#141210]">
+              <div className="bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-6 sm:p-8 shadow-[0_4px_24px_rgba(17,17,17,0.04)]">
                 <form onSubmit={handleManualSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-xs font-black uppercase tracking-wider text-[#141210]/70 mb-2 font-mono">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#666] mb-2 font-mono">
                       Code Commande (ex : CS-7H9KZ)
                     </label>
                     <input
@@ -332,12 +332,12 @@ export default function MerchantScanPage() {
                       placeholder="CS-XXXXX"
                       maxLength={8}
                       required
-                      className="w-full bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] rounded-xl px-4 py-3 text-[#141210] font-mono text-lg uppercase tracking-wider focus:outline-none focus:shadow-[4px_4px_0px_#141210] transition-all"
+                      className="w-full bg-white border border-[#111111]/15 shadow-sm rounded-full px-5 py-3 text-[#111111] font-mono text-base uppercase tracking-wider focus:outline-none focus:border-[#DA0711] transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black uppercase tracking-wider text-[#141210]/70 mb-2 font-mono">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#666] mb-2 font-mono">
                       Code de Secours (6 chiffres affichés sous le QR)
                     </label>
                     <input
@@ -349,14 +349,14 @@ export default function MerchantScanPage() {
                       placeholder="123456"
                       maxLength={6}
                       required
-                      className="w-full bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] rounded-xl px-4 py-3 text-[#E51C23] font-mono text-2xl tracking-widest text-center focus:outline-none focus:shadow-[4px_4px_0px_#141210] font-black transition-all"
+                      className="w-full bg-white border border-[#111111]/15 shadow-sm rounded-full px-5 py-3 text-[#DA0711] font-mono text-2xl tracking-widest text-center focus:outline-none focus:border-[#DA0711] font-black transition-all"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading || orderCode.length < 5 || code6.length !== 6}
-                    className="w-full bg-[#E51C23] text-white font-anton uppercase text-lg py-3.5 rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-4"
+                    className="w-full btn-griddle-primary py-4 rounded-full text-base font-anton cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

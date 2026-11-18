@@ -93,61 +93,61 @@ export default function MerchantOrdersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* En-tête commerçant */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[#111111]/10">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#141210]">
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-[#111111]">
               Commandes &amp; Retraits des Étudiants
             </h1>
-            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
+            <p className="text-xs text-[#111111]/70 mt-1 font-sans">
               Gérez les retraits d'invendus au comptoir et vérifiez les Living Tickets.
             </p>
           </div>
 
           <Link
             to="/merchant/scan"
-            className="px-5 py-2.5 rounded-2xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-2 self-start sm:self-auto"
+            className="btn-griddle-primary px-6 py-2.5 text-xs font-anton uppercase self-start sm:self-auto"
           >
             <span>📷 Scanner un QR Code</span>
           </Link>
         </div>
 
         {/* Onglets statut */}
-        <div className="flex rounded-2xl bg-[#FAF6EE] p-1.5 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-xs">
+        <div className="flex rounded-full bg-[#EDE6D7] p-1.5 border border-[#111111]/8 shadow-sm text-xs gap-1">
           <button
             type="button"
             onClick={() => setActiveTab('PAID')}
-            className={`flex-1 py-2.5 rounded-xl font-black transition-all ${
+            className={`flex-1 py-2.5 rounded-full font-anton uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'PAID'
-                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210]'
-                : 'text-[#141210]/70 hover:text-[#141210]'
+                ? 'bg-[#DA0711] text-white shadow-sm'
+                : 'text-[#666] hover:text-[#111111]'
             }`}
           >
-            🎟️ Payées — À Remettre ({orders.filter((o) => o.status === 'PAID').length})
+            🎟️ Payées ({orders.filter((o) => o.status === 'PAID').length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('RESERVED')}
-            className={`flex-1 py-2.5 rounded-xl font-black transition-all ${
+            className={`flex-1 py-2.5 rounded-full font-anton uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'RESERVED'
-                ? 'bg-[#FFD000] text-[#141210] shadow-[2px_2px_0px_#141210]'
-                : 'text-[#141210]/70 hover:text-[#141210]'
+                ? 'bg-[#FFD000] text-[#111111] shadow-sm'
+                : 'text-[#666] hover:text-[#111111]'
             }`}
           >
-            ⏳ Réservées (10 min) ({orders.filter((o) => o.status === 'RESERVED').length})
+            ⏳ Réservées ({orders.filter((o) => o.status === 'RESERVED').length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('COMPLETED')}
-            className={`flex-1 py-2.5 rounded-xl font-black transition-all ${
+            className={`flex-1 py-2.5 rounded-full font-anton uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'COMPLETED'
-                ? 'bg-[#DCFCE7] text-[#15803D] shadow-[2px_2px_0px_#141210]'
-                : 'text-[#141210]/70 hover:text-[#141210]'
+                ? 'bg-[#DCFCE7] text-[#15803D] shadow-sm'
+                : 'text-[#666] hover:text-[#111111]'
             }`}
           >
-            ✓ Remises sur place ({orders.filter((o) => o.status === 'COMPLETED').length})
+            ✓ Remises ({orders.filter((o) => o.status === 'COMPLETED').length})
           </button>
         </div>
 
@@ -155,7 +155,7 @@ export default function MerchantOrdersPage() {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <Spinner size="lg" />
-            <p className="text-xs text-[#141210]/60 font-mono">Synchronisation des retraits en direct...</p>
+            <p className="text-xs text-[#111111]/60 font-mono">Synchronisation des retraits en direct...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <EmptyState
@@ -168,28 +168,28 @@ export default function MerchantOrdersPage() {
             {filteredOrders.map((o) => (
               <div
                 key={o.id}
-                className="p-5 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-5 sm:p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-black text-sm text-[#141210] px-2.5 py-0.5 rounded bg-[#FFD000] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+                    <span className="font-mono font-bold text-sm text-[#111111] px-3 py-1 rounded-full bg-[#FFD000] border border-[#111111]/15 shadow-sm">
                       {o.orderCode}
                     </span>
-                    <span className="text-xs text-[#141210] font-bold">
+                    <span className="text-xs text-[#111111] font-bold">
                       👤 {o.customerName || 'Étudiant ESSECT'}
                     </span>
                   </div>
 
-                  <h3 className="font-anton uppercase text-lg text-[#141210] pt-1">{o.offerTitle}</h3>
+                  <h3 className="font-anton uppercase text-lg text-[#111111] pt-1">{o.offerTitle}</h3>
 
-                  <div className="flex items-center gap-3 text-xs text-[#141210]/70 font-sans flex-wrap">
-                    <span>Quantité : <strong className="text-[#141210] font-bold">{o.quantity}</strong></span>
+                  <div className="flex items-center gap-3 text-xs text-[#666] font-sans flex-wrap">
+                    <span>Quantité : <strong className="text-[#111111] font-bold">{o.quantity}</strong></span>
                     <span>•</span>
-                    <span>Total réglé : <strong className="text-[#E51C23] font-mono font-bold">{formatTND(o.totalPriceMillimes)}</strong></span>
+                    <span>Total réglé : <strong className="text-[#DA0711] font-mono font-bold">{formatTND(o.totalPriceMillimes)}</strong></span>
                     <span>•</span>
                     <span>Créneau : {o.pickupSlot}</span>
                     <span>•</span>
-                    <span className="font-mono text-[11px] text-[#141210]/50">{o.createdAt?.includes('T') ? formatTunisDate(o.createdAt) : o.createdAt}</span>
+                    <span className="font-mono text-[11px] text-[#888]">{o.createdAt?.includes('T') ? formatTunisDate(o.createdAt) : o.createdAt}</span>
                   </div>
                 </div>
 
@@ -197,20 +197,20 @@ export default function MerchantOrdersPage() {
                   {o.status === 'PAID' && (
                     <Link
                       to="/merchant/scan"
-                      className="px-4 py-2 rounded-xl bg-[#E51C23] text-white border-2 border-[#141210] shadow-[3px_3px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] font-black text-xs transition-all flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded-full bg-[#DA0711] text-white font-bold text-xs transition-all shadow-sm hover:opacity-95 flex items-center gap-1.5"
                     >
                       <span>Valider le retrait →</span>
                     </Link>
                   )}
 
                   {o.status === 'RESERVED' && (
-                    <span className="text-xs text-amber-700 font-bold px-3 py-1 rounded-full bg-[#FEF08A] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] animate-pulse">
+                    <span className="text-xs text-amber-800 font-bold px-3.5 py-1.5 rounded-full bg-[#FEF08A] border border-amber-600/20 shadow-sm animate-pulse">
                       ⏳ En attente de règlement Konnect
                     </span>
                   )}
 
                   {o.status === 'COMPLETED' && (
-                    <span className="text-xs text-[#15803D] font-bold px-3 py-1 rounded-full bg-[#DCFCE7] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+                    <span className="text-xs text-[#15803D] font-bold px-3.5 py-1.5 rounded-full bg-[#DCFCE7] border border-[#15803D]/20 shadow-sm">
                       ✓ Remis avec succès
                     </span>
                   )}

@@ -73,24 +73,24 @@ export default function FiliereLeaderboard({ leaderboard = DEFAULT_FILIERES_DATA
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-6">
+    <div className="p-6 sm:p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] space-y-6">
       {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b-2 border-[#141210]/15">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-[#111111]/10">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#FFD000] text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+          <div className="p-3 rounded-2xl bg-[#FFD000] text-[#111111] shadow-sm">
             <Trophy className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-anton uppercase text-xl sm:text-2xl text-[#141210] tracking-wide">
+            <h3 className="font-anton uppercase text-xl sm:text-2xl text-[#111111] tracking-wide">
               Challenge Inter-Filières ESSECT 🏆
             </h3>
-            <p className="text-xs text-[#141210]/70 mt-0.5 font-sans">
+            <p className="text-xs text-[#666] mt-0.5 font-sans">
               Classement en direct de la mobilisation anti-gaspillage par promotion.
             </p>
           </div>
         </div>
 
-        <span className="px-3 py-1 rounded-full bg-[#E51C23] text-white text-xs font-black uppercase self-start sm:self-auto flex items-center gap-1.5 shadow-[2px_2px_0px_#141210]">
+        <span className="px-4 py-1.5 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase self-start sm:self-auto flex items-center gap-1.5 shadow-sm">
           <Flame className="w-3.5 h-3.5" />
           <span>Saison Universitaire 2026</span>
         </span>
@@ -106,27 +106,27 @@ export default function FiliereLeaderboard({ leaderboard = DEFAULT_FILIERES_DATA
           return (
             <div
               key={item.filiere}
-              className={`p-4 rounded-2xl border-2 transition-all ${
+              className={`p-4 sm:p-5 rounded-2xl bg-white border transition-all ${
                 isUserFiliere
-                  ? 'bg-white border-[#E51C23] shadow-[4px_4px_0px_#E51C23]'
-                  : 'bg-white border-[#141210] shadow-[2px_2px_0px_#141210]'
+                  ? 'border-[#DA0711] ring-2 ring-[#DA0711]/30 shadow-md'
+                  : 'border-[#111111]/10 shadow-sm'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center font-anton text-sm border-2 border-[#141210] shadow-[1px_1px_0px_#141210] bg-[#FAF6EE]`}>
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center font-anton text-sm bg-[#EDE6D7] text-[#111111] shadow-sm">
                     {rank.icon}
                   </span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-anton uppercase text-base text-[#141210]">{item.name}</h4>
+                      <h4 className="font-anton uppercase text-base text-[#111111]">{item.name}</h4>
                       {isUserFiliere && (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#E51C23] text-white">
+                        <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#DA0711] text-white">
                           Votre Promotion
                         </span>
                       )}
                     </div>
-                    <span className="text-xs font-bold text-[#141210]/60 font-sans">{item.badge}</span>
+                    <span className="text-xs font-medium text-[#666] font-sans">{item.badge}</span>
                   </div>
                 </div>
 
@@ -134,14 +134,14 @@ export default function FiliereLeaderboard({ leaderboard = DEFAULT_FILIERES_DATA
                   <span className="font-anton text-lg text-[#15803D] block">
                     {item.co2SavedKg} kg CO₂
                   </span>
-                  <span className="text-[11px] font-mono text-[#141210]/60">
+                  <span className="text-[11px] font-mono text-[#666] font-medium">
                     {item.studentsCount} étudiants • {item.ecoPoints} pts
                   </span>
                 </div>
               </div>
 
               {/* Barre de progression */}
-              <div className="w-full bg-[#F4EFE6] h-3 rounded-full overflow-hidden border border-[#141210]">
+              <div className="w-full bg-[#FAF3E6] h-2.5 rounded-full overflow-hidden border border-[#111111]/10">
                 <div
                   className="bg-[#15803D] h-full rounded-full transition-all duration-500"
                   style={{ width: `${percent}%` }}

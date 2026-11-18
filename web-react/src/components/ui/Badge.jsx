@@ -13,19 +13,19 @@ export default function Badge({
   className = '',
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center font-bold uppercase tracking-wider rounded-md select-none border text-xs';
+  const baseStyles = 'inline-flex items-center font-bold uppercase tracking-wider rounded-full select-none text-xs';
 
   const variants = {
-    green: 'bg-[#DCFCE7] text-[#15803D] border-[#166534]',
-    lime: 'bg-[#DCFCE7] text-[#15803D] border-[#166534]',
-    emerald: 'bg-[#DCFCE7] text-[#15803D] border-[#166534]',
-    yellow: 'bg-[#FEF08A] text-[#854D0E] border-[#A16207]',
-    griddle: 'bg-[#FFD000] text-[#141210] border-2 border-[#141210] shadow-[2px_2px_0px_#141210]',
-    orange: 'bg-[#FFEDD5] text-[#C2410C] border-[#EA580C]',
-    red: 'bg-[#FEE2E2] text-[#B91C1C] border-[#DC2626]',
-    cyan: 'bg-[#E0F2FE] text-[#0369A1] border-[#0284C7]',
-    purple: 'bg-[#F3E8FF] text-[#7E22CE] border-[#9333EA]',
-    muted: 'bg-[#F4EFE6] text-[#555] border-[#141210]/30',
+    green: 'bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20',
+    lime: 'bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20',
+    emerald: 'bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20',
+    yellow: 'bg-[#FEF08A] text-[#854D0E] border border-[#A16207]/20',
+    griddle: 'bg-[#FFD000] text-[#111111] border border-[#111111]/15',
+    orange: 'bg-[#FFEDD5] text-[#C2410C] border border-[#EA580C]/20',
+    red: 'bg-[#FEE2E2] text-[#DA0711] border border-[#DA0711]/20',
+    cyan: 'bg-[#E0F2FE] text-[#0369A1] border border-[#0284C7]/20',
+    purple: 'bg-[#F3E8FF] text-[#7E22CE] border border-[#9333EA]/20',
+    muted: 'bg-[#EDE6D7] text-[#666] border border-[#111111]/10',
   };
 
   const dotColors = {
@@ -33,7 +33,7 @@ export default function Badge({
     lime: 'bg-[#15803D]',
     emerald: 'bg-[#15803D]',
     yellow: 'bg-[#854D0E]',
-    griddle: 'bg-[#141210]',
+    griddle: 'bg-[#111111]',
     orange: 'bg-[#C2410C]',
     red: 'bg-[#B91C1C]',
     cyan: 'bg-[#0369A1]',

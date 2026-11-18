@@ -13,13 +13,13 @@ export default function EmptyState({
 }) {
   return (
     <div
-      className={`w-full flex flex-col items-center justify-center text-center p-8 sm:p-12 bg-[#FAF6EE] border-2 border-dashed border-[#141210] rounded-xl shadow-[3px_3px_0px_#141210] ${className}`}
+      className={`w-full flex flex-col items-center justify-center text-center p-8 sm:p-12 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 ${className}`}
     >
-      <div className="w-16 h-16 rounded-xl bg-white border-2 border-[#141210] flex items-center justify-center text-3xl mb-4 shadow-[2px_2px_0px_#141210]">
+      <div className="w-16 h-16 rounded-2xl bg-white border border-[#111111]/10 flex items-center justify-center text-3xl mb-4 shadow-sm">
         {icon}
       </div>
-      <h4 className="text-lg font-black text-[#141210] uppercase tracking-wide mb-1.5">{title}</h4>
-      <p className="text-xs text-[#555] max-w-sm mb-6 leading-relaxed font-medium">
+      <h4 className="text-xl font-anton uppercase text-[#111111] tracking-wide mb-1.5">{title}</h4>
+      <p className="text-xs text-[#666] max-w-sm mb-6 leading-relaxed font-medium">
         {description}
       </p>
       {action && <div className="inline-flex">{action}</div>}

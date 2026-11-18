@@ -1,85 +1,115 @@
-// 💡 Concept & Analogie : Comme les fondations d'un édifice, le pied de page ancre le projet dans son contexte académique et institutionnel.
-// 🔄 Comparaison React / Flutter : En React, `Footer` conclut la page web ; en Flutter mobile, l'espace restreint privilégie un panneau dans le profil.
-// 🎯 À retenir pour la soutenance : "Ce footer certifie le rattachement universitaire à l'ESSECT Montfleury et rappelle les engagements écologiques fondateurs."
+// 💡 Concept & Analogie : Comme le bas de page signature du site Griddle, ce footer conclut l'expérience par 4 colonnes épurées et l'impression monumentale du logo bulle rouge vif CAMPUSSAVE mur-à-mur.
+// 🔄 Comparaison React / Flutter : En React, `Footer` intègre la typographie géante responsive Griddle ; en Flutter, l'espace restreint privilégie un panneau de certification dans le profil.
+// 🎯 À retenir pour la soutenance : "Ce footer ancre le projet dans l'écosystème de l'ESSECT Montfleury avec l'impact visuel inoubliable de la marque."
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf } from 'lucide-react';
+import { MapPin, ArrowRight, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#FAF6EE] border-t-2 border-[#141210] text-[#141210] text-xs py-10 px-4 sm:px-6 lg:px-8 mt-auto shadow-[0_-4px_0px_rgba(20,18,16,0.03)]">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Colonne 1 : Projet & Université */}
-        <div className="space-y-3 md:col-span-2">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#E51C23] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] flex items-center justify-center text-white font-anton text-xs">
-              CS
+    <footer className="w-full bg-[#FAF3E6] text-[#111111] pt-16 pb-6 px-4 sm:px-6 lg:px-8 mt-auto overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        {/* 4 Colonnes Épurées Griddle */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-12 border-b border-[#111111]/8">
+          
+          {/* Colonne 1 : Adresse & Contact (span 4) */}
+          <div className="md:col-span-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <MapPin className="w-5 h-5 text-[#DA0711] shrink-0 mt-0.5" />
+              <div>
+                <p className="font-anton uppercase tracking-wider text-sm text-[#111111]">
+                  ESSECT MONTFLEURY
+                </p>
+                <p className="text-xs text-[#666] font-medium leading-relaxed">
+                  65 Rue Abdelaziz Thâalbi, Montfleury, 1089 Tunis
+                </p>
+                <p className="text-xs text-[#DA0711] font-bold mt-1">
+                  contact@campussave.tn
+                </p>
+              </div>
             </div>
-            <span className="font-anton uppercase text-[#141210] text-lg tracking-wider">
-              Campus<span className="text-[#E51C23]">Save</span>
-            </span>
           </div>
-          <p className="text-[#555] text-xs leading-relaxed max-w-md font-medium">
-            Plateforme intelligente anti-gaspillage alimentaire et de solidarité étudiante développée pour le campus de l'<strong>ESSECT Montfleury</strong> (Université de Tunis).
-          </p>
-          <div className="flex items-center gap-2 text-[11px] text-[#15803D] font-bold">
-            <Leaf className="w-3.5 h-3.5" />
-            <span>Chaque repas sauvé évite 2,5 kg d'équivalent CO₂ (Standard FAO 2013)</span>
+
+          {/* Colonne 2 : Liens Rapides (span 2) */}
+          <div className="md:col-span-2 space-y-2">
+            <h4 className="font-anton uppercase tracking-wider text-xs text-[#111111]">
+              ACCÈS RAPIDE
+            </h4>
+            <ul className="space-y-1.5 text-xs font-bold text-[#666]">
+              <li>
+                <Link to="/app" className="hover:text-[#DA0711] transition-colors">
+                  OFFRES ANTI-GASPI
+                </Link>
+              </li>
+              <li>
+                <Link to="/app/radar" className="hover:text-[#DA0711] transition-colors">
+                  HOLO-RADAR 3D
+                </Link>
+              </li>
+              <li>
+                <Link to="/app/loyalty" className="hover:text-[#DA0711] transition-colors">
+                  FIDÉLITÉ & BADGES
+                </Link>
+              </li>
+              <li>
+                <Link to="/impact" className="hover:text-[#DA0711] transition-colors">
+                  IMPACT CARBONE
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Colonne 3 : Campus & Soutenance (span 2) */}
+          <div className="md:col-span-2 space-y-2">
+            <h4 className="font-anton uppercase tracking-wider text-xs text-[#111111]">
+              PROJET 2026
+            </h4>
+            <ul className="space-y-1.5 text-xs font-bold text-[#666]">
+              <li>LICENCE E-BUSINESS</li>
+              <li>ESSECT MONTFLEURY</li>
+              <li>RITEJ BEJAOUI</li>
+              <li>FEDI TOUATI</li>
+            </ul>
+          </div>
+
+          {/* Colonne 4 : Newsletter / Alertes Anti-Gaspi (span 4) */}
+          <div className="md:col-span-4 space-y-3">
+            <h4 className="font-anton uppercase tracking-wider text-xs text-[#111111]">
+              REJOINDRE LA COMMUNAUTÉ
+            </h4>
+            <p className="text-xs text-[#666]">
+              Reçois les alertes flash 15 min avant la fin des cours à l'ESSECT.
+            </p>
+            <div className="relative flex items-center max-w-sm">
+              <input
+                type="email"
+                placeholder="prenom.nom@essect.u-tunis.tn"
+                className="w-full pl-4 pr-12 py-2.5 rounded-full bg-[#EDE6D7] border border-[#111111]/10 text-xs text-[#111111] placeholder:text-[#888] focus:outline-none focus:ring-1 focus:ring-[#DA0711]"
+              />
+              <button
+                type="button"
+                className="absolute right-1 w-8 h-8 rounded-full bg-[#DA0711] text-white flex items-center justify-center hover:bg-[#bd060f] transition-transform active:scale-90"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Colonne 2 : Espaces de la Plateforme */}
-        <div className="space-y-2">
-          <h4 className="font-black text-[#141210] uppercase tracking-wider text-[11px]">
-            Navigation
-          </h4>
-          <ul className="space-y-1.5 text-xs font-bold">
-            <li>
-              <Link to="/app" className="text-[#555] hover:text-[#E51C23] transition-colors">
-                Catalogue Étudiant
-              </Link>
-            </li>
-            <li>
-              <Link to="/app/radar" className="text-[#555] hover:text-[#E51C23] transition-colors">
-                Holo-Radar 3D Montfleury
-              </Link>
-            </li>
-            <li>
-              <Link to="/app/loyalty" className="text-[#555] hover:text-[#E51C23] transition-colors">
-                Carte de Fidélité Éco
-              </Link>
-            </li>
-            <li>
-              <Link to="/merchant/dashboard" className="text-[#555] hover:text-[#E51C23] transition-colors">
-                Espace Commerçant
-              </Link>
-            </li>
-            <li>
-              <Link to="/impact" className="text-[#E51C23] hover:underline transition-colors font-black">
-                Impact Écologique Campus
-              </Link>
-            </li>
-          </ul>
+        {/* Le Logo Bulle Géant Monumental : CAMPUSSAVE */}
+        <div className="pt-8 pb-4">
+          <div className="griddle-bubble-logo select-none">
+            CAMPUSSAVE
+          </div>
         </div>
 
-        {/* Colonne 3 : Équipe & Soutenance */}
-        <div className="space-y-2">
-          <h4 className="font-black text-[#141210] uppercase tracking-wider text-[11px]">
-            Projet Universitaire
-          </h4>
-          <p className="text-xs text-[#333]">
-            <strong>Licence E-Business 3ème Année</strong>
-          </p>
-          <p className="text-xs text-[#666] font-medium">
-            Projet Intégrateur Web & Mobile
-          </p>
-          <p className="text-xs text-[#666] pt-1">
-            Développé par <strong className="text-[#141210]">Ritej Bejaoui</strong> & <strong className="text-[#141210]">Fedi Touati</strong>.
-          </p>
-          <p className="text-[11px] text-[#888] pt-1 font-mono">
-            © 2026 CampusSave • ESSECT Montfleury
-          </p>
+        {/* Mentions Légales et Badge Bas de Page */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#888] pt-2">
+          <p>© 2026 CampusSave • Conçu avec passion pour les étudiants de l'ESSECT Montfleury</p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDE6D7] text-[#111111] font-bold text-[10px]">
+            <span>⚡ Standard Anti-Gaspillage ESSECT</span>
+          </div>
         </div>
       </div>
     </footer>

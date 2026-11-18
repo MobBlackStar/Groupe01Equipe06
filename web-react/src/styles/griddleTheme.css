@@ -1,29 +1,33 @@
 /**
- * Griddle Total Visual Theme & Utility Classes
+ * Griddle Total Visual Theme & Utility Classes (Framer Griddle High-Fidelity)
  * CampusSave - ESSECT Anti-Gaspillage Platform
  * 
- * Palette:
- * - Canvas: #F4EFE6 (Warm Butcher-Paper Cream)
- * - Cards: #FAF6EE (Warm Ivory), #FFFFFF (Pure Paper)
- * - Ink & Borders: #141210 (2px solid #141210, shadow: 4px 4px 0px #141210)
- * - Accents: #E51C23 (Griddle Crimson Red), #FFD000 (Mustard Yellow)
+ * True Framer Griddle Palette:
+ * - Canvas: #FAF3E6 (Warm Butcher-Paper Cream)
+ * - Cards: #EDE6D7 (Soft Biscuit / Cardboard), #FFFFFF (Pure Receipt / Paper)
+ * - Ink: #111111 (Deep Warm Charcoal Ink)
+ * - Accents: #DA0711 (Griddle Crimson Red), #FFD000 (Mustard Yellow)
+ * 
+ * Rule: Zero heavy comic-book borders! Zero harsh 4px black shadows!
+ * Pure, open, warm organic diner aesthetic with crisp condensed typography.
  */
 
 :root {
-  --griddle-canvas: #F4EFE6;
-  --griddle-card: #FAF6EE;
-  --griddle-pure: #FFFFFF;
-  --griddle-ink: #141210;
-  --griddle-red: #E51C23;
+  --griddle-canvas: #FAF3E6;
+  --griddle-card: #EDE6D7;
+  --griddle-card-white: #FFFFFF;
+  --griddle-ink: #111111;
+  --griddle-red: #DA0711;
   --griddle-yellow: #FFD000;
-  --griddle-border: 2px solid #141210;
-  --griddle-shadow: 4px 4px 0px #141210;
-  --griddle-shadow-hover: 2px 2px 0px #141210;
-  --griddle-shadow-lg: 6px 6px 0px #141210;
+  --griddle-radius-card: 1.25rem;
+  --griddle-radius-pill: 9999px;
+  --griddle-border-subtle: 1px solid rgba(17, 17, 17, 0.07);
+  --griddle-shadow-soft: 0 4px 20px rgba(17, 17, 17, 0.04);
+  --griddle-shadow-hover: 0 12px 32px rgba(17, 17, 17, 0.08);
 }
 
 /* ==========================================================================
-   1. GRIDDLE CARDS & CONTAINERS
+   1. GRIDDLE CANVASES & CARDS
    ========================================================================== */
 
 .griddle-canvas {
@@ -34,35 +38,34 @@
 .griddle-card {
   background-color: var(--griddle-card);
   color: var(--griddle-ink);
-  border: 2px solid var(--griddle-ink);
-  box-shadow: 4px 4px 0px var(--griddle-ink);
-  border-radius: 8px;
+  border-radius: var(--griddle-radius-card);
+  border: var(--griddle-border-subtle);
+  box-shadow: var(--griddle-shadow-soft);
   position: relative;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .griddle-card-white {
-  background-color: var(--griddle-pure);
+  background-color: var(--griddle-card-white);
   color: var(--griddle-ink);
-  border: 2px solid var(--griddle-ink);
-  box-shadow: 4px 4px 0px var(--griddle-ink);
-  border-radius: 8px;
+  border-radius: var(--griddle-radius-card);
+  border: var(--griddle-border-subtle);
+  box-shadow: 0 8px 30px rgba(17, 17, 17, 0.06);
   position: relative;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .griddle-card-hover:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--griddle-ink);
+  transform: translateY(-3px);
+  box-shadow: var(--griddle-shadow-hover);
 }
 
 .griddle-card-active:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px var(--griddle-ink);
+  transform: translateY(1px);
 }
 
 /* ==========================================================================
-   2. BUTTONS (.btn-griddle-primary, .btn-griddle-secondary)
+   2. AUTHENTIC GRIDDLE BUTTONS (PILLS)
    ========================================================================== */
 
 .btn-griddle-primary {
@@ -70,30 +73,59 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: #E51C23;
-  color: #FFFFFF;
-  font-family: 'Anton', 'Bebas Neue', sans-serif;
-  font-size: 1.15rem;
-  letter-spacing: 0.05em;
+  background-color: #DA0711;
+  color: #FFFFFF !important;
+  font-family: 'Anton', 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.65rem 1.4rem;
-  border: 2px solid #141210;
-  box-shadow: 4px 4px 0px #141210;
-  border-radius: 6px;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  border: none;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  box-shadow: 0 2px 10px rgba(218, 7, 17, 0.25);
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn-griddle-primary:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px #141210;
-  background-color: #d1141b;
+  background-color: #bd060f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(218, 7, 17, 0.35);
 }
 
 .btn-griddle-primary:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0px #141210;
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-griddle-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: #111111;
+  font-family: 'Anton', 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  border: 1.5px solid #111111;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-griddle-outline:hover {
+  background-color: rgba(17, 17, 17, 0.05);
+  transform: translateY(-1px);
+}
+
+.btn-griddle-outline:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn-griddle-secondary {
@@ -101,30 +133,28 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: #F4EFE6;
-  color: #141210;
-  font-family: 'Anton', 'Bebas Neue', sans-serif;
-  font-size: 1.15rem;
-  letter-spacing: 0.05em;
+  background-color: #EDE6D7;
+  color: #111111;
+  font-family: 'Anton', 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.65rem 1.4rem;
-  border: 2px solid #141210;
-  box-shadow: 4px 4px 0px #141210;
-  border-radius: 6px;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
   cursor: pointer;
   user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn-griddle-secondary:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px #141210;
-  background-color: #eae3d5;
+  background-color: #e2d9c7;
+  transform: translateY(-1px);
 }
 
 .btn-griddle-secondary:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0px #141210;
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn-griddle-yellow {
@@ -133,33 +163,32 @@
   justify-content: center;
   gap: 0.5rem;
   background-color: #FFD000;
-  color: #141210;
-  font-family: 'Anton', 'Bebas Neue', sans-serif;
-  font-size: 1.15rem;
-  letter-spacing: 0.05em;
+  color: #111111;
+  font-family: 'Anton', 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.65rem 1.4rem;
-  border: 2px solid #141210;
-  box-shadow: 4px 4px 0px #141210;
-  border-radius: 6px;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  border: none;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  box-shadow: 0 2px 10px rgba(255, 208, 0, 0.3);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn-griddle-yellow:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px #141210;
   background-color: #eec200;
+  transform: translateY(-1px);
 }
 
 .btn-griddle-yellow:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0px #141210;
+  transform: translateY(1px) scale(0.98);
 }
 
 /* ==========================================================================
-   3. STICKERS & BADGES (.sticker-yellow, .sticker-red)
+   3. STICKERS & BADGES (DIE-CUT & PILL STICKERS)
    ========================================================================== */
 
 .sticker-yellow {
@@ -167,19 +196,19 @@
   align-items: center;
   justify-content: center;
   background-color: #FFD000;
-  color: #141210;
-  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  color: #111111;
+  font-family: 'Anton', 'Oswald', sans-serif;
   text-transform: uppercase;
   font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  padding: 0.25rem 0.75rem;
-  border: 2px solid #141210;
-  box-shadow: 2.5px 2.5px 0px #141210;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.85rem;
   border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(255, 208, 0, 0.4);
   transform: rotate(-3deg);
   user-select: none;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
+  border: 1px solid rgba(17, 17, 17, 0.08);
 }
 
 .sticker-yellow:hover {
@@ -190,19 +219,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: #E51C23;
+  background-color: #DA0711;
   color: #FFFFFF;
-  font-family: 'Anton', 'Bebas Neue', sans-serif;
+  font-family: 'Anton', 'Oswald', sans-serif;
   text-transform: uppercase;
   font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  padding: 0.25rem 0.75rem;
-  border: 2px solid #141210;
-  box-shadow: 2.5px 2.5px 0px #141210;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.85rem;
   border-radius: 9999px;
-  transform: rotate(4deg);
+  box-shadow: 0 2px 8px rgba(218, 7, 17, 0.35);
+  transform: rotate(3deg);
   user-select: none;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
 }
 
@@ -210,98 +238,162 @@
   transform: rotate(0deg) scale(1.05);
 }
 
-.sticker-starburst {
+.sticker-circle-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  width: 34px;
+  height: 34px;
+  background-color: #DA0711;
+  color: #FFFFFF;
   font-family: 'Anton', sans-serif;
-  font-size: 0.9rem;
-  color: #141210;
-  transform: rotate(-6deg);
-}
-
-.sticker-tilt-left {
-  transform: rotate(-6deg);
-}
-
-.sticker-tilt-right {
-  transform: rotate(5deg);
-}
-
-/* ==========================================================================
-   4. POLAROID TAPE (.polaroid-tape)
-   ========================================================================== */
-
-.polaroid-tape-wrap {
-  position: relative;
-}
-
-.polaroid-tape-top-left {
-  position: absolute;
-  top: -8px;
-  left: -12px;
-  width: 54px;
-  height: 18px;
-  background: rgba(255, 236, 170, 0.82);
-  box-shadow: 0 1px 3px rgba(20, 18, 16, 0.15);
-  transform: rotate(-35deg);
-  border: 1px dashed rgba(220, 195, 120, 0.6);
-  z-index: 10;
-  pointer-events: none;
-}
-
-.polaroid-tape-top-right {
-  position: absolute;
-  top: -8px;
-  right: -12px;
-  width: 54px;
-  height: 18px;
-  background: rgba(255, 236, 170, 0.82);
-  box-shadow: 0 1px 3px rgba(20, 18, 16, 0.15);
-  transform: rotate(35deg);
-  border: 1px dashed rgba(220, 195, 120, 0.6);
-  z-index: 10;
-  pointer-events: none;
-}
-
-/* ==========================================================================
-   5. DINER CHECKERBOARD PATTERNS
-   ========================================================================== */
-
-.bg-diner-checker-subtle {
-  background-image: url('/assets/griddle/patterns/diner-checker-subtle.svg');
-  background-repeat: repeat;
-  background-size: 20px 20px;
-}
-
-.bg-diner-checker-red {
-  background-image: url('/assets/griddle/patterns/diner-checker-red.svg');
-  background-repeat: repeat;
-  background-size: 24px 24px;
-}
-
-.bg-diner-checker-black {
-  background-image: url('/assets/griddle/patterns/diner-checker-black.svg');
-  background-repeat: repeat;
-  background-size: 24px 24px;
-}
-
-/* ==========================================================================
-   6. HANDWRITTEN & DINER MARQUEES
-   ========================================================================== */
-
-.font-handwritten {
-  font-family: 'Permanent Marker', 'Caveat', cursive;
-}
-
-.font-diner-headline {
-  font-family: 'Anton', 'Bebas Neue', sans-serif;
-  text-transform: uppercase;
+  font-size: 0.85rem;
   letter-spacing: 0.04em;
-  line-height: 0.95;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(218, 7, 17, 0.35);
+  user-select: none;
+}
+
+/* ==========================================================================
+   4. POLAROID TAPE & THERMAL RECEIPT
+   ========================================================================== */
+
+.rs-polaroid {
+  background: #FFFFFF;
+  padding: 14px 14px 44px 14px;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rs-polaroid figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  text-align: center;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.1rem;
+  color: #1b1b1b;
+  transform: rotate(-1.5deg);
+}
+
+.rs-tape-tl {
+  position: absolute;
+  top: -10px;
+  left: -14px;
+  width: 58px;
+  height: 22px;
+  background: rgba(255, 238, 178, 0.85);
+  box-shadow: 0 1px 4px rgba(20, 18, 16, 0.15);
+  transform: rotate(-35deg);
+  border: 1px dashed rgba(220, 195, 120, 0.5);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.rs-tape-tr {
+  position: absolute;
+  top: -10px;
+  right: -14px;
+  width: 58px;
+  height: 22px;
+  background: rgba(255, 238, 178, 0.85);
+  box-shadow: 0 1px 4px rgba(20, 18, 16, 0.15);
+  transform: rotate(35deg);
+  border: 1px dashed rgba(220, 195, 120, 0.5);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Thermal Paper Receipt */
+.griddle-receipt {
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  position: relative;
+  font-family: 'Space Mono', 'Courier New', monospace;
+  overflow: hidden;
+}
+
+.griddle-receipt::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-color: #111111;
+}
+
+.griddle-stamp {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 2px solid #DA0711;
+  color: #DA0711;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(218, 7, 17, 0.2);
+  user-select: none;
+}
+
+/* ==========================================================================
+   5. RED TICKER RIBBON (FULL-BLEED MARQUEE)
+   ========================================================================== */
+
+.griddle-ticker {
+  background-color: #DA0711;
+  color: #FFFFFF;
+  padding: 0.85rem 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: 'Anton', 'Oswald', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.griddle-ticker-track {
+  display: inline-flex;
+  align-items: center;
+  animation: griddleTickerMarquee 28s linear infinite;
+}
+
+@keyframes griddleTickerMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.griddle-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.15rem;
+}
+
+.griddle-ticker-star {
+  color: #FFD000;
+  margin: 0 1.25rem;
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   6. MONUMENTAL BUBBLE FOOTER LOGO
+   ========================================================================== */
+
+.griddle-bubble-logo {
+  font-family: 'Bowlby One SC', 'Anton', sans-serif;
+  color: #DA0711;
+  font-size: clamp(3.5rem, 15.5vw, 16rem);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  user-select: none;
+  pointer-events: none;
+  font-weight: 900;
 }

@@ -88,22 +88,22 @@ export function MapPinPicker({
   const pinPos = getSvgCoordinates(coords.lat, coords.lng);
 
   return (
-    <div className="bg-[#FAF6EE] border-2 border-[#141210] rounded-2xl p-5 text-[#141210] shadow-[4px_4px_0px_#141210]">
+    <div className="bg-[#EDE6D7] border border-[#111111]/8 rounded-3xl p-5 text-[#111111] shadow-[0_4px_20px_rgba(17,17,17,0.04)]">
       {/* En-tête et Statut du Rayon */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
-          <h3 className="font-anton uppercase text-base text-[#141210] flex items-center gap-2 tracking-wide">
+          <h3 className="font-anton uppercase text-base text-[#111111] flex items-center gap-2 tracking-wide">
             <span>📍</span> Localisation du Commerce (Montfleury)
           </h3>
-          <p className="text-xs text-[#141210]/70 mt-0.5 font-sans">
+          <p className="text-xs text-[#666] mt-0.5 font-sans">
             Cliquez sur le radar pour ajuster le repère GPS de votre boutique.
           </p>
         </div>
         <div
-          className={`px-3 py-1 rounded-full text-xs font-black border-2 border-[#141210] shadow-[2px_2px_0px_#141210] flex items-center gap-1.5 ${
+          className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
             isEligible
-              ? 'bg-[#DCFCE7] text-[#15803D]'
-              : 'bg-[#FEE2E2] text-[#991B1B]'
+              ? 'bg-[#DCFCE7] text-[#15803D] border-[#15803D]/20'
+              : 'bg-[#FEE2E2] text-[#DA0711] border-[#DA0711]/20'
           }`}
         >
           <span>{isEligible ? '✓ Zone Éligible' : '✗ Trop Éloigné'}</span>
@@ -112,7 +112,7 @@ export function MapPinPicker({
       </div>
 
       {/* Radar SVG Interactif Haute Fidélité */}
-      <div className="relative w-full aspect-[4/3] max-h-72 bg-white rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] overflow-hidden select-none cursor-crosshair">
+      <div className="relative w-full aspect-[4/3] max-h-72 bg-white rounded-2xl border border-[#111111]/10 shadow-sm overflow-hidden select-none cursor-crosshair">
         <svg
           viewBox="0 0 300 300"
           className="w-full h-full"
@@ -198,20 +198,20 @@ export function MapPinPicker({
           </g>
 
           {/* Étiquette d'échelle */}
-          <text x="245" y="145" fill="rgba(20, 18, 16, 0.6)" fontSize="7" textAnchor="middle" fontFamily="monospace">
+          <text x="245" y="145" fill="rgba(17, 17, 17, 0.6)" fontSize="7" textAnchor="middle" fontFamily="monospace">
             Limite 3 km
           </text>
         </svg>
 
         {/* Badge d'aide contextuel en superposition */}
-        <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-white/90 border border-[#141210] text-[11px] text-[#141210] font-mono font-bold shadow-sm">
+        <div className="absolute bottom-2 left-2 px-3 py-1 rounded-full bg-white/95 border border-[#111111]/15 text-[11px] text-[#111111] font-mono font-bold shadow-sm">
           Lat: {coords.lat.toFixed(4)} | Lng: {coords.lng.toFixed(4)}
         </div>
       </div>
 
       {/* Raccourcis Repères de Montfleury */}
       <div className="mt-4">
-        <label className="block text-[11px] font-black text-[#141210]/70 uppercase tracking-wider mb-2 font-mono">
+        <label className="block text-[11px] font-black text-[#111111]/70 uppercase tracking-wider mb-2 font-mono">
           Repères rapides autour du campus :
         </label>
         <div className="flex flex-wrap gap-2">
@@ -221,7 +221,7 @@ export function MapPinPicker({
               type="button"
               disabled={disabled}
               onClick={() => updateLocation(lm.lat, lm.lng)}
-              className="px-2.5 py-1 rounded-lg text-xs bg-white border-2 border-[#141210] shadow-[1px_1px_0px_#141210] hover:bg-[#FFD000] text-[#141210] font-bold transition-all"
+              className="px-3 py-1 rounded-full text-xs bg-white border border-[#111111]/15 hover:bg-[#FFD000] text-[#111111] font-bold transition-all shadow-sm"
             >
               {lm.label}
             </button>

@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Comme les compteurs du tableau de bord, chaque tuile KPI isole un indicateur clé pour donner une vue synthétique instantanée.
-// 🔄 Comparaison React / Flutter : En React, `KpiCard` est un composant Griddle néo-brutaliste ; en Flutter, `KpiTile` est un `Card` avec bordure et ombre.
-// 🎯 À retenir pour la soutenance : "Nos tuiles KPI mettent en lumière l'impact économique et environnemental concret avec relief tactile."
+// 💡 Concept & Analogie : Comme les cadrans et compteurs en laiton d'un grand restaurant, chaque tuile KPI isole un indicateur clé pour donner une vue synthétique instantanée.
+// 🔄 Comparaison React / Flutter : En React, `KpiCard` est une tuile biscuit chaleureuse (#EDE6D7) sans bordures lourdes ; en Flutter, `KpiTile` est un `Card` aux bords arrondis.
+// 🎯 À retenir pour la soutenance : "Nos tuiles KPI mettent en lumière l'impact économique et environnemental concret avec élégance et lisibilité."
 
 import React from 'react';
 
@@ -19,56 +19,56 @@ export default function KpiCard({
 }) {
   const accentStyles = {
     red: {
-      valColor: 'text-[#E51C23]',
-      iconBg: 'bg-[#FEE2E2] text-[#B91C1C] border-[#141210]',
+      valColor: 'text-[#DA0711]',
+      iconBg: 'bg-[#DA0711]/10 text-[#DA0711]',
     },
     lime: {
       valColor: 'text-[#15803D]',
-      iconBg: 'bg-[#DCFCE7] text-[#15803D] border-[#141210]',
+      iconBg: 'bg-[#15803D]/10 text-[#15803D]',
     },
     green: {
       valColor: 'text-[#15803D]',
-      iconBg: 'bg-[#DCFCE7] text-[#15803D] border-[#141210]',
+      iconBg: 'bg-[#15803D]/10 text-[#15803D]',
     },
     amber: {
       valColor: 'text-[#C2410C]',
-      iconBg: 'bg-[#FFEDD5] text-[#C2410C] border-[#141210]',
+      iconBg: 'bg-[#C2410C]/10 text-[#C2410C]',
     },
     yellow: {
       valColor: 'text-[#854D0E]',
-      iconBg: 'bg-[#FEF08A] text-[#854D0E] border-[#141210]',
+      iconBg: 'bg-[#FFD000]/20 text-[#854D0E]',
     },
     cyan: {
       valColor: 'text-[#0369A1]',
-      iconBg: 'bg-[#E0F2FE] text-[#0369A1] border-[#141210]',
+      iconBg: 'bg-[#0369A1]/10 text-[#0369A1]',
     },
     purple: {
       valColor: 'text-[#7E22CE]',
-      iconBg: 'bg-[#F3E8FF] text-[#7E22CE] border-[#141210]',
+      iconBg: 'bg-[#7E22CE]/10 text-[#7E22CE]',
     },
     slate: {
-      valColor: 'text-[#141210]',
-      iconBg: 'bg-[#F4EFE6] text-[#141210] border-[#141210]',
+      valColor: 'text-[#111111]',
+      iconBg: 'bg-[#111111]/5 text-[#111111]',
     },
   }[accent] || {
-    valColor: 'text-[#E51C23]',
-    iconBg: 'bg-[#FEE2E2] text-[#B91C1C] border-[#141210]',
+    valColor: 'text-[#DA0711]',
+    iconBg: 'bg-[#DA0711]/10 text-[#DA0711]',
   };
 
   return (
     <div
       onClick={onClick}
-      className={`group relative p-5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#141210] ${
+      className={`group relative p-5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_16px_rgba(17,17,17,0.03)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(17,17,17,0.06)] ${
         onClick ? 'cursor-pointer' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <span className="text-xs font-black uppercase tracking-wider text-[#666]">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#555]">
           {title}
         </span>
         {icon && (
           <div
-            className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center shadow-[2px_2px_0px_#141210] ${accentStyles.iconBg}`}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${accentStyles.iconBg}`}
           >
             {icon}
           </div>
@@ -81,10 +81,10 @@ export default function KpiCard({
         </span>
         {badge && (
           <span
-            className={`text-xs px-2 py-0.5 rounded-md border font-black ${
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               positive
-                ? 'bg-[#DCFCE7] text-[#15803D] border-[#166534]'
-                : 'bg-[#FEE2E2] text-[#B91C1C] border-[#DC2626]'
+                ? 'bg-emerald-100 text-emerald-800'
+                : 'bg-rose-100 text-rose-800'
             }`}
           >
             {badge}
@@ -93,7 +93,7 @@ export default function KpiCard({
       </div>
 
       {subtitle && (
-        <p className="text-xs text-[#555] font-medium leading-relaxed truncate">
+        <p className="text-xs text-[#666] font-medium leading-relaxed">
           {subtitle}
         </p>
       )}

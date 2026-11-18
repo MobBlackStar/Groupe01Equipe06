@@ -76,37 +76,37 @@ export default function RatingDialog({ isOpen, onClose, order, onSuccess }) {
   const activeScore = hoverRating || rating;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md bg-[#FAF6EE] border-2 border-[#141210] rounded-xl p-6 sm:p-7 shadow-[8px_8px_0px_#141210] text-[#141210] space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-md bg-[#FAF3E6] border border-[#111111]/10 rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(17,17,17,0.15)] text-[#111111] space-y-5">
         {/* Bouton de fermeture */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg border border-[#141210] text-[#141210] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
+          className="absolute top-4 right-4 p-2 rounded-full border border-[#111111]/15 text-[#111111] hover:bg-[#EDE6D7] transition-colors cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         {submitted ? (
           <div className="py-8 text-center space-y-3">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] border-2 border-[#166534] text-[#15803D] flex items-center justify-center text-3xl font-black shadow-[3px_3px_0px_#166534]">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center text-3xl font-bold shadow-sm">
               ✓
             </div>
-            <h3 className="text-xl font-anton uppercase text-[#141210]">Merci pour votre avis !</h3>
-            <p className="text-xs text-[#555] font-bold">
+            <h3 className="text-xl font-anton uppercase text-[#111111]">Merci pour votre avis !</h3>
+            <p className="text-xs text-[#666] font-medium">
               Votre note encourage les artisans de Montfleury dans leur démarche anti-gaspi.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#E51C23] font-black">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#DA0711] font-bold">
                 ÉVALUATION DU REPAS
               </span>
-              <h2 className="text-2xl font-anton uppercase text-[#141210] mt-1">
+              <h2 className="text-2xl font-anton uppercase text-[#111111] mt-1">
                 Comment était votre commande ?
               </h2>
-              <p className="text-xs text-[#555] mt-1 font-medium">
+              <p className="text-xs text-[#666] mt-1 font-medium">
                 Pour <strong>{offerTitle}</strong> chez <strong>{merchantName}</strong>.
               </p>
             </div>
@@ -126,21 +126,21 @@ export default function RatingDialog({ isOpen, onClose, order, onSuccess }) {
                     <Star
                       className={`w-9 h-9 ${
                         star <= activeScore
-                          ? 'text-[#FFD000] fill-[#FFD000] stroke-[#141210]'
-                          : 'text-[#DDD] stroke-[#141210]'
+                          ? 'text-[#FFD000] fill-[#FFD000]'
+                          : 'text-[#DDD]'
                       }`}
                     />
                   </button>
                 ))}
               </div>
-              <span className="text-xs font-anton text-[#141210] mt-1">
+              <span className="text-xs font-anton text-[#111111] mt-1">
                 {RATING_LABELS[activeScore] || 'Sélectionnez une note'}
               </span>
             </div>
 
             {/* Commentaire optionnel */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111111] mb-1.5">
                 Commentaire pour le commerçant (optionnel) :
               </label>
               <textarea
@@ -148,12 +148,12 @@ export default function RatingDialog({ isOpen, onClose, order, onSuccess }) {
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
                 placeholder="Qualité des portions, rapidité d'accueil, fraîcheur..."
-                className="w-full p-3 rounded-lg bg-white border-2 border-[#141210] text-[#141210] text-xs font-medium placeholder-[#888] outline-none shadow-[2px_2px_0px_#141210] focus:border-[#E51C23]"
+                className="w-full p-3 rounded-2xl bg-white border border-[#111111]/15 text-[#111111] text-xs font-medium placeholder-[#888] outline-none shadow-sm focus:border-[#DA0711]"
               />
             </div>
 
             {error && (
-              <p className="text-xs text-[#E51C23] font-bold">⚠️ {error}</p>
+              <p className="text-xs text-[#DA0711] font-bold">⚠️ {error}</p>
             )}
 
             <button

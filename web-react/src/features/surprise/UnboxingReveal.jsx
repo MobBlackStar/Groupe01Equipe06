@@ -76,7 +76,7 @@ export default function UnboxingReveal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-lg bg-white border-2 border-[#141210] text-[#141210] hover:bg-[#FEE2E2] transition-colors z-50 text-sm font-bold shadow-[2px_2px_0px_#141210] cursor-pointer"
+          className="absolute top-6 right-6 p-2 rounded-full bg-white border border-[#111111]/15 text-[#111111] hover:bg-[#EDE6D7] transition-colors z-50 text-sm font-bold shadow-sm cursor-pointer"
         >
           ✕
         </button>
@@ -85,7 +85,7 @@ export default function UnboxingReveal({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="relative max-w-xl w-full bg-[#FAF6EE] border-2 border-[#141210] rounded-xl p-6 sm:p-8 text-center overflow-hidden shadow-[8px_8px_0px_#141210] text-[#141210]"
+          className="relative max-w-xl w-full bg-[#FAF3E6] border border-[#111111]/10 rounded-3xl p-6 sm:p-8 text-center overflow-hidden shadow-[0_20px_50px_rgba(17,17,17,0.15)] text-[#111111]"
         >
           {/* ÉTAPE 1 & 2 : BOÎTE FERMÉE */}
           {step <= 2 && (
@@ -109,13 +109,13 @@ export default function UnboxingReveal({
                 <img
                   src="/assets/griddle/food/box-assortiment-fika.png"
                   alt="Boîte à pâtisserie"
-                  className="w-48 h-48 object-contain filter drop-shadow-[0_12px_24px_rgba(20,18,16,0.3)]"
+                  className="w-48 h-48 object-contain filter drop-shadow-[0_12px_24px_rgba(20,18,16,0.2)]"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = '/assets/griddle/food/croissant-amande.png';
                   }}
                 />
-                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FFD000] text-[#141210] border-2 border-[#141210] font-anton text-xs uppercase whitespace-nowrap shadow-[2px_2px_0px_#141210]">
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full bg-[#FFD000] text-[#111111] border border-[#111111]/15 font-anton text-xs uppercase whitespace-nowrap shadow-sm">
                   {step === 1 ? '✨ DÉBALLAGE DU PANIER...' : '💥 OUVERTURE !'}
                 </span>
               </motion.div>
@@ -131,20 +131,20 @@ export default function UnboxingReveal({
             >
               {/* Badge Rareté & Titre */}
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#141210] font-anton text-xs uppercase border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#E51C23]" />
-                  <span>RARETÉ DU LOT : <strong className="text-[#E51C23]">{rarityLabel}</strong></span>
+                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-[#111111] font-anton text-xs uppercase border border-[#111111]/10 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-[#DA0711]" />
+                  <span>RARETÉ DU LOT : <strong className="text-[#DA0711]">{rarityLabel}</strong></span>
                 </div>
-                <h2 className="font-anton uppercase text-2xl sm:text-3xl font-black text-[#141210]">
+                <h2 className="font-anton uppercase text-2xl sm:text-3xl font-black text-[#111111]">
                   CONTENU DE VOTRE BOÎTE SURPRISE
                 </h2>
               </div>
 
               {/* Boîte rayée ouverte */}
               <div
-                className="p-5 rounded-xl border-2 border-dashed border-[#141210]/40 relative overflow-hidden"
+                className="p-5 rounded-2xl border border-dashed border-[#111111]/25 relative overflow-hidden"
                 style={{
-                  background: 'repeating-linear-gradient(45deg, #FAF6EE, #FAF6EE 12px, #F4EFE6 12px, #F4EFE6 24px)',
+                  background: 'repeating-linear-gradient(45deg, #FAF3E6, #FAF3E6 12px, #EDE6D7 12px, #EDE6D7 24px)',
                 }}
               >
                 <div className="text-[10px] font-mono uppercase tracking-widest text-[#555] font-bold mb-3">
@@ -158,7 +158,7 @@ export default function UnboxingReveal({
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.15 }}
-                      className="p-3 rounded-lg bg-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210] flex flex-col items-center text-center"
+                      className="p-3.5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-sm flex flex-col items-center text-center"
                     >
                       <div className="w-16 h-16 mb-2 flex items-center justify-center">
                         <img
@@ -171,10 +171,10 @@ export default function UnboxingReveal({
                           }}
                         />
                       </div>
-                      <span className="font-mono text-[11px] font-black text-[#141210] leading-tight line-clamp-2">
+                      <span className="font-mono text-[11px] font-bold text-[#111111] leading-tight line-clamp-2">
                         {item.name}
                       </span>
-                      <span className="mt-1 px-2 py-0.5 rounded-md bg-[#E51C23] text-white text-[9px] font-anton">
+                      <span className="mt-1 px-2.5 py-0.5 rounded-full bg-[#DA0711] text-white text-[9px] font-anton">
                         QTÉ : x{item.qty || 1}
                       </span>
                     </motion.div>
@@ -183,7 +183,7 @@ export default function UnboxingReveal({
               </div>
 
               {/* Note artisan */}
-              <p className="text-xs text-[#555] italic font-sans max-w-md mx-auto font-medium">
+              <p className="text-xs text-[#666] italic font-sans max-w-md mx-auto font-medium">
                 "{revealData.note}"
               </p>
 
@@ -192,7 +192,7 @@ export default function UnboxingReveal({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-3.5 rounded-lg bg-[#FEF08A] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex items-center justify-between"
+                  className="p-4 rounded-2xl bg-[#FEF08A] border border-[#A16207]/20 shadow-sm flex items-center justify-between"
                 >
                   <div className="flex items-center gap-2 text-left">
                     <Award className="w-6 h-6 text-[#854D0E]" />

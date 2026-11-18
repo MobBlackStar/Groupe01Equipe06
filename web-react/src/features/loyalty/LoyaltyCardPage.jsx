@@ -46,20 +46,20 @@ export default function LoyaltyCardPage() {
 
   let tierIcon = '🌱';
   let tierLabel = 'GRAINE';
-  let tierBadgeColor = 'bg-[#FAF6EE] text-[#141210] border-2 border-[#141210]';
+  let tierBadgeColor = 'bg-white text-[#111111] border border-[#111111]/15';
 
   if (tier === LOYALTY_TIERS.FORET) {
     tierIcon = '🌲';
     tierLabel = 'FORÊT';
-    tierBadgeColor = 'bg-[#15803D] text-white border-2 border-[#141210]';
+    tierBadgeColor = 'bg-[#15803D] text-white';
   } else if (tier === LOYALTY_TIERS.ARBRE) {
     tierIcon = '🌳';
     tierLabel = 'ARBRE';
-    tierBadgeColor = 'bg-[#15803D] text-white border-2 border-[#141210]';
+    tierBadgeColor = 'bg-[#15803D] text-white';
   } else if (tier === LOYALTY_TIERS.POUSSE) {
     tierIcon = '🌿';
     tierLabel = 'POUSSE';
-    tierBadgeColor = 'bg-[#FFD000] text-[#141210] border-2 border-[#141210] font-black';
+    tierBadgeColor = 'bg-[#FFD000] text-[#111111]';
   }
 
   const handleAddPoints = (amount = 20) => {
@@ -81,29 +81,29 @@ export default function LoyaltyCardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* En-tête éditorial */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#111111]/10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E51C23] text-white text-xs font-mono font-black uppercase tracking-wider mb-2 shadow-[2px_2px_0px_#141210]">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-mono font-black uppercase tracking-wider mb-2 shadow-sm">
               <Flame className="w-3.5 h-3.5" />
               <span>Programme de Récompenses Anti-Gaspi</span>
             </div>
-            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#141210]">
+            <h1 className="font-anton uppercase text-3xl sm:text-5xl tracking-wide text-[#111111]">
               CAMPUSSAVE CLUB · CARTE DE FIDÉLITÉ
             </h1>
-            <p className="text-xs sm:text-sm text-[#141210]/70 font-sans mt-1">
+            <p className="text-xs sm:text-sm text-[#111111]/70 font-sans mt-1">
               Chaque repas sauvé alimente votre compteur de tampons et attribue des points à votre filière à l'ESSECT.
             </p>
           </div>
 
           {/* Badge Profil Étudiant */}
-          <div className="p-3 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-right">
-            <span className="text-[10px] font-mono font-black uppercase text-[#141210]/60 block">MEMBRE OFFICIEL :</span>
-            <span className="font-black text-[#141210] text-xs">{displayName}</span>
-            <span className="text-[10px] text-[#E51C23] font-mono font-bold block">{filiere}</span>
+          <div className="p-3.5 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-sm text-right">
+            <span className="text-[10px] font-mono font-bold uppercase text-[#666] block">MEMBRE OFFICIEL :</span>
+            <span className="font-bold text-[#111111] text-xs">{displayName}</span>
+            <span className="text-[10px] text-[#DA0711] font-mono font-bold block">{filiere}</span>
           </div>
         </div>
 
@@ -122,57 +122,57 @@ export default function LoyaltyCardPage() {
 
         {/* Métriques du Palier Actuel */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex items-center justify-between">
+          <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase tracking-wider text-[#141210]/60">Palier Végétal</span>
-              <p className="font-anton text-2xl text-[#141210] mt-0.5 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#666]">Palier Végétal</span>
+              <p className="font-anton text-2xl text-[#111111] mt-0.5 flex items-center gap-1.5">
                 <span>{tierIcon}</span>
                 <span>{tierLabel}</span>
               </p>
             </div>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-black shadow-[2px_2px_0px_#141210] ${tierBadgeColor}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${tierBadgeColor}`}>
               Niveau Actif
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex items-center justify-between">
+          <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase tracking-wider text-[#141210]/60">Repas Sauvés</span>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#666]">Repas Sauvés</span>
               <p className="font-anton text-3xl text-[#15803D] mt-0.5">
-                {mealsRescued} <span className="text-xs font-sans text-[#141210]/60 font-normal">repas</span>
+                {mealsRescued} <span className="text-xs font-sans text-[#666] font-normal">repas</span>
               </p>
             </div>
-            <span className="p-2 rounded-xl bg-white border-2 border-[#141210] text-lg shadow-[2px_2px_0px_#141210]">
+            <span className="p-2.5 rounded-2xl bg-white border border-[#111111]/10 text-xl shadow-sm">
               🥗
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[3px_3px_0px_#141210] flex items-center justify-between">
+          <div className="p-5 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase tracking-wider text-[#141210]/60">Prochain Palier</span>
-              <p className="font-anton text-3xl text-[#E51C23] mt-0.5">
-                {nextMilestone} <span className="text-xs font-sans text-[#141210]/60 font-normal">pts</span>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#666]">Prochain Palier</span>
+              <p className="font-anton text-3xl text-[#DA0711] mt-0.5">
+                {nextMilestone} <span className="text-xs font-sans text-[#666] font-normal">pts</span>
               </p>
             </div>
-            <span className="p-2 rounded-xl bg-white border-2 border-[#141210] text-lg shadow-[2px_2px_0px_#141210]">
+            <span className="p-2.5 rounded-2xl bg-white border border-[#111111]/10 text-xl shadow-sm">
               🎯
             </span>
           </div>
         </div>
 
         {/* Barre de Progression vers le Prochain Coupon */}
-        <div className="p-5 rounded-3xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] space-y-2">
+        <div className="p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] space-y-2">
           <div className="flex justify-between items-center text-xs font-mono">
-            <span className="text-[#141210] font-black">Progression vers le prochain coupon :</span>
-            <span className="text-[#E51C23] font-black">{Math.round(progressInCycle)}% ({ecoPoints} / {nextMilestone} pts)</span>
+            <span className="text-[#111111] font-bold">Progression vers le prochain coupon :</span>
+            <span className="text-[#DA0711] font-bold">{Math.round(progressInCycle)}% ({ecoPoints} / {nextMilestone} pts)</span>
           </div>
-          <div className="w-full bg-white h-3 rounded-full overflow-hidden border border-[#141210]">
+          <div className="w-full bg-white h-2.5 rounded-full overflow-hidden border border-[#111111]/10">
             <div
-              className="bg-[#E51C23] h-full transition-all duration-700"
+              className="bg-[#DA0711] h-full transition-all duration-700"
               style={{ width: `${progressInCycle}%` }}
             />
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-[#141210]/60">
+          <div className="flex justify-between text-[10px] font-mono text-[#666]">
             <span>Palier précédent ({prevMilestone} pts)</span>
             <span>Objectif coupon ({nextMilestone} pts)</span>
           </div>
@@ -182,10 +182,10 @@ export default function LoyaltyCardPage() {
         <RewardWallet rewards={rewards} />
 
         {/* Panneau de Simulation Démo pour le Jury */}
-        <div className="p-4 rounded-2xl bg-white border-2 border-dashed border-[#141210] shadow-[3px_3px_0px_#141210] flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#FFD000]" />
-            <span className="text-xs font-mono font-black text-[#141210]">
+            <span className="text-xs font-mono font-black text-[#111111]">
               Contrôles de Simulation Démo (Jury Soutenance) :
             </span>
           </div>
@@ -194,7 +194,7 @@ export default function LoyaltyCardPage() {
             <button
               type="button"
               onClick={() => handleAddPoints(20)}
-              className="px-3 py-1.5 rounded-xl bg-[#E51C23] text-white font-mono text-xs font-black border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-full bg-[#DA0711] text-white font-mono text-xs font-bold shadow-sm hover:opacity-95 transition-all flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>+1 Repas (20 pts)</span>
@@ -203,7 +203,7 @@ export default function LoyaltyCardPage() {
             <button
               type="button"
               onClick={() => handleAddPoints(100)}
-              className="px-3 py-1.5 rounded-xl bg-[#FFD000] text-[#141210] font-mono text-xs font-black border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all flex items-center gap-1"
+              className="px-3.5 py-1.5 rounded-full bg-[#FFD000] text-[#111111] font-mono text-xs font-bold border border-[#111111]/15 shadow-sm hover:opacity-95 transition-all flex items-center gap-1 cursor-pointer"
             >
               <Award className="w-3.5 h-3.5" />
               <span>+100 pts (Palier)</span>
@@ -213,7 +213,7 @@ export default function LoyaltyCardPage() {
               type="button"
               onClick={handleResetDemo}
               title="Réinitialiser"
-              className="p-1.5 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] hover:bg-white transition-colors"
+              className="p-2 rounded-full bg-white border border-[#111111]/15 shadow-sm text-[#111111] hover:bg-[#FAF3E6] transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>

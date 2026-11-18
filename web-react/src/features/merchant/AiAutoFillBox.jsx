@@ -137,26 +137,26 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
 
   return (
     <div
-      className={`p-5 rounded-2xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] relative overflow-hidden ${className}`}
+      className={`p-6 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative overflow-hidden ${className}`}
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#FFD000] border-2 border-[#141210] flex items-center justify-center text-lg shadow-[2px_2px_0px_#141210]">
+          <div className="w-9 h-9 rounded-2xl bg-[#FFD000] border border-[#111111]/15 flex items-center justify-center text-lg shadow-sm">
             ✨
           </div>
           <div>
-            <h3 className="font-anton uppercase text-base text-[#141210] flex items-center gap-2 tracking-wide">
+            <h3 className="font-anton uppercase text-base text-[#111111] flex items-center gap-2 tracking-wide">
               <span>Assistant Culinaire IA &amp; Saisie Magique</span>
               <Badge variant="yellow" size="sm">IA ZERO-TYPING</Badge>
             </h3>
-            <p className="text-[11px] text-[#141210]/70 font-sans">
+            <p className="text-[11px] text-[#666] font-sans">
               Tapez vos invendus en style cuisine : l'IA génère les prix, le poids et la description.
             </p>
           </div>
         </div>
 
         {lastSource && (
-          <span className="text-[10px] text-[#141210] font-black bg-[#FFD000] px-2.5 py-1 rounded-full border-2 border-[#141210] shadow-[1px_1px_0px_#141210]">
+          <span className="text-[10px] text-[#111111] font-bold bg-[#FFD000] px-3 py-1 rounded-full border border-[#111111]/15 shadow-sm">
             Source : {lastSource}
           </span>
         )}
@@ -170,14 +170,14 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
             onChange={(e) => setRawText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleGenerate())}
             placeholder="ex: 4 makloub escalope + 3 brik, fermeture 17h"
-            className="w-full bg-white text-[#141210] placeholder-[#141210]/40 text-xs sm:text-sm rounded-xl pl-4 pr-32 py-3 border-2 border-[#141210] shadow-[2px_2px_0px_#141210] focus:shadow-[3px_3px_0px_#141210] outline-none transition-all"
+            className="w-full bg-white text-[#111111] placeholder-[#666]/50 text-xs sm:text-sm rounded-full pl-5 pr-32 py-3.5 border border-[#111111]/15 shadow-sm focus:border-[#DA0711] outline-none transition-all font-medium"
           />
           <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
             <button
               type="button"
               disabled={loading}
               onClick={() => handleGenerate()}
-              className="px-4 py-1.5 rounded-lg bg-[#E51C23] text-white font-black text-xs border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all disabled:opacity-50"
+              className="btn-griddle-primary px-5 py-2 rounded-full text-xs cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Calcul...' : 'Remplir ✨'}
             </button>
@@ -186,7 +186,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
 
         {/* Exemples rapides en 1-clic pour la démo soutenance */}
         <div className="flex items-center gap-2 flex-wrap pt-0.5">
-          <span className="text-[10px] font-black uppercase text-[#141210]/60">Exemples rapides :</span>
+          <span className="text-[10px] font-bold uppercase text-[#666]">Exemples rapides :</span>
           {examples.map((ex, i) => (
             <button
               key={i}
@@ -195,7 +195,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
                 setRawText(ex);
                 handleGenerate(ex);
               }}
-              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white border-2 border-[#141210] shadow-[1px_1px_0px_#141210] text-[#141210] hover:bg-[#FFD000] transition-colors"
+              className="text-[11px] font-bold px-3 py-1 rounded-full bg-white border border-[#111111]/15 shadow-sm text-[#111111] hover:bg-[#FFD000] transition-colors cursor-pointer"
             >
               {ex}
             </button>

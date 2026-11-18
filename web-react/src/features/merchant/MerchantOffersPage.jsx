@@ -144,18 +144,18 @@ export default function MerchantOffersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b-2 border-[#141210]/15">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#111111]/10">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#141210]">
+              <h1 className="text-3xl font-anton uppercase tracking-wide text-[#111111]">
                 Catalogue des Offres Commerçant
               </h1>
               <Badge variant="green" size="md">Boutique Active</Badge>
             </div>
-            <p className="text-xs text-[#141210]/70 mt-1 font-sans">
+            <p className="text-xs text-[#111111]/70 mt-1 font-sans">
               Gérez vos portions, vos enchères dégressives et vos paniers surprises du jour.
             </p>
           </div>
@@ -172,7 +172,7 @@ export default function MerchantOffersPage() {
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
           <Link
             to="/merchant/store"
-            className="text-xs font-black text-[#141210] hover:text-[#E51C23] transition-colors"
+            className="text-xs font-black text-[#111111] hover:text-[#DA0711] transition-colors"
           >
             ⚙️ Modifier l'Établissement
           </Link>
@@ -209,7 +209,7 @@ export default function MerchantOffersPage() {
               return (
                 <Card
                   key={offer.id}
-                  className={`p-5 bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] relative flex flex-col justify-between ${
+                  className={`p-6 bg-[#EDE6D7] rounded-3xl border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] relative flex flex-col justify-between ${
                     offer.status === OFFER_STATUS.DELETED ? 'opacity-40 pointer-events-none' : ''
                   }`}
                 >
@@ -243,45 +243,45 @@ export default function MerchantOffersPage() {
 
                     {/* Titre & Catégorie */}
                     <div>
-                      <h3 className="font-anton uppercase text-lg text-[#141210] line-clamp-1">
+                      <h3 className="font-anton uppercase text-lg text-[#111111] line-clamp-1">
                         {offer.title}
                       </h3>
-                      <p className="text-xs text-[#141210]/60 mt-0.5 font-sans">
+                      <p className="text-xs text-[#111111]/60 mt-0.5 font-sans">
                         Catégorie : <strong>{offer.category}</strong> • Retrait : {offer.pickupEndAt?.includes('T') ? formatTunisDate(offer.pickupEndAt) : offer.pickupEndAt}
                       </p>
                     </div>
 
                     {/* Tarifs */}
-                    <div className="p-3 rounded-xl bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] flex items-center justify-between">
+                    <div className="p-3.5 rounded-2xl bg-[#FAF3E6] border border-[#111111]/8 shadow-sm flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] uppercase font-black text-[#141210]/60 block">
+                        <span className="text-[10px] uppercase font-black text-[#111111]/60 block font-mono">
                           Prix Étudiant
                         </span>
-                        <span className="font-anton text-2xl text-[#E51C23]">
+                        <span className="font-anton text-2xl text-[#DA0711]">
                           {formatTND(displayPrice)}
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] uppercase font-black text-[#141210]/60 block">
+                        <span className="text-[10px] uppercase font-black text-[#111111]/60 block font-mono">
                           Prix Initial
                         </span>
-                        <span className="text-xs font-mono text-[#141210]/50 line-through">
+                        <span className="text-xs font-mono text-[#111111]/50 line-through">
                           {formatTND(offer.originalPriceMillimes)}
                         </span>
                       </div>
                     </div>
 
                     {/* Barre de stock sans NaN */}
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono">
-                        <span className="text-[#141210]/70">
-                          Portions restantes : <strong className="text-[#141210] font-black">{available} / {total}</strong>
+                        <span className="text-[#111111]/70">
+                          Portions restantes : <strong className="text-[#111111] font-black">{available} / {total}</strong>
                         </span>
-                        <span className="text-xs text-[#E51C23] font-black">{percentSold}% vendus</span>
+                        <span className="text-xs text-[#DA0711] font-black">{percentSold}% vendus</span>
                       </div>
-                      <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-[#141210]">
+                      <div className="w-full h-2 bg-[#FAF3E6] rounded-full overflow-hidden border border-[#111111]/10">
                         <div
-                          className="h-full bg-[#E51C23] rounded-full transition-all"
+                          className="h-full bg-[#DA0711] rounded-full transition-all"
                           style={{ width: `${percentSold}%` }}
                         />
                       </div>
@@ -289,11 +289,11 @@ export default function MerchantOffersPage() {
                   </div>
 
                   {/* Boutons d'action */}
-                  <div className="pt-4 mt-4 border-t-2 border-[#141210]/15 flex items-center justify-end gap-2">
+                  <div className="pt-4 mt-4 border-t border-[#111111]/10 flex items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => navigate(`/merchant/offers/${offer.id}/edit`)}
-                      className="text-xs font-black px-3 py-1.5 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-[#141210] transition-all"
+                      className="text-xs font-black px-4 py-2 rounded-full bg-white border border-[#111111]/15 hover:bg-[#FAF3E6] text-[#111111] transition-all shadow-sm"
                     >
                       ✏️ Modifier
                     </button>
@@ -301,7 +301,7 @@ export default function MerchantOffersPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteModalOffer(offer)}
-                      className="text-xs font-black px-3 py-1.5 rounded-lg bg-[#FEE2E2] border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] text-[#991B1B] transition-all"
+                      className="text-xs font-black px-4 py-2 rounded-full bg-rose-50 border border-rose-200 hover:bg-rose-100 text-[#DA0711] transition-all shadow-sm"
                     >
                       🗑️ Supprimer
                     </button>
@@ -338,17 +338,17 @@ export default function MerchantOffersPage() {
           }
         >
           {deleteModalOffer && (
-            <div className="space-y-3 py-2 text-xs text-[#141210]">
+            <div className="space-y-3 py-2 text-xs text-[#111111]">
               <p>
                 Vous êtes sur le point de retirer :{' '}
-                <strong className="text-[#E51C23]">{deleteModalOffer.title}</strong>
+                <strong className="text-[#DA0711]">{deleteModalOffer.title}</strong>
               </p>
               {deleteModalOffer.hasOrders ? (
-                <div className="p-3 rounded-xl bg-[#FEF08A] border-2 border-[#141210] text-[#141210] font-medium shadow-[2px_2px_0px_#141210]">
+                <div className="p-4 rounded-2xl bg-[#FFD000]/20 border border-[#FFD000]/40 text-[#111111] font-medium shadow-sm">
                   ℹ️ <strong>Règle d'intégrité comptable :</strong> Des réservations ou paiements sont déjà enregistrés sur cette offre. Le système appliquera un <em>soft-delete</em> (statut <code>DELETED</code>) pour maintenir l'historique financier et les tickets déjà émis.
                 </div>
               ) : (
-                <p className="text-[#141210]/70">
+                <p className="text-[#111111]/70">
                   Aucune commande n'étant en cours, cette offre sera retirée sans impact.
                 </p>
               )}

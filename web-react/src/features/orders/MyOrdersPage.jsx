@@ -114,24 +114,24 @@ export default function MyOrdersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* En-tête */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b-2 border-[#141210]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#111111]/10">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-anton uppercase text-[#141210] tracking-wide">
+            <h1 className="text-3xl sm:text-4xl font-anton uppercase text-[#111111] tracking-wide">
               Mes Commandes &amp; Sauvetages
             </h1>
-            <p className="text-xs text-[#555] font-bold mt-1">
+            <p className="text-xs text-[#666] font-medium mt-1">
               Retrouvez vos réservations en cours et vos Living Tickets pour retrait sur place à Montfleury.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setUnboxingOrder({ id: 'demo-unboxing', reveal: null })}
-              className="btn-griddle-yellow text-xs py-2 px-3.5"
+              className="btn-griddle-yellow text-xs py-2 px-4"
             >
               <span>🎁</span>
               <span>Déballer Panier</span>
@@ -139,22 +139,22 @@ export default function MyOrdersPage() {
 
             <Link
               to="/app/explore"
-              className="btn-griddle-primary text-xs py-2 px-4"
+              className="btn-griddle-primary text-xs py-2 px-5"
             >
               + Sauver un repas
             </Link>
           </div>
         </div>
 
-        {/* Onglets */}
-        <div className="flex rounded-xl bg-[#FAF6EE] p-1.5 border-2 border-[#141210] shadow-[3px_3px_0px_#141210] text-xs">
+        {/* Onglets Pills Griddle */}
+        <div className="flex rounded-full bg-[#EDE6D7] p-1.5 border border-[#111111]/8 text-xs font-anton uppercase tracking-wider">
           <button
             type="button"
             onClick={() => setActiveTab('ACTIVE')}
-            className={`flex-1 py-2 rounded-lg font-anton uppercase tracking-wide transition-all cursor-pointer ${
+            className={`flex-1 py-2 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === 'ACTIVE'
-                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210]'
-                : 'text-[#141210] hover:bg-[#F4EFE6]'
+                ? 'bg-[#DA0711] text-white shadow-sm'
+                : 'text-[#111111] hover:bg-black/5'
             }`}
           >
             ⚡ En cours ({orders.filter((o) => ['RESERVED', 'PAID'].includes(o.status)).length})
@@ -162,10 +162,10 @@ export default function MyOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('COMPLETED')}
-            className={`flex-1 py-2 rounded-lg font-anton uppercase tracking-wide transition-all cursor-pointer ${
+            className={`flex-1 py-2 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === 'COMPLETED'
-                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210]'
-                : 'text-[#141210] hover:bg-[#F4EFE6]'
+                ? 'bg-[#DA0711] text-white shadow-sm'
+                : 'text-[#111111] hover:bg-black/5'
             }`}
           >
             ✓ Terminées ({orders.filter((o) => o.status === 'COMPLETED').length})
@@ -173,10 +173,10 @@ export default function MyOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('ARCHIVED')}
-            className={`flex-1 py-2 rounded-lg font-anton uppercase tracking-wide transition-all cursor-pointer ${
+            className={`flex-1 py-2 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === 'ARCHIVED'
-                ? 'bg-[#E51C23] text-white shadow-[2px_2px_0px_#141210] border-2 border-[#141210]'
-                : 'text-[#141210] hover:bg-[#F4EFE6]'
+                ? 'bg-[#DA0711] text-white shadow-sm'
+                : 'text-[#111111] hover:bg-black/5'
             }`}
           >
             ✕ Annulées / Expirées
@@ -187,7 +187,7 @@ export default function MyOrdersPage() {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <Spinner size="lg" />
-            <p className="text-xs text-[#555] font-bold">Chargement de vos commandes...</p>
+            <p className="text-xs text-[#666] font-bold">Chargement de vos commandes...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <EmptyState

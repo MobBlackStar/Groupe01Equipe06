@@ -13,7 +13,7 @@ export default function Stepper({
     <div className={`w-full ${className}`}>
       <div className="flex items-center justify-between relative">
         {/* Background connecting bar */}
-        <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-[#141210] -z-0" />
+        <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-[#111111]/15 -z-0" />
         
         {steps.map((step, idx) => {
           const isCompleted = idx < currentStep;
@@ -23,23 +23,23 @@ export default function Stepper({
           return (
             <div key={idx} className="flex flex-col items-center relative z-10">
               <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all duration-200 border-2 border-[#141210] ${
+                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 ${
                   isCompleted
-                    ? 'bg-[#15803D] text-white shadow-[2px_2px_0px_#141210]'
+                    ? 'bg-[#15803D] text-white shadow-sm'
                     : isCurrent
-                    ? 'bg-[#E51C23] text-white shadow-[3px_3px_0px_#141210] ring-4 ring-[#E51C23]/30 scale-110'
-                    : 'bg-[#FAF6EE] text-[#777]'
+                    ? 'bg-[#DA0711] text-white shadow-md ring-4 ring-[#DA0711]/20 scale-110'
+                    : 'bg-[#EDE6D7] text-[#888] border border-[#111111]/10'
                 }`}
               >
                 {isCompleted ? '✓' : idx + 1}
               </div>
               <span
-                className={`text-[11px] font-bold mt-2 max-w-[100px] text-center leading-tight truncate ${
+                className={`text-[11px] font-anton uppercase tracking-wider mt-2 max-w-[100px] text-center leading-tight truncate ${
                   isCurrent
-                    ? 'text-[#E51C23]'
+                    ? 'text-[#DA0711]'
                     : isCompleted
-                    ? 'text-[#141210]'
-                    : 'text-[#777]'
+                    ? 'text-[#111111]'
+                    : 'text-[#888]'
                 }`}
               >
                 {stepLabel}

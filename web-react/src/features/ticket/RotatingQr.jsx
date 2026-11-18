@@ -58,24 +58,24 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
   const strokeDashoffset = circumference - (secondsRemaining / 30) * circumference;
 
   return (
-    <div className="flex flex-col items-center bg-[#FAF6EE] border-2 border-[#141210] rounded-xl p-6 shadow-[6px_6px_0px_#141210] relative overflow-hidden text-[#141210]">
+    <div className="flex flex-col items-center bg-[#EDE6D7] rounded-3xl p-6 border border-[#111111]/8 shadow-[0_4px_24px_rgba(17,17,17,0.06)] relative overflow-hidden text-[#111111]">
       {/* Pastille Live et statut temps réel */}
-      <div className="flex items-center gap-2 mb-4 bg-white px-4 py-1.5 rounded-full border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+      <div className="flex items-center gap-2 mb-4 bg-white px-4 py-1.5 rounded-full border border-[#111111]/10 shadow-sm">
         <span className="w-2.5 h-2.5 rounded-full bg-[#15803D] animate-ping" />
-        <span className="text-xs font-black text-[#15803D] uppercase tracking-wider">
+        <span className="text-xs font-bold text-[#15803D] uppercase tracking-wider">
           Living Ticket Actif
         </span>
       </div>
 
       {/* Cadre central du QR Code */}
-      <div className="relative p-4 bg-white rounded-xl border-2 border-[#141210] shadow-[3px_3px_0px_#141210] my-2 flex items-center justify-center">
+      <div className="relative p-4 bg-white rounded-2xl border border-[#111111]/10 shadow-sm my-2 flex items-center justify-center">
         {ticketData?.qrPayload ? (
           <QRCodeSVG
             value={ticketData.qrPayload}
             size={220}
             level="H"
             includeMargin={false}
-            fgColor="#141210"
+            fgColor="#111111"
             className="transition-opacity duration-300"
           />
         ) : (
@@ -88,11 +88,11 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
       {/* Code de secours à 6 chiffres formaté */}
       <div className="mt-4 text-center">
         <span className="text-xs text-[#666] font-bold block mb-1">Code de secours (si caméra indisponible) :</span>
-        <div className="inline-flex items-center gap-1 font-anton text-2xl font-black text-[#141210] tracking-widest bg-[#FFD000] px-4 py-1.5 rounded-lg border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+        <div className="inline-flex items-center gap-1 font-anton text-2xl font-black text-[#111111] tracking-widest bg-[#FFD000] px-5 py-1.5 rounded-full border border-[#111111]/15 shadow-sm">
           {ticketData?.code6 ? (
             <>
               <span>{ticketData.code6.slice(0, 3)}</span>
-              <span className="text-[#141210]">-</span>
+              <span className="text-[#111111]">-</span>
               <span>{ticketData.code6.slice(3, 6)}</span>
             </>
           ) : (
@@ -102,7 +102,7 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
       </div>
 
       {/* Anneau de décompte circulaire 30 secondes */}
-      <div className="flex items-center gap-3 mt-5 bg-white px-5 py-2.5 rounded-lg border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
+      <div className="flex items-center gap-3 mt-5 bg-white px-5 py-2.5 rounded-full border border-[#111111]/10 shadow-sm">
         <div className="relative w-8 h-8 flex items-center justify-center">
           <svg className="w-8 h-8 transform -rotate-90">
             <circle
@@ -127,12 +127,12 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
               strokeLinecap="round"
             />
           </svg>
-          <span className="absolute text-[10px] font-black text-[#141210]">
+          <span className="absolute text-[10px] font-black text-[#111111]">
             {secondsRemaining}
           </span>
         </div>
         <div className="text-left">
-          <p className="text-xs font-bold text-[#141210]">Renouvellement automatique</p>
+          <p className="text-xs font-bold text-[#111111]">Renouvellement automatique</p>
           <p className="text-[10px] text-[#666] font-medium">Protection anti-capture d'écran</p>
         </div>
       </div>
@@ -140,7 +140,7 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
       {/* Identifiant de commande */}
       {orderCode && (
         <div className="mt-3 text-[11px] font-mono text-[#666] font-bold">
-          N° de retrait : <span className="text-[#141210] font-black">{orderCode}</span>
+          N° de retrait : <span className="text-[#111111] font-black">{orderCode}</span>
         </div>
       )}
     </div>

@@ -61,9 +61,9 @@ export default function LivingTicketPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F4EFE6] flex flex-col items-center justify-center gap-4 text-[#141210]">
+      <div className="min-h-screen bg-[#FAF3E6] flex flex-col items-center justify-center gap-4 text-[#111111]">
         <Spinner size="lg" />
-        <p className="text-xs text-[#555] font-bold">Génération du Living Ticket sécurisé...</p>
+        <p className="text-xs text-[#666] font-bold">Génération du Living Ticket sécurisé...</p>
       </div>
     );
   }
@@ -71,17 +71,17 @@ export default function LivingTicketPage() {
   const currentTicket = ticket || FALLBACK_TICKET;
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto space-y-6">
         {/* En-tête navigation */}
         <div className="flex items-center justify-between">
           <Link
             to="/app/orders"
-            className="text-xs font-anton uppercase tracking-wider text-[#141210] hover:text-[#E51C23] transition-colors"
+            className="text-xs font-anton uppercase tracking-wider text-[#111111] hover:text-[#DA0711] transition-colors"
           >
             ← Mes commandes
           </Link>
-          <div className="text-xs font-bold text-[#666]">
+          <div className="text-xs font-medium text-[#777]">
             Montfleury • Campus ESSECT
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function LivingTicketPage() {
         <button
           type="button"
           onClick={() => setShowUnboxing(true)}
-          className="w-full btn-griddle-yellow py-3.5 text-xs font-anton tracking-wider shadow-[3px_3px_0px_#141210] cursor-pointer"
+          className="w-full btn-griddle-yellow py-3.5 text-xs font-anton uppercase tracking-wider shadow-sm cursor-pointer"
         >
           <span>🎁</span>
           <span>SIMULER / REVOIR L'UNBOXING DU PANIER SURPRISE</span>

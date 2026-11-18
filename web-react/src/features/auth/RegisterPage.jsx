@@ -150,28 +150,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4EFE6] text-[#141210] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
-      {/* Rubans Damier */}
-      <div className="absolute top-0 left-0 right-0 h-4 bg-diner-checker-subtle border-b-2 border-[#141210] opacity-40 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-4 bg-diner-checker-subtle border-t-2 border-[#141210] opacity-40 pointer-events-none" />
-
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center relative z-10">
         
         {/* =========================================================================
-            COLONNE GAUCHE : POLAROID 3D & BADGE DE BIENVENUE
+            COLONNE GAUCHE : POLAROID AUTHENTIQUE + REÇU THERMIQUE (IMAGE 3)
             ========================================================================= */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-6">
-          <DepthCard maxTilt={10} perspective={1200} className="w-full max-w-sm relative p-4">
+        <div className="lg:col-span-5 flex flex-col items-center justify-center">
+          <div className="relative w-full max-w-sm">
             
-            {/* Ticket de bienvenue en arrière-plan */}
-            <div className="absolute -top-3 -right-3 w-64 rounded-xl bg-[#FAF6EE] text-[#141210] p-4 font-mono text-[11px] shadow-[6px_6px_0px_#141210] rotate-3 border-2 border-[#141210] hidden sm:block pointer-events-none select-none">
-              <div className="text-center font-black text-xs uppercase tracking-wider pb-2 border-b-2 border-dashed border-[#141210]/30">
+            {/* Ticket de bienvenue thermique en arrière-plan */}
+            <div className="absolute -top-5 -right-4 w-68 rounded-xl bg-white text-[#111111] p-5 font-mono text-[11px] shadow-xl rotate-4 border border-[#111111]/8 hidden sm:block pointer-events-none select-none z-0">
+              <div className="text-center font-anton text-xs uppercase tracking-wider pb-2 border-b border-dashed border-[#111111]/25">
                 NOUVEAU MEMBRE · ESSECT
+                <div className="text-[9px] font-sans font-normal text-[#666]">COMMUNAUTÉ ANTI-GASPI 2026</div>
               </div>
-              <div className="py-2 space-y-1 text-[10px] font-bold">
+              <div className="py-2.5 space-y-1.5 text-[10px] font-bold border-b border-dashed border-[#111111]/25">
                 <div className="flex justify-between">
                   <span>CARTE FIDÉLITÉ :</span>
-                  <span className="text-[#E51C23]">ACTIVÉE</span>
+                  <span className="text-[#DA0711] font-anton">ACTIVÉE</span>
                 </div>
                 <div className="flex justify-between">
                   <span>CLASSEMENT FILIÈRE :</span>
@@ -182,26 +179,23 @@ export default function RegisterPage() {
                   <span className="text-[#15803D]">DISPONIBLE</span>
                 </div>
               </div>
-              <div className="mt-2 pt-2 border-t-2 border-dashed border-[#141210]/30 text-center">
-                <span className="font-anton text-xs uppercase px-2 py-0.5 rounded bg-[#DCFCE7] text-[#15803D] border-2 border-[#166534] rotate-[-5deg] shadow-sm">
-                  [BIENVENUE AU CLUB]
+              <div className="mt-3 text-center">
+                <span className="griddle-stamp text-[10px] py-0.5 px-2">
+                  WELCOME
                 </span>
+              </div>
+              <div className="mt-3 pt-2 border-t border-dashed border-[#111111]/25 flex flex-col items-center">
+                <div className="h-5 w-full bg-[repeating-linear-gradient(90deg,#111111,#111111_2px,transparent_2px,transparent_4px)] opacity-70" />
+                <span className="text-[8px] font-bold tracking-widest text-[#777] mt-1">FIRST BITE · ZERO WASTE</span>
               </div>
             </div>
 
-            {/* Cadre Polaroid Avant-Plan */}
-            <div className="relative z-10 w-full rounded-xl bg-white p-4 pb-6 shadow-[8px_8px_0px_#141210] rotate-[-2.5deg] border-2 border-[#141210]">
-              {/* Masking tape */}
-              <div
-                aria-hidden="true"
-                className="absolute -top-3.5 left-5 w-14 h-6 bg-[#FFD000]/80 border border-[#141210] shadow-sm rotate-[-12deg] pointer-events-none z-20"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute -top-3.5 right-5 w-14 h-6 bg-[#FFD000]/80 border border-[#141210] shadow-sm rotate-[15deg] pointer-events-none z-20"
-              />
+            {/* Cadre Polaroid Avant-Plan Tilted -3deg */}
+            <div className="relative z-10 w-full rs-polaroid rotate-[-3deg] cursor-pointer hover:rotate-0 transition-transform duration-300">
+              <span className="rs-tape-tl" />
+              <span className="rs-tape-tr" />
 
-              <DepthLayer depth={20} shadow className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#141210] border-2 border-[#141210] relative">
+              <div className="w-full aspect-[4/3] rounded overflow-hidden bg-[#EDE6D7] relative">
                 <img
                   src="/assets/griddle/food/box-assortiment-fika.png"
                   alt="Assortiment box"
@@ -211,24 +205,19 @@ export default function RegisterPage() {
                     e.currentTarget.src = '/assets/griddle/food/croissant-amande.png';
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-2.5 left-3">
-                  <span className="px-2.5 py-0.5 rounded-md bg-[#FFD000] text-[#141210] text-[10px] font-anton border border-[#141210]">
-                    ZERO GASPILLAGE
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-3 left-3">
+                  <span className="sticker-yellow">
+                    ZÉRO GASPILLAGE
                   </span>
                 </div>
-              </DepthLayer>
-
-              <div className="mt-3.5 text-center">
-                <p className="font-anton uppercase text-lg font-bold tracking-wider text-[#141210]">
-                  REJOINS LA COMMUNAUTÉ ♥
-                </p>
-                <p className="text-[11px] text-[#555] font-bold">
-                  Plus de 1 200 repas sauvés par les étudiants de l'ESSECT
-                </p>
               </div>
+
+              <figcaption>
+                rejoins la communauté ♥
+              </figcaption>
             </div>
-          </DepthCard>
+          </div>
         </div>
 
         {/* =========================================================================
@@ -236,12 +225,12 @@ export default function RegisterPage() {
             ========================================================================= */}
         <div className="lg:col-span-7 flex flex-col justify-center space-y-5">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFD000] text-[#141210] text-xs font-anton tracking-wider mb-2 border-2 border-[#141210] shadow-[2px_2px_0px_#141210]">
-              <Flame className="w-3.5 h-3.5 text-[#E51C23]" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#DA0711] text-white text-xs font-anton uppercase tracking-wider mb-2 shadow-sm">
+              <Flame className="w-3.5 h-3.5" />
               <span>Campus ESSECT Montfleury</span>
             </div>
-            <h1 className="font-anton uppercase text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#141210] leading-none">
-              REJOINS LE <span className="text-[#E51C23]">CLUB.</span>
+            <h1 className="font-anton uppercase text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#111111] leading-none">
+              REJOINS LE <span className="text-[#DA0711]">CLUB.</span>
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-[#555] font-medium leading-relaxed">
               Créez votre compte en quelques secondes pour accéder aux offres anti-gaspi ou publier vos surplus.
@@ -250,10 +239,10 @@ export default function RegisterPage() {
 
           {serverMsg && (
             <div
-              className={`p-3 rounded-lg text-xs font-bold flex items-center gap-2 border-2 ${
+              className={`p-3.5 rounded-2xl text-xs font-bold flex items-center gap-2.5 ${
                 serverMsg.type === 'success'
-                  ? 'bg-[#DCFCE7] border-[#166534] text-[#15803D]'
-                  : 'bg-[#FEE2E2] border-[#DC2626] text-[#B91C1C]'
+                  ? 'bg-[#DCFCE7] text-[#15803D] border border-[#166534]/20'
+                  : 'bg-[#FEE2E2] text-[#DA0711] border border-[#DA0711]/20'
               }`}
             >
               <span>{serverMsg.type === 'success' ? '✅' : '⚠️'}</span>
@@ -264,45 +253,45 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {/* Choix du rôle Étudiant vs Commerçant */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-2">
+              <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-2">
                 Vous êtes :
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => handleChange('role', ROLES.STUDENT)}
-                  className={`p-3 rounded-xl border-2 text-left transition-all flex flex-col justify-between cursor-pointer ${
+                  className={`p-3.5 rounded-2xl text-left transition-all flex flex-col justify-between cursor-pointer border ${
                     formData.role === ROLES.STUDENT
-                      ? 'bg-[#FEE2E2] border-[#E51C23] shadow-[3px_3px_0px_#E51C23]'
-                      : 'bg-white border-[#141210] shadow-[2px_2px_0px_#141210] hover:bg-[#FAF6EE]'
+                      ? 'bg-[#FEE2E2] border-[#DA0711] shadow-sm'
+                      : 'bg-white border-[#111111]/10 hover:bg-[#EDE6D7]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <GraduationCap className={`w-5 h-5 ${formData.role === ROLES.STUDENT ? 'text-[#E51C23]' : 'text-[#777]'}`} />
-                    {formData.role === ROLES.STUDENT && <Check className="w-4 h-4 text-[#E51C23]" />}
+                    <GraduationCap className={`w-5 h-5 ${formData.role === ROLES.STUDENT ? 'text-[#DA0711]' : 'text-[#777]'}`} />
+                    {formData.role === ROLES.STUDENT && <Check className="w-4 h-4 text-[#DA0711]" />}
                   </div>
                   <div>
-                    <span className="text-xs font-black block text-[#141210]">Étudiant ESSECT</span>
-                    <span className="text-[10px] text-[#666] font-bold">Acheter & sauver des repas</span>
+                    <span className="text-xs font-anton uppercase block text-[#111111]">Étudiant ESSECT</span>
+                    <span className="text-[10px] text-[#666] font-medium">Acheter & sauver des repas</span>
                   </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleChange('role', ROLES.MERCHANT)}
-                  className={`p-3 rounded-xl border-2 text-left transition-all flex flex-col justify-between cursor-pointer ${
+                  className={`p-3.5 rounded-2xl text-left transition-all flex flex-col justify-between cursor-pointer border ${
                     formData.role === ROLES.MERCHANT
-                      ? 'bg-[#FEF08A] border-[#141210] shadow-[3px_3px_0px_#141210]'
-                      : 'bg-white border-[#141210] shadow-[2px_2px_0px_#141210] hover:bg-[#FAF6EE]'
+                      ? 'bg-[#FEF08A] border-[#A16207]/30 shadow-sm'
+                      : 'bg-white border-[#111111]/10 hover:bg-[#EDE6D7]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <Store className={`w-5 h-5 ${formData.role === ROLES.MERCHANT ? 'text-[#141210]' : 'text-[#777]'}`} />
-                    {formData.role === ROLES.MERCHANT && <Check className="w-4 h-4 text-[#141210]" />}
+                    <Store className={`w-5 h-5 ${formData.role === ROLES.MERCHANT ? 'text-[#111111]' : 'text-[#777]'}`} />
+                    {formData.role === ROLES.MERCHANT && <Check className="w-4 h-4 text-[#111111]" />}
                   </div>
                   <div>
-                    <span className="text-xs font-black block text-[#141210]">Commerçant Partenaire</span>
-                    <span className="text-[10px] text-[#666] font-bold">Publier & scanner les tickets</span>
+                    <span className="text-xs font-anton uppercase block text-[#111111]">Commerçant Partenaire</span>
+                    <span className="text-[10px] text-[#666] font-medium">Publier & scanner les tickets</span>
                   </div>
                 </button>
               </div>
@@ -311,16 +300,16 @@ export default function RegisterPage() {
             {/* Filière si étudiant */}
             {formData.role === ROLES.STUDENT && (
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1.5">
+                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1.5">
                   Filière Universitaire ESSECT
                 </label>
                 <select
                   value={formData.filiereId || ''}
                   onChange={(e) => handleChange('filiereId', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-white border-2 border-[#141210] shadow-[2px_2px_0px_#141210] text-[#141210] text-xs font-bold outline-none cursor-pointer"
+                  className="w-full px-4 py-2.5 rounded-full bg-white border border-[#111111]/15 text-[#111111] text-xs font-bold outline-none cursor-pointer focus:border-[#DA0711]"
                 >
                   {filiereOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-white text-[#141210]">
+                    <option key={opt.value} value={opt.value} className="bg-white text-[#111111]">
                       {opt.label}
                     </option>
                   ))}
@@ -331,7 +320,7 @@ export default function RegisterPage() {
             {/* Grille des champs principaux */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1">
+                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
                   Nom Complet
                 </label>
                 <input
@@ -339,15 +328,15 @@ export default function RegisterPage() {
                   placeholder="Ritej Bejaoui"
                   value={formData.displayName}
                   onChange={(e) => handleChange('displayName', e.target.value)}
-                  className={`w-full px-3.5 py-2 rounded-lg bg-white border-2 text-[#141210] text-xs font-medium outline-none ${
-                    errors.displayName ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]' : 'border-[#141210] shadow-[2px_2px_0px_#141210] focus:border-[#E51C23]'
+                  className={`w-full px-4 py-2.5 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
+                    errors.displayName ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
                   }`}
                 />
-                {errors.displayName && <p className="text-[10px] text-[#E51C23] font-bold mt-0.5">{errors.displayName}</p>}
+                {errors.displayName && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.displayName}</p>}
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1">
+                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
                   Téléphone (+216)
                 </label>
                 <input
@@ -355,15 +344,15 @@ export default function RegisterPage() {
                   placeholder="+21698000000"
                   value={formData.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
-                  className={`w-full px-3.5 py-2 rounded-lg bg-white border-2 text-[#141210] text-xs font-medium outline-none ${
-                    errors.phone ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]' : 'border-[#141210] shadow-[2px_2px_0px_#141210] focus:border-[#E51C23]'
+                  className={`w-full px-4 py-2.5 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
+                    errors.phone ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
                   }`}
                 />
-                {errors.phone && <p className="text-[10px] text-[#E51C23] font-bold mt-0.5">{errors.phone}</p>}
+                {errors.phone && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.phone}</p>}
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1">
+                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
                   Adresse Email
                 </label>
                 <input
@@ -371,15 +360,15 @@ export default function RegisterPage() {
                   placeholder="etudiant@essect.u-tunis.tn"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  className={`w-full px-3.5 py-2 rounded-lg bg-white border-2 text-[#141210] text-xs font-medium outline-none ${
-                    errors.email ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]' : 'border-[#141210] shadow-[2px_2px_0px_#141210] focus:border-[#E51C23]'
+                  className={`w-full px-4 py-2.5 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
+                    errors.email ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
                   }`}
                 />
-                {errors.email && <p className="text-[10px] text-[#E51C23] font-bold mt-0.5">{errors.email}</p>}
+                {errors.email && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.email}</p>}
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#141210] mb-1">
+                <label className="block text-[11px] font-anton uppercase tracking-wider text-[#111111] mb-1">
                   Mot de passe
                 </label>
                 <div className="relative">
@@ -388,19 +377,19 @@ export default function RegisterPage() {
                     placeholder="Min. 6 caractères"
                     value={formData.password}
                     onChange={(e) => handleChange('password', e.target.value)}
-                    className={`w-full px-3.5 py-2 pr-9 rounded-lg bg-white border-2 text-[#141210] text-xs font-medium outline-none ${
-                      errors.password ? 'border-[#E51C23] shadow-[2px_2px_0px_#E51C23]' : 'border-[#141210] shadow-[2px_2px_0px_#141210] focus:border-[#E51C23]'
+                    className={`w-full px-4 py-2.5 pr-10 rounded-full bg-white border text-[#111111] text-xs font-medium outline-none transition-all ${
+                      errors.password ? 'border-[#DA0711]' : 'border-[#111111]/15 focus:border-[#DA0711]'
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2 text-[#777] hover:text-[#141210]"
+                    className="absolute right-3.5 top-2.5 text-[#777] hover:text-[#111111]"
                   >
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-[10px] text-[#E51C23] font-bold mt-0.5">{errors.password}</p>}
+                {errors.password && <p className="text-[10px] text-[#DA0711] font-bold mt-0.5">{errors.password}</p>}
               </div>
             </div>
 
@@ -414,8 +403,8 @@ export default function RegisterPage() {
           </form>
 
           <div className="text-center pt-2">
-            <span className="text-xs text-[#555] font-medium">Déjà inscrit ? </span>
-            <Link to="/login" className="text-xs font-black text-[#E51C23] hover:underline">
+            <span className="text-xs text-[#666] font-medium">Déjà inscrit ? </span>
+            <Link to="/login" className="text-xs font-bold text-[#DA0711] hover:underline">
               Se connecter à son compte →
             </Link>
           </div>

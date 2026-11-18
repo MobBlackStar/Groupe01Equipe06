@@ -21,12 +21,12 @@ function CustomTooltip({ active, payload, label, unit = '', formatter }) {
     const item = payload[0];
     const displayValue = formatter ? formatter(item.value) : `${item.value} ${unit}`.trim();
     return (
-      <div className="bg-white border-2 border-[#141210] rounded-lg p-3 shadow-[3px_3px_0px_#141210]">
+      <div className="bg-white border border-[#111111]/10 rounded-xl p-3 shadow-lg">
         <p className="text-xs text-[#666] font-bold mb-1">{label}</p>
-        <p className="text-sm font-black text-[#141210] flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#E51C23]" />
+        <p className="text-sm font-black text-[#111111] flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711]" />
           <span>{item.name || 'Valeur'} :</span>
-          <span className="text-[#E51C23] font-bold">{displayValue}</span>
+          <span className="text-[#DA0711] font-bold">{displayValue}</span>
         </p>
       </div>
     );
@@ -41,7 +41,7 @@ export default function LineChartCard({
   xKey = 'label',
   yKey = 'value',
   name = 'Valeur',
-  strokeColor = '#E51C23',
+  strokeColor = '#DA0711',
   gradientId = 'lineGradient',
   yFormatter,
   tooltipFormatter,
@@ -64,11 +64,11 @@ export default function LineChartCard({
   }, [data]);
 
   return (
-    <div className="p-6 rounded-xl bg-[#FAF6EE] border-2 border-[#141210] shadow-[4px_4px_0px_#141210] flex flex-col justify-between">
+    <div className="p-6 rounded-2xl bg-[#EDE6D7] border border-[#111111]/8 shadow-[0_4px_20px_rgba(17,17,17,0.04)] flex flex-col justify-between">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-base font-black text-[#141210] uppercase tracking-wide">{title}</h3>
+          <h3 className="text-base font-anton uppercase text-[#111111] tracking-wide">{title}</h3>
           {subtitle && <p className="text-xs text-[#666] font-medium mt-0.5">{subtitle}</p>}
         </div>
         {headerAction && <div className="self-start sm:self-auto">{headerAction}</div>}

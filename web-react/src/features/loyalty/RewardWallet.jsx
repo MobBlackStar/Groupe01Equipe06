@@ -24,7 +24,7 @@ export default function RewardWallet({
       </div>
 
       {rewards.length === 0 ? (
-        <div className="p-6 rounded-2xl bg-[#FAF6EE] border-2 border-dashed border-[#141210] text-center text-xs font-bold text-[#141210]/60 shadow-[2px_2px_0px_#141210]">
+        <div className="p-8 rounded-3xl bg-[#EDE6D7] border border-[#111111]/8 text-center text-xs font-medium text-[#666]">
           Aucun coupon débloqué pour le moment. Sauvez votre premier repas pour accumuler des tampons !
         </div>
       ) : (
@@ -36,24 +36,24 @@ export default function RewardWallet({
             return (
               <div
                 key={r.rewardId || r.id}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-3 ${
+                className={`p-5 rounded-3xl border transition-all flex flex-col justify-between space-y-3 ${
                   isAvailable
                     ? isFreeSurprise
-                      ? 'bg-[#FEF08A] border-[#141210] shadow-[4px_4px_0px_#141210]'
-                      : 'bg-white border-[#141210] shadow-[4px_4px_0px_#141210]'
-                    : 'bg-[#FAF6EE] border-[#141210]/30 opacity-60'
+                      ? 'bg-[#FEF08A] border-[#A16207]/30 shadow-sm'
+                      : 'bg-white border-[#111111]/10 shadow-sm'
+                    : 'bg-[#EDE6D7] border-[#111111]/8 opacity-60'
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <span className="text-2xl">{isFreeSurprise ? '🎁' : '🔖'}</span>
                     <span
-                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border-2 border-[#141210] shadow-[1px_1px_0px_#141210] ${
+                      className={`text-[10px] font-bold px-3 py-1 rounded-full border shadow-sm ${
                         isAvailable
-                          ? 'bg-[#DCFCE7] text-[#15803D]'
+                          ? 'bg-[#DCFCE7] text-[#15803D] border-[#15803D]/20'
                           : r.status === 'LOCKED'
-                          ? 'bg-[#FEF08A] text-[#141210]'
-                          : 'bg-[#F4EFE6] text-[#141210]/60'
+                          ? 'bg-[#FEF08A] text-[#854D0E] border-[#A16207]/20'
+                          : 'bg-[#EDE6D7] text-[#666] border-[#111111]/10'
                       }`}
                     >
                       {isAvailable
@@ -64,28 +64,28 @@ export default function RewardWallet({
                     </span>
                   </div>
 
-                  <h4 className="font-anton uppercase text-base text-[#141210] mt-2 tracking-wide">
+                  <h4 className="font-anton uppercase text-base text-[#111111] mt-2 tracking-wide">
                     {isFreeSurprise
                       ? 'Panier Surprise 100% Offert ✨'
                       : '-20% de Réduction Immédiate'}
                   </h4>
 
-                  <p className="text-[11px] text-[#141210]/70 font-sans mt-0.5">
+                  <p className="text-[11px] text-[#666] font-sans mt-0.5">
                     {isFreeSurprise
                       ? `Offert jusqu'à ${formatTND(r.maxDiscountMillimes || 4000)} sur un panier mystère.`
                       : `Plafonné à ${formatTND(r.maxDiscountMillimes || 2000)} sur votre commande.`}
                   </p>
 
-                  <div className="mt-2 text-[10px] text-[#141210]/60 font-mono font-bold">
+                  <div className="mt-2 text-[10px] text-[#666] font-mono font-medium">
                     Palier {r.milestone || 100} EcoPoints • Non cumulable
                   </div>
                 </div>
 
                 {isAvailable && (
-                  <div className="pt-2 border-t-2 border-dashed border-[#141210]/20">
+                  <div className="pt-2 border-t border-dashed border-[#111111]/15">
                     <Link
                       to="/app/explore"
-                      className="w-full py-2 px-3 rounded-xl bg-[#E51C23] text-white font-black text-xs border-2 border-[#141210] shadow-[2px_2px_0px_#141210] hover:shadow-[1px_1px_0px_#141210] transition-all flex items-center justify-center gap-1.5"
+                      className="w-full btn-griddle-primary py-2.5 rounded-full block text-center text-xs"
                     >
                       <span>Utiliser au Catalogue →</span>
                     </Link>
