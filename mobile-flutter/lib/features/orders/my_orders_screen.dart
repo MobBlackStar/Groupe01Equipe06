@@ -11,6 +11,7 @@ import '../../services/campus_api.dart';
 import '../ticket/ticket_screen.dart';
 import '../checkout/checkout_screen.dart';
 
+import '../../widgets/griddle.dart';
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
 
@@ -54,27 +55,23 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       length: 3,
       child: Scaffold(
         backgroundColor: AppTheme.cream,
-        appBar: AppBar(
-          title: const Text('Mes Commandes', style: TextStyle(fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          bottom: const TabBar(
+        
+        body: GScreenBody(eyebrow: 'Espace étudiant', title: 'Mes tickets', bottom: const TabBar(
             indicatorColor: AppTheme.red,
             labelColor: AppTheme.red,
             unselectedLabelColor: AppTheme.muted,
             tabs: [
-              Tab(text: '⚡ En cours'),
-              Tab(text: '✓ Terminées'),
-              Tab(text: '✕ Annulées'),
+              Tab(text: 'En cours'),
+              Tab(text: 'Terminées'),
+              Tab(text: 'Annulées'),
             ],
-          ),
-        ),
-        body: TabBarView(
+          ), child: TabBarView(
           children: [
             _buildOrderList(['PAID', 'RESERVED']),
             _buildOrderList(['COMPLETED']),
             _buildOrderList(['CANCELLED', 'EXPIRED', 'NO_SHOW', 'FAILED']),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -101,20 +98,13 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            const SizedBox(height: 120),
-            Column(
-              children: [
-                Text(_error != null ? '⚠️' : '🛍️', style: const TextStyle(fontSize: 48)),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    _error ?? 'Aucune commande dans cet onglet',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                  ),
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              child: GEmpty(
+                icon: _error != null ? Icons.cloud_off : Icons.confirmation_number_outlined,
+                title: _error != null ? 'Connexion impossible' : 'Aucun ticket ici',
+                message: _error ?? 'Vos commandes de cet onglet apparaîtront ici. Réservez une offre pour obtenir un Living Ticket.',
+              ),
             ),
           ],
         ),
@@ -161,13 +151,13 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.black45,
+                      color: AppTheme.ink,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: badgeColor.withOpacity(0.4)),
                     ),
                     child: Text(
                       order.orderCode,
-                      style: TextStyle(color: badgeColor, fontSize: 13, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppTheme.mustard, fontSize: 13, fontFamily: AppTheme.fontMono, fontWeight: FontWeight.bold),
                     ),
                   ),
                   Container(

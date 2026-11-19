@@ -9,6 +9,7 @@ import '../../core/domain/loyalty.dart';
 import '../../core/models/loyalty_model.dart';
 import '../../services/campus_api.dart';
 
+import '../../widgets/griddle.dart';
 /// Peintre vectoriel pour cercles en pointillés réguliers
 class DashedCirclePainter extends CustomPainter {
   final Color color;
@@ -126,14 +127,8 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text(
-          'CAMPUSSAVE CLUB • FIDÉLITÉ',
-          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5, fontSize: 16),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
+      
+      body: GScreenBody(eyebrow: 'Club étudiant', title: 'Ma fidélité', child: SafeArea(
         child: RefreshIndicator(
         onRefresh: _load,
         color: AppTheme.mustard,
@@ -477,7 +472,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
           ),
         ),
         ),
-      ),
+      )),
     );
   }
 

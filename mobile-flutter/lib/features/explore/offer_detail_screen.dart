@@ -10,7 +10,7 @@ import '../../core/models/offer_model.dart';
 import '../../services/campus_api.dart';
 import '../checkout/checkout_screen.dart';
 import '../../core/domain/money.dart';
-import '../../widgets/app_button.dart';
+import '../../widgets/griddle.dart';
 import '../../widgets/live_price_text.dart';
 import '../../widgets/countdown_chip.dart';
 import '../../widgets/rarity_badge.dart';
@@ -92,288 +92,216 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     final maxAllowed = offer.remainingQuantity.clamp(1, 4);
     final walkingMin = (widget.distanceFromEssectM * 1.3 / 83.33).round().clamp(1, 45);
 
-    // Calcul impact écologique (2.5g CO2 / g aliment)
+    // Impact écologique (2,5 g de CO2 évités par gramme d'aliment sauvé)
     final foodGrams = 350 * _quantity;
     final co2Grams = (foodGrams * 2.5).round();
     final phonesCharged = (co2Grams / 10).round();
-
-    // Calcul total
     final totalMillimes = offer.targetPriceMillimes * _quantity;
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: Text(offer.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: CountdownChip(pickupEndAt: offer.pickupEndAt),
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Image / Illustration
-              Container(
-                height: 220,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppTheme.biscuit,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.sand),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            offer.isSurpriseBasket ? '🎁' : '🥪',
-                            style: const TextStyle(fontSize: 64),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            offer.title,
-                            style: const TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (offer.isSurpriseBasket)
-                      const Positioned(
-                        top: 14,
-                        left: 14,
-                        child: RarityBadge(rarity: 'RARE', score: 0.65),
-                      ),
-                    Positioned(
-                      bottom: 12,
-                      left: 14,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '📦 ${offer.remainingQuantity} portion${offer.remainingQuantity > 1 ? 's' : ''} restante${offer.remainingQuantity > 1 ? 's' : ''}',
-                          style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // 2. Commerce & Distance
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '🏪 ${offer.merchantName ?? "Commerce Montfleury"}',
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    '📍 ${widget.distanceFromEssectM} m (~$walkingMin min)',
-                    style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Titre
-              Text(
-                offer.title,
-                style: const TextStyle(color: AppTheme.ink, fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-
-              // Description
-              Text(
-                offer.description,
-                style: const TextStyle(color: AppTheme.muted, fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 18),
-
-              // 3. Ticker Prix Grand Format
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.biscuit,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.sand),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Prix unitaire actuel :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    LivePriceText(
-                      pricingType: offer.pricingType,
-                      originalPriceMillimes: offer.originalPriceMillimes,
-                      targetPriceMillimes: offer.targetPriceMillimes,
-                      pickupStartAt: offer.pickupStartAt,
-                      pickupEndAt: offer.pickupEndAt,
-                      stepMillimes: offer.stepMillimes,
-                      isLarge: true,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 4. Impact Écologique
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.ink.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.sand),
-                ),
-                child: Row(
-                  children: [
-                    const Text('🌱', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Impact Éco : $foodGrams g sauvés • $co2Grams g CO₂ évités',
-                            style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Équivaut à recharger ~ $phonesCharged smartphones',
-                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 5. Sélecteur de Quantité
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Quantité à réserver :', style: TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.w600)),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.biscuit,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.sand),
-                    ),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Photo pleine largeur, boutons et autocollants par-dessus
+          AspectRatio(
+            aspectRatio: 4 / 3.4,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (offer.photoUrl != null && offer.photoUrl!.isNotEmpty)
+                  Image.network(
+                    offer.photoUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const _DetailPhotoPlaceholder(),
+                  )
+                else
+                  const _DetailPhotoPlaceholder(),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove, color: AppTheme.ink, size: 18),
-                          onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
-                        ),
-                        Text(
-                          '$_quantity',
-                          style: const TextStyle(color: AppTheme.red, fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add, color: AppTheme.ink, size: 18),
-                          onPressed: _quantity < maxAllowed ? () => setState(() => _quantity++) : null,
-                        ),
+                        GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context)),
+                        const Spacer(),
+                        CountdownChip(pickupEndAt: offer.pickupEndAt),
                       ],
                     ),
                   ),
-                ],
-              ),
-              if (_applicableRewards.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                const Text('Coupon fidélité', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                ),
+                Positioned(
+                  left: 14,
+                  bottom: 14,
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      GPill('${offer.remainingQuantity} restant${offer.remainingQuantity > 1 ? 's' : ''}', icon: Icons.shopping_bag_outlined, color: AppTheme.ink),
+                      if (offer.isSurpriseBasket) const RarityBadge(rarity: 'RARE', score: 0.65),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text((offer.merchantName ?? 'Commerce Montfleury').toUpperCase(), style: AppTheme.eyebrow()),
+                const SizedBox(height: 4),
+                Text(offer.title.toUpperCase(), style: AppTheme.display(46)),
+                const SizedBox(height: 10),
+                Text(offer.description, style: AppTheme.body(17, AppTheme.muted)),
+                const SizedBox(height: 14),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildRewardChip(null, 'Aucun'),
-                    for (final r in _applicableRewards) _buildRewardChip(r.id, r.isFreeSurprise ? '100% offert ✨' : '-${r.percentOff ?? 10}%'),
+                    GPill('$walkingMin min à pied', icon: Icons.directions_walk, color: AppTheme.cream),
+                    GPill('${widget.distanceFromEssectM} m de l\'ESSECT', icon: Icons.place_outlined, color: AppTheme.cream),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'La remise est calculée par le serveur à la réservation.',
-                  style: TextStyle(color: AppTheme.muted, fontSize: 13),
+                const SizedBox(height: 22),
+
+                // Prix
+                GCard(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('PRIX UNITAIRE ACTUEL', style: AppTheme.label()),
+                      const SizedBox(height: 6),
+                      LivePriceText(
+                        pricingType: offer.pricingType,
+                        originalPriceMillimes: offer.originalPriceMillimes,
+                        targetPriceMillimes: offer.targetPriceMillimes,
+                        pickupStartAt: offer.pickupStartAt,
+                        pickupEndAt: offer.pickupEndAt,
+                        stepMillimes: offer.stepMillimes,
+                        onCream: true,
+                        isLarge: true,
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 14),
+
+                // Impact écologique
+                GCard(
+                  color: const Color(0xFFDDEFD9),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(color: AppTheme.leaf, shape: BoxShape.circle, border: Border.all(color: AppTheme.ink, width: 2)),
+                        child: const Icon(Icons.eco, color: AppTheme.cream, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('IMPACT ÉCO', style: AppTheme.label(AppTheme.leaf)),
+                            Text('$foodGrams g sauvés · $co2Grams g CO₂ évités', style: AppTheme.body(17).copyWith(fontWeight: FontWeight.w700)),
+                            Text('Équivalent à recharger ~$phonesCharged smartphones', style: AppTheme.body(14, AppTheme.muted)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // Quantité
+                Row(
+                  children: [
+                    Expanded(child: Text('QUANTITÉ À RÉSERVER', style: AppTheme.h3(18))),
+                    GIconButton(icon: Icons.remove, tooltip: 'Moins', onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null),
+                    SizedBox(width: 56, child: Center(child: Text('$_quantity', style: AppTheme.figure(40, AppTheme.red)))),
+                    GIconButton(icon: Icons.add, tooltip: 'Plus', onPressed: _quantity < maxAllowed ? () => setState(() => _quantity++) : null),
+                  ],
+                ),
+
+                if (_applicableRewards.isNotEmpty) ...[
+                  const SizedBox(height: 22),
+                  Text('COUPON FIDÉLITÉ', style: AppTheme.h3(18)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      GChip('Aucun', selected: _selectedRewardId == null, onTap: () => setState(() => _selectedRewardId = null)),
+                      for (final r in _applicableRewards)
+                        GChip(
+                          r.isFreeSurprise ? '100 % offert' : '-${r.percentOff ?? 10} %',
+                          icon: Icons.local_offer_outlined,
+                          selected: _selectedRewardId == r.id,
+                          onTap: () => setState(() => _selectedRewardId = r.id),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text('La remise est calculée par le serveur à la réservation.', style: AppTheme.body(14, AppTheme.muted)),
+                ],
               ],
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.biscuit,
-          border: const Border(top: BorderSide(color: AppTheme.sand)),
-        ),
+        decoration: const BoxDecoration(color: AppTheme.cream, border: Border(top: BorderSide(color: AppTheme.ink, width: 2))),
         child: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            child: Row(
+              children: [
+                Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Total estimé :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
-                    Text(
-                      Money.formatTND(totalMillimes),
-                      style: const TextStyle(color: AppTheme.red, fontSize: 20, fontWeight: FontWeight.w900),
-                    ),
+                    Text('TOTAL ESTIMÉ', style: AppTheme.label()),
+                    Text(Money.formatTND(totalMillimes), style: AppTheme.figure(40, AppTheme.red)),
                   ],
                 ),
-              ),
-              Expanded(
-                child: AppButton(
-                  text: _isReserving ? 'Blocage...' : '⚡ Réserver',
-                  backgroundColor: AppTheme.red,
-                  textColor: AppTheme.cream,
-                  onPressed: _isReserving ? null : _reserve,
+                const SizedBox(width: 18),
+                Expanded(
+                  child: GButton(
+                    _isReserving ? 'Blocage…' : 'Réserver',
+                    icon: Icons.bolt,
+                    loading: _isReserving,
+                    onPressed: _isReserving ? null : _reserve,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildRewardChip(String? id, String label) {
-    final isSel = _selectedRewardId == id;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedRewardId = id),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSel ? AppTheme.red.withOpacity(0.15) : AppTheme.biscuit,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSel ? AppTheme.red : AppTheme.sand),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSel ? AppTheme.red : AppTheme.muted,
-            fontSize: 13,
-            fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
+class _DetailPhotoPlaceholder extends StatelessWidget {
+  const _DetailPhotoPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppTheme.sand,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.restaurant_menu, size: 64, color: AppTheme.muted),
+          const SizedBox(height: 8),
+          Text('CAMPUSSAVE · ANTI-GASPI', style: AppTheme.label()),
+        ],
       ),
     );
   }

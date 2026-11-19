@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/config/env.dart';
 import '../../core/models/offer_model.dart';
 import '../../services/campus_api.dart';
 import '../explore/offer_detail_screen.dart';
@@ -22,8 +23,9 @@ class RadarScreen extends StatefulWidget {
 }
 
 class _RadarScreenState extends State<RadarScreen> {
-  // Une WebView n'existe pas dans un navigateur (nos tests visuels) : on part alors directement sur la carte native.
-  _RadarMode _mode = kIsWeb ? _RadarMode.native2d : _RadarMode.webgl3d;
+  // La vue 3D n'existe que si le site web est configuré (WEB_APP_URL) et hors navigateur (pas de WebView sur le web).
+  static bool get _canShow3d => !kIsWeb && Env.hasWebApp;
+  _RadarMode _mode = _canShow3d ? _RadarMode.webgl3d : _RadarMode.native2d;
   int _webViewGeneration = 0; // change à chaque retour en 3D : la page est rechargée proprement
 
   void _fallBack(String reason) {
@@ -71,7 +73,7 @@ class _RadarScreenState extends State<RadarScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: TextButton.icon(
-        onPressed: kIsWeb && to3d ? null : _toggle, // pas de WebView dans un navigateur
+        onPressed: to3d && !_canShow3d ? null : _toggle, // 3D indisponible : site web non configuré, ou navigateur
         style: TextButton.styleFrom(
           backgroundColor: AppTheme.mustard,
           foregroundColor: AppTheme.ink,

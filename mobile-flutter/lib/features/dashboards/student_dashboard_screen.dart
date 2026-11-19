@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../widgets/kpi_tile.dart';
 
 import '../../app/theme.dart';
+import '../../widgets/griddle.dart';
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
 
@@ -137,36 +138,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        backgroundColor: AppTheme.cream,
-        elevation: 0,
-        title: const Text(
-          'Mon Impact Étudiant 🌱',
-          style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.red.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.red.withOpacity(0.3)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.eco, color: AppTheme.red, size: 14),
-                SizedBox(width: 4),
-                Text(
-                  '280 pts',
-                  style: TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+      
+      body: GScreenBody(eyebrow: 'Impact étudiant', title: 'Mon bilan', child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +415,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

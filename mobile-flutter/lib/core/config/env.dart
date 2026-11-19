@@ -4,17 +4,21 @@
 // Module : Infrastructure Mobile
 
 class Env {
+  /// Adresse de l'API (backend Node.js hébergé). Au build : `--dart-define=API_BASE_URL=https://<hôte>/api/v1`.
+  /// La valeur par défaut ne sert qu'au développement sur la même machine (web / bureau) ; un émulateur Android
+  /// doit recevoir `http://10.0.2.2:4000/api/v1` explicitement.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:4000/api/v1',
+    defaultValue: 'http://localhost:4000/api/v1',
   );
 
-  /// Adresse du site web (le radar 3D WebGL est affiché dans une WebView : `<WEB_APP_URL>/app/radar?embed=1`).
-  /// En développement : l'IP du PC sur le Wi-Fi (le téléphone doit pouvoir la joindre).
-  static const String webAppUrl = String.fromEnvironment(
-    'WEB_APP_URL',
-    defaultValue: 'http://192.168.1.15:5173',
-  );
+  /// Adresse du site web hébergé (ex. GitHub Pages) : le radar 3D WebGL s'affiche dans une WebView sur
+  /// `<WEB_APP_URL>/app/radar?embed=1`. Au build : `--dart-define=WEB_APP_URL=https://<utilisateur>.github.io/<dépôt>`.
+  /// Vide (défaut) : aucune adresse devinée, le radar reste sur la carte 2D native.
+  static const String webAppUrl = String.fromEnvironment('WEB_APP_URL', defaultValue: '');
+
+  /// La vue 3D n'est proposée que si le site web est configuré.
+  static bool get hasWebApp => webAppUrl.trim().isNotEmpty;
 
   static const String mapStyleUrl = String.fromEnvironment(
     'MAP_STYLE_URL',

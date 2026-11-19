@@ -8,6 +8,7 @@ import '../../core/models/offer_model.dart';
 import '../../core/domain/money.dart';
 import 'offer_form_screen.dart';
 
+import '../../widgets/griddle.dart';
 class MerchantOffersScreen extends StatefulWidget {
   const MerchantOffersScreen({super.key});
 
@@ -70,11 +71,8 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Mes Offres Publiées', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: SafeArea(
+      
+      body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Mes offres', child: SafeArea(
         child: _offers.isEmpty
             ? Center(
                 child: Column(
@@ -175,7 +173,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                   );
                 },
               ),
-      ),
+      )),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.red,
         foregroundColor: AppTheme.cream,

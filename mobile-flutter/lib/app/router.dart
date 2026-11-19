@@ -21,6 +21,9 @@ import '../features/merchant/merchant_orders_screen.dart';
 import '../features/merchant/merchant_store_screen.dart';
 
 import 'theme.dart';
+import 'package:provider/provider.dart';
+import '../features/auth/profile_screen.dart';
+import '../widgets/griddle.dart';
 class AppRouter {
   static final AuthService authService = AuthService();
 
@@ -140,30 +143,32 @@ class _StudentShellState extends State<StudentShell> {
         const StudentDashboardScreen(),
       ];
 
+  static const _tabs = [
+    GTab('Offres', Icons.shopping_bag_outlined, Icons.shopping_bag),
+    GTab('Radar', Icons.map_outlined, Icons.map),
+    GTab('Tickets', Icons.confirmation_number_outlined, Icons.confirmation_number),
+    GTab('Fidélité', Icons.workspace_premium_outlined, Icons.workspace_premium),
+    GTab('Bilan', Icons.bar_chart_outlined, Icons.bar_chart),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final points = context.watch<AuthService>().profile?.ecoPoints;
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      backgroundColor: AppTheme.cream,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            GTopBar(
+              points: points,
+              onProfile: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+            ),
+            Expanded(child: IndexedStack(index: _currentIndex, children: _pages)),
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: AppTheme.biscuit,
-        selectedItemColor: AppTheme.red,
-        unselectedItemColor: AppTheme.muted,
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), activeIcon: Icon(Icons.shopping_bag), label: 'Explorer'),
-          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map), label: 'Radar 3D'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Commandes'),
-          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard_outlined), activeIcon: Icon(Icons.card_giftcard), label: 'Fidélité'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Dashboard'),
-        ],
-      ),
+      bottomNavigationBar: GBottomBar(tabs: _tabs, index: _currentIndex, onChanged: (i) => setState(() => _currentIndex = i)),
     );
   }
 }
@@ -187,30 +192,28 @@ class _MerchantShellState extends State<MerchantShell> {
     MerchantStoreScreen(),
   ];
 
+  static const _tabs = [
+    GTab('Bilan', Icons.bar_chart_outlined, Icons.bar_chart),
+    GTab('Offres', Icons.storefront_outlined, Icons.storefront),
+    GTab('Scanner', Icons.qr_code_scanner_outlined, Icons.qr_code_scanner),
+    GTab('Commandes', Icons.receipt_long_outlined, Icons.receipt_long),
+    GTab('Boutique', Icons.store_outlined, Icons.store),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      backgroundColor: AppTheme.cream,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            GTopBar(onProfile: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+            Expanded(child: IndexedStack(index: _currentIndex, children: _pages)),
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: AppTheme.biscuit,
-        selectedItemColor: AppTheme.orange,
-        unselectedItemColor: AppTheme.muted,
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Stats'),
-          BottomNavigationBarItem(icon: Icon(Icons.storefront_outlined), activeIcon: Icon(Icons.storefront), label: 'Offres'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_outlined), activeIcon: Icon(Icons.qr_code_scanner), label: 'Scanner'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_outlined), activeIcon: Icon(Icons.receipt), label: 'Commandes'),
-          BottomNavigationBarItem(icon: Icon(Icons.store_outlined), activeIcon: Icon(Icons.store), label: 'Boutique'),
-        ],
-      ),
+      bottomNavigationBar: GBottomBar(tabs: _tabs, index: _currentIndex, onChanged: (i) => setState(() => _currentIndex = i)),
     );
   }
 }

@@ -25,14 +25,19 @@ flutter pub get
 
 ### 3. Exécution avec `--dart-define`
 ```bash
-# Sur navigateur Chrome
+# Développement sur la même machine (Chrome / bureau) : l'API par défaut est http://localhost:4000/api/v1
 flutter run -d chrome
 
-# Sur émulateur Android (l'API pointe sur 10.0.2.2:5000)
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5000/api/v1
+# Émulateur Android (l'émulateur voit la machine hôte sous 10.0.2.2)
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000/api/v1
 
-# Sur smartphone physique (remplacer par l'IP locale de votre machine)
-flutter run --dart-define=API_BASE_URL=http://192.168.1.50:5000/api/v1
+# Application connectée aux services HÉBERGÉS (aucune adresse du réseau local)
+#   API_BASE_URL : le backend Node.js hébergé  |  WEB_APP_URL : le site web hébergé (ex. GitHub Pages),
+#   utilisé pour afficher le radar 3D WebGL dans la WebView (vide = carte 2D native uniquement)
+flutter run --dart-define=API_BASE_URL=https://<hote-du-backend>/api/v1 --dart-define=WEB_APP_URL=https://<utilisateur>.github.io/<depot>
+
+# APK de production
+flutter build apk --release --dart-define=API_BASE_URL=https://<hote-du-backend>/api/v1 --dart-define=WEB_APP_URL=https://<utilisateur>.github.io/<depot>
 ```
 
 ---

@@ -97,10 +97,11 @@ class _LivePriceTextState extends State<LivePriceText> {
               formattedPrice,
               style: widget.priceStyle ??
                   TextStyle(
-                    color: widget.onCream ? AppTheme.ink : AppTheme.red,
-                    fontSize: widget.isLarge ? 28 : 17,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
+                    fontFamily: AppTheme.fontDisplay, // les prix sont des « figures » League Gothic, comme sur le site
+                    color: AppTheme.red,
+                    fontSize: widget.isLarge ? 52 : 36,
+                    height: 1,
+                    letterSpacing: 0.2,
                   ),
             ),
             if (widget.originalPriceMillimes > currentPrice) ...[
@@ -109,7 +110,7 @@ class _LivePriceTextState extends State<LivePriceText> {
                 formattedOriginal,
                 style: TextStyle(
                   color: widget.onCream ? AppTheme.muted : AppTheme.muted,
-                  fontSize: widget.isLarge ? 16 : 12,
+                  fontSize: widget.isLarge ? 18 : 14,
                   decoration: TextDecoration.lineThrough,
                   decorationColor: widget.onCream ? AppTheme.muted : AppTheme.muted,
                 ),
@@ -118,18 +119,18 @@ class _LivePriceTextState extends State<LivePriceText> {
             if (discountPercent > 0) ...[
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppTheme.red.withValues(alpha: widget.onCream ? 0.12 : 0.2),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppTheme.red.withValues(alpha: widget.onCream ? 0.35 : 0.4)),
+                  color: AppTheme.mustard,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppTheme.ink, width: 2),
                 ),
                 child: Text(
                   '-$discountPercent%',
                   style: const TextStyle(
-                    color: AppTheme.red,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    color: AppTheme.ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),

@@ -1,22 +1,16 @@
 // 💡 Concept & Analogie : Client HTTP centralisé (Axios) injectant automatiquement le jeton d'authentification Bearer dans chaque requête vers l'API.
 // 🔄 Comparaison React / Flutter : Côté Flutter, le client Dio utilise un intercepteur équivalent.
-// 🎯 À retenir pour la soutenance : "Ce client Axios adapte dynamiquement son URL de base si l'application est consultée depuis une adresse IP LAN (ex: 192.168.x.x) pour fonctionner sans accroc sur smartphone."
+// 🎯 À retenir pour la soutenance : "Ce client Axios lit son URL de base dans VITE_API_BASE_URL (le backend hébergé) ; il ne devine jamais une adresse à partir de l'hôte de la page."
 // Module : Infrastructure
 
 import axios from 'axios';
 import { auth } from './firebase.js';
 import { updateServerOffset } from './serverClock.js';
 
+// URL de l'API : celle configurée au build (VITE_API_BASE_URL, ex. le backend hébergé) ; localhost seulement en développement.
+// Aucune adresse n'est devinée à partir de l'hôte de la page : un site hébergé sur GitHub Pages ne doit jamais viser `http://<hôte>:4000`.
 function computeBaseUrl() {
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (typeof window !== 'undefined' && window.location) {
-    const hostname = window.location.hostname;
-    // Si l'utilisateur accède par une IP LAN ou tout hôte distinct de localhost, adapter dynamiquement vers le port 4000
-    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return `http://${hostname}:4000/api/v1`;
-    }
-  }
-  return envUrl || 'http://localhost:4000/api/v1';
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
 }
 
 export const apiClient = axios.create({

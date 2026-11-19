@@ -8,6 +8,7 @@ import '../../core/config/env.dart';
 import '../../core/models/offer_model.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/offer_card.dart';
+import '../../widgets/griddle.dart';
 import 'filter_bottom_sheet.dart';
 import 'offer_detail_screen.dart';
 
@@ -198,165 +199,135 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.dispose();
   }
 
+  static const Map<String, String> _categoryLabels = {
+    'ALL': 'Tout',
+    'SANDWICH': 'Sandwichs',
+    'PATISSERIE': 'Pâtisseries',
+    'BOULANGERIE': 'Boulangerie',
+    'PLAT_CHAUD': 'Plats chauds',
+    'MIXTE': 'Paniers mixtes',
+    'DESSERT': 'Desserts',
+    'BOISSON': 'Boissons',
+  };
+
+  String _labelOf(String category) {
+    final known = _categoryLabels[category];
+    if (known != null) return known;
+    final lower = category.toLowerCase().replaceAll('_', ' ');
+    return lower.isEmpty ? category : lower[0].toUpperCase() + lower.substring(1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final offers = _filteredOffers;
+    final categories = <String>['ALL', ...{..._allOffers.map((o) => o.category)}];
+    final activeFilters = (_selectedCategory != 'ALL' ? 1 : 0) + (_surpriseOnly ? 1 : 0) + (_maxPriceMillimes < 15000 ? 1 : 0);
 
-    return Scaffold(
-      backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('CampusSave • ESSECT', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune, color: AppTheme.red),
-            onPressed: _openFilters,
-            tooltip: 'Filtres de recherche',
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
+    return GPage(
+      onRefresh: _loadOffers,
+      header: const GPageHeader(eyebrow: 'Autour de l\'ESSECT · Montfleury', title: 'Offres du moment', titleSize: 58),
+      children: [
+        // Recherche + filtres
+        Row(
           children: [
-            // 1. Barre de recherche avec icône filtres
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() {}),
-                      style: const TextStyle(color: AppTheme.ink, fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher un plat, sandwich, commerce...',
-                        hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search, color: AppTheme.muted, size: 20),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, color: AppTheme.muted, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {});
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: AppTheme.biscuit,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.sand),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.sand),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.red),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 2. Bannière Campus
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.red.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Text('📍', style: TextStyle(fontSize: 14)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Autour de l ESSECT Montfleury • ${offers.length} offre(s) en ligne',
-                        style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 3. Grille des offres
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: _loadOffers,
-                color: AppTheme.red,
-                backgroundColor: AppTheme.biscuit,
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
-                    : offers.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          const SizedBox(height: 80),
-                          Column(
-                            children: [
-                              Text(_loadError != null ? '⚠️' : '🔍', style: const TextStyle(fontSize: 48)),
-                              const SizedBox(height: 12),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
-                                child: Text(
-                                  _loadError ?? 'Aucune offre ne correspond à votre recherche',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                                ),
-                              ),
-                              if (_loadError != null)
-                                TextButton(
-                                  onPressed: () {
-                                    setState(() => _isLoading = true);
-                                    _loadOffers();
-                                  },
-                                  child: const Text('Réessayer', style: TextStyle(color: AppTheme.red)),
-                                ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: offers.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 14),
-                        itemBuilder: (context, index) {
-                          final offer = offers[index];
-                          final distances = [180, 120, 350, 420, 520];
-                          final dist = distances[index % distances.length];
-
-                          return OfferCard(
-                            offer: offer,
-                            distanceFromEssectM: dist,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => OfferDetailScreen(
-                                    offer: offer,
-                                    distanceFromEssectM: dist,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() {}),
+                style: AppTheme.body(16),
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Un plat, un sandwich, un commerce…',
+                  prefixIcon: const Icon(Icons.search, color: AppTheme.ink),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close, color: AppTheme.ink, size: 20),
+                          tooltip: 'Effacer la recherche',
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                ),
               ),
+            ),
+            const SizedBox(width: 10),
+            GIconButton(
+              icon: Icons.tune,
+              tooltip: activeFilters > 0 ? 'Filtres ($activeFilters actifs)' : 'Filtres de recherche',
+              onPressed: _openFilters,
+              color: activeFilters > 0 ? AppTheme.mustard : AppTheme.cream,
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 14),
+
+        // Catégories
+        if (categories.length > 1)
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final c = categories[index];
+                return GChip(_labelOf(c), selected: _selectedCategory == c, onTap: () => setState(() => _selectedCategory = c));
+              },
+            ),
+          ),
+        const SizedBox(height: 18),
+
+        // Ruban du site
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: const GTicker(items: ['Cuisiné', 'Bradé', 'Sauvé', 'Prix qui baissent', 'Retrait à Montfleury']),
+        ),
+        const SizedBox(height: 22),
+
+        GSectionTitle(offers.length == 1 ? '1 offre en ligne' : '${offers.length} offres en ligne'),
+        const SizedBox(height: 14),
+
+        if (_isLoading)
+          const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator(color: AppTheme.red)))
+        else if (offers.isEmpty)
+          GEmpty(
+            icon: _loadError != null ? Icons.cloud_off : Icons.search_off,
+            title: _loadError != null ? 'Connexion impossible' : 'Rien pour le moment',
+            message: _loadError ?? 'Aucune offre ne correspond à votre recherche. Essayez d\'élargir les filtres.',
+            actionLabel: _loadError != null ? 'Réessayer' : (activeFilters > 0 ? 'Effacer les filtres' : null),
+            onAction: _loadError != null
+                ? () {
+                    setState(() => _isLoading = true);
+                    _loadOffers();
+                  }
+                : () => setState(() {
+                      _selectedCategory = 'ALL';
+                      _maxPriceMillimes = 15000;
+                      _surpriseOnly = false;
+                    }),
+          )
+        else
+          for (var index = 0; index < offers.length; index++) ...[
+            () {
+              final offer = offers[index];
+              const distances = [180, 120, 350, 420, 520];
+              final dist = distances[index % distances.length];
+              return OfferCard(
+                offer: offer,
+                distanceFromEssectM: dist,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => OfferDetailScreen(offer: offer, distanceFromEssectM: dist)),
+                  );
+                },
+              );
+            }(),
+            const SizedBox(height: 16),
+          ],
+      ],
     );
   }
 }

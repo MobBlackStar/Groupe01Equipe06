@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../widgets/kpi_tile.dart';
 
 import '../../app/theme.dart';
+import '../../widgets/griddle.dart';
 class MerchantDashboardScreen extends StatefulWidget {
   const MerchantDashboardScreen({super.key});
 
@@ -23,15 +24,8 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        backgroundColor: AppTheme.cream,
-        elevation: 0,
-        title: const Text(
-          'Performances Ventes 📊',
-          style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-      ),
-      body: SingleChildScrollView(
+      
+      body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Mes ventes', child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +226,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

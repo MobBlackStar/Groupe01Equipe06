@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../core/domain/money.dart';
 
+import '../../widgets/griddle.dart';
 class MerchantOrdersScreen extends StatefulWidget {
   const MerchantOrdersScreen({super.key});
 
@@ -53,27 +54,23 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
       length: 3,
       child: Scaffold(
         backgroundColor: AppTheme.cream,
-        appBar: AppBar(
-          title: const Text('Retraits & Commandes', style: TextStyle(fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          bottom: const TabBar(
+        
+        body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Retraits', bottom: const TabBar(
             indicatorColor: AppTheme.red,
             labelColor: AppTheme.red,
             unselectedLabelColor: AppTheme.muted,
             tabs: [
-              Tab(text: '🎟️ Payées'),
-              Tab(text: '⏳ Réservées'),
-              Tab(text: '✓ Terminées'),
+              Tab(text: 'Payées'),
+              Tab(text: 'Réservées'),
+              Tab(text: 'Terminées'),
             ],
-          ),
-        ),
-        body: TabBarView(
+          ), child: TabBarView(
           children: [
             _buildList('PAID'),
             _buildList('RESERVED'),
             _buildList('COMPLETED'),
           ],
-        ),
+        )),
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: AppTheme.red,
           foregroundColor: AppTheme.cream,

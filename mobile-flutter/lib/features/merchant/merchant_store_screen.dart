@@ -8,6 +8,7 @@ import '../../widgets/app_button.dart';
 import 'pending_approval_screen.dart';
 import 'merchant_onboarding_screen.dart';
 
+import '../../widgets/griddle.dart';
 class MerchantStoreScreen extends StatefulWidget {
   const MerchantStoreScreen({super.key});
 
@@ -71,18 +72,8 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Espace Commerçant', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Simuler changement de statut',
-            icon: const Icon(Icons.sync_alt, color: AppTheme.red),
-            onPressed: _cycleStatus,
-          ),
-        ],
-      ),
-      body: SafeArea(
+      
+      body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Ma boutique', trailing: GIconButton(icon: Icons.sync_alt, tooltip: 'Simuler un changement de statut', onPressed: _cycleStatus), child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -349,7 +340,7 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 

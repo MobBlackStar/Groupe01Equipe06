@@ -1,6 +1,6 @@
-// 💡 Concept & Analogie : Comme un portier de club intelligent, cette configuration autorise immédiatement les développeurs locaux (localhost et IP LAN Wi-Fi du campus) en développement, tout en verrouillant strictement la production aux domaines officiels.
+// 💡 Concept & Analogie : Comme un portier de club qui ne laisse entrer que les invités de la liste, cette configuration n'accepte en production que les sites dont l'adresse figure dans CORS_ORIGINS, et facilite le développement local (localhost).
 // 🔄 Comparaison React / Flutter : Le mécanisme CORS s'applique aux requêtes des navigateurs Web (React) ; les applications mobiles natives (Flutter Android/iOS) ne sont pas restreintes par la même politique d'origine des navigateurs.
-// 🎯 À retenir pour la soutenance : "En développement, la passerelle autorise dynamiquement le réseau LAN (192.168.*.*) pour permettre de tester l'application simultanément sur PC et smartphone connecté au Wi-Fi de l'ESSECT."
+// 🎯 À retenir pour la soutenance : "En production, seules les origines listées dans CORS_ORIGINS (ex. le site hébergé sur GitHub Pages) sont acceptées ; en développement, localhost suffit."
 // Module : Architecture & Infrastructure
 
 import { env } from './env.js';
@@ -14,16 +14,11 @@ export const corsOptions = {
       return callback(null, true);
     }
 
-    // 2. En mode développement : autoriser tous les localhost, 127.0.0.1 et adresses LAN privées (192.168.x.x, 10.x.x.x, 172.x.x.x)
+    // 2. En mode développement : localhost / 127.0.0.1 et les origines listées dans CORS_ORIGINS
     if (env.NODE_ENV !== 'production') {
-      const isLocalOrLan =
-        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
-        /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
-        /^https?:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
-        /^https?:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
-        /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/.test(origin);
+      const isLocal = /^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
 
-      if (isLocalOrLan || allowedOrigins.includes(origin)) {
+      if (isLocal || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       // Tolérance totale en développement pour ne jamais bloquer le jury ou les tests
