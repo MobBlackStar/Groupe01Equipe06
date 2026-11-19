@@ -601,6 +601,35 @@ section('L. B3/I4 Reward lifecycle: milestone -> coupon -> reserve (cap) -> lock
   check('B3', 'coupon becomes USED once the order is PAID', used?.status === 'USED', used?.status);
 }
 
+
+// ================================================================ M. demo merchant CRUD + store isolation
+section('M. Demo merchant (m-baguette) offer CRUD, and a merchant WITHOUT a store sees nothing');
+{
+  const DEMO_M = 'test-token:m-baguette:MERCHANT:commercant@baguette.tn';
+  const created = await call('POST', '/offers', DEMO_M, offerBody({ title: 'CRUD Demo Merchant' }));
+  const oid = created.body.offer?.id;
+  check('M3', 'demo merchant can publish an offer (201)', created.status === 201 && oid, `${created.status} ${err(created)}`);
+  const inList = await call('GET', '/merchants/me/offers', DEMO_M);
+  check('M3', 'the new offer appears in the demo merchant list', (inList.body.offers || []).some((o) => o.id === oid), `${inList.status}`);
+  const upd = await call('PATCH', `/offers/${oid}`, DEMO_M, { title: 'CRUD Demo Merchant (modifie)', quantity: 7 });
+  check('M3', 'demo merchant can edit own offer (was 403 FORBIDDEN_RESOURCE)', upd.status === 200 && upd.body.offer?.title === 'CRUD Demo Merchant (modifie)', `${upd.status} ${err(upd)}`);
+  const del = await call('DELETE', `/offers/${oid}`, DEMO_M);
+  check('M3', 'demo merchant can delete own offer', del.status === 204 || del.status === 200, `${del.status} ${err(del)}`);
+  const gone = await call('GET', `/offers/${oid}`);
+  check('M3', 'the deleted offer is gone for students too', gone.status === 404, gone.status);
+
+  // A merchant with NO store must never be shown another store's data (old fallback = "first approved store")
+  const NOSTORE = 'test-token:qa-no-store:MERCHANT:nostore@essect.u-tunis.tn';
+  const offs = await call('GET', '/merchants/me/offers', NOSTORE);
+  check('C3', 'merchant without a store sees NO offers (not another store\'s)', offs.status === 200 && (offs.body.offers || []).length === 0, `${offs.status} ${(offs.body.offers || []).length}`);
+  const ords = await call('GET', '/merchants/me/orders', NOSTORE);
+  check('C3', 'merchant without a store sees NO orders', ords.status === 200 && (ords.body.orders || []).length === 0, `${ords.status} ${(ords.body.orders || []).length}`);
+  const dash = await call('GET', '/dashboards/merchant', NOSTORE);
+  check('C3', 'merchant without a store gets 404 on the dashboard (no foreign revenue)', dash.status === 404, `${dash.status}`);
+  const me = await call('GET', '/merchants/me', NOSTORE);
+  check('C3', 'merchant without a store gets 404 on /merchants/me', me.status === 404, `${me.status}`);
+}
+
 // ================================================================ summary
 const pass = results.filter((r) => r.ok).length;
 const fail = results.filter((r) => !r.ok);

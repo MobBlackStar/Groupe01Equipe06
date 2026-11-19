@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Ce service utilise les agrégations count() natives de Firestore pour un coût de lecture minimal et offre une rétrocompatibilité complète en mémoire."
 // Module : Tableaux de Bord & Indicateurs Décisionnels
 
+import { resolveMerchantId } from '../../utils/merchantResolver.js';
 import { db } from '../../config/firebase.js';
 import { calculateEquivalences } from '../../../../shared/impact.js';
 import { ROLES, MERCHANT_STATUS, ORDER_STATUS } from '../../../../shared/constants.js';
@@ -134,23 +135,12 @@ export const dashboardsService = {
    * Tableau de bord Commerçant : Chiffre d'affaires, taux de no-show, série temporelle journalière et top offres.
    */
   async getMerchantDashboard(merchantId, range = '7d') {
-    let merchantDoc = await db.collection('merchants').doc(merchantId).get();
-    let actualMerchantId = merchantId;
-    if (!merchantDoc.exists) {
-      const ownerSnap = await db.collection('merchants').where('ownerUid', '==', merchantId).limit(1).get();
-      if (!ownerSnap.empty) {
-        merchantDoc = ownerSnap.docs[0];
-        actualMerchantId = merchantDoc.id;
-      } else {
-        const firstApproved = await db.collection('merchants').where('status', '==', MERCHANT_STATUS.APPROVED).limit(1).get();
-        if (!firstApproved.empty) {
-          merchantDoc = firstApproved.docs[0];
-          actualMerchantId = merchantDoc.id;
-        } else {
-          throw new AppError('Établissement commerçant introuvable', 404, 'MERCHANT_NOT_FOUND');
-        }
-      }
+    // Jamais le repli sur « le premier commerce approuvé » : un compte sans boutique reçoit un 404
+    const actualMerchantId = await resolveMerchantId(merchantId);
+    if (!actualMerchantId) {
+      throw new AppError('Établissement commerçant introuvable', 404, 'MERCHANT_NOT_FOUND');
     }
+    const merchantDoc = await db.collection('merchants').doc(actualMerchantId).get();
 
     const merchant = merchantDoc.data() || {};
     const rawStats = merchant.stats || {};

@@ -35,12 +35,60 @@ function categoryImage(category, title) {
   }
   return getDistinctGriddleFoodImage(CATEGORY_POOL[category] || 'fast-food', title || category || 0);
 }
-import { Sparkles, Clock, ArrowRight, Gift, Leaf } from 'lucide-react';
+import { Sparkles, Clock, ArrowRight, Gift, Leaf, AlertTriangle } from 'lucide-react';
 
 // Affichage sûr : jamais de NaN / 0,000 DT à l'écran
 function money(millimes) {
   const n = Number(millimes);
   return millimes != null && Number.isFinite(n) && n > 0 ? formatTND(n) : '—';
+}
+
+
+// ---------------------------------------------------------------------------------------------
+// Fuseau et formats : le créneau de retrait est saisi en heure de Tunis (UTC+1 toute l'année)
+// ---------------------------------------------------------------------------------------------
+const TUNIS_TZ = 'Africa/Tunis';
+const toMs = (v) => (v?._seconds ? v._seconds * 1000 : v?.seconds ? v.seconds * 1000 : v ? new Date(v).getTime() : NaN);
+const hhmm = (v) => {
+  const ms = toMs(v);
+  if (!Number.isFinite(ms)) return '';
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: TUNIS_TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(ms);
+};
+const tunisDay = (ms = Date.now()) => new Intl.DateTimeFormat('en-CA', { timeZone: TUNIS_TZ }).format(ms); // AAAA-MM-JJ
+const tunisIso = (day, time) => new Date(`${day}T${time}:00+01:00`).toISOString();
+
+/** Message lisible à partir d'une erreur Axios : on affiche la VRAIE raison du serveur, jamais un faux succès. */
+function apiErrorMessage(err, fallback) {
+  const e = err?.response?.data?.error;
+  if (Array.isArray(e?.details) && e.details.length > 0) {
+    return `${e.message || 'Données invalides'} : ${e.details.map((d) => `${d.field} — ${d.message}`).join(' ; ')}`;
+  }
+  if (e?.message) return e.message;
+  if (err?.response) return `${fallback} (erreur ${err.response.status})`;
+  return "Serveur injoignable : l'offre n'a PAS été enregistrée. Vérifiez que l'API est démarrée.";
+}
+
+/** Offre renvoyée par l'API → valeurs du formulaire (mode modification). */
+function offerToForm(o, defaults) {
+  const pr = o.pricing || {};
+  return {
+    ...defaults,
+    title: o.title ?? '',
+    description: o.description ?? '',
+    category: o.category || defaults.category,
+    originalPriceMillimes: pr.originalPriceMillimes ?? o.originalPriceMillimes ?? 0,
+    pricingMode: pr.mode || defaults.pricingMode,
+    startPriceMillimes: pr.startPriceMillimes ?? '',
+    floorPriceMillimes: pr.floorPriceMillimes ?? '',
+    fixedDiscountedMillimes: pr.discountedPriceMillimes ?? o.discountedPriceMillimes ?? '',
+    quantityTotal: o.quantityTotal ?? o.quantity ?? 1,
+    maxPerOrder: o.maxPerOrder ?? defaults.maxPerOrder,
+    weightGramsPerUnit: o.weightGramsPerUnit ?? o.weightGrams ?? defaults.weightGramsPerUnit,
+    photoUrl: o.photoUrl || '',
+    pickupStartAt: hhmm(o.pickupStartAt) || defaults.pickupStartAt,
+    pickupEndAt: hhmm(o.pickupEndAt) || defaults.pickupEndAt,
+    isSurpriseBasket: Boolean(o.isSurpriseBasket),
+  };
 }
 
 // En-tête de section numérotée (01, 02…)
@@ -95,6 +143,39 @@ export default function OfferFormPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [loadingOffer, setLoadingOffer] = useState(isEditing);
+  const [initialForm, setInitialForm] = useState(null); // valeurs chargées : sert à n'envoyer que ce qui change
+  const [initialOffer, setInitialOffer] = useState(null);
+
+  // Mode modification : on charge la VRAIE offre (sinon le formulaire affichait des valeurs de démonstration
+  // qui auraient écrasé l'offre au moment d'enregistrer).
+  useEffect(() => {
+    if (!isEditing) return undefined;
+    let alive = true;
+    setLoadingOffer(true);
+    apiClient
+      .get(ENDPOINTS.OFFER_BY_ID(id))
+      .then((res) => {
+        if (!alive) return;
+        const o = res.data?.offer || res.data;
+        setFormData((prev) => {
+          const next = offerToForm(o, prev);
+          setInitialForm(next);
+          return next;
+        });
+        setInitialOffer(o);
+      })
+      .catch((err) => {
+        if (alive) setErrorMsg(apiErrorMessage(err, "Impossible de charger cette offre"));
+      })
+      .finally(() => {
+        if (alive) setLoadingOffer(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id, isEditing]);
 
   const impact = calculateImpact(
     (Number(formData.weightGramsPerUnit) || 350) * (Number(formData.quantityTotal) || 1)
@@ -141,66 +222,113 @@ export default function OfferFormPage() {
     setToastMsg('✨ L intelligence artificielle a configuré l ensemble de votre ticket !');
   }
 
+  /** Contrôles côté client (le serveur re-valide tout) : on renvoie la liste des problèmes à corriger. */
+  function validateForm(f) {
+    const problems = [];
+    const orig = Number(f.originalPriceMillimes);
+    const qty = Number(f.quantityTotal);
+    if (!f.title.trim() || f.title.trim().length < 2) problems.push("le titre est obligatoire (2 caractères minimum)");
+    if (!Number.isInteger(orig) || orig <= 0) problems.push("le prix d'origine doit être un entier positif (en millimes)");
+    if (f.pricingMode === PRICING_MODES.FIXED) {
+      const disc = Number(f.fixedDiscountedMillimes);
+      if (!Number.isInteger(disc) || disc < 0 || disc >= orig) problems.push("le prix réduit doit être strictement inférieur au prix d'origine");
+    } else {
+      const start = Number(f.startPriceMillimes);
+      const floor = Number(f.floorPriceMillimes);
+      if (!Number.isInteger(start) || start <= 0 || !Number.isInteger(floor) || floor < 0 || floor >= start) {
+        problems.push("Smart Decay : le prix plancher doit être strictement inférieur au prix de départ");
+      }
+    }
+    if (!Number.isInteger(qty) || qty < 1 || qty > 50) problems.push('la quantité doit être comprise entre 1 et 50');
+    const [sh, sm] = String(f.pickupStartAt).split(':').map(Number);
+    const [eh, em] = String(f.pickupEndAt).split(':').map(Number);
+    const mins = eh * 60 + em - (sh * 60 + sm);
+    if (!Number.isFinite(mins) || mins <= 0) problems.push("l'heure de fin de retrait doit être postérieure à l'heure de début");
+    else if (mins > 360) problems.push('le créneau de retrait ne peut pas dépasser 6 heures');
+    return problems;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setErrors({});
     setToastMsg(null);
+    setErrorMsg(null);
 
-    if (!formData.title.trim()) {
-      setErrors((prev) => ({ ...prev, title: 'Le titre de l offre est obligatoire' }));
+    const problems = validateForm(formData);
+    if (problems.length > 0) {
+      if (!formData.title.trim()) setErrors((prev) => ({ ...prev, title: "Le titre de l'offre est obligatoire" }));
+      setErrorMsg(`À corriger : ${problems.join(' · ')}.`);
       return;
     }
 
     setLoading(true);
-
     try {
-      const today = new Date();
-      const [startH, startM] = formData.pickupStartAt.split(':').map(Number);
-      const [endH, endM] = formData.pickupEndAt.split(':').map(Number);
+      // En modification on garde le jour d'origine de l'offre ; à la création, c'est aujourd'hui (heure de Tunis)
+      const day = tunisDay(isEditing && initialOffer ? toMs(initialOffer.pickupStartAt) : Date.now());
+      const pickupStartIso = tunisIso(day, formData.pickupStartAt);
+      const pickupEndIso = tunisIso(day, formData.pickupEndAt);
+      const isDutchMode = formData.pricingMode === PRICING_MODES.DUTCH_AUCTION;
 
-      const pickupStart = new Date(today);
-      pickupStart.setHours(startH, startM, 0, 0);
-
-      const pickupEnd = new Date(today);
-      pickupEnd.setHours(endH, endM, 0, 0);
-
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        originalPriceMillimes: Number(formData.originalPriceMillimes),
-        quantityTotal: Number(formData.quantityTotal),
-        maxPerOrder: Number(formData.maxPerOrder),
-        weightGramsPerUnit: Number(formData.weightGramsPerUnit),
-        pickupStartAt: pickupStart.toISOString(),
-        pickupEndAt: pickupEnd.toISOString(),
-        isSurpriseBasket: formData.isSurpriseBasket,
-        pricing: {
-          mode: formData.pricingMode,
-          startPriceMillimes: Number(formData.startPriceMillimes),
-          floorPriceMillimes: Number(formData.floorPriceMillimes),
-          discountedPriceMillimes: Number(formData.fixedDiscountedMillimes),
-          roundingStepMillimes: 100,
-        },
-        surprise: formData.isSurpriseBasket ? {
-          teaser: formData.surprise.teaser,
-          itemCountHint: Number(formData.surprise.itemCountHint),
-          privateContents: formData.surprise.privateContents,
-        } : undefined,
-      };
+      // Contrat de l'API (createOfferSchema) : prix DANS `pricing`, `quantity`, `surpriseContents`
+      const pricing = isDutchMode
+        ? {
+            mode: PRICING_MODES.DUTCH_AUCTION,
+            originalPriceMillimes: Number(formData.originalPriceMillimes),
+            startPriceMillimes: Number(formData.startPriceMillimes),
+            floorPriceMillimes: Number(formData.floorPriceMillimes),
+            decayStartAt: pickupStartIso,
+            roundingStepMillimes: 100,
+          }
+        : {
+            mode: PRICING_MODES.FIXED,
+            originalPriceMillimes: Number(formData.originalPriceMillimes),
+            discountedPriceMillimes: Number(formData.fixedDiscountedMillimes),
+            roundingStepMillimes: 100,
+          };
 
       if (isEditing) {
-        await apiClient.patch(ENDPOINTS.OFFER_BY_ID(id), payload);
+        // PATCH partiel : seulement ce qui a changé (le prix est verrouillé dès qu'une réservation existe, INV-15)
+        const changed = (k) => String(formData[k]) !== String(initialForm?.[k]);
+        const body = {};
+        if (changed('title')) body.title = formData.title.trim();
+        if (changed('description')) body.description = formData.description;
+        if (changed('category')) body.category = formData.category;
+        if (changed('photoUrl') && formData.photoUrl) body.photoUrl = formData.photoUrl;
+        if (changed('quantityTotal')) body.quantity = Number(formData.quantityTotal);
+        if (changed('pickupStartAt') || changed('pickupEndAt')) {
+          body.pickupStartAt = pickupStartIso;
+          body.pickupEndAt = pickupEndIso;
+        }
+        if (['originalPriceMillimes', 'pricingMode', 'startPriceMillimes', 'floorPriceMillimes', 'fixedDiscountedMillimes'].some(changed)) {
+          body.pricing = pricing;
+        }
+        if (Object.keys(body).length === 0) {
+          setToastMsg('Aucune modification à enregistrer.');
+          return;
+        }
+        await apiClient.patch(ENDPOINTS.OFFER_BY_ID(id), body);
+        setToastMsg("✅ Offre mise à jour. Les étudiants voient déjà la nouvelle version.");
       } else {
+        const payload = {
+          title: formData.title.trim(),
+          description: formData.description,
+          category: formData.category,
+          pricing,
+          quantity: Number(formData.quantityTotal),
+          pickupStartAt: pickupStartIso,
+          pickupEndAt: pickupEndIso,
+          isSurpriseBasket: formData.isSurpriseBasket,
+          ...(formData.isSurpriseBasket ? { surpriseContents: formData.surprise.privateContents } : {}),
+          ...(formData.photoUrl ? { photoUrl: formData.photoUrl } : {}),
+        };
         await apiClient.post(ENDPOINTS.OFFERS, payload);
+        setToastMsg("✅ Offre publiée sur le catalogue de l'ESSECT !");
       }
-
-      setToastMsg('✅ Offre publiée avec succès sur le catalogue de l ESSECT !');
-      setTimeout(() => navigate('/merchant/offers'), 800);
+      setTimeout(() => navigate('/merchant/offers'), 900);
     } catch (err) {
-      console.warn('Mode démo / offline publish :', err.message);
-      setToastMsg('✅ Offre enregistrée localement pour la démonstration !');
-      setTimeout(() => navigate('/merchant/offers'), 800);
+      // Jamais de faux succès : on affiche la vraie raison et on reste sur le formulaire
+      console.warn("Enregistrement de l'offre refusé :", err?.response?.data || err.message);
+      setErrorMsg(apiErrorMessage(err, "L'offre n'a pas pu être enregistrée"));
     } finally {
       setLoading(false);
     }
@@ -244,6 +372,13 @@ export default function OfferFormPage() {
 
       {/* Assistant IA Magique Zero-Typing (I5) */}
       <AiAutoFillBox onAutoFill={handleAiAutoFill} className="mb-8" />
+
+      {errorMsg && (
+        <div role="alert" className="mb-8 rounded-[1.25rem] bg-[#DA0711] text-white p-5 text-base font-semibold flex items-start gap-3 border-2 border-[#111111]">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {toastMsg && (
         <div role="status" className="mb-8 rounded-[1.25rem] bg-[#DDEFD9] text-[#1F7A3A] p-5 text-base font-semibold flex items-center gap-3">
@@ -433,10 +568,10 @@ export default function OfferFormPage() {
           {/* Bouton de Soumission */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || loadingOffer}
             className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
           >
-            <span>{loading ? 'Publication en cours…' : isEditing ? 'Enregistrer l\'offre' : 'Publier l\'offre'}</span>
+            <span>{loading ? 'Enregistrement en cours…' : loadingOffer ? "Chargement de l'offre…" : isEditing ? 'Enregistrer l\'offre' : 'Publier l\'offre'}</span>
             {!loading && <ArrowRight className="w-6 h-6" aria-hidden="true" />}
           </button>
         </form>

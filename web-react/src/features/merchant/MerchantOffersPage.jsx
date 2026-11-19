@@ -2,7 +2,7 @@
 // 🔄 Comparaison React / Flutter : En React, les offres sont rendues sous forme de grille de cartes avec modale de confirmation de suppression ; en Flutter, nous utilisons un `ListView.builder` avec gestes de balayage `Dismissible`.
 // 🎯 À retenir pour la soutenance : "La suppression d'une offre applique un soft-delete (bascule à `DELETED`) si des réservations ou commandes y sont déjà associées, préservant l'historique comptable et l'intégrité référentielle."
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { OFFER_STATUS, PRICING_MODES } from '@shared/constants.js';
 import { formatTND } from '@shared/money.js';
@@ -60,127 +60,81 @@ const STATUS_VIEW = {
 };
 
 // Données d'offres démo pour démonstration immédiate
-const DEMO_OFFERS = [
-  {
-    id: 'off-01',
-    title: 'Baguette Farcie Escalope Panée',
-    category: 'SANDWICH',
-    pricing: {
-      mode: PRICING_MODES.DUTCH_AUCTION,
-      startPriceMillimes: 5500,
-      floorPriceMillimes: 3000,
-      currentPriceMillimes: 4200,
-    },
-    originalPriceMillimes: 7500,
-    quantityTotal: 6,
-    quantityAvailable: 4,
-    quantitySold: 2,
-    status: OFFER_STATUS.ACTIVE,
-    isSurpriseBasket: false,
-    pickupEndAt: 'Ce soir à 20h00',
-    hasOrders: true,
-  },
-  {
-    id: 'off-02',
-    title: 'Makloub Chawarma Poulet',
-    category: 'SANDWICH',
-    pricing: {
-      mode: PRICING_MODES.FIXED,
-      discountedPriceMillimes: 4000,
-    },
-    originalPriceMillimes: 6800,
-    quantityTotal: 5,
-    quantityAvailable: 2,
-    quantitySold: 3,
-    status: OFFER_STATUS.ACTIVE,
-    isSurpriseBasket: false,
-    pickupEndAt: 'Ce soir à 19h30',
-    hasOrders: true,
-  },
-  {
-    id: 'off-03',
-    title: 'Panier Surprise Douceurs du Chef',
-    category: 'MIXTE',
-    pricing: {
-      mode: PRICING_MODES.FIXED,
-      discountedPriceMillimes: 5000,
-    },
-    originalPriceMillimes: 12000,
-    quantityTotal: 4,
-    quantityAvailable: 0,
-    quantitySold: 4,
-    status: OFFER_STATUS.SOLD_OUT,
-    isSurpriseBasket: true,
-    surpriseRarity: 'RARE',
-    pickupEndAt: 'Épuisé à 18h15',
-    hasOrders: true,
-  },
-];
-
 export default function MerchantOffersPage() {
   const navigate = useNavigate();
-  const [offers, setOffers] = useState(DEMO_OFFERS);
+  // Aucune offre de démonstration : ce qui s'affiche vient TOUJOURS du serveur (sinon on croirait modifier de vraies offres)
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [activeTab, setActiveTab] = useState('ALL');
   const [deleteModalOffer, setDeleteModalOffer] = useState(null);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    async function loadOffers() {
-      try {
-        const res = await apiClient.get(ENDPOINTS.MERCHANT_OFFERS);
-        if (res.data?.offers && res.data.offers.length > 0) {
-          setOffers(res.data.offers);
-        }
-      } catch (err) {
-        console.warn('API merchant offers fallback démo:', err.message);
-      }
+  const loadOffers = useCallback(async () => {
+    setLoadError(null);
+    try {
+      const res = await apiClient.get(ENDPOINTS.MERCHANT_OFFERS);
+      setOffers(Array.isArray(res.data?.offers) ? res.data.offers : []);
+    } catch (err) {
+      const msg = err?.response?.data?.error?.message;
+      setLoadError(msg || (err?.response ? `Erreur ${err.response.status}` : "Serveur injoignable : vérifiez que l'API est démarrée."));
+    } finally {
+      setLoading(false);
     }
-    loadOffers();
   }, []);
 
+  useEffect(() => {
+    loadOffers();
+  }, [loadOffers]);
+
+  // Les offres archivées (suppression douce) ne s'affichent plus dans la liste
+  const visibleOffers = offers.filter((o) => o.status !== OFFER_STATUS.DELETED);
+
   const tabs = [
-    { id: 'ALL', label: 'Toutes', count: offers.length },
+    { id: 'ALL', label: 'Toutes', count: visibleOffers.length },
     {
       id: OFFER_STATUS.ACTIVE,
       label: 'En ligne',
-      count: offers.filter((o) => o.status === OFFER_STATUS.ACTIVE).length,
+      count: visibleOffers.filter((o) => o.status === OFFER_STATUS.ACTIVE).length,
     },
     {
       id: OFFER_STATUS.SOLD_OUT,
       label: 'Épuisées',
-      count: offers.filter((o) => o.status === OFFER_STATUS.SOLD_OUT).length,
+      count: visibleOffers.filter((o) => o.status === OFFER_STATUS.SOLD_OUT).length,
     },
   ];
 
-  const filteredOffers = offers.filter((o) => {
+  const filteredOffers = visibleOffers.filter((o) => {
     if (activeTab === 'ALL') return true;
     return o.status === activeTab;
   });
 
   async function confirmDelete() {
     if (!deleteModalOffer) return;
-    const targetId = deleteModalOffer.id;
+    const target = deleteModalOffer;
 
     try {
-      await apiClient.delete(ENDPOINTS.OFFER_BY_ID(targetId));
+      await apiClient.delete(ENDPOINTS.OFFER_BY_ID(target.id));
     } catch (err) {
-      console.warn('API delete offer fallback:', err.message);
+      // Échec réel : on ne marque rien comme supprimé et on explique pourquoi
+      const msg = err?.response?.data?.error?.message;
+      setToast({
+        type: 'error',
+        message: msg || (err?.response ? `Suppression refusée (erreur ${err.response.status}).` : "Serveur injoignable : l'offre n'a PAS été supprimée."),
+      });
+      setDeleteModalOffer(null);
+      return;
     }
 
-    setOffers((prev) =>
-      prev.map((o) =>
-        o.id === targetId ? { ...o, status: OFFER_STATUS.DELETED } : o
-      )
-    );
-
+    setDeleteModalOffer(null);
     setToast({
       type: 'success',
-      message: deleteModalOffer.hasOrders
-        ? "Offre archivée (soft-delete appliqué car des commandes y sont associées)."
-        : "Offre supprimée définitivement.",
+      message: target.hasOrders
+        ? 'Offre archivée (des commandes y sont associées, l\'historique est conservé).'
+        : 'Offre supprimée.',
     });
-
-    setDeleteModalOffer(null);
+    // On relit la liste du serveur : c'est elle qui fait foi
+    await loadOffers();
   }
 
   return (
@@ -212,7 +166,20 @@ export default function MerchantOffersPage() {
       </div>
 
       {/* Grille des offres */}
-      {filteredOffers.length === 0 ? (
+      {loadError ? (
+        <EmptyState
+          icon="⚠️"
+          title="Offres indisponibles"
+          description={loadError}
+          action={
+            <button type="button" onClick={() => { setLoading(true); loadOffers(); }} className="cs-btn cs-btn-red">
+              Réessayer
+            </button>
+          }
+        />
+      ) : loading ? (
+        <p className="cs-lead py-16 text-center" role="status">Chargement de vos offres…</p>
+      ) : filteredOffers.length === 0 ? (
         <EmptyState
           icon="🥖"
           title="Aucune offre ici"

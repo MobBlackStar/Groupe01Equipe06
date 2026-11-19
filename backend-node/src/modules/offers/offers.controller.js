@@ -5,6 +5,7 @@
 
 import { offersService } from './offers.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { resolveMerchantId } from '../../utils/merchantResolver.js';
 
 export const offersController = {
   listOffers: asyncHandler(async (req, res) => {
@@ -23,12 +24,15 @@ export const offersController = {
   }),
 
   updateOffer: asyncHandler(async (req, res) => {
-    const result = await offersService.updateOffer(req.params.id, req.user.uid, req.body);
+    // Le propriétaire d'une offre est le COMMERCE (merchants/{id}), pas forcément l'uid de connexion (compte démo)
+    const merchantId = (await resolveMerchantId(req.user.uid)) ?? req.user.uid;
+    const result = await offersService.updateOffer(req.params.id, merchantId, req.body);
     res.json(result);
   }),
 
   deleteOffer: asyncHandler(async (req, res) => {
-    const result = await offersService.deleteOffer(req.params.id, req.user.uid);
+    const merchantId = (await resolveMerchantId(req.user.uid)) ?? req.user.uid;
+    const result = await offersService.deleteOffer(req.params.id, merchantId);
     res.json(result);
   }),
 };

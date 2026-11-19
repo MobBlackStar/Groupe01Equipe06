@@ -9,6 +9,7 @@ import { AppError } from '../../utils/AppError.js';
 import { MERCHANT_STATUS } from '../../../../shared/constants.js';
 import { distanceFromEssect, calculateWalkingMinutes } from '../../../../shared/geo.js';
 import { DEMO_MERCHANT_UID, findDemoMerchant } from '../../utils/demoAccounts.js';
+import { resolveMerchantId } from '../../utils/merchantResolver.js';
 
 export const merchantsService = {
   /**
@@ -181,19 +182,9 @@ export const merchantsService = {
    * Récupère toutes les offres d'un commerçant avec filtre d'état facultatif.
    */
   async getMyOffers(merchantId, statusFilter) {
-    let actualMerchantId = merchantId;
-    const directDoc = await db.collection('merchants').doc(merchantId).get();
-    if (!directDoc.exists) {
-      const ownerSnap = await db.collection('merchants').where('ownerUid', '==', merchantId).limit(1).get();
-      if (!ownerSnap.empty) {
-        actualMerchantId = ownerSnap.docs[0].id;
-      } else {
-        const firstApproved = await db.collection('merchants').where('status', '==', MERCHANT_STATUS.APPROVED).limit(1).get();
-        if (!firstApproved.empty) {
-          actualMerchantId = firstApproved.docs[0].id;
-        }
-      }
-    }
+    // Un commerçant sans boutique n'a ni offres ni commandes : jamais le repli sur le premier commerce approuvé
+    const actualMerchantId = await resolveMerchantId(merchantId);
+    if (!actualMerchantId) return { offers: [] };
 
     const snap = await db.collection('offers').where('merchantId', '==', actualMerchantId).get();
     let offers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -207,19 +198,9 @@ export const merchantsService = {
    * Récupère les commandes d'un commerce pour son tableau de bord.
    */
   async getMyOrders(merchantId, statusFilter, dateFilter) {
-    let actualMerchantId = merchantId;
-    const directDoc = await db.collection('merchants').doc(merchantId).get();
-    if (!directDoc.exists) {
-      const ownerSnap = await db.collection('merchants').where('ownerUid', '==', merchantId).limit(1).get();
-      if (!ownerSnap.empty) {
-        actualMerchantId = ownerSnap.docs[0].id;
-      } else {
-        const firstApproved = await db.collection('merchants').where('status', '==', MERCHANT_STATUS.APPROVED).limit(1).get();
-        if (!firstApproved.empty) {
-          actualMerchantId = firstApproved.docs[0].id;
-        }
-      }
-    }
+    // Un commerçant sans boutique n'a ni offres ni commandes : jamais le repli sur le premier commerce approuvé
+    const actualMerchantId = await resolveMerchantId(merchantId);
+    if (!actualMerchantId) return { orders: [] };
 
     const snap = await db.collection('orders').where('merchantId', '==', actualMerchantId).get();
     let orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
