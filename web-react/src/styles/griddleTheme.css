@@ -642,3 +642,16 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
 .cs-walk-hud__speeds { display: inline-flex; gap: 0.4rem; }
 .cs-walk-hud__stylised { font-size: 0.8125rem; color: #5E5850; }
 @media (max-width: 639px) { .cs-walk-hud__stylised { display: none; } .cs-walk-hud .cs-range { height: 36px; } }
+
+/* ============================================================
+   14. INTERFACE EFFAÇABLE (Holo-Radar) : vue libre + fondu pendant les gestes
+   ============================================================ */
+.cs-ui-fade { transition: opacity .28s ease, transform .28s ease; }
+[data-ui='dim'] .cs-ui-fade { opacity: 0.12; pointer-events: none !important; }
+[data-ui='dim'] .cs-ui-fade * { pointer-events: none !important; }
+[data-ui='focus'] .cs-ui-fade { opacity: 0; transform: translateY(8px); pointer-events: none !important; visibility: hidden; transition: opacity .28s ease, transform .28s ease, visibility 0s linear .28s; }
+[data-ui='focus'] .cs-ui-fade * { pointer-events: none !important; }
+@media (prefers-reduced-motion: reduce) { .cs-ui-fade { transition: none; } }
+
+/* Le calque 3D WebGL2 a sa propre brume : on allège le voile CSS pour ne pas gommer les couleurs */
+.cs-w3d .cs-map-haze { opacity: .45; }

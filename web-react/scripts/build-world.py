@@ -140,11 +140,11 @@ from shapely.strtree import STRtree
 IGNORED_ROAD = {"steps", "track", "unknown", "driveway", "parking_aisle", "alley"}
 ROAD_CROSS_M = 4.0
 seg_rows = con.execute(
-    f"""SELECT ST_AsGeoJSON(geometry), class FROM {src('transportation', 'segment')}
+    f"""SELECT ST_AsGeoJSON(geometry), class, subclass FROM {src('transportation', 'segment')}
         WHERE {BOX} AND subtype = 'road'"""
 ).fetchall()
 road_lines = []
-for g, klass in seg_rows:
+for g, klass, _subclass in seg_rows:
     if klass in IGNORED_ROAD:
         continue
     geo = json.loads(g)
@@ -254,7 +254,7 @@ def hash01(x, y, salt):
 
 
 auto_trees = []
-for g, klass in seg_rows:
+for g, klass, _subclass in seg_rows:
     spacing = SIDE_CLASSES.get(klass, 0)
     if not spacing:
         continue
@@ -298,6 +298,28 @@ if len(auto_trees) > MAX_TREES:  # keep a stable, evenly spread subset
     auto_trees = sorted(auto_trees, key=lambda p: hash01(p[0], p[1], "cap"))[:MAX_TREES]
 trees.extend(auto_trees)
 
+# ---- street surface: road centrelines with a class code (the renderer extrudes ribbons of the right width) -------------
+ROAD_CODE = {"motorway": 0, "trunk": 0, "primary": 1, "secondary": 2, "tertiary": 3, "residential": 4, "unclassified": 4,
+             "living_street": 5, "service": 6, "track": 6, "pedestrian": 7, "footway": 8, "path": 8, "cycleway": 8}
+roads = []
+for g, klass, subclass in seg_rows:
+    code = ROAD_CODE.get(klass)
+    if code is None or subclass in ("sidewalk", "crosswalk"):
+        continue
+    geo = json.loads(g)
+    parts = geo["coordinates"] if geo["type"] == "MultiLineString" else [geo["coordinates"]]
+    for coords in parts:
+        pts = [((x - LNG0) * M_LNG, (y - LAT0) * M_LAT) for x, y in coords]
+        if len(pts) < 2:
+            continue
+        line = LineString(pts).simplify(0.4)
+        if line.length < 3 or any(px * px + py * py > (RADIUS_M + 40) ** 2 for px, py in list(line.coords)[:1]):
+            continue
+        flat = []
+        for px, py in line.coords:
+            flat.extend([round(px * 10), round(py * 10)])
+        roads.append({"k": code, "r": flat})
+
 data = {
     "origin": [LNG0, LAT0],
     "radiusM": RADIUS_M,
@@ -307,11 +329,12 @@ data = {
     "buildings": buildings,
     "green": green,
     "trees": trees,
+    "roads": roads,
 }
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 with open(OUT, "w", encoding="utf-8") as f:
     json.dump(data, f, separators=(",", ":"))
 print(
     f"buildings={len(buildings)} (real/floor heights {real_h}, estimated {est_h}) green={len(green)} "
-    f"mappedTrees={len(trees)} landCover={cover_counts} -> {os.path.getsize(OUT) / 1024:.0f} KB"
+    f"roads={len(roads)} mappedTrees={len(trees)} landCover={cover_counts} -> {os.path.getsize(OUT) / 1024:.0f} KB"
 )

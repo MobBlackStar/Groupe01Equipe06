@@ -14,7 +14,7 @@ import { mockMerchants, mockOffers } from '../../mocks/index.js';
 import { getFramerFoodImage } from '../../lib/framerAssets.js';
 import { MAP_CONFIG, add3DBuildingsLayer, isMapReady } from './mapStyle.js';
 import { applyAtmosphere, atmosphereStats } from './atmosphere.js';
-import { applyWorld, worldStats } from './world/worldLayer.js';
+import { applyWorld, worldStats, setWorldBeacons } from './world/worldLayer.js';
 import { auditRoutes } from './routeAudit.js';
 import { setupBeaconLayers, createFikaNumberedMarkers } from './beaconLayer.js';
 import { setupCircuitRoute, updateWalkingPath, getWalkRoute } from './walkingPath.js';
@@ -37,6 +37,10 @@ import {
   Navigation,
   ArrowUpRight,
   Flame,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 // Fallback photographique haute définition pour les commerces de Montfleury
@@ -75,6 +79,28 @@ const [walkState, setWalkState] = useState(null); // null = pas de marche ; sino
 const [walkError, setWalkError] = useState(null);
 const walkRef = useRef(null);
 const navigate = useNavigate();
+// Ergonomie : l'interface s'efface pour laisser voir la carte (mode « vue libre », fondu pendant les gestes, panneaux repliables)
+const readUi = (key, fallback) => {
+  try {
+    const v = localStorage.getItem(`cs.radar.${key}`);
+    return v === null ? fallback : v === '1';
+  } catch {
+    return fallback;
+  }
+};
+const writeUi = (key, value) => {
+  try {
+    localStorage.setItem(`cs.radar.${key}`, value ? '1' : '0');
+  } catch {
+    /* stockage indisponible : le réglage vaut pour la session */
+  }
+};
+const [focusMode, setFocusMode] = useState(() => readUi('focus', false));
+const [programOpen, setProgramOpen] = useState(() => readUi('program', true));
+const [cardsOpen, setCardsOpen] = useState(() => readUi('cards', true));
+const [introOpen, setIntroOpen] = useState(true);
+const [uiDim, setUiDim] = useState(false);
+const dimTimerRef = useRef(null);
 
   const RADIUS_OPTIONS = [500, 1000, 1500, 2500, 3000];
 
@@ -212,6 +238,12 @@ const navigate = useNavigate();
     if (import.meta.env.DEV) window.__radarWalk = walkRef.current; // hook QA (absent en production)
   }, [selectedMerchant, navigate]);
 
+  // Le bandeau d'accroche se retire seul : il ne sert qu'à la première seconde de découverte
+  useEffect(() => {
+    const t = setTimeout(() => setIntroOpen(false), 7000);
+    return () => clearTimeout(t);
+  }, []);
+
   // La page quitte l'écran : on libère la boucle d'animation sans toucher à la caméra
   useEffect(
     () => () => {
@@ -263,6 +295,7 @@ const navigate = useNavigate();
       // Monde pré-calculé (Overture) puis lumière/ombres/brume dessus ; sans lui, on garde les bâtiments des tuiles
       applyWorld(map).then((world) => applyAtmosphere(map, world || undefined));
       setupBeaconLayers(map, merchants, handleSelectMerchant);
+      setWorldBeacons(map, merchants); // colonnes de lumière WebGL2 (si le calque 3D est actif)
       setupCircuitRoute(map, merchants);
       refreshMarkers(map, merchants);
     },
@@ -296,6 +329,19 @@ const navigate = useNavigate();
           }),
           'bottom-right'
         );
+
+        // L'interface se fond pendant un geste de l'utilisateur (glisser, tourner, incliner, zoomer), puis revient
+        const dimNow = (e) => {
+          if (!e || !e.originalEvent) return; // ignore les mouvements de caméra programmés (vols, marche)
+          clearTimeout(dimTimerRef.current);
+          setUiDim(true);
+        };
+        const undim = () => {
+          clearTimeout(dimTimerRef.current);
+          dimTimerRef.current = setTimeout(() => setUiDim(false), 1600);
+        };
+        ['dragstart', 'rotatestart', 'pitchstart', 'zoomstart'].forEach((ev) => map.on(ev, dimNow));
+        ['dragend', 'rotateend', 'pitchend', 'zoomend'].forEach((ev) => map.on(ev, undim));
 
         map.on('load', () => {
           // Les commerces peuvent arriver avant ou après le style : applyOverlays gère les deux ordres
@@ -407,7 +453,7 @@ const navigate = useNavigate();
       </div>
 
       {/* 2. ZONE CENTRALE : VUE 3D OU LISTE 2D */}
-      <div className="relative flex-1 w-full min-h-0">
+      <div className="relative flex-1 w-full min-h-0" data-ui={focusMode ? 'focus' : uiDim ? 'dim' : 'full'}>
         {viewMode === '3D' ? (
           <div ref={mapContainerRef} className="w-full h-full bg-[#E2D8C5]" />
         ) : (
@@ -455,9 +501,28 @@ const navigate = useNavigate();
           </div>
         )}
 
-        {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}
+        {/* Vue libre : masque / affiche toute l'interface par-dessus la carte */}
         {viewMode === '3D' && !walkState && (
-          <div className="hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setFocusMode((v) => {
+                writeUi('focus', !v);
+                return !v;
+              });
+            }}
+            aria-pressed={focusMode}
+            aria-label={focusMode ? "Afficher l'interface" : "Masquer l'interface pour voir la carte"}
+            title={focusMode ? "Afficher l'interface" : "Vue libre : masquer l'interface"}
+            className="cs-icon-btn absolute top-[8.75rem] right-[6px] z-30 bg-[#FAF3E6]"
+          >
+            {focusMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+          </button>
+        )}
+
+        {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}
+        {viewMode === '3D' && !walkState && introOpen && (
+          <div className="cs-ui-fade hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-sm">
             <div className="cs-card-ink p-6">
               <p className="cs-eyebrow !text-[#FFD000] mb-3 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711] animate-pulse" aria-hidden="true" />
@@ -474,14 +539,39 @@ const navigate = useNavigate();
         )}
 
         {/* 4. PANNEAU CRÈME À DROITE (PROGRAMME & ALERTES) */}
-        {viewMode === '3D' && !selectedMerchant && (
-          <div className="hidden lg:flex flex-col gap-4 absolute top-5 right-14 z-20 w-[360px] max-h-[calc(100%-2.5rem)] overflow-y-auto bg-[#FAF3E6] border-2 border-[#111111] rounded-[1.25rem] p-6">
+        {viewMode === '3D' && !selectedMerchant && !programOpen && (
+          <button
+            type="button"
+            onClick={() => {
+              setProgramOpen(true);
+              writeUi('program', true);
+            }}
+            className="cs-ui-fade cs-btn cs-btn-cream cs-btn-sm hidden lg:inline-flex absolute top-5 right-14 z-20"
+          >
+            <Calendar className="w-4 h-4" aria-hidden="true" /> Programme du jour
+          </button>
+        )}
+        {viewMode === '3D' && !selectedMerchant && programOpen && (
+          <div className="cs-ui-fade hidden lg:flex flex-col gap-4 absolute top-5 right-14 z-20 w-[360px] max-h-[calc(100%-2.5rem)] overflow-y-auto bg-[#FAF3E6] border-2 border-[#111111] rounded-[1.25rem] p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="cs-eyebrow">Programme du jour</p>
                 <h3 className="cs-h3 mt-1">Créneaux de sauvetage</h3>
               </div>
-              <span className="cs-pill cs-pill-mustard">Aujourd'hui</span>
+              <div className="flex items-center gap-2">
+                <span className="cs-pill cs-pill-mustard">Aujourd'hui</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProgramOpen(false);
+                    writeUi('program', false);
+                  }}
+                  aria-label="Réduire le programme du jour"
+                  className="cs-icon-btn"
+                >
+                  <ChevronUp className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Liste chronologique des créneaux */}
@@ -555,8 +645,47 @@ const navigate = useNavigate();
         )}
 
         {/* 5. TROIS FICHES NUMÉROTÉES EN BAS (X MIN À PIED) */}
-        {viewMode === '3D' && !selectedMerchant && (
-          <div className="absolute bottom-4 left-0 right-0 sm:bottom-5 sm:left-5 sm:right-5 lg:right-[436px] z-20 pointer-events-none">
+        {viewMode === '3D' && !selectedMerchant && !cardsOpen && (
+          <div className="cs-ui-fade absolute bottom-[5.25rem] md:bottom-5 left-4 right-4 sm:left-5 lg:right-[436px] z-20 flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <button
+              type="button"
+              onClick={() => {
+                setCardsOpen(true);
+                writeUi('cards', true);
+              }}
+              className="cs-btn cs-btn-ink cs-btn-sm shrink-0"
+              aria-label="Déplier les 3 commerces les plus proches"
+            >
+              <ChevronUp className="w-4 h-4" aria-hidden="true" /> Les plus proches
+            </button>
+            {topThreeMerchants.map((m, i) => (
+              <button
+                key={m.id || m.merchantId}
+                type="button"
+                onClick={() => handleSelectMerchant(m)}
+                className="cs-btn cs-btn-cream cs-btn-sm shrink-0"
+              >
+                <span className="cs-dot-badge !w-6 !h-6 !text-[13px]">{i + 1}</span>
+                <span className="max-w-[11rem] truncate">{m.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {viewMode === '3D' && !selectedMerchant && cardsOpen && (
+          <div className="cs-ui-fade absolute bottom-4 left-0 right-0 sm:bottom-5 sm:left-5 sm:right-5 lg:right-[436px] z-20 pointer-events-none">
+            <div className="flex justify-start px-4 sm:px-0 mb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCardsOpen(false);
+                  writeUi('cards', false);
+                }}
+                className="cs-btn cs-btn-ink cs-btn-sm pointer-events-auto"
+                aria-label="Replier les 3 commerces les plus proches"
+              >
+                <ChevronDown className="w-4 h-4" aria-hidden="true" /> Replier
+              </button>
+            </div>
             <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-none px-4 sm:px-0 pb-1">
               {topThreeMerchants.map((merchant, idx) => {
                 const num = idx + 1;

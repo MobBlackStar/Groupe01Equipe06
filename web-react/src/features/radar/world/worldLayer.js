@@ -2,7 +2,9 @@
 // 🔄 Comparaison React / Flutter : Données figées au build (script `scripts/build-world.py`) puis chargées à la demande (import dynamique, comme un `lazy()` React) : zéro appel réseau en plus à l'exécution.
 // 🎯 À retenir pour la soutenance : "Les empreintes de bâtiments viennent d'Overture Maps (données ouvertes) ; les hauteurs sont estimées de façon déterministe, donc la carte est annoncée comme stylisée."
 
-import { isMapReady } from '../mapStyle.js';
+import maplibregl from 'maplibre-gl';
+import { MAP_CONFIG, isMapReady, griddleUrgencyColor } from '../mapStyle.js';
+import { createWorld3DLayer, WORLD3D_LAYER_ID } from '../world3d/world3dLayer.js';
 
 export const WORLD_SRC = 'world-buildings-src';
 const TREES_SRC = 'world-trees-src';
@@ -78,6 +80,7 @@ function buildWorld(data) {
 
   const fc = (features) => ({ type: 'FeatureCollection', features });
   return {
+    raw: data,
     source: data.source,
     heights: data.heights,
     counts: { buildings: buildings.length, trees: canopies.length, green: green.length },
@@ -197,6 +200,62 @@ function addLayers(map, world) {
 }
 
 /**
+ * Remplace les volumes simples (extrusions MapLibre) par le calque WebGL2 : façades, feuillage, oiseaux, balises.
+ * Si WebGL2 ou les shaders échouent, les volumes simples restent affichés.
+ */
+function addWorld3D(map, world, st) {
+  // Sous les piliers de balises et sous les textes (les piliers sont posés avant que ce calque asynchrone n'arrive)
+  const labelId = firstLayerIdWhere(
+    map,
+    (l) => l.id === 'essect-pillar-layer' || l.id === 'merchant-beacons-layer' || (l.type === 'symbol' && l.layout && l.layout['text-field'])
+  );
+  const w3d = createWorld3DLayer(maplibregl, world.raw);
+  try {
+    map.addLayer(w3d.layer, labelId);
+  } catch (e) {
+    console.warn('[Radar] Ajout du calque 3D impossible :', e);
+    return;
+  }
+  if (!w3d.ok) {
+    if (map.getLayer(WORLD3D_LAYER_ID)) map.removeLayer(WORLD3D_LAYER_ID);
+    return;
+  }
+  st.w3d = w3d;
+  map.getContainer().classList.add('cs-w3d'); // le calque porte sa propre brume : le voile CSS s'allège
+  softenPillars(map);
+  [WORLD_LAYERS.buildings, WORLD_LAYERS.canopy, WORLD_LAYERS.trunks].forEach((id) => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  });
+  if (st.pendingBeacons) w3d.setBeacons(st.pendingBeacons);
+}
+
+/**
+ * Les piliers « boîtes » de MapLibre deviennent quasi invisibles (mais restent cliquables) : les colonnes de lumière du
+ * calque WebGL2 prennent le relais.
+ */
+function softenPillars(map) {
+  ['essect-pillar-layer', 'merchant-beacons-layer'].forEach((id) => {
+    if (map.getLayer(id)) map.setPaintProperty(id, 'fill-extrusion-opacity', 0.02);
+  });
+}
+
+/** Balises lumineuses des commerces (appelable avant que le calque soit prêt). */
+export function setWorldBeacons(map, merchants) {
+  const st = states.get(map);
+  if (!st) return;
+  const list = (merchants || [])
+    .filter((m) => m.location && Number.isFinite(m.location.lng) && Number.isFinite(m.location.lat))
+    .map((m) => ({ lng: m.location.lng, lat: m.location.lat, color: griddleUrgencyColor(m.beaconUrgencyColor), height: 85 }));
+  // Le campus : colonne rouge Griddle, plus haute (repère de la scène)
+  list.unshift({ lng: MAP_CONFIG.ESSECT_COORDS[0], lat: MAP_CONFIG.ESSECT_COORDS[1], color: '#DA0711', height: 120 });
+  st.pendingBeacons = list;
+  if (st.w3d) {
+    st.w3d.setBeacons(list);
+    softenPillars(map);
+  }
+}
+
+/**
  * Pose le monde pré-calculé sur la carte (idempotent, asynchrone).
  * @param {object} map - Instance MapLibre GL (style chargé)
  * @returns {Promise<object|null>} le monde chargé, ou null si indisponible (la carte garde alors les bâtiments des tuiles)
@@ -211,6 +270,7 @@ export function applyWorld(map) {
     .then((world) => {
       if (!isMapReady(map)) return null; // carte détruite entre-temps
       addLayers(map, world);
+      addWorld3D(map, world, st);
       st.world = world;
       return world;
     })
@@ -226,5 +286,5 @@ export function applyWorld(map) {
 export function worldStats(map) {
   const st = states.get(map);
   if (!st || !st.world) return null;
-  return { ...st.world.counts, heights: st.world.heights, source: st.world.source };
+  return { ...st.world.counts, heights: st.world.heights, source: st.world.source, renderer: st.w3d ? st.w3d.stats() : 'extrusions MapLibre' };
 }
