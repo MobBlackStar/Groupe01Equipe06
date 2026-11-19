@@ -98,7 +98,7 @@ export default function Navbar() {
   const ecoPoints = Number.isFinite(rawPoints) ? rawPoints : 0;
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#FAF3E6]/95 backdrop-blur-sm border-b-2 border-[#111111]">
+    <header className="sticky top-0 z-40 w-full bg-[#FAF3E6] border-b-2 border-[#111111]">
       <div className="cs-container h-20 flex items-center justify-between gap-6">
         {/* Wordmark */}
         <Link to="/" className="shrink-0 flex items-baseline gap-2 group" aria-label="CampusSave — accueil">
