@@ -29,6 +29,22 @@ export const MAP_CONFIG = {
 };
 
 /**
+ * Couleurs d'urgence de l'API/du module partagé (néon `#CCFF00`, orange `#FF5500`, rouge `#FF1744`) -> palette Griddle.
+ * Le contrat serveur et ses tests ne changent pas : la traduction se fait au dernier moment, à l'affichage de la carte.
+ * @param {string} [hex]
+ * @returns {string}
+ */
+export function griddleUrgencyColor(hex) {
+  const map = {
+    '#CCFF00': MAP_CONFIG.COLORS.URGENCY_LOW, // > 60 min : moutarde (plus jamais de vert fluo)
+    '#FF5500': MAP_CONFIG.COLORS.URGENCY_MEDIUM, // 20-60 min : orange
+    '#FF1744': MAP_CONFIG.COLORS.URGENCY_HIGH, // < 20 min : rouge Griddle
+  };
+  const key = String(hex || '').toUpperCase();
+  return map[key] || hex || MAP_CONFIG.COLORS.ROUTE_GLOW;
+}
+
+/**
  * Le style est-il assez chargé pour accepter addSource/addLayer ?
  * `map.isStyleLoaded()` est trop strict : il repasse à false dès qu'une source ou un calque vient d'être ajouté
  * (le helper suivant abandonnait alors en silence). `getStyle()` n'est défini qu'une fois le style chargé.
@@ -70,16 +86,25 @@ export function add3DBuildingsLayer(map) {
           id: '3d-buildings',
           source: sourceName,
           'source-layer': 'building',
-          filter: ['==', 'extrude', 'true'],
+          // CORRECTIF : ce jeu de tuiles (OpenFreeMap) n'a PAS de propriété `extrude` ; l'ancien filtre
+          // ['==', 'extrude', 'true'] ne laissait passer aucun bâtiment, donc la ville n'était jamais extrudée.
+          // La donnée porte `render_height` (hauteur réelle OSM) et `hide_3d` (parties à ne pas extruder).
+          filter: ['!=', ['get', 'hide_3d'], true],
           type: 'fill-extrusion',
           minzoom: 14,
           paint: {
+            // Ton par hauteur : bas = crème sable, haut = terre cuite. Avec le dégradé vertical, façades claires en haut,
+            // sombres au pied : c'est ce qui donne du volume (structure de valeurs).
             'fill-extrusion-color': [
-              'case',
-              ['boolean', ['feature-state', 'hover'], false],
-              MAP_CONFIG.COLORS.BUILDINGS_HOVER,
-              MAP_CONFIG.COLORS.BUILDINGS,
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'render_height'], 8],
+              0, '#EFE3CB',
+              15, '#E3D1B0',
+              40, '#D4BB92',
+              90, '#BFA073',
             ],
+            'fill-extrusion-vertical-gradient': true,
             'fill-extrusion-height': [
               'interpolate',
               ['linear'],
@@ -98,7 +123,7 @@ export function add3DBuildingsLayer(map) {
               15.2,
               ['coalesce', ['get', 'render_min_height'], 0],
             ],
-            'fill-extrusion-opacity': 0.92,
+            'fill-extrusion-opacity': 0.97,
           },
         },
         labelLayerId
@@ -111,14 +136,7 @@ export function add3DBuildingsLayer(map) {
       .filter((l) => l.type === 'background')
       .forEach((l) => map.setPaintProperty(l.id, 'background-color', MAP_CONFIG.COLORS.BACKGROUND));
 
-    if (map.setLight) {
-      map.setLight({
-        anchor: 'viewport',
-        color: '#FFAA55',
-        intensity: 0.35,
-        position: [1.15, 210, 30],
-      });
-    }
+    // La lumière (soleil réel de Tunis, ou lumière dorée la nuit) est posée par `applyAtmosphere` (atmosphere.js)
   } catch (e) {
     console.warn('[MapLibre] Impossible d injecter la couche 3D des bâtiments :', e);
   }

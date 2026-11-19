@@ -13,6 +13,8 @@ import { formatTND } from '@shared/money.js';
 import { mockMerchants, mockOffers } from '../../mocks/index.js';
 import { getFramerFoodImage } from '../../lib/framerAssets.js';
 import { MAP_CONFIG, add3DBuildingsLayer, isMapReady } from './mapStyle.js';
+import { applyAtmosphere, atmosphereStats } from './atmosphere.js';
+import { auditRoutes } from './routeAudit.js';
 import { setupBeaconLayers, createFikaNumberedMarkers } from './beaconLayer.js';
 import { setupCircuitRoute, updateWalkingPath } from './walkingPath.js';
 import { droneSwoopToMerchant, resetToCampusHome } from './cameraFx.js';
@@ -210,6 +212,7 @@ export default function HoloRadarPage() {
         return;
       }
       add3DBuildingsLayer(map);
+      applyAtmosphere(map); // soleil, ombres portées, contact darkening, brume
       setupBeaconLayers(map, merchants, handleSelectMerchant);
       setupCircuitRoute(map, merchants);
       refreshMarkers(map, merchants);
@@ -246,7 +249,11 @@ export default function HoloRadarPage() {
         });
 
         mapRef.current = map;
-        if (import.meta.env.DEV) window.__radarMap = map; // hook QA : inspection de la caméra et des calques (absent en production)
+        if (import.meta.env.DEV) {
+          window.__radarMap = map; // hook QA : inspection de la caméra et des calques (absent en production)
+          window.__radarAtmosphere = () => atmosphereStats(map);
+          window.__radarAudit = () => auditRoutes(map); // preuve chiffrée : itinéraires vs routes/bâtiments affichés
+        }
       } catch (e) {
         console.warn('Initialisation WebGL impossible, bascule en vue 2D :', e);
         setViewMode('2D');

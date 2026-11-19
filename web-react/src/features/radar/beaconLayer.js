@@ -3,7 +3,7 @@
 // Prismes 3D polygonaux extrudés et marqueurs HTML avec temps de marche.
 
 import maplibregl from 'maplibre-gl';
-import { MAP_CONFIG, isMapReady } from './mapStyle.js';
+import { MAP_CONFIG, isMapReady, griddleUrgencyColor } from './mapStyle.js';
 
 /**
  * Génère un polygone régulier à 6 côtés (hexagone) centré sur des coordonnées géographiques.
@@ -78,7 +78,7 @@ export function buildMerchantBeaconsGeoJson(merchants = []) {
         type: m.type,
         height,
         base: 0,
-        color: m.beaconUrgencyColor || MAP_CONFIG.COLORS.ROUTE_GLOW,
+        color: griddleUrgencyColor(m.beaconUrgencyColor),
         activeOfferCount: offerCount,
         walkingMinutes: m.walkingMinutes || 5,
         distanceM: m.distanceM || m.distanceFromEssectM || 300,

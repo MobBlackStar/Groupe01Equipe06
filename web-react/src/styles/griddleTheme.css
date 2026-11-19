@@ -589,3 +589,24 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
   .cs-ticker-track, .griddle-ticker-track, .cs-float, .cs-fade-up { animation: none !important; }
   .cs-photo > img { transition: none; }
 }
+
+/* ==========================================================================
+   12. HOLO-RADAR : brume d'horizon + lueur du soleil (voir features/radar/atmosphere.js)
+   Valeurs pilotées en JS (--haze, --glow-x, --glow-o) quand la caméra penche ou tourne.
+   ========================================================================== */
+.cs-map-haze {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    /* lueur chaude du soleil, du côté où il se trouve par rapport au regard */
+    radial-gradient(60% 24% at var(--glow-x, 50%) 0%, rgba(255, 205, 130, calc(0.5 * var(--glow-o, 0))), transparent 72%),
+    /* brume crème qui monte vers l'horizon : la ville s'efface dans la distance au lieu d'être coupée net */
+    linear-gradient(to bottom, rgba(250, 243, 230, var(--haze, 0.6)) 0%, rgba(250, 243, 230, calc(var(--haze, 0.6) * 0.55)) 15%, rgba(250, 243, 230, 0) 44%),
+    /* vignette discrète : les bords reculent, le centre (l'ESSECT) ressort */
+    radial-gradient(125% 95% at 50% 58%, transparent 64%, rgba(94, 75, 49, 0.12) 100%);
+}
+/* Les marqueurs et boutons restent au-dessus de la brume */
+.maplibregl-marker { z-index: 3; }
+.maplibregl-ctrl-top-right, .maplibregl-ctrl-top-left { z-index: 4; }

@@ -30,12 +30,21 @@ function circuitLegs(merchants) {
   return legs;
 }
 
+/**
+ * Géométrie à dessiner : on retire le 1er et le dernier point (raccords entre l'adresse réelle, souvent à l'intérieur
+ * d'un bâtiment, et la chaussée la plus proche). Le tracé commence et finit donc sur la rue, jamais dans un mur.
+ */
+function drawnCoordinates(route) {
+  const c = route.coordinates;
+  return c.length > 3 ? c.slice(1, -1) : c;
+}
+
 /** Un segment : trait de rue si l'itinéraire est connu, sinon trait "à vol d'oiseau" explicitement distinct. */
 function legFeature(from, to, route) {
   return {
     type: 'Feature',
     properties: { kind: route ? 'street' : 'crow' },
-    geometry: { type: 'LineString', coordinates: route ? route.coordinates : [from, to] },
+    geometry: { type: 'LineString', coordinates: route ? drawnCoordinates(route) : [from, to] },
   };
 }
 
@@ -153,7 +162,7 @@ export async function updateWalkingPath(map, merchantCoords) {
       {
         type: 'Feature',
         properties: { kind: route ? 'street' : 'crow' },
-        geometry: { type: 'LineString', coordinates: route ? route.coordinates : [from, merchantCoords] },
+        geometry: { type: 'LineString', coordinates: route ? drawnCoordinates(route) : [from, merchantCoords] },
       },
     ],
   };
