@@ -198,3 +198,15 @@ export async function updateWalkingPath(map, merchantCoords) {
 
   return route ? { distanceM: route.distanceM, durationS: route.durationS, source: route.source } : null;
 }
+
+/**
+ * Tracé de rue (sans les raccords dans les bâtiments) de l'ESSECT vers un commerce, pour le mode Marcher.
+ * @param {[number, number]} merchantCoords - [Longitude, Latitude]
+ * @returns {Promise<{coordinates: Array<[number, number]>, distanceM: number|null, durationS: number|null}|null>}
+ */
+export async function getWalkRoute(merchantCoords) {
+  const from = MAP_CONFIG.ESSECT_COORDS;
+  const route = getKnownStreetRoute(from, merchantCoords) || (await getStreetRoute(from, merchantCoords));
+  if (!route || !route.coordinates || route.coordinates.length < 2) return null;
+  return { coordinates: drawnCoordinates(route), distanceM: route.distanceM ?? null, durationS: route.durationS ?? null };
+}

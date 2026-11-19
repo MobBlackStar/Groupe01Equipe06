@@ -4,7 +4,7 @@
 // Module : Holo-Radar 3D WebGL
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { apiClient } from '../../lib/api.js';
@@ -14,9 +14,12 @@ import { mockMerchants, mockOffers } from '../../mocks/index.js';
 import { getFramerFoodImage } from '../../lib/framerAssets.js';
 import { MAP_CONFIG, add3DBuildingsLayer, isMapReady } from './mapStyle.js';
 import { applyAtmosphere, atmosphereStats } from './atmosphere.js';
+import { applyWorld, worldStats } from './world/worldLayer.js';
 import { auditRoutes } from './routeAudit.js';
 import { setupBeaconLayers, createFikaNumberedMarkers } from './beaconLayer.js';
-import { setupCircuitRoute, updateWalkingPath } from './walkingPath.js';
+import { setupCircuitRoute, updateWalkingPath, getWalkRoute } from './walkingPath.js';
+import { startWalk } from './walkMode.js';
+import WalkHud from './WalkHud.jsx';
 import { droneSwoopToMerchant, resetToCampusHome } from './cameraFx.js';
 import { DepthCard } from '../../components/common/DepthCard.jsx';
 import {
@@ -68,6 +71,10 @@ export default function HoloRadarPage() {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('3D'); // '3D' | '2D'
   const [alertSuccess, setAlertSuccess] = useState(false);
+const [walkState, setWalkState] = useState(null); // null = pas de marche ; sinon état du contrôleur de marche
+const [walkError, setWalkError] = useState(null);
+const walkRef = useRef(null);
+const navigate = useNavigate();
 
   const RADIUS_OPTIONS = [500, 1000, 1500, 2500, 3000];
 
@@ -172,6 +179,47 @@ export default function HoloRadarPage() {
     }
   }, []);
 
+  // Mode Marcher : caméra à hauteur d'yeux le long de la vraie rue jusqu'à la barrière du commerce
+  const handleStartWalk = useCallback(async () => {
+    const merchant = selectedMerchant;
+    const map = mapRef.current;
+    if (!merchant?.location || !map) return;
+    setWalkError(null);
+    const route = await getWalkRoute([merchant.location.lng, merchant.location.lat]);
+    if (!route) {
+      setWalkError("Itinéraire par les rues indisponible pour le moment.");
+      return;
+    }
+    walkRef.current?.stop(false);
+    const offers = merchant.activeOffers || [];
+    const firstOfferId = offers[0]?.id || offers[0]?.offerId;
+    setWalkState({ progress: 0, metersLeft: Math.round(route.distanceM || 0), paused: false, arrived: false, speed: 'brisk' });
+    walkRef.current = startWalk(map, {
+      coordinates: route.coordinates,
+      name: merchant.name,
+      subtitle: offers.length ? `${offers.length} panier(s) à sauver` : 'Aucun panier pour le moment',
+      reserveLabel: firstOfferId ? 'Réserver un panier' : 'Revenir à la carte',
+      onReserve: () => {
+        if (firstOfferId) navigate(`/app/offers/${firstOfferId}`);
+        else walkRef.current?.stop(true);
+      },
+      onState: setWalkState,
+      onStop: () => {
+        walkRef.current = null;
+        setWalkState(null);
+      },
+    });
+    if (import.meta.env.DEV) window.__radarWalk = walkRef.current; // hook QA (absent en production)
+  }, [selectedMerchant, navigate]);
+
+  // La page quitte l'écran : on libère la boucle d'animation sans toucher à la caméra
+  useEffect(
+    () => () => {
+      walkRef.current?.stop(false);
+    },
+    []
+  );
+
   // Déclenche l'alerte de notification (simulation bouton "Text me when parked")
   const handleTriggerAlert = useCallback(() => {
     setAlertSuccess(true);
@@ -212,7 +260,8 @@ export default function HoloRadarPage() {
         return;
       }
       add3DBuildingsLayer(map);
-      applyAtmosphere(map); // soleil, ombres portées, contact darkening, brume
+      // Monde pré-calculé (Overture) puis lumière/ombres/brume dessus ; sans lui, on garde les bâtiments des tuiles
+      applyWorld(map).then((world) => applyAtmosphere(map, world || undefined));
       setupBeaconLayers(map, merchants, handleSelectMerchant);
       setupCircuitRoute(map, merchants);
       refreshMarkers(map, merchants);
@@ -234,10 +283,19 @@ export default function HoloRadarPage() {
           pitch: MAP_CONFIG.DEFAULT_CAMERA.pitch,
           bearing: MAP_CONFIG.DEFAULT_CAMERA.bearing,
           antialias: true,
+          maxPitch: 85, // le mode Marcher regarde presque à l'horizontale
           attributionControl: false,
         });
 
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+        // Crédit obligatoire des données ouvertes (ODbL) : OpenStreetMap / OpenFreeMap pour le fond, Overture Maps pour les bâtiments
+        map.addControl(
+          new maplibregl.AttributionControl({
+            compact: true,
+            customAttribution: '© OpenStreetMap · OpenFreeMap · Bâtiments : Overture Maps (hauteurs estimées, vue stylisée)',
+          }),
+          'bottom-right'
+        );
 
         map.on('load', () => {
           // Les commerces peuvent arriver avant ou après le style : applyOverlays gère les deux ordres
@@ -252,6 +310,7 @@ export default function HoloRadarPage() {
         if (import.meta.env.DEV) {
           window.__radarMap = map; // hook QA : inspection de la caméra et des calques (absent en production)
           window.__radarAtmosphere = () => atmosphereStats(map);
+          window.__radarWorld = () => worldStats(map);
           window.__radarAudit = () => auditRoutes(map); // preuve chiffrée : itinéraires vs routes/bâtiments affichés
         }
       } catch (e) {
@@ -397,7 +456,7 @@ export default function HoloRadarPage() {
         )}
 
         {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}
-        {viewMode === '3D' && (
+        {viewMode === '3D' && !walkState && (
           <div className="hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-sm">
             <div className="cs-card-ink p-6">
               <p className="cs-eyebrow !text-[#FFD000] mb-3 flex items-center gap-2">
@@ -551,8 +610,19 @@ export default function HoloRadarPage() {
           </div>
         )}
 
+        {walkState && selectedMerchant && (
+          <WalkHud
+            state={walkState}
+            merchantName={selectedMerchant.name}
+            onSpeed={(k) => walkRef.current?.setSpeed(k)}
+            onTogglePause={() => walkRef.current?.togglePause()}
+            onScrub={(f) => walkRef.current?.setProgress(f)}
+            onExit={() => walkRef.current?.stop(true)}
+          />
+        )}
+
         {/* 6. TIROIR LATÉRAL : DÉTAILS D'UN COMMERCE CIBLÉ AVEC DRONE SWOOP */}
-        {selectedMerchant && (
+        {selectedMerchant && !walkState && (
           <div className="absolute top-0 right-0 z-40 w-full sm:w-[440px] h-full bg-[#FAF3E6] sm:border-l-2 border-[#111111] p-6 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
             {/* Bouton de fermeture */}
             <div className="flex items-center justify-between gap-3 mb-5">
@@ -594,6 +664,16 @@ export default function HoloRadarPage() {
                 {routeInfo ? `${routeInfo.distanceM} m par les rues` : `${distanceLabel(selectedMerchant)} de l'ESSECT`}
               </span>
             </div>
+
+            {/* Visite à pied : caméra à hauteur d'yeux jusqu'à la porte */}
+            <button type="button" onClick={handleStartWalk} className="cs-btn cs-btn-red cs-btn-block -mt-4 mb-8">
+              <Footprints className="w-5 h-5" aria-hidden="true" /> Marcher jusqu'ici en 3D
+            </button>
+            {walkError && (
+              <p role="alert" className="cs-pill cs-pill-mustard -mt-4 mb-6">
+                {walkError}
+              </p>
+            )}
 
             {/* Paniers d'invendus disponibles */}
             <div className="flex-1">

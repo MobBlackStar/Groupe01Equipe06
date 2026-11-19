@@ -4,6 +4,7 @@
 
 import { mapSun } from './sun.js';
 import { MAP_CONFIG, isMapReady } from './mapStyle.js';
+import { WORLD_SRC, WORLD_LAYERS } from './world/worldLayer.js';
 
 const SHADOW_SRC = 'radar-shadows-src';
 const SHADOW_LAYER = 'radar-shadows';
@@ -11,8 +12,8 @@ const AO_LAYER = 'radar-contact-ao';
 
 const M_PER_DEG = 111320;
 const MAX_SHADOW_M = 90; // un gratte-ciel ne projette pas une ombre infinie
-const MAX_RADIUS_M = 1600; // autour de l'ESSECT : au-delà, personne ne regarde
-const MAX_BUILDINGS = 5000;
+const MAX_RADIUS_M = 1800; // autour de l'ESSECT : au-delà, personne ne regarde (= rayon du monde pré-calculé)
+const MAX_BUILDINGS = 20000;
 const MIN_HEIGHT_M = 3;
 
 const states = new WeakMap();
@@ -107,28 +108,27 @@ function applyLight(map, sun) {
   });
 }
 
-function ensureLayers(map) {
-  const before = map.getLayer('3d-buildings') ? '3d-buildings' : undefined;
+function ensureLayers(map, st) {
+  const before = map.getLayer(WORLD_LAYERS.buildings) ? WORLD_LAYERS.buildings : map.getLayer('3d-buildings') ? '3d-buildings' : undefined;
 
   // Contact AO : halo flou au pied de chaque bâtiment (équivalent du « contact darkening » analytique, sans calcul CPU)
-  if (!map.getLayer(AO_LAYER) && map.getSource('openmaptiles')) {
-    map.addLayer(
-      {
-        id: AO_LAYER,
-        type: 'line',
-        source: 'openmaptiles',
-        'source-layer': 'building',
-        minzoom: 14.5,
-        layout: { 'line-join': 'round' },
-        paint: {
-          'line-color': '#5E4B31',
-          'line-opacity': 0.26,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 14.5, 2, 17, 9],
-          'line-blur': ['interpolate', ['linear'], ['zoom'], 14.5, 2, 17, 7],
-        },
+  const aoSource = st.world ? WORLD_SRC : 'openmaptiles';
+  if (!map.getLayer(AO_LAYER) && map.getSource(aoSource)) {
+    const layer = {
+      id: AO_LAYER,
+      type: 'line',
+      source: aoSource,
+      minzoom: 14.5,
+      layout: { 'line-join': 'round' },
+      paint: {
+        'line-color': '#5E4B31',
+        'line-opacity': 0.26,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 14.5, 2, 17, 9],
+        'line-blur': ['interpolate', ['linear'], ['zoom'], 14.5, 2, 17, 7],
       },
-      before
-    );
+    };
+    if (!st.world) layer['source-layer'] = 'building';
+    map.addLayer(layer, before);
   }
 
   // Ombres portées : un polygone par bâtiment, translucide (les routes restent lisibles dessous)
@@ -150,11 +150,12 @@ function ensureLayers(map) {
 
 /** Calcule les ombres des bâtiments nouvellement chargés (cache : un bâtiment n'est traité qu'une fois). */
 function refreshShadows(map, st) {
-  if (!map.getSource('openmaptiles') || !map.getSource(SHADOW_SRC)) return;
-  if (map.getZoom() < 14.5) return;
+  if (!map.getSource(SHADOW_SRC)) return;
+  if (st.world && st.worldDone) return; // données pré-calculées : une seule passe suffit
+  if (!st.world && (!map.getSource('openmaptiles') || map.getZoom() < 14.5)) return;
 
   let added = 0;
-  const features = map.querySourceFeatures('openmaptiles', { sourceLayer: 'building' });
+  const features = st.world ? st.world.shadowFeatures : map.querySourceFeatures('openmaptiles', { sourceLayer: 'building' });
   for (const f of features) {
     if (st.cache.size >= MAX_BUILDINGS) break;
     if (f.properties?.hide_3d === true || f.properties?.hide_3d === 'true') continue;
@@ -179,6 +180,7 @@ function refreshShadows(map, st) {
     st.dirty = false;
     st.shadowCount = polys.length;
   }
+  if (st.world) st.worldDone = true;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -215,13 +217,14 @@ function mountHaze(map, st) {
 /**
  * Habille la carte : lumière du soleil, ombres portées, contact darkening, brume. Idempotent.
  * @param {object} map - Instance MapLibre GL (style chargé)
+ * @param {object} [world] - Monde pré-calculé (worldLayer) : ombres et contact calculés dessus plutôt que sur les tuiles
  */
-export function applyAtmosphere(map) {
+export function applyAtmosphere(map, world) {
   if (!isMapReady(map)) return;
 
   let st = states.get(map);
   if (!st) {
-    st = { sun: mapSun(), cache: new Map(), dirty: true, timer: null, shadowCount: 0, hazeEl: null };
+    st = { sun: mapSun(), cache: new Map(), dirty: true, timer: null, shadowCount: 0, hazeEl: null, world: null, worldDone: false };
     states.set(map, st);
 
     const schedule = () => {
@@ -235,8 +238,13 @@ export function applyAtmosphere(map) {
     mountHaze(map, st);
   }
 
+  if (world && !st.world) {
+    st.world = world;
+    st.cache.clear(); // ombres des tuiles remplacées par celles du monde pré-calculé
+    st.dirty = true;
+  }
   applyLight(map, st.sun);
-  ensureLayers(map);
+  ensureLayers(map, st);
   refreshShadows(map, st);
 }
 

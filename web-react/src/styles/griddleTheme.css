@@ -610,3 +610,35 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
 /* Les marqueurs et boutons restent au-dessus de la brume */
 .maplibregl-marker { z-index: 3; }
 .maplibregl-ctrl-top-right, .maplibregl-ctrl-top-left { z-index: 4; }
+
+/* ============================================================
+   13. MODE MARCHER (Holo-Radar) : panneau d'arrivée + barre de contrôle
+   ============================================================ */
+.cs-walking .maplibregl-marker:not(.cs-walk-sign) { visibility: hidden !important; pointer-events: none; }
+.cs-walking .maplibregl-ctrl-top-right { display: none; }
+.cs-walking .cs-map-haze { --haze: 1; }
+.cs-walk-sign {
+  z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem;
+  width: min(280px, 78vw); padding: 0.9rem 1rem 1rem; background: var(--cs-cream); color: var(--cs-ink);
+  border: 3px solid var(--cs-ink); border-radius: 1.1rem; box-shadow: 6px 6px 0 var(--cs-ink); margin-bottom: 0.6rem;
+}
+.cs-walk-sign__eyebrow { font-family: var(--cs-font-mono, 'Space Mono', monospace); font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cs-red); }
+.cs-walk-sign__title { font-family: 'League Gothic', 'Oswald', sans-serif; font-size: 1.9rem; line-height: 1; text-transform: uppercase; }
+.cs-walk-sign__sub { font-size: 0.9375rem; color: #5E5850; margin-bottom: 0.35rem; }
+.cs-walk-sign .cs-btn { align-self: stretch; }
+/* Immersion : la carte passe en plein écran pendant la marche (la barre de contrôle et le badge sont fixes au-dessus) */
+.cs-walking { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; z-index: 60 !important; border-radius: 0 !important; }
+.cs-walk-hud {
+  position: fixed; z-index: 70; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(560px, calc(100% - 1.5rem)); display: flex; flex-direction: column; gap: 0.35rem; padding: 0.7rem 0.9rem;
+  background: var(--cs-cream); color: var(--cs-ink); border: 3px solid var(--cs-ink); border-radius: 1.25rem; box-shadow: 6px 6px 0 var(--cs-ink);
+}
+.cs-walk-badge {
+  position: fixed; z-index: 70; top: calc(0.75rem + env(safe-area-inset-top)); left: 0.75rem; max-width: calc(100% - 1.5rem);
+  padding: 0.3rem 0.8rem; border-radius: 9999px; background: var(--cs-mustard); color: var(--cs-ink); border: 2px solid var(--cs-ink);
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.cs-walk-hud__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.cs-walk-hud__speeds { display: inline-flex; gap: 0.4rem; }
+.cs-walk-hud__stylised { font-size: 0.8125rem; color: #5E5850; }
+@media (max-width: 639px) { .cs-walk-hud__stylised { display: none; } .cs-walk-hud .cs-range { height: 36px; } }

@@ -4,6 +4,7 @@
 
 import PRECOMPUTED from './streetRoutes.data.json';
 import { MAP_CONFIG } from './mapStyle.js';
+import { loadWorld } from './world/worldLayer.js';
 
 const M_PER_DEG = 111320;
 const NON_WALKABLE = new Set(['rail', 'transit', 'ferry', 'aerialway', 'motorway_junction']);
@@ -51,7 +52,7 @@ function lineParts(geometry) {
  * @param {object} map - Instance MapLibre GL
  * @returns {object} rapport chiffré
  */
-export function auditRoutes(map) {
+export async function auditRoutes(map) {
   if (map.getZoom() < 14.5) return { error: 'zoom >= 14.5 requis pour que les bâtiments soient chargés' };
   const proj = makeProjector();
 
@@ -84,8 +85,17 @@ export function auditRoutes(map) {
   }
 
   // ---- bâtiments (anneaux extérieurs en mètres) + boîte englobante
+  // Bâtiments : le monde pré-calculé (Overture, ~11 000 empreintes) ; à défaut, ceux des tuiles de la carte
   const buildings = [];
-  for (const f of map.querySourceFeatures('openmaptiles', { sourceLayer: 'building' })) {
+  let buildingSource = 'tuiles';
+  let buildingFeatures = null;
+  try {
+    buildingFeatures = (await loadWorld()).buildings.features;
+    buildingSource = 'monde pré-calculé (Overture)';
+  } catch {
+    buildingFeatures = map.querySourceFeatures('openmaptiles', { sourceLayer: 'building' });
+  }
+  for (const f of buildingFeatures) {
     const polys = f.geometry?.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry?.type === 'MultiPolygon' ? f.geometry.coordinates : [];
     for (const poly of polys) {
       const ring = poly[0].map(proj);
@@ -156,6 +166,7 @@ export function auditRoutes(map) {
   const pct = (n) => (vertexCount ? Math.round((n / vertexCount) * 1000) / 10 : null);
   return {
     routes: names.length,
+    buildingSource,
     buildingsLoaded: buildings.length,
     roadSegmentsLoaded: roadSegments,
     streetVertices: vertexCount,
