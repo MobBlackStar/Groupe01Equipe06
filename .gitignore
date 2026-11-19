@@ -31,12 +31,16 @@ firebase_options.dart
 .agent/
 .agents/
 .antigravity/
+.claude/
+.code-review-graph/
+qa-harness/
 AGENTS.md
 CLAUDE.md
 GEMINI.md
 .cursorrules
 .copilot/
 specs-and-plans/
+docs/superpowers/
 
 # ==============================================================================
 # NODE.JS & JAVASCRIPT DEPENDENCIES / LOGS
