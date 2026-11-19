@@ -5,6 +5,9 @@
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../core/domain/money.dart';
+import '../../core/models/order_model.dart';
+import '../../core/time/server_clock.dart';
+import '../../services/campus_api.dart';
 import '../ticket/ticket_screen.dart';
 import '../checkout/checkout_screen.dart';
 
@@ -16,36 +19,34 @@ class MyOrdersScreen extends StatefulWidget {
 }
 
 class _MyOrdersScreenState extends State<MyOrdersScreen> {
-  final List<Map<String, dynamic>> _orders = [
-    {
-      'id': 'ord-1',
-      'orderCode': 'CS-8K4M9',
-      'title': 'Baguette Farcie Escalope Panée & Fromage',
-      'merchantName': 'Baguette & Baguette Montfleury',
-      'quantity': 2,
-      'unitPriceMillimes': 3800,
-      'status': 'PAID',
-    },
-    {
-      'id': 'ord-2',
-      'orderCode': 'CS-3T7X1',
-      'title': 'Panier Surprise Viennoiseries du Matin',
-      'merchantName': "Cafétéria L'Étoile du Savoir",
-      'quantity': 1,
-      'unitPriceMillimes': 2500,
-      'status': 'RESERVED',
-      'expiresAt': DateTime.now().add(const Duration(minutes: 8)),
-    },
-    {
-      'id': 'ord-3',
-      'orderCode': 'CS-9M2K4',
-      'title': 'Ojja Royale aux Merguez & Œuf',
-      'merchantName': 'Restaurant Le Dôme Montfleury',
-      'quantity': 1,
-      'unitPriceMillimes': 4500,
-      'status': 'COMPLETED',
-    },
-  ];
+  List<OrderModel> _orders = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  /// `GET /orders/my-orders` : commandes réelles de l'étudiant (statut, prix gelé, code) ; rien n'est simulé localement.
+  Future<void> _load() async {
+    try {
+      final orders = await CampusApi.shared.fetchMyOrders();
+      if (!mounted) return;
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +72,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
           children: [
             _buildOrderList(['PAID', 'RESERVED']),
             _buildOrderList(['COMPLETED']),
-            _buildOrderList(['CANCELLED', 'EXPIRED']),
+            _buildOrderList(['CANCELLED', 'EXPIRED', 'NO_SHOW', 'FAILED']),
           ],
         ),
       ),
@@ -79,29 +80,60 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }
 
   Widget _buildOrderList(List<String> allowedStatuses) {
-    final list = _orders.where((o) => allowedStatuses.contains(o['status'])).toList();
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.limeAccent));
+    }
+
+    final nowMs = ServerClock.serverNowMs;
+    // Une réservation dont les 10 minutes sont écoulées n'est plus payable : elle passe dans « Annulées ».
+    String effectiveStatus(OrderModel o) {
+      final exp = o.reservationExpiresAt?.millisecondsSinceEpoch;
+      return (o.isReserved && exp != null && exp < nowMs) ? 'EXPIRED' : o.status;
+    }
+
+    final list = _orders.where((o) => allowedStatuses.contains(effectiveStatus(o))).toList();
 
     if (list.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text('🛍️', style: TextStyle(fontSize: 48)),
-            SizedBox(height: 12),
-            Text('Aucune commande dans cet onglet', style: TextStyle(color: Colors.white70, fontSize: 13)),
+      return RefreshIndicator(
+        onRefresh: _load,
+        color: AppTheme.limeAccent,
+        backgroundColor: AppTheme.surfaceCard,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 120),
+            Column(
+              children: [
+                Text(_error != null ? '⚠️' : '🛍️', style: const TextStyle(fontSize: 48)),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    _error ?? 'Aucune commande dans cet onglet',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       );
     }
 
-    return ListView.separated(
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppTheme.limeAccent,
+      backgroundColor: AppTheme.surfaceCard,
+      child: ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: list.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final order = list[index];
-        final status = order['status'] as String;
-        final total = (order['unitPriceMillimes'] as int) * (order['quantity'] as int);
+        final status = effectiveStatus(order);
+        final total = order.totalMillimes;
 
         Color badgeColor = AppTheme.limeAccent;
         String badgeText = 'PAID';
@@ -134,7 +166,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       border: Border.all(color: badgeColor.withOpacity(0.4)),
                     ),
                     child: Text(
-                      order['orderCode'] as String,
+                      order.orderCode,
                       style: TextStyle(color: badgeColor, fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -153,12 +185,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                order['title'] as String,
+                order.offerTitle,
                 style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
-                '🏪 ${order['merchantName']}',
+                '🏪 ${order.merchantName}',
                 style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
               const SizedBox(height: 8),
@@ -166,7 +198,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Quantité : ${order['quantity']} • Total : ${Money.formatTND(total)}',
+                    'Quantité : ${order.quantity} • Total : ${Money.formatTND(total)}',
                     style: const TextStyle(color: Colors.white54, fontSize: 11),
                   ),
                   if (status == 'PAID')
@@ -175,13 +207,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => TicketScreen(
-                              orderId: order['id'] as String,
-                              orderCode: order['orderCode'] as String,
-                              offerTitle: order['title'] as String,
-                              merchantName: order['merchantName'] as String,
-                              quantity: order['quantity'] as int,
-                            ),
+                            builder: (context) => TicketScreen(orderId: order.id),
                           ),
                         );
                       },
@@ -199,17 +225,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CheckoutScreen(
-                              orderId: order['id'] as String,
-                              orderCode: order['orderCode'] as String,
-                              offerTitle: order['title'] as String,
-                              merchantName: order['merchantName'] as String,
-                              quantity: order['quantity'] as int,
-                              lockedUnitPriceMillimes: order['unitPriceMillimes'] as int,
-                              reservationExpiresAt: order['expiresAt'] as DateTime? ?? DateTime.now().add(const Duration(minutes: 8)),
-                            ),
+                            builder: (context) => CheckoutScreen(order: order),
                           ),
-                        );
+                        ).then((_) => _load());
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.orangeUrgent,
@@ -224,6 +242,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
           ),
         );
       },
+    ),
     );
   }
 }

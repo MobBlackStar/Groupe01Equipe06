@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../app/theme.dart';
 import '../../core/crypto/ticket_crypto.dart';
+import '../../core/time/server_clock.dart';
 
 /// Découpe thermique avec encoches de perforation latérales et crantage zig-zag en bas
 class ThermalReceiptClipper extends CustomClipper<Path> {
@@ -85,6 +86,7 @@ class BoardingPass extends StatefulWidget {
   final String offerTitle;
   final String merchantName;
   final int quantity;
+  /// Clé HMAC réelle renvoyée par `GET /orders/:id/ticket` (jamais de valeur par défaut : un QR factice ne validerait pas).
   final String ticketKeyHex;
 
   const BoardingPass({
@@ -94,7 +96,7 @@ class BoardingPass extends StatefulWidget {
     required this.offerTitle,
     required this.merchantName,
     this.quantity = 1,
-    this.ticketKeyHex = 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
+    required this.ticketKeyHex,
   });
 
   @override
@@ -108,11 +110,11 @@ class _BoardingPassState extends State<BoardingPass> {
   @override
   void initState() {
     super.initState();
-    _nowMs = DateTime.now().millisecondsSinceEpoch;
+    _nowMs = ServerClock.serverNowMs;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          _nowMs = DateTime.now().millisecondsSinceEpoch;
+          _nowMs = ServerClock.serverNowMs;
         });
       }
     });

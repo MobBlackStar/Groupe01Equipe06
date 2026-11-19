@@ -3,6 +3,8 @@
 // 🎯 À retenir pour la soutenance : "Ce modèle encapsule les prix en millimes entiers stricts et les créneaux de collecte."
 // Module : Modèles de Données Mobile
 
+import 'order_model.dart' show parseApiDate;
+
 class OfferModel {
   final String id;
   final String merchantId;
@@ -22,6 +24,7 @@ class OfferModel {
   final bool isSurpriseBasket;
   final String status; // 'ACTIVE', 'SOLD_OUT', 'EXPIRED'
   final String? photoUrl;
+  final String? rarity; // COMMON | RARE | LEGENDARY (paniers surprise)
 
   const OfferModel({
     required this.id,
@@ -42,26 +45,32 @@ class OfferModel {
     this.isSurpriseBasket = false,
     this.status = 'ACTIVE',
     this.photoUrl,
+    this.rarity,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
     return OfferModel(
       id: json['id'] as String? ?? '',
       merchantId: json['merchantId'] as String? ?? '',
-      merchantName: json['merchantName'] as String?,
+      merchantName: json['merchantName'] as String? ??
+          (json['merchantSnapshot'] is Map ? (json['merchantSnapshot'] as Map)['name'] as String? : null),
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       category: json['category'] as String? ?? 'SANDWICH',
-      pricingType: json['pricingType'] as String? ?? 'FIXED',
+      pricingType: json['pricingType'] as String? ??
+          (json['pricing'] is Map ? (json['pricing'] as Map)['mode'] as String? : null) ??
+          'FIXED',
       originalPriceMillimes: (json['originalPriceMillimes'] as num?)?.toInt() ?? 0,
       targetPriceMillimes: (json['targetPriceMillimes'] as num?)?.toInt() ?? 0,
       decayHours: (json['decayHours'] as num?)?.toInt() ?? 2,
       stepMillimes: (json['stepMillimes'] as num?)?.toInt() ?? 100,
-      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
-      remainingQuantity: (json['remainingQuantity'] as num?)?.toInt() ?? 1,
-      pickupStartAt: DateTime.tryParse(json['pickupStartAt']?.toString() ?? '') ?? DateTime.now(),
-      pickupEndAt: DateTime.tryParse(json['pickupEndAt']?.toString() ?? '') ?? DateTime.now().add(const Duration(hours: 2)),
+      quantity: (json['quantity'] as num?)?.toInt() ?? (json['quantityAvailable'] as num?)?.toInt() ?? 1,
+      // L'API expose le stock sous `quantityAvailable` (alias historique : `remainingQuantity`)
+      remainingQuantity: (json['quantityAvailable'] as num?)?.toInt() ?? (json['remainingQuantity'] as num?)?.toInt() ?? 1,
+      pickupStartAt: parseApiDate(json['pickupStartAt']) ?? DateTime.now(),
+      pickupEndAt: parseApiDate(json['pickupEndAt']) ?? DateTime.now().add(const Duration(hours: 2)),
       isSurpriseBasket: json['isSurpriseBasket'] as bool? ?? false,
+      rarity: json['rarity'] as String?,
       status: json['status'] as String? ?? 'ACTIVE',
       photoUrl: json['photoUrl'] as String?,
     );
@@ -87,6 +96,7 @@ class OfferModel {
       'isSurpriseBasket': isSurpriseBasket,
       'status': status,
       'photoUrl': photoUrl,
+      'rarity': rarity,
     };
   }
 }

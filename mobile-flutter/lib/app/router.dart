@@ -129,13 +129,15 @@ class StudentShell extends StatefulWidget {
 class _StudentShellState extends State<StudentShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    ExploreScreen(),
-    RadarScreen(),
-    MyOrdersScreen(),
-    LoyaltyCardScreen(),
-    StudentDashboardScreen(),
-  ];
+  // Commandes et Fidélité sont recréées à chaque sélection de l'onglet : elles rechargent ainsi le serveur
+  // (nouvelle commande payée, EcoPoints crédités après un retrait).
+  List<Widget> get _pages => [
+        const ExploreScreen(),
+        const RadarScreen(),
+        _currentIndex == 2 ? const MyOrdersScreen() : const SizedBox.shrink(),
+        _currentIndex == 3 ? const LoyaltyCardScreen() : const SizedBox.shrink(),
+        const StudentDashboardScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {

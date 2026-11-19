@@ -4,7 +4,9 @@
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
+import '../../core/config/env.dart';
 import '../../core/models/offer_model.dart';
+import '../../services/campus_api.dart';
 import '../../widgets/offer_card.dart';
 import 'filter_bottom_sheet.dart';
 import 'offer_detail_screen.dart';
@@ -24,8 +26,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _surpriseOnly = false;
   String _sortBy = 'distance';
 
-  // Offres de démonstration Montfleury
-  final List<OfferModel> _allOffers = [
+  // Catalogue réel chargé depuis `GET /offers` (identifiants réels, requis pour réserver)
+  List<OfferModel> _allOffers = [];
+  bool _isLoading = true;
+  String? _loadError;
+
+  // Offres de démonstration hors-ligne : utilisées uniquement avec --dart-define=USE_MOCKS=true
+  final List<OfferModel> _demoOffers = [
     OfferModel(
       id: 'off-1',
       merchantId: 'm1',
@@ -109,6 +116,38 @@ class _ExploreScreenState extends State<ExploreScreen> {
       photoUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOffers();
+  }
+
+  Future<void> _loadOffers() async {
+    if (Env.useMocks) {
+      setState(() {
+        _allOffers = _demoOffers;
+        _isLoading = false;
+        _loadError = null;
+      });
+      return;
+    }
+    try {
+      final offers = await CampusApi.shared.fetchOffers();
+      if (!mounted) return;
+      setState(() {
+        _allOffers = offers;
+        _isLoading = false;
+        _loadError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadError = e.toString();
+      });
+    }
+  }
 
   void _openFilters() {
     showModalBottomSheet(
@@ -253,25 +292,39 @@ class _ExploreScreenState extends State<ExploreScreen> {
             // 3. Grille des offres
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () async {
-                  await Future.delayed(const Duration(milliseconds: 500));
-                  setState(() {});
-                },
+                onRefresh: _loadOffers,
                 color: AppTheme.limeAccent,
                 backgroundColor: AppTheme.surfaceCard,
-                child: offers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text('🔍', style: TextStyle(fontSize: 48)),
-                            SizedBox(height: 12),
-                            Text(
-                              'Aucune offre ne correspond à votre recherche',
-                              style: TextStyle(color: Colors.white70, fontSize: 13),
-                            ),
-                          ],
-                        ),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppTheme.limeAccent))
+                    : offers.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 80),
+                          Column(
+                            children: [
+                              Text(_loadError != null ? '⚠️' : '🔍', style: const TextStyle(fontSize: 48)),
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: Text(
+                                  _loadError ?? 'Aucune offre ne correspond à votre recherche',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                ),
+                              ),
+                              if (_loadError != null)
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() => _isLoading = true);
+                                    _loadOffers();
+                                  },
+                                  child: const Text('Réessayer', style: TextStyle(color: AppTheme.limeAccent)),
+                                ),
+                            ],
+                          ),
+                        ],
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -4,28 +4,53 @@
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
+import '../../core/models/order_model.dart';
+import '../../services/campus_api.dart';
 import 'boarding_pass.dart';
 
-class TicketScreen extends StatelessWidget {
+/// Charge le vrai ticket : `GET /orders/:id/ticket` (ticketKey, orderCode) et `GET /orders/:id`
+/// (offre, commerce, quantité) ; sans la clé réelle du serveur le QR ne pourrait jamais être validé.
+class TicketScreen extends StatefulWidget {
   final String orderId;
-  final String orderCode;
-  final String offerTitle;
-  final String merchantName;
-  final int quantity;
-  final String ticketKeyHex;
 
-  const TicketScreen({
-    super.key,
-    required this.orderId,
-    this.orderCode = 'CS-8K4M9',
-    this.offerTitle = 'Baguette Farcie Escalope Panée & Fromage',
-    this.merchantName = 'Baguette & Baguette Montfleury',
-    this.quantity = 2,
-    this.ticketKeyHex = 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
-  });
+  const TicketScreen({super.key, required this.orderId});
+
+  @override
+  State<TicketScreen> createState() => _TicketScreenState();
+}
+
+class _TicketScreenState extends State<TicketScreen> {
+  TicketParams? _ticket;
+  OrderModel? _order;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _error = null);
+    try {
+      final results = await Future.wait([
+        CampusApi.shared.fetchTicket(widget.orderId),
+        CampusApi.shared.fetchOrder(widget.orderId),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _ticket = results[0] as TicketParams;
+        _order = results[1] as OrderModel;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final ticket = _ticket;
+    final order = _order;
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
@@ -33,17 +58,36 @@ class TicketScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: (ticket == null || order == null)
+            ? Center(
+                child: _error == null
+                    ? const CircularProgressIndicator(color: AppTheme.limeAccent)
+                    : Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: _load,
+                              child: const Text('Réessayer', style: TextStyle(color: AppTheme.limeAccent)),
+                            ),
+                          ],
+                        ),
+                      ),
+              )
+            : SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               BoardingPass(
-                orderId: orderId,
-                orderCode: orderCode,
-                offerTitle: offerTitle,
-                merchantName: merchantName,
-                quantity: quantity,
-                ticketKeyHex: ticketKeyHex,
+                orderId: order.id,
+                orderCode: ticket.orderCode.isNotEmpty ? ticket.orderCode : order.orderCode,
+                offerTitle: order.offerTitle,
+                merchantName: order.merchantName,
+                quantity: order.quantity,
+                ticketKeyHex: ticket.ticketKeyHex,
               ),
               const SizedBox(height: 24),
 

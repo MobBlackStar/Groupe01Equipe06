@@ -4,7 +4,11 @@
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
+import '../../core/config/env.dart';
+import '../../core/models/loyalty_model.dart';
 import '../../core/models/offer_model.dart';
+import '../../services/campus_api.dart';
+import '../checkout/checkout_screen.dart';
 import '../../core/domain/money.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/live_price_text.dart';
@@ -28,53 +32,56 @@ class OfferDetailScreen extends StatefulWidget {
 class _OfferDetailScreenState extends State<OfferDetailScreen> {
   int _quantity = 1;
   bool _isReserving = false;
+  List<LoyaltyReward> _rewards = [];
+  String? _selectedRewardId;
 
-  void _reserve() async {
-    setState(() {
-      _isReserving = true;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadRewards();
+  }
 
-    await Future.delayed(const Duration(milliseconds: 700));
+  /// Coupons réellement débloqués (`GET /loyalty/me`) ; le coupon choisi part dans `POST /orders` (rewardId).
+  Future<void> _loadRewards() async {
+    if (Env.useMocks) return;
+    try {
+      final loyalty = await CampusApi.shared.fetchLoyalty();
+      if (mounted) setState(() => _rewards = loyalty.rewards.where((r) => r.isAvailable).toList());
+    } catch (_) {
+      // Sans coupons la réservation reste possible au prix plein.
+    }
+  }
 
-    if (mounted) {
+  /// FREE_SURPRISE : uniquement paniers surprise de rareté COMMON ; coupons expirés exclus (règle serveur).
+  List<LoyaltyReward> get _applicableRewards {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final commonSurprise = widget.offer.isSurpriseBasket && (widget.offer.rarity ?? 'COMMON') == 'COMMON';
+    return _rewards.where((r) {
+      final exp = r.expiresAt?.millisecondsSinceEpoch;
+      if (exp != null && exp < nowMs) return false;
+      return !r.isFreeSurprise || commonSurprise;
+    }).toList();
+  }
+
+  Future<void> _reserve() async {
+    setState(() => _isReserving = true);
+    try {
+      // Le serveur fige le prix, applique le coupon et renvoie la commande (10 min de blocage de stock).
+      final order = await CampusApi.shared.createOrder(
+        offerId: widget.offer.id,
+        quantity: _quantity,
+        rewardId: _applicableRewards.any((r) => r.id == _selectedRewardId) ? _selectedRewardId : null,
+      );
+      if (!mounted) return;
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => CheckoutScreen(order: order)),
+      );
+    } catch (e) {
+      if (!mounted) return;
       setState(() => _isReserving = false);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppTheme.surfaceCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: const [
-              Text('🔒', style: TextStyle(fontSize: 22)),
-              SizedBox(width: 8),
-              Text('Réservation Bloquée', style: TextStyle(color: AppTheme.limeAccent, fontSize: 16)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Votre commande pour $_quantity portion(s) est verrouillée pendant 10 minutes au prix garanti.',
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Rendez-vous au comptoir du restaurant à Montfleury avec votre QR code.',
-                style: TextStyle(color: Colors.white60, fontSize: 11),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text('OK, Super !', style: TextStyle(color: AppTheme.limeAccent, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -288,6 +295,24 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                   ),
                 ],
               ),
+              if (_applicableRewards.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text('Coupon fidélité', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildRewardChip(null, 'Aucun'),
+                    for (final r in _applicableRewards) _buildRewardChip(r.id, r.isFreeSurprise ? '100% offert ✨' : '-${r.percentOff ?? 10}%'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'La remise est calculée par le serveur à la réservation.',
+                  style: TextStyle(color: Colors.white38, fontSize: 10),
+                ),
+              ],
               const SizedBox(height: 24),
             ],
           ),
@@ -307,7 +332,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Total à régler :', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    const Text('Total estimé :', style: TextStyle(color: Colors.white54, fontSize: 11)),
                     Text(
                       Money.formatTND(totalMillimes),
                       style: const TextStyle(color: AppTheme.limeAccent, fontSize: 20, fontWeight: FontWeight.w900),
@@ -324,6 +349,29 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRewardChip(String? id, String label) {
+    final isSel = _selectedRewardId == id;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedRewardId = id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSel ? AppTheme.limeAccent.withOpacity(0.15) : AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isSel ? AppTheme.limeAccent : Colors.white10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSel ? AppTheme.limeAccent : Colors.white70,
+            fontSize: 11,
+            fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),

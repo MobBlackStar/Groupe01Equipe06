@@ -5,6 +5,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
+import '../../core/domain/loyalty.dart';
+import '../../core/models/loyalty_model.dart';
+import '../../services/campus_api.dart';
 
 /// Peintre vectoriel pour cercles en pointillés réguliers
 class DashedCirclePainter extends CustomPainter {
@@ -58,43 +61,45 @@ class LoyaltyCardScreen extends StatefulWidget {
 }
 
 class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
-  int _ecoPoints = 240;
-  int _mealsRescued = 12;
+  int _ecoPoints = 0;
+  int _mealsRescued = 0;
+  String _displayName = '';
+  List<LoyaltyReward> _rewards = [];
+  String? _error;
 
-  final List<Map<String, dynamic>> _rewards = [
-    {
-      'id': 'rw-1',
-      'title': '-20% Réduction Immédiate',
-      'sub': 'Plafonné à 2,000 DT sur commande Montfleury',
-      'milestone': 100,
-      'status': 'USED',
-      'code': 'CS-ECO-100',
-    },
-    {
-      'id': 'rw-2',
-      'title': '-20% Réduction Immédiate',
-      'sub': 'Plafonné à 2,000 DT sur commande Montfleury',
-      'milestone': 200,
-      'status': 'AVAILABLE',
-      'code': 'CS-ECO-200',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
 
-  void _addPoints(int amount) {
-    setState(() {
-      _ecoPoints += amount;
-      if (amount == 20) _mealsRescued += 1;
-      if (_ecoPoints >= 300 && !_rewards.any((r) => r['milestone'] == 300)) {
-        _rewards.add({
-          'id': 'rw-3',
-          'title': 'Panier Surprise 100% Offert ✨',
-          'sub': 'Offert jusqu à 4,000 DT sur un panier mystère',
-          'milestone': 300,
-          'status': 'AVAILABLE',
-          'code': 'CS-MYST-300',
-        });
-      }
-    });
+  /// `GET /loyalty/me` : EcoPoints, repas sauvés et coupons réellement débloqués (rien n'est simulé localement).
+  Future<void> _load() async {
+    try {
+      final loyalty = await CampusApi.shared.fetchLoyalty();
+      if (!mounted) return;
+      setState(() {
+        _ecoPoints = loyalty.ecoPoints;
+        _mealsRescued = loyalty.totalMealsRescued;
+        _displayName = loyalty.displayName;
+        _rewards = loyalty.rewards;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    }
+  }
+
+  String _rewardTitle(LoyaltyReward r) =>
+      r.isFreeSurprise ? 'Panier Surprise 100% Offert ✨' : '-${r.percentOff ?? 10}% Réduction Immédiate';
+
+  String _rewardSub(LoyaltyReward r) {
+    final cap = r.maxDiscountMillimes;
+    final capText = cap == null ? '' : 'Plafonné à ${(cap / 1000).toStringAsFixed(3).replaceAll('.', ',')} DT';
+    return r.isFreeSurprise ? 'Panier mystère COMMON. $capText'.trim() : capText;
   }
 
   @override
@@ -113,8 +118,9 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
       tierIcon = '🌿';
     }
 
-    const totalStamps = 10;
-    final activeStamps = ((_ecoPoints ~/ 20) % totalStamps);
+    // ALG-LOYALTY : tampons = floor((ecoPoints mod 100) / 20) sur 5 ; le 5e emplacement est le coupon -20 %
+    const totalStamps = 5;
+    final activeStamps = Loyalty.calculateStamps(_ecoPoints);
     final nextMilestone = ((_ecoPoints ~/ 100) + 1) * 100;
     final progress = (_ecoPoints % 100) / 100.0;
 
@@ -128,7 +134,12 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
+        child: RefreshIndicator(
+        onRefresh: _load,
+        color: AppTheme.mustardYellow,
+        backgroundColor: AppTheme.surfaceCard,
         child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +185,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '1 tampon par plat sauvé. Le 10ème est offert.',
+                                "20 points = 1 tampon. Au 5e, le club t'offre -20 %.",
                                 style: TextStyle(
                                   color: AppTheme.deepInk.withValues(alpha: 0.7),
                                   fontSize: 10.5,
@@ -204,21 +215,10 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                       ),
                       const SizedBox(height: 18),
 
-                      // Grille des 10 encoches de tampons (2 rangées de 5)
-                      Column(
-                        children: [
-                          // Rangée 1 : Tampons 1 à 5
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(5, (index) => _buildStampSlot(index, activeStamps)),
-                          ),
-                          const SizedBox(height: 14),
-                          // Rangée 2 : Tampons 6 à 10 (10 = Repas Offert)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(5, (index) => _buildStampSlot(index + 5, activeStamps)),
-                          ),
-                        ],
+                      // Grille des 5 emplacements : 4 tampons + le coupon -20 %
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(totalStamps, (index) => _buildStampSlot(index, activeStamps)),
                       ),
 
                       const SizedBox(height: 16),
@@ -228,7 +228,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'YASSINE TRABELSI • ESSECT 2026',
+                            '${(_displayName.isEmpty ? 'ÉTUDIANT ESSECT' : _displayName).toUpperCase()} • ESSECT 2026',
                             style: TextStyle(
                               color: AppTheme.deepInk.withValues(alpha: 0.65),
                               fontSize: 9.5,
@@ -361,7 +361,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
               ),
               const SizedBox(height: 12),
               ..._rewards.map((r) {
-                final isAvailable = r['status'] == 'AVAILABLE';
+                final isAvailable = r.isAvailable;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12, right: 3),
                   padding: const EdgeInsets.all(14),
@@ -411,7 +411,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              r['title'] as String,
+                              _rewardTitle(r),
                               style: TextStyle(
                                 color: isAvailable ? AppTheme.deepInk : AppTheme.textMuted,
                                 fontSize: 13,
@@ -420,7 +420,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              r['sub'] as String,
+                              _rewardSub(r),
                               style: TextStyle(
                                 color: isAvailable ? AppTheme.deepInk.withValues(alpha: 0.65) : AppTheme.textMuted,
                                 fontSize: 10,
@@ -428,7 +428,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              r['code'] as String? ?? 'CS-ECO',
+                              r.id,
                               style: TextStyle(
                                 color: isAvailable ? AppTheme.griddleRed : AppTheme.textMuted,
                                 fontSize: 10,
@@ -452,7 +452,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                           ),
                         ),
                         child: Text(
-                          isAvailable ? 'DISPONIBLE' : 'UTILISÉ',
+                          isAvailable ? 'DISPONIBLE' : (r.status == 'LOCKED' ? 'RÉSERVÉ' : 'UTILISÉ'),
                           style: TextStyle(
                             color: isAvailable ? Colors.white : AppTheme.textMuted,
                             fontSize: 9.5,
@@ -465,80 +465,14 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                 );
               }),
 
-              const SizedBox(height: 18),
-
-              // 4. Banc de Démo Live (Soutenance)
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white12),
+              if (_rewards.isEmpty)
+                Text(
+                  _error ?? 'Aucun coupon pour le moment : un coupon se débloque tous les 100 EcoPoints.',
+                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.bolt, color: AppTheme.mustardYellow, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'Banc de Démo Live (Soutenance) :',
-                          style: TextStyle(
-                            color: AppTheme.mustardYellow,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => _addPoints(20),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppTheme.griddleRed, width: 2),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text(
-                              '+20 pts (Tamponner)',
-                              style: TextStyle(
-                                color: AppTheme.griddleRed,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => _addPoints(60),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppTheme.mustardYellow, width: 2),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text(
-                              'Franchir 300 pts ✨',
-                              style: TextStyle(
-                                color: AppTheme.mustardYellow,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -547,7 +481,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
   /// Construction d'un slot circulaire tamponné ou vierge (CAMPUSSAVE CLUB)
   Widget _buildStampSlot(int index, int activeStamps) {
     final isStamped = index < activeStamps;
-    final isFreeBowl = index == 9;
+    final isFreeBowl = index == 4;
 
     final angle = isStamped ? ((index * 7) % 15 - 7) * (math.pi / 180) : 0.0;
 
@@ -592,7 +526,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'REPAS',
+                            '-20 %',
                             style: TextStyle(
                               color: AppTheme.griddleRed,
                               fontSize: 7.5,
@@ -601,7 +535,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                             ),
                           ),
                           Text(
-                            'OFFERT',
+                            'COUPON',
                             style: TextStyle(
                               color: AppTheme.griddleRed,
                               fontSize: 7.5,

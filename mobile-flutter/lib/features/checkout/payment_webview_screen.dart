@@ -6,17 +6,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../../core/api/api_client.dart';
-import '../../core/api/endpoints.dart';
+import '../../services/campus_api.dart';
 
 class PaymentWebViewScreen extends StatefulWidget {
   final String payUrl;
   final String orderId;
 
+  /// Référence renvoyée par `POST /payments/konnect/init` ; transmise à la vérification seulement si présente.
+  final String? paymentRef;
+
   const PaymentWebViewScreen({
     super.key,
     required this.payUrl,
     required this.orderId,
+    this.paymentRef,
   });
 
   @override
@@ -97,6 +100,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     return false;
   }
 
+  /// Retour de passerelle : le serveur reste seul juge. `confirmed:false` ou une erreur ne sont JAMAIS un succès.
   Future<void> _handlePaymentSuccess() async {
     if (_isVerifying) return;
     setState(() {
@@ -104,36 +108,36 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     });
 
     try {
-      await ApiClient.dio.post(
-        Endpoints.verifyPayment,
-        data: {
-          'orderId': widget.orderId,
-          'paymentRef': 'ref_${DateTime.now().millisecondsSinceEpoch}',
-        },
-      );
-
+      final confirmed = await CampusApi.shared.verifyPayment(widget.orderId, paymentRef: widget.paymentRef);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Paiement validé avec succès ! Votre Living Ticket est prêt.'),
-          backgroundColor: Color(0xFF34D399),
-        ),
-      );
-      Navigator.of(context).pop(true);
+      if (confirmed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Paiement validé avec succès ! Votre Living Ticket est prêt.'),
+            backgroundColor: Color(0xFF34D399),
+          ),
+        );
+        Navigator.of(context).pop(true);
+      } else {
+        _failVerification("Le paiement n'est pas encore confirmé par la passerelle.");
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Paiement confirmé (mode démonstration).'),
-          backgroundColor: Color(0xFF34D399),
-        ),
-      );
-      Navigator.of(context).pop(true);
+      _failVerification(e.toString());
     }
   }
 
+  void _failVerification(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    );
+    Navigator.of(context).pop(false);
+  }
+
   void _handlePaymentFailed() {
-    if (!mounted) return;
+    if (!mounted || _isVerifying) return;
+    _isVerifying = true; // onPageStarted + onNavigationRequest peuvent tous deux intercepter la même URL
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Paiement annulé ou non complété sur la passerelle Konnect.'),
