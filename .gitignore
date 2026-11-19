@@ -26,21 +26,17 @@ firebase_options.dart
 !firebase_options.example.dart
 
 # ==============================================================================
-# AI ASSISTANTS, AGENTS & LOCAL WORKSPACE RULES (STEALTH MODE)
+# LOCAL WORKSPACE RULES & ARTIFACTS
 # ==============================================================================
 .agent/
 .agents/
-.antigravity/
-.claude/
 .code-review-graph/
 qa-harness/
 AGENTS.md
-CLAUDE.md
 GEMINI.md
 .cursorrules
 .copilot/
 specs-and-plans/
-docs/superpowers/
 
 # ==============================================================================
 # NODE.JS & JAVASCRIPT DEPENDENCIES / LOGS
