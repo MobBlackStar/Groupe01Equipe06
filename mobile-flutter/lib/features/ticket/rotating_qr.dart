@@ -198,7 +198,7 @@ class _RotatingQrState extends State<RotatingQr> {
                   ? '${code6.substring(0, 3)} - ${code6.substring(3, 6)}'
                   : code6,
               style: const TextStyle(
-                fontFamily: 'monospace',
+                fontFamily: AppTheme.fontMono,
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: AppTheme.red,
@@ -272,7 +272,7 @@ class _RotatingQrState extends State<RotatingQr> {
             Text(
               'N° de retrait : ${widget.orderCode}',
               style: TextStyle(
-                fontFamily: 'monospace',
+                fontFamily: AppTheme.fontMono,
                 fontSize: 13,
                 color: Colors.grey.shade400,
                 fontWeight: FontWeight.w500,

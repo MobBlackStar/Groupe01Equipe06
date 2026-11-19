@@ -151,9 +151,9 @@ class _BoardingPassState extends State<BoardingPass> {
           color: AppTheme.paper,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -178,7 +178,7 @@ class _BoardingPassState extends State<BoardingPass> {
                       color: AppTheme.ink,
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
-                      fontFamily: 'monospace',
+                      fontFamily: AppTheme.fontMono,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -188,7 +188,7 @@ class _BoardingPassState extends State<BoardingPass> {
                     style: TextStyle(
                       color: AppTheme.ink.withValues(alpha: 0.65),
                       fontSize: 13,
-                      fontFamily: 'monospace',
+                      fontFamily: AppTheme.fontMono,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -222,7 +222,7 @@ class _BoardingPassState extends State<BoardingPass> {
                                 color: AppTheme.red,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
-                                fontFamily: 'monospace',
+                                fontFamily: AppTheme.fontMono,
                               ),
                             ),
                           ],
@@ -234,7 +234,7 @@ class _BoardingPassState extends State<BoardingPass> {
                           color: AppTheme.ink,
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
-                          fontFamily: 'monospace',
+                          fontFamily: AppTheme.fontMono,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -250,24 +250,20 @@ class _BoardingPassState extends State<BoardingPass> {
             // Section Corps du Reçu & Données de Retrait
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-              child: Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildReceiptRow('COMMERCE', widget.merchantName.toUpperCase()),
-                      const SizedBox(height: 6),
-                      _buildReceiptRow('CAMPUS', 'ESSECT TUNIS (MONTFLEURY)'),
-                      const SizedBox(height: 6),
-                      _buildReceiptRow('ARTICLE', '${widget.quantity}x ${widget.offerTitle}'),
-                      const SizedBox(height: 6),
-                      _buildReceiptRow('STATUT', 'PAYÉ & RÉSERVÉ'),
-                    ],
-                  ),
-                  // Tampon Encreur Rouge [PAYÉ] Tilted
-                  Positioned(
-                    right: 0,
-                    top: 8,
+                  _buildReceiptRow('COMMERCE', widget.merchantName.toUpperCase()),
+                  const SizedBox(height: 6),
+                  _buildReceiptRow('CAMPUS', 'ESSECT TUNIS (MONTFLEURY)'),
+                  const SizedBox(height: 6),
+                  _buildReceiptRow('ARTICLE', '${widget.quantity}x ${widget.offerTitle}'),
+                  const SizedBox(height: 6),
+                  _buildReceiptRow('STATUT', 'PAYÉ & RÉSERVÉ'),
+                  const SizedBox(height: 10),
+                  // Tampon encreur rouge [PAYÉ], sous les lignes pour ne jamais recouvrir le texte
+                  Align(
+                    alignment: Alignment.centerRight,
                     child: Transform.rotate(
                       angle: -0.16,
                       child: Container(
@@ -283,7 +279,7 @@ class _BoardingPassState extends State<BoardingPass> {
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,
-                            fontFamily: 'monospace',
+                            fontFamily: AppTheme.fontMono,
                           ),
                         ),
                       ),
@@ -334,7 +330,7 @@ class _BoardingPassState extends State<BoardingPass> {
                         style: TextStyle(
                           color: AppTheme.ink.withValues(alpha: 0.65),
                           fontSize: 13,
-                          fontFamily: 'monospace',
+                          fontFamily: AppTheme.fontMono,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -344,7 +340,7 @@ class _BoardingPassState extends State<BoardingPass> {
                           color: AppTheme.red,
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
-                          fontFamily: 'monospace',
+                          fontFamily: AppTheme.fontMono,
                         ),
                       ),
                     ],
@@ -378,7 +374,7 @@ class _BoardingPassState extends State<BoardingPass> {
                             color: AppTheme.cream.withValues(alpha: 0.7),
                             fontSize: 13,
                             letterSpacing: 1,
-                            fontFamily: 'monospace',
+                            fontFamily: AppTheme.fontMono,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -390,7 +386,7 @@ class _BoardingPassState extends State<BoardingPass> {
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 5,
-                            fontFamily: 'monospace',
+                            fontFamily: AppTheme.fontMono,
                           ),
                         ),
                       ],
@@ -408,7 +404,7 @@ class _BoardingPassState extends State<BoardingPass> {
                         style: TextStyle(
                           color: AppTheme.ink.withValues(alpha: 0.6),
                           fontSize: 13,
-                          fontFamily: 'monospace',
+                          fontFamily: AppTheme.fontMono,
                         ),
                       ),
                     ],
@@ -451,19 +447,19 @@ class _BoardingPassState extends State<BoardingPass> {
             style: TextStyle(
               color: AppTheme.ink.withValues(alpha: 0.55),
               fontSize: 13,
-              fontFamily: 'monospace',
+              fontFamily: AppTheme.fontMono,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        const Text(': ', style: TextStyle(color: AppTheme.ink, fontSize: 13, fontFamily: 'monospace')),
+        const Text(': ', style: TextStyle(color: AppTheme.ink, fontSize: 13, fontFamily: AppTheme.fontMono)),
         Expanded(
           child: Text(
             value,
             style: const TextStyle(
               color: AppTheme.ink,
               fontSize: 13,
-              fontFamily: 'monospace',
+              fontFamily: AppTheme.fontMono,
               fontWeight: FontWeight.bold,
             ),
             maxLines: 2,

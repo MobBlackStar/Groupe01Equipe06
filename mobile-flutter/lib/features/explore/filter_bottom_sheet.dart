@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../core/domain/money.dart';
-import '../../widgets/app_button.dart';
+import '../../widgets/griddle.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final String selectedCategory;
@@ -63,37 +63,32 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: AppTheme.ink, width: 2), left: BorderSide(color: AppTheme.ink, width: 2), right: BorderSide(color: AppTheme.ink, width: 2)),
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       child: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Poignée de glissement
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.sand,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  width: 48,
+                  height: 5,
+                  decoration: BoxDecoration(color: AppTheme.ink, borderRadius: BorderRadius.circular(3)),
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Titre et réinitialiser
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Filtres de recherche',
-                    style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  TextButton(
+                  Expanded(child: Text('FILTRES', style: AppTheme.display(44))),
+                  GButton(
+                    'Réinitialiser',
+                    variant: GVariant.cream,
+                    small: true,
+                    expand: false,
                     onPressed: () {
                       setState(() {
                         _category = 'ALL';
@@ -102,47 +97,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         _sortBy = 'distance';
                       });
                     },
-                    child: const Text('Réinitialiser', style: TextStyle(color: AppTheme.red, fontSize: 13)),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
-              // 1. Catégories
-              const Text('Catégories', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('CATÉGORIE', style: AppTheme.label()),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _categories.map((c) {
-                  final isSelected = _category == c['id'];
-                  return ChoiceChip(
-                    label: Text('${c['icon']} ${c['label']}'),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      if (val) setState(() => _category = c['id']!);
-                    },
-                    selectedColor: AppTheme.red,
-                    backgroundColor: AppTheme.biscuit,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppTheme.cream : AppTheme.ink,
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  );
-                }).toList(),
+                children: _categories
+                    .map((c) => GChip('${c['label']}', selected: _category == c['id'], onTap: () => setState(() => _category = c['id']!)))
+                    .toList(),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
-              // 2. Budget Maximum
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Budget Maximum', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text(
-                    Money.formatTND(_maxPrice.toInt()),
-                    style: const TextStyle(color: AppTheme.red, fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
+                  Expanded(child: Text('BUDGET MAXIMUM', style: AppTheme.label())),
+                  Text(Money.formatTND(_maxPrice.toInt()), style: AppTheme.figure(34, AppTheme.red)),
                 ],
               ),
               Slider(
@@ -154,37 +128,36 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 inactiveColor: AppTheme.sand,
                 onChanged: (val) => setState(() => _maxPrice = val),
               ),
-              const SizedBox(height: 12),
-
-              // 3. Tri
-              const Text('Trier par', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              Row(
+
+              Text('TRIER PAR', style: AppTheme.label()),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  _buildSortOption('distance', '📍 Proximité'),
-                  const SizedBox(width: 8),
-                  _buildSortOption('price', '💰 Prix bas'),
-                  const SizedBox(width: 8),
-                  _buildSortOption('ending', '⏳ Urgence'),
+                  GChip('Proximité', icon: Icons.place_outlined, selected: _sortBy == 'distance', onTap: () => setState(() => _sortBy = 'distance')),
+                  GChip('Prix bas', icon: Icons.sell_outlined, selected: _sortBy == 'price', onTap: () => setState(() => _sortBy = 'price')),
+                  GChip('Urgence', icon: Icons.timer_outlined, selected: _sortBy == 'ending', onTap: () => setState(() => _sortBy = 'ending')),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
-              // 4. Panier Surprise Switch
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('🎁 Paniers Surprise uniquement', style: TextStyle(color: AppTheme.ink, fontSize: 13)),
-                value: _surpriseOnly,
-                activeColor: AppTheme.red,
-                onChanged: (val) => setState(() => _surpriseOnly = val),
+              GCard(
+                padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Paniers surprise uniquement', style: AppTheme.body(16).copyWith(fontWeight: FontWeight.w700)),
+                  value: _surpriseOnly,
+                  activeColor: AppTheme.red,
+                  onChanged: (val) => setState(() => _surpriseOnly = val),
+                ),
               ),
               const SizedBox(height: 20),
 
-              // Bouton Appliquer
-              AppButton(
-                text: 'Appliquer les filtres',
-                backgroundColor: AppTheme.red,
-                textColor: AppTheme.cream,
+              GButton(
+                'Appliquer les filtres',
+                icon: Icons.check,
                 onPressed: () {
                   widget.onApply(
                     category: _category,
@@ -195,34 +168,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   Navigator.pop(context);
                 },
               ),
+              const SizedBox(height: 8),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSortOption(String id, String label) {
-    final isSelected = _sortBy == id;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _sortBy = id),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? AppTheme.red : AppTheme.biscuit,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSelected ? AppTheme.red : AppTheme.sand),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.black : AppTheme.muted,
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
           ),
         ),
       ),

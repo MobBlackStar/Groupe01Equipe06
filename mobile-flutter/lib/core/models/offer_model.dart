@@ -25,6 +25,7 @@ class OfferModel {
   final String status; // 'ACTIVE', 'SOLD_OUT', 'EXPIRED'
   final String? photoUrl;
   final String? rarity; // COMMON | RARE | LEGENDARY (paniers surprise)
+  final int? distanceFromEssectM; // distance réelle du commerce (merchantSnapshot), null si inconnue
 
   const OfferModel({
     required this.id,
@@ -46,6 +47,7 @@ class OfferModel {
     this.status = 'ACTIVE',
     this.photoUrl,
     this.rarity,
+    this.distanceFromEssectM,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
@@ -73,6 +75,8 @@ class OfferModel {
       rarity: json['rarity'] as String?,
       status: json['status'] as String? ?? 'ACTIVE',
       photoUrl: json['photoUrl'] as String?,
+      distanceFromEssectM: (json['distanceFromEssectM'] as num?)?.toInt() ??
+          (json['merchantSnapshot'] is Map ? ((json['merchantSnapshot'] as Map)['distanceFromEssectM'] as num?)?.toInt() : null),
     );
   }
 
@@ -97,6 +101,7 @@ class OfferModel {
       'status': status,
       'photoUrl': photoUrl,
       'rarity': rarity,
+      'distanceFromEssectM': distanceFromEssectM,
     };
   }
 }

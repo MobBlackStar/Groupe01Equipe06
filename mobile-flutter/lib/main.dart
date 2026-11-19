@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'app/app.dart';
+import 'app/router.dart';
 import 'services/auth_service.dart';
 
 void main() async {
@@ -25,7 +26,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
+        // Une seule instance : celle du routeur (connexion, déconnexion, redirections) ; le profil et les points la lisent aussi.
+        ChangeNotifierProvider<AuthService>.value(value: AppRouter.authService),
       ],
       child: const CampusSaveApp(),
     ),

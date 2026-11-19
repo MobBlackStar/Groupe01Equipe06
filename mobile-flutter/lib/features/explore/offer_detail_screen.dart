@@ -17,12 +17,12 @@ import '../../widgets/rarity_badge.dart';
 
 class OfferDetailScreen extends StatefulWidget {
   final OfferModel offer;
-  final int distanceFromEssectM;
+  final int? distanceFromEssectM;
 
   const OfferDetailScreen({
     super.key,
     required this.offer,
-    this.distanceFromEssectM = 180,
+    this.distanceFromEssectM,
   });
 
   @override
@@ -90,7 +90,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
   Widget build(BuildContext context) {
     final offer = widget.offer;
     final maxAllowed = offer.remainingQuantity.clamp(1, 4);
-    final walkingMin = (widget.distanceFromEssectM * 1.3 / 83.33).round().clamp(1, 45);
+    final dist = widget.distanceFromEssectM;
+    final walkingMin = dist == null ? null : (dist * 1.3 / 83.33).round().clamp(1, 45);
 
     // Impact écologique (2,5 g de CO2 évités par gramme d'aliment sauvé)
     final foodGrams = 350 * _quantity;
@@ -160,8 +161,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    GPill('$walkingMin min à pied', icon: Icons.directions_walk, color: AppTheme.cream),
-                    GPill('${widget.distanceFromEssectM} m de l\'ESSECT', icon: Icons.place_outlined, color: AppTheme.cream),
+                    if (walkingMin != null) GPill('$walkingMin min à pied', icon: Icons.directions_walk, color: AppTheme.cream),
+                    if (dist != null) GPill('$dist m de l\'ESSECT', icon: Icons.place_outlined, color: AppTheme.cream),
                   ],
                 ),
                 const SizedBox(height: 22),

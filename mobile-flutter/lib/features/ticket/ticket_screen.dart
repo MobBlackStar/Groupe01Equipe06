@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../core/models/order_model.dart';
 import '../../services/campus_api.dart';
+import '../../widgets/griddle.dart';
 import 'boarding_pass.dart';
 
 /// Charge le vrai ticket : `GET /orders/:id/ticket` (ticketKey, orderCode) et `GET /orders/:id`
@@ -53,34 +54,19 @@ class _TicketScreenState extends State<TicketScreen> {
     final order = _order;
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Living Ticket • QR Dynamique', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: (ticket == null || order == null)
-            ? Center(
-                child: _error == null
-                    ? const CircularProgressIndicator(color: AppTheme.red)
-                    : Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: _load,
-                              child: const Text('Réessayer', style: TextStyle(color: AppTheme.red)),
-                            ),
-                          ],
-                        ),
-                      ),
-              )
-            : SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: [
+            Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
+            const SizedBox(height: 14),
+            const GPageHeader(eyebrow: 'Étape 3 sur 3 · Retrait', title: 'Living Ticket', titleSize: 58, lead: 'Le QR change toutes les 30 secondes.'),
+            const SizedBox(height: 22),
+            if (ticket == null || order == null)
+              _error == null
+                  ? const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator(color: AppTheme.red)))
+                  : GEmpty(icon: Icons.cloud_off, title: 'Ticket indisponible', message: _error!, actionLabel: 'Réessayer', onAction: _load)
+            else ...[
               BoardingPass(
                 orderId: order.id,
                 orderCode: ticket.orderCode.isNotEmpty ? ticket.orderCode : order.orderCode,
@@ -90,35 +76,52 @@ class _TicketScreenState extends State<TicketScreen> {
                 ticketKeyHex: ticket.ticketKeyHex,
               ),
               const SizedBox(height: 24),
-
-              // Instructions de retrait
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.biscuit,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.ink),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      '📍 Comment récupérer votre repas :',
-                      style: TextStyle(color: AppTheme.cream, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      '1. Présentez-vous au restaurant à Montfleury pendant le créneau horaire.\n2. Montrez ce ticket thermique et son QR code vivant au commerçant.\n3. Si le scan optique échoue, dictez simplement le code de secours à 6 chiffres.',
-                      style: TextStyle(color: AppTheme.muted, fontSize: 13, height: 1.5),
-                    ),
-                  ],
-                ),
+              const GCard(
+                padding: EdgeInsets.all(18),
+                child: _PickupSteps(),
               ),
             ],
-          ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _PickupSteps extends StatelessWidget {
+  const _PickupSteps();
+
+  @override
+  Widget build(BuildContext context) {
+    const steps = [
+      'Présentez-vous au restaurant à Montfleury pendant le créneau horaire.',
+      'Montrez ce ticket et son QR code vivant au commerçant.',
+      'Si le scan échoue, dictez le code de secours à 6 chiffres.',
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('COMMENT RÉCUPÉRER VOTRE REPAS', style: AppTheme.h3(20)),
+        const SizedBox(height: 12),
+        for (var i = 0; i < steps.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: AppTheme.red, shape: BoxShape.circle, border: Border.all(color: AppTheme.ink, width: 2)),
+                  child: Text('${i + 1}', style: AppTheme.figure(20, AppTheme.cream)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Text(steps[i], style: AppTheme.body(16))),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

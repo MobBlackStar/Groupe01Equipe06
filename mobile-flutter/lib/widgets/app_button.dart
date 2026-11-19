@@ -1,9 +1,11 @@
-// 💡 Concept & Analogie : Comme la pédale d'accélérateur d'une automobile, ce bouton déclenche une action décisive avec un retour haptique et visuel immédiat pour l'utilisateur mobile.
-// 🔄 Comparaison React / Flutter : En Flutter, `AppButton` enveloppe un `ElevatedButton` ou `OutlinedButton` dans un conteneur stylisé selon `AppTheme` ; en React, il s'agit d'un composant JSX avec des classes Tailwind.
-// 🎯 À retenir pour la soutenance : "Nous avons encapsulé la gestion de l'état de chargement asynchrone pour afficher un indicateur circulaire sans modifier la taille du bouton."
+// 💡 Concept & Analogie : Comme une ancienne prise de courant avec un adaptateur, `AppButton` garde son ancienne forme mais branche tous les écrans sur le bouton Griddle.
+// 🔄 Comparaison React / Flutter : Équivalent d'un composant `<Button variant="…">` qui délègue à `.cs-btn` ; ici il délègue à `GButton` (lib/widgets/griddle.dart).
+// 🎯 À retenir pour la soutenance : "Un seul style de bouton dans toute l'application : les écrans historiques passent par AppButton, qui n'est plus qu'un adaptateur vers GButton."
 
 import 'package:flutter/material.dart';
+
 import '../app/theme.dart';
+import 'griddle.dart';
 
 enum AppButtonVariant { primary, secondary, outline, danger }
 
@@ -33,96 +35,34 @@ class AppButton extends StatelessWidget {
     this.isOutlined = false,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    Color effectiveBg;
-    Color effectiveFg;
-    BorderSide borderSide = BorderSide.none;
-
+  GVariant get _variant {
+    final bg = backgroundColor;
+    if (bg != null) {
+      if (bg == AppTheme.mustard) return GVariant.mustard;
+      if (bg == AppTheme.ink) return GVariant.ink;
+      if (bg == AppTheme.cream || bg == AppTheme.biscuit) return GVariant.cream;
+      return GVariant.red;
+    }
+    if (isOutlined) return GVariant.cream;
     switch (variant) {
       case AppButtonVariant.primary:
-        effectiveBg = AppTheme.red;
-        effectiveFg = Colors.black;
-        break;
-      case AppButtonVariant.secondary:
-        effectiveBg = AppTheme.biscuit;
-        effectiveFg = AppTheme.ink;
-        borderSide = const BorderSide(color: AppTheme.ink);
-        break;
-      case AppButtonVariant.outline:
-        effectiveBg = Colors.transparent;
-        effectiveFg = AppTheme.red;
-        borderSide = const BorderSide(color: AppTheme.red);
-        break;
       case AppButtonVariant.danger:
-        effectiveBg = AppTheme.red;
-        effectiveFg = AppTheme.ink;
-        break;
+        return GVariant.red;
+      case AppButtonVariant.secondary:
+      case AppButtonVariant.outline:
+        return GVariant.cream;
     }
+  }
 
-    if (backgroundColor != null) {
-      effectiveBg = backgroundColor!;
-    }
-    if (textColor != null) {
-      effectiveFg = textColor!;
-    }
-    if (isOutlined) {
-      borderSide = BorderSide(color: textColor ?? AppTheme.ink);
-    }
-
-    Widget? resolvedIcon;
-    if (icon != null) {
-      if (icon is IconData) {
-        resolvedIcon = Icon(icon as IconData, size: 20, color: effectiveFg);
-      } else if (icon is Widget) {
-        resolvedIcon = icon as Widget;
-      }
-    }
-
-    return SizedBox(
-      height: height,
-      width: width,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: effectiveBg,
-          foregroundColor: effectiveFg,
-          disabledBackgroundColor: effectiveBg.withValues(alpha: 0.5),
-          disabledForegroundColor: effectiveFg.withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: borderSide,
-          ),
-          elevation: variant == AppButtonVariant.primary && !isOutlined ? 4 : 0,
-        ),
-        child: isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(effectiveFg),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (resolvedIcon != null) ...[
-                    resolvedIcon,
-                    const SizedBox(width: 8),
-                  ],
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: effectiveFg,
-                    ),
-                  ),
-                ],
-              ),
-      ),
+  @override
+  Widget build(BuildContext context) {
+    return GButton(
+      text,
+      onPressed: onPressed,
+      variant: _variant,
+      icon: icon is IconData ? icon as IconData : null,
+      loading: isLoading,
+      expand: width == double.infinity,
     );
   }
 }

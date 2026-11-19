@@ -1,12 +1,15 @@
-// 💡 Concept & Analogie : Le pupitre de commande de la cuisine où s'affichent les plats à emporter payés d'avance par les étudiants.
-// 🔄 Comparaison React / Flutter : En Flutter, les commandes se consultent avec des tuiles à haute lisibilité et accès direct au scanner caméra ; en React, il correspond à `MerchantOrdersPage.jsx`.
-// 🎯 À retenir pour la soutenance : "Le commerçant consulte en direct les retraits de la journée et accède au scanner QR pour valider la délivrance en 1 seconde."
+// 💡 Concept & Analogie : Le pupitre de la cuisine où s'affichent les plats à emporter payés d'avance, lus depuis les vraies commandes du commerce.
+// 🔄 Comparaison React / Flutter : Équivalent de la page « Commandes » du site : `GET /merchants/me/orders`, regroupées par statut.
+// 🎯 À retenir pour la soutenance : "Le commerçant voit les retraits réels de son commerce ; le scanner QR est l'onglet voisin."
 
 import 'package:flutter/material.dart';
+
 import '../../app/theme.dart';
 import '../../core/domain/money.dart';
-
+import '../../core/models/order_model.dart';
+import '../../services/campus_api.dart';
 import '../../widgets/griddle.dart';
+
 class MerchantOrdersScreen extends StatefulWidget {
   const MerchantOrdersScreen({super.key});
 
@@ -15,164 +18,130 @@ class MerchantOrdersScreen extends StatefulWidget {
 }
 
 class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
-  final List<Map<String, dynamic>> _orders = [
-    {
-      'id': 'ord-m-1',
-      'orderCode': 'CS-8K4M9',
-      'customerName': 'Yassine Trabelsi (ESSECT 3A)',
-      'title': 'Baguette Farcie Escalope Panée & Fromage',
-      'quantity': 2,
-      'totalPriceMillimes': 7600,
-      'status': 'PAID',
-      'pickupSlot': 'Aujourd hui 17h00 – 18h30',
-    },
-    {
-      'id': 'ord-m-2',
-      'orderCode': 'CS-3T7X1',
-      'customerName': 'Sarra Ben Salem (ESSECT 2A)',
-      'title': 'Panier Surprise Salés du Midi',
-      'quantity': 1,
-      'totalPriceMillimes': 2500,
-      'status': 'RESERVED',
-      'pickupSlot': 'Aujourd hui 17h30 – 19h00',
-    },
-    {
-      'id': 'ord-m-3',
-      'orderCode': 'CS-9M2K4',
-      'customerName': 'Mohamed Dridi (ESSECT 1A)',
-      'title': 'Makloub Escalope Panée',
-      'quantity': 1,
-      'totalPriceMillimes': 3800,
-      'status': 'COMPLETED',
-      'pickupSlot': 'Hier 18h15',
-    },
-  ];
+  List<({OrderModel order, String student})> _orders = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final raw = await CampusApi.shared.fetchMerchantOrders();
+      final orders = raw.map((m) {
+        final snap = m['studentSnapshot'] is Map ? Map<String, dynamic>.from(m['studentSnapshot'] as Map) : const <String, dynamic>{};
+        return (order: OrderModel.fromApi(m), student: (snap['displayName'] ?? 'Étudiant').toString());
+      }).toList();
+      if (!mounted) return;
+      setState(() {
+        _orders = orders;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
-        backgroundColor: AppTheme.cream,
-        
-        body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Retraits', bottom: const TabBar(
-            indicatorColor: AppTheme.red,
-            labelColor: AppTheme.red,
-            unselectedLabelColor: AppTheme.muted,
-            tabs: [
-              Tab(text: 'Payées'),
-              Tab(text: 'Réservées'),
-              Tab(text: 'Terminées'),
-            ],
-          ), child: TabBarView(
-          children: [
-            _buildList('PAID'),
-            _buildList('RESERVED'),
-            _buildList('COMPLETED'),
-          ],
-        )),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: AppTheme.red,
-          foregroundColor: AppTheme.cream,
-          icon: const Icon(Icons.qr_code_scanner),
-          label: const Text('Scanner un Retrait', style: TextStyle(fontWeight: FontWeight.bold)),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ouverture du scanner caméra commerçant...'),
-                backgroundColor: AppTheme.biscuit,
-              ),
-            );
-          },
+      child: GScreenBody(
+        eyebrow: 'Espace commerçant',
+        title: 'Retraits',
+        bottom: const TabBar(
+          indicatorColor: AppTheme.red,
+          labelColor: AppTheme.red,
+          unselectedLabelColor: AppTheme.muted,
+          tabs: [Tab(text: 'Payées'), Tab(text: 'Réservées'), Tab(text: 'Terminées')],
         ),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
+            : _error != null
+                ? ListView(padding: const EdgeInsets.all(20), children: [GEmpty(icon: Icons.cloud_off_outlined, title: 'Commandes indisponibles', message: _error!, actionLabel: 'Réessayer', onAction: _load)])
+                : TabBarView(children: [_buildList('PAID'), _buildList('RESERVED'), _buildList('COMPLETED')]),
       ),
     );
   }
 
   Widget _buildList(String status) {
-    final list = _orders.where((o) => o['status'] == status).toList();
+    final list = _orders.where((o) => o.order.status == status).toList();
 
-    if (list.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text('📦', style: TextStyle(fontSize: 48)),
-            SizedBox(height: 12),
-            Text('Aucune commande sous ce statut', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: list.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = list[index];
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.biscuit,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: status == 'PAID' ? AppTheme.red.withOpacity(0.3) : AppTheme.sand,
+    return RefreshIndicator(
+      color: AppTheme.red,
+      onRefresh: _load,
+      child: list.isEmpty
+          ? ListView(padding: const EdgeInsets.all(20), children: const [GEmpty(icon: Icons.inbox_outlined, title: 'Rien ici', message: 'Aucune commande sous ce statut.')])
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              itemCount: list.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, i) => _OrderTile(order: list[i].order, student: list[i].student),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+class _OrderTile extends StatelessWidget {
+  final OrderModel order;
+  final String student;
+
+  const _OrderTile({required this.order, required this.student});
+
+  static String _hm(DateTime? d) {
+    if (d == null) return '';
+    final l = d.toLocal();
+    return '${l.hour.toString().padLeft(2, '0')}h${l.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final slot = (order.pickupStartAt != null && order.pickupEndAt != null) ? '${_hm(order.pickupStartAt)} – ${_hm(order.pickupEndAt)}' : '';
+    return GCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppTheme.red.withOpacity(0.4)),
-                    ),
-                    child: Text(
-                      item['orderCode'] as String,
-                      style: const TextStyle(color: AppTheme.red, fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-                  Text(
-                    item['pickupSlot'] as String,
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: AppTheme.ink, borderRadius: BorderRadius.circular(8)),
+                child: Text(order.orderCode, style: AppTheme.mono(13, AppTheme.mustard).copyWith(fontWeight: FontWeight.w700)),
               ),
-              const SizedBox(height: 8),
-              Text(
-                item['title'] as String,
-                style: const TextStyle(color: AppTheme.ink, fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '👤 Client : ${item['customerName']}',
-                style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Quantité : ${item['quantity']} portion(s)',
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                  ),
-                  Text(
-                    Money.formatTND(item['totalPriceMillimes'] as int),
-                    style: const TextStyle(color: AppTheme.red, fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+              const Spacer(),
+              if (slot.isNotEmpty) Text(slot, style: AppTheme.mono(13, AppTheme.muted)),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 10),
+          Text(order.offerTitle.toUpperCase(), style: AppTheme.h3(20)),
+          const SizedBox(height: 2),
+          Row(children: [
+            const Icon(Icons.person_outline, size: 18, color: AppTheme.red),
+            const SizedBox(width: 6),
+            Expanded(child: Text(student, style: AppTheme.body(15, AppTheme.muted), overflow: TextOverflow.ellipsis)),
+          ]),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: Text('${order.quantity} portion${order.quantity > 1 ? 's' : ''}', style: AppTheme.body(15, AppTheme.muted))),
+              Text(Money.formatTND(order.totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

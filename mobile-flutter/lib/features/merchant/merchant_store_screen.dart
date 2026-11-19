@@ -1,14 +1,14 @@
-// 💡 Concept & Analogie : Le tableau de bord du commerçant est comme son comptoir digital : il visualise son agrément, ses statistiques clés et lance ses publications quotidiennes d'invendus en un geste.
-// 🔄 Comparaison React / Flutter : En React, MerchantStorePage orchestre les formulaires et le banner d'approbation ; en Flutter, cet écran utilise un Scaffold sombre avec des tuiles d'actions rapides et un badge de statut réactif.
-// 🎯 À retenir pour la soutenance : "Le dashboard commerçant donne une vue immédiate sur le statut d'approbation et permet un basculement rapide vers la création d'offres magiques assistées par IA."
+// 💡 Concept & Analogie : Le comptoir numérique du commerçant : agrément, coordonnées et chiffres clés, tous lus depuis son vrai dossier.
+// 🔄 Comparaison React / Flutter : Équivalent de `MerchantStorePage.jsx` : `GET /merchants/me`, avec la création du dossier via `POST /merchants`.
+// 🎯 À retenir pour la soutenance : "Le statut (en attente, agréé, refusé) vient du serveur ; seul un administrateur peut le changer."
 
 import 'package:flutter/material.dart';
+
 import '../../app/theme.dart';
-import '../../widgets/app_button.dart';
-import 'pending_approval_screen.dart';
+import '../../services/campus_api.dart';
+import '../../widgets/griddle.dart';
 import 'merchant_onboarding_screen.dart';
 
-import '../../widgets/griddle.dart';
 class MerchantStoreScreen extends StatefulWidget {
   const MerchantStoreScreen({super.key});
 
@@ -17,352 +17,170 @@ class MerchantStoreScreen extends StatefulWidget {
 }
 
 class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
-  String _status = 'APPROVED'; // 'PENDING', 'APPROVED', 'REJECTED'
-  String? _statusReason;
+  Map<String, dynamic>? _store;
+  bool _loading = true;
+  String? _error;
 
-  // Mock store data (Montfleury preset)
-  final Map<String, dynamic> _store = {
-    'name': 'Chez Chaker Montfleury',
-    'type': 'FAST_FOOD',
-    'typeName': 'Fast Food',
-    'address': '12 Rue Abou El Kacem Chebbi, Montfleury, Tunis',
-    'distanceM': 180,
-    'walkingMinutes': 2,
-    'phone': '+216 71 390 123',
-    'rating': 4.8,
-    'offersActive': 3,
-    'savedMeals': 142,
-    'co2AvoidedKg': 355.0,
-  };
-
-  void _cycleStatus() {
-    setState(() {
-      if (_status == 'APPROVED') {
-        _status = 'PENDING';
-        _statusReason = null;
-      } else if (_status == 'PENDING') {
-        _status = 'REJECTED';
-        _statusReason = 'Justificatif RNE expiré et adresse non conforme';
-      } else {
-        _status = 'APPROVED';
-        _statusReason = null;
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _load();
   }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final store = await CampusApi.shared.fetchMyMerchant();
+      if (!mounted) return;
+      setState(() {
+        _store = store;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _openOnboarding() async {
+    final created = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const MerchantOnboardingScreen()));
+    if (created == true) _load();
+  }
+
+  static const _typeLabels = {
+    'RESTAURANT': 'Restaurant',
+    'CAFETERIA': 'Cafétéria',
+    'BOULANGERIE': 'Boulangerie',
+    'FAST_FOOD': 'Fast-food',
+    'PATISSERIE': 'Pâtisserie',
+  };
 
   @override
   Widget build(BuildContext context) {
-    Color statusColor;
-    String statusLabel;
-    IconData statusIcon;
-
-    if (_status == 'APPROVED') {
-      statusColor = AppTheme.red;
-      statusLabel = 'Agréé ESSECT ✓';
-      statusIcon = Icons.verified;
-    } else if (_status == 'REJECTED') {
-      statusColor = AppTheme.red;
-      statusLabel = 'Dossier Refusé ✕';
-      statusIcon = Icons.cancel;
-    } else {
-      statusColor = AppTheme.red;
-      statusLabel = 'En attente de validation ⏳';
-      statusIcon = Icons.hourglass_top;
-    }
-
-    return Scaffold(
-      backgroundColor: AppTheme.cream,
-      
-      body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Ma boutique', trailing: GIconButton(icon: Icons.sync_alt, tooltip: 'Simuler un changement de statut', onPressed: _cycleStatus), child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Status Banner
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PendingApprovalScreen(
-                        status: _status,
-                        statusReason: _statusReason,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: statusColor.withOpacity(0.5), width: 1.5),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(statusIcon, color: statusColor, size: 28),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              statusLabel,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _status == 'APPROVED'
-                                  ? 'Votre commerce est actif et visible par les étudiants.'
-                                  : _status == 'REJECTED'
-                                      ? (_statusReason ?? 'Consultez le motif de refus.')
-                                      : 'Votre dossier est en cours d instruction (sous 2h).',
-                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                            ),
-                          ],
+    return GScreenBody(
+      eyebrow: 'Espace commerçant',
+      title: 'Ma boutique',
+      child: RefreshIndicator(
+        color: AppTheme.red,
+        onRefresh: _load,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
+            : _error != null
+                ? ListView(padding: const EdgeInsets.all(20), children: [GEmpty(icon: Icons.cloud_off_outlined, title: 'Boutique indisponible', message: _error!, actionLabel: 'Réessayer', onAction: _load)])
+                : _store == null
+                    ? ListView(padding: const EdgeInsets.all(20), children: [
+                        GEmpty(
+                          icon: Icons.storefront_outlined,
+                          title: 'Pas encore de boutique',
+                          message: 'Déposez votre dossier pour publier des offres anti-gaspi près du campus.',
+                          actionLabel: 'Créer ma boutique',
+                          onAction: _openOnboarding,
                         ),
-                      ),
-                      const Icon(Icons.chevron_right, color: AppTheme.muted),
-                    ],
-                  ),
-                ),
-              ),
+                      ])
+                    : _content(_store!),
+      ),
+    );
+  }
 
-              const SizedBox(height: 20),
+  Widget _content(Map<String, dynamic> s) {
+    final status = (s['status'] ?? 'PENDING').toString();
+    final address = s['address'] is Map ? Map<String, dynamic>.from(s['address'] as Map) : const <String, dynamic>{};
+    final addressLine = [address['street'], address['area'], address['city']].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+    final distance = s['distanceFromEssectM'];
+    final walking = s['walkingMinutes'];
+    final rating = s['ratingAvg'];
+    final ratingCount = s['ratingCount'];
 
-              // 2. Store Header Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.biscuit,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.sand),
-                ),
+    final (Color color, IconData icon, String title, String text) = switch (status) {
+      'APPROVED' => (AppTheme.leaf, Icons.verified_outlined, 'Agréé', 'Votre commerce est actif et visible par les étudiants.'),
+      'REJECTED' => (AppTheme.red, Icons.cancel_outlined, 'Dossier refusé', (s['statusReason'] ?? 'Consultez le motif auprès de l\'administration.').toString()),
+      _ => (AppTheme.orange, Icons.hourglass_top, 'En attente de validation', 'Votre dossier est en cours d\'examen par l\'administration.'),
+    };
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+      children: [
+        GCard(
+          color: color,
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Icon(icon, size: 34, color: AppTheme.onColor(color)),
+              const SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: AppTheme.red.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.red.withOpacity(0.3)),
-                          ),
-                          child: const Center(
-                            child: Text('🏪', style: TextStyle(fontSize: 26)),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _store['name'] as String,
-                                style: const TextStyle(
-                                  color: AppTheme.ink,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.ink.withOpacity(0.08),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      _store['typeName'] as String,
-                                      style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.star, color: AppTheme.mustard, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${_store['rating']}',
-                                    style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(color: AppTheme.sand, height: 24),
-                    Row(
-                      children: [
-                        const Icon(Icons.place, color: AppTheme.red, size: 16),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            '${_store['address']} (${_store['distanceM']} m de l ESSECT • ~${_store['walkingMinutes']} min à pied)',
-                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.phone, color: AppTheme.muted, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          _store['phone'] as String,
-                          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 3. Stats Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard('Offres Actives', '${_store['offersActive']}', '⚡ En ligne', AppTheme.red),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard('Repas Sauvés', '${_store['savedMeals']}', '🌱 Anti-gaspi', AppTheme.ink),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard('CO₂ Évité', '${_store['co2AvoidedKg']} kg', '🌍 Impact vert', AppTheme.ink),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // 4. Quick Actions
-              const Text(
-                'Actions Rapides',
-                style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-
-              AppButton(
-                text: '✨ Publier une Offre (IA Magique)',
-                icon: Icons.auto_awesome,
-                backgroundColor: AppTheme.red,
-                textColor: AppTheme.cream,
-                onPressed: _status == 'APPROVED'
-                    ? () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ouverture du formulaire de publication IA...'),
-                            backgroundColor: AppTheme.biscuit,
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-
-              const SizedBox(height: 12),
-
-              AppButton(
-                text: '📋 Gérer mon Catalogue d Offres',
-                icon: Icons.inventory_2_outlined,
-                backgroundColor: AppTheme.biscuit,
-                textColor: AppTheme.ink,
-                isOutlined: true,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Affichage du catalogue des offres'),
-                      backgroundColor: AppTheme.biscuit,
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              AppButton(
-                text: '✏️ Modifier les Coordonnées de l Établissement',
-                icon: Icons.edit_location_alt_outlined,
-                backgroundColor: Colors.transparent,
-                textColor: AppTheme.muted,
-                isOutlined: true,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MerchantOnboardingScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              // Sustainability Tip
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.ink.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.ink.withOpacity(0.06)),
-                ),
-                child: Row(
-                  children: const [
-                    Text('💡', style: TextStyle(fontSize: 22)),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Astuce ESSECT : Les offres à prix dégressif dynamique se vendent 2,4x plus vite entre 15h et 18h !',
-                        style: TextStyle(color: AppTheme.muted, fontSize: 13),
-                      ),
-                    ),
+                    Text(title.toUpperCase(), style: AppTheme.h3(22, AppTheme.onColor(color))),
+                    const SizedBox(height: 2),
+                    Text(text, style: AppTheme.body(15, AppTheme.onColor(color))),
                   ],
                 ),
               ),
             ],
           ),
         ),
-      )),
+        const SizedBox(height: 18),
+        GCard(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_typeLabels[s['type']]?.toUpperCase() ?? 'COMMERCE', style: AppTheme.eyebrow()),
+              const SizedBox(height: 4),
+              Text((s['name'] ?? '').toString().toUpperCase(), style: AppTheme.display(40)),
+              const SizedBox(height: 12),
+              if (addressLine.isNotEmpty) _InfoRow(Icons.place_outlined, addressLine),
+              if ((s['phone'] ?? '').toString().isNotEmpty) _InfoRow(Icons.phone_outlined, s['phone'].toString(), mono: true),
+              if (distance is num) _InfoRow(Icons.directions_walk, '${distance.round()} m de l\'ESSECT${walking is num ? ' · ${walking.round()} min à pied' : ''}'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: GStat(label: 'Offres actives', value: '${(s['activeOfferCount'] as num?)?.toInt() ?? 0}', icon: Icons.local_offer_outlined)),
+            const SizedBox(width: 12),
+            Expanded(child: GStat(label: 'Repas sauvés', value: '${(s['totalMealsSaved'] as num?)?.toInt() ?? 0}', icon: Icons.eco_outlined, valueColor: AppTheme.leaf)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GStat(
+          label: 'Note moyenne',
+          value: (rating is num && (ratingCount as num? ?? 0) > 0) ? rating.toStringAsFixed(1) : '—',
+          hint: (ratingCount is num && ratingCount > 0) ? '$ratingCount avis' : 'Pas encore d\'avis',
+          icon: Icons.star_outline,
+          valueColor: AppTheme.red,
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildStatCard(String label, String value, String sub, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.biscuit,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.sand),
-      ),
-      child: Column(
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool mono;
+
+  const _InfoRow(this.icon, this.text, {this.mono = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(sub, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
+          Icon(icon, size: 20, color: AppTheme.red),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: mono ? AppTheme.mono(15).copyWith(fontWeight: FontWeight.w700) : AppTheme.body(16))),
         ],
       ),
     );

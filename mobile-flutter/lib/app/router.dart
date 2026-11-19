@@ -184,13 +184,15 @@ class MerchantShell extends StatefulWidget {
 class _MerchantShellState extends State<MerchantShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    MerchantDashboardScreen(),
-    MerchantOffersScreen(),
-    ScannerScreen(),
-    MerchantOrdersScreen(),
-    MerchantStoreScreen(),
-  ];
+  // Seul l'onglet affiché est construit (sauf le bilan) : le scanner n'allume la caméra que lorsqu'il est visible,
+  // et chaque liste se recharge depuis le serveur à chaque ouverture.
+  List<Widget> get _pages => [
+        const MerchantDashboardScreen(),
+        _currentIndex == 1 ? const MerchantOffersScreen() : const SizedBox.shrink(),
+        _currentIndex == 2 ? const ScannerScreen() : const SizedBox.shrink(),
+        _currentIndex == 3 ? const MerchantOrdersScreen() : const SizedBox.shrink(),
+        _currentIndex == 4 ? const MerchantStoreScreen() : const SizedBox.shrink(),
+      ];
 
   static const _tabs = [
     GTab('Bilan', Icons.bar_chart_outlined, Icons.bar_chart),

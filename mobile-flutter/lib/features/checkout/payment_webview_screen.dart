@@ -9,6 +9,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../services/campus_api.dart';
 
 import '../../app/theme.dart';
+import '../../widgets/griddle.dart';
 class PaymentWebViewScreen extends StatefulWidget {
   final String payUrl;
   final String orderId;
@@ -153,50 +154,27 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     if (kIsWeb) {
       return Scaffold(
         backgroundColor: AppTheme.cream,
-        appBar: AppBar(
-          title: const Text(
-            'Paiement Konnect (Aperçu Web)',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: AppTheme.biscuit,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.payment_rounded, size: 64, color: AppTheme.red),
-                const SizedBox(height: 16),
-                const Text(
-                  'Simulation Passerelle Konnect',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.ink),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+            children: [
+              Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.close, tooltip: 'Fermer', onPressed: () => Navigator.of(context).pop(false))),
+              const SizedBox(height: 14),
+              const GPageHeader(eyebrow: 'Aperçu web · Konnect', title: 'Paiement', titleSize: 58, lead: 'La passerelle réelle s\'ouvre dans l\'application mobile. Ici, la validation est simulée pour la démonstration.'),
+              const SizedBox(height: 22),
+              GCard(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lock_outline, color: AppTheme.red, size: 30),
+                    const SizedBox(width: 14),
+                    Expanded(child: Text('Commande ${widget.orderId}', style: AppTheme.mono(14).copyWith(fontWeight: FontWeight.w700))),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Règlement sécurisé pour la commande : ${widget.orderId}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: _isVerifying ? null : _handlePaymentSuccess,
-                  icon: const Icon(Icons.check_circle_rounded),
-                  label: Text(_isVerifying ? 'Validation...' : 'Valider le Règlement (1-Clic Démo)'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.red,
-                    foregroundColor: AppTheme.cream,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              GButton(_isVerifying ? 'Validation…' : 'Valider le règlement (démo)', icon: Icons.check_circle_outline, loading: _isVerifying, onPressed: _isVerifying ? null : _handlePaymentSuccess),
+            ],
           ),
         ),
       );

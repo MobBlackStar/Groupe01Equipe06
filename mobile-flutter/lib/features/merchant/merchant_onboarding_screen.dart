@@ -1,13 +1,15 @@
-// 💡 Concept & Analogie : Comme le premier passage au bureau des inscriptions où le restaurateur présente sa carte professionnelle et son bail commercial, cet écran recueille les coordonnées de la boutique et vérifie qu'elle se trouve bien dans le rayon piétonnier des étudiants.
-// 🔄 Comparaison React / Flutter : En Flutter, le calcul de la distance orthodromique de Haversine s'effectue directement dans une méthode de calcul locale réactive à chaque saisie ; en React, nous importons le même algorithme depuis `@shared/geo.js`.
-// 🎯 À retenir pour la soutenance : "L'application mobile calcule en temps réel la distance à vol d'oiseau de l'ESSECT et affiche une alerte immédiate si le commerce dépasse le périmètre d'éligibilité de 3 000 mètres."
+// 💡 Concept & Analogie : Le guichet d'inscription du commerçant : il remplit son dossier, l'application calcule sa distance à l'ESSECT et le serveur enregistre la demande.
+// 🔄 Comparaison React / Flutter : Équivalent de `MerchantOnboardingPage.jsx` : même contrat `createMerchantSchema` et même règle des 3 000 m (Haversine).
+// 🎯 À retenir pour la soutenance : "Le dossier est réellement envoyé (POST /merchants) ; le commerce reste « en attente » jusqu'à la validation d'un administrateur."
 
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+
 import '../../app/theme.dart';
-import '../../widgets/app_button.dart';
+import '../../services/campus_api.dart';
 import '../../widgets/app_text_field.dart';
-import '../auth/validators.dart';
+import '../../widgets/griddle.dart';
 
 class MerchantOnboardingScreen extends StatefulWidget {
   const MerchantOnboardingScreen({super.key});
@@ -22,31 +24,26 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _phoneController = TextEditingController(text: '+216');
-  final _streetController = TextEditingController(text: 'Avenue Habib Bourguiba');
-  final _hoursController = TextEditingController(text: '08:00 - 21:00');
+  final _streetController = TextEditingController();
+  final _coordsController = TextEditingController();
 
   String _selectedType = 'FAST_FOOD';
-  double _lat = 36.7885;
-  double _lng = 10.1762;
   bool _isLoading = false;
+  String? _error;
+  ({double lat, double lng})? _coords;
 
+  // Mêmes valeurs que `shared/constants.js` (ESSECT_COORDINATES, MAX_MERCHANT_DISTANCE_METERS)
   static const double essectLat = 36.7871;
   static const double essectLng = 10.1748;
+  static const int maxDistanceM = 3000;
 
-  final List<Map<String, String>> _types = const [
-    {'value': 'FAST_FOOD', 'label': '🍔 Sandwicherie & Fast-Food'},
-    {'value': 'RESTAURANT', 'label': '🍽️ Restaurant Traditionnel'},
-    {'value': 'CAFETERIA', 'label': '☕ Cafétéria & Salon de Thé'},
-    {'value': 'BOULANGERIE', 'label': '🥖 Boulangerie Artisanale'},
-    {'value': 'PATISSERIE', 'label': '🧁 Pâtisserie & Douceurs'},
-  ];
-
-  final List<Map<String, dynamic>> _presets = const [
-    {'name': 'Avenue Habib Bourguiba', 'lat': 36.7885, 'lng': 10.1762},
-    {'name': "Rue de l'ESSECT", 'lat': 36.7865, 'lng': 10.1739},
-    {'name': 'Rue de la République', 'lat': 36.7892, 'lng': 10.1725},
-    {'name': 'Avenue Taha Hussein', 'lat': 36.7848, 'lng': 10.1771},
-  ];
+  static const _types = {
+    'FAST_FOOD': 'Fast-food',
+    'RESTAURANT': 'Restaurant',
+    'CAFETERIA': 'Cafétéria',
+    'BOULANGERIE': 'Boulangerie',
+    'PATISSERIE': 'Pâtisserie',
+  };
 
   @override
   void dispose() {
@@ -54,272 +51,142 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
     _descController.dispose();
     _phoneController.dispose();
     _streetController.dispose();
-    _hoursController.dispose();
+    _coordsController.dispose();
     super.dispose();
   }
 
-  // Calcul Haversine en mètres
-  int _calculateDistance() {
-    const double earthRadius = 6371000;
-    final dLat = (_lat - essectLat) * pi / 180;
-    final dLng = (_lng - essectLng) * pi / 180;
-
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(essectLat * pi / 180) *
-            cos(_lat * pi / 180) *
-            sin(dLng / 2) *
-            sin(dLng / 2);
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return (earthRadius * c).round();
+  /// Accepte « 36.7875, 10.1758 » ou « 36.7875 10.1758 » (coordonnées copiées depuis Google Maps).
+  static ({double lat, double lng})? _parseCoords(String raw) {
+    final m = RegExp(r'(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)').firstMatch(raw.trim());
+    if (m == null) return null;
+    final lat = double.tryParse(m.group(1)!);
+    final lng = double.tryParse(m.group(2)!);
+    if (lat == null || lng == null || lat.abs() > 90 || lng.abs() > 180) return null;
+    return (lat: lat, lng: lng);
   }
 
-  int _calculateWalkingMinutes(int meters) {
-    if (meters <= 0) return 0;
-    final urbanMeters = meters * 1.3;
-    final metersPerMinute = 5000 / 60;
-    return max(1, (urbanMeters / metersPerMinute).round());
+  static int _distanceM(double lat, double lng) {
+    const earthRadius = 6371000;
+    final dLat = (lat - essectLat) * pi / 180;
+    final dLng = (lng - essectLng) * pi / 180;
+    final a = sin(dLat / 2) * sin(dLat / 2) + cos(essectLat * pi / 180) * cos(lat * pi / 180) * sin(dLng / 2) * sin(dLng / 2);
+    return (earthRadius * 2 * atan2(sqrt(a), sqrt(1 - a))).round();
   }
 
-  void _handleSubmit() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final dist = _calculateDistance();
-    if (dist > 3000) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: AppTheme.red,
-          content: Text("L'établissement est au-delà du rayon autorisé de 3 000 m de l'ESSECT"),
-        ),
-      );
+    final c = _coords;
+    if (c == null) return;
+    if (_distanceM(c.lat, c.lng) > maxDistanceM) {
+      setState(() => _error = 'Le commerce doit se trouver à moins de 3 000 m de l\'ESSECT.');
       return;
     }
-
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: AppTheme.biscuit,
-        content: Text(
-          'Dossier soumis avec succès ! Statut en attente d instruction.',
-          style: TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      await CampusApi.shared.createMerchant({
+        'name': _nameController.text.trim(),
+        'type': _selectedType,
+        'description': _descController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'address': {'street': _streetController.text.trim(), 'area': 'Montfleury', 'city': 'Tunis'},
+        'location': {'lat': c.lat, 'lng': c.lng},
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dossier envoyé : en attente de validation.')));
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final dist = _calculateDistance();
-    final walkingMins = _calculateWalkingMinutes(dist);
-    final isEligible = dist <= 3000;
+    final c = _coords;
+    final dist = c == null ? null : _distanceM(c.lat, c.lng);
+    final walking = dist == null ? null : max(1, (dist * 1.3 / (5000 / 60)).round());
+    final eligible = dist != null && dist <= maxDistanceM;
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Adhésion Commerçant', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'ENREGISTRER VOTRE ÉTABLISSEMENT',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: AppTheme.red,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Rejoignez le réseau anti-gaspi de Montfleury',
-                  style: TextStyle(fontSize: 14, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 20),
-
-                // Nom de l'enseigne
-                AppTextField(
-                  label: "Nom de l'Enseigne",
-                  controller: _nameController,
-                  validator: (val) {
-                    if (val == null || val.trim().length < 2) {
-                      return "Le nom de l'enseigne est obligatoire (min 2 car.)";
-                    }
-                    return null;
-                  },
-                  hintText: 'ex: Baguette & Baguette Montfleury',
-                  prefixIcon: const Icon(Icons.storefront_outlined, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 16),
-
-                // Type d'établissement
-                const Text(
-                  'TYPE D ÉTABLISSEMENT',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: AppTheme.muted,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.ink),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedType,
-                      isExpanded: true,
-                      dropdownColor: AppTheme.biscuit,
-                      style: const TextStyle(color: AppTheme.ink, fontSize: 13),
-                      items: _types.map((t) {
-                        return DropdownMenuItem<String>(
-                          value: t['value'],
-                          child: Text(t['label']!),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedType = val);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Téléphone
-                AppTextField(
-                  label: 'Téléphone Professionnel',
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  validator: Validators.validatePhone,
-                  hintText: '+21671390111',
-                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 16),
-
-                // Description
-                AppTextField(
-                  label: 'Description & Spécialités',
-                  controller: _descController,
-                  validator: (val) => val == null || val.trim().isEmpty ? 'La description est requise' : null,
-                  hintText: 'Spécialités appréciées des étudiants...',
-                  prefixIcon: const Icon(Icons.description_outlined, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 20),
-
-                // Emplacement Montfleury
-                const Text(
-                  'EMPLACEMENT GÉOGRAPHIQUE MONTFLEURY',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: AppTheme.muted,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Presets rapides
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _presets.map((p) {
-                    final isSel = _lat == p['lat'] && _lng == p['lng'];
-                    return ChoiceChip(
-                      label: Text(p['name']),
-                      selected: isSel,
-                      selectedColor: AppTheme.red,
-                      labelStyle: TextStyle(
-                        fontSize: 13,
-                        color: isSel ? Colors.black : AppTheme.ink,
-                        fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      backgroundColor: AppTheme.biscuit,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _streetController.text = p['name'];
-                            _lat = p['lat'];
-                            _lng = p['lng'];
-                          });
-                        }
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 12),
-
-                AppTextField(
-                  label: 'Adresse & Rue',
-                  controller: _streetController,
-                  prefixIcon: const Icon(Icons.location_on_outlined, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 12),
-
-                // Jauge de distance Haversine
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isEligible ? AppTheme.red.withOpacity(0.1) : AppTheme.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isEligible ? AppTheme.red.withOpacity(0.4) : AppTheme.red,
-                    ),
-                  ),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            children: [
+              Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
+              const SizedBox(height: 14),
+              const GPageHeader(eyebrow: 'Devenir partenaire', title: 'Ma boutique', titleSize: 54, lead: 'Votre dossier est examiné par l\'administration avant la mise en ligne de vos offres.'),
+              const SizedBox(height: 22),
+              AppTextField(
+                label: 'Nom du commerce',
+                hint: 'Chez Chaker',
+                controller: _nameController,
+                validator: (v) => (v == null || v.trim().length < 2) ? 'Au moins 2 caractères' : null,
+              ),
+              const SizedBox(height: 16),
+              Text('TYPE D\'ÉTABLISSEMENT', style: AppTheme.label()),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [for (final e in _types.entries) GChip(e.value, selected: _selectedType == e.key, onTap: () => setState(() => _selectedType = e.key))],
+              ),
+              const SizedBox(height: 16),
+              AppTextField(label: 'Description (facultatif)', hint: 'Spécialités, horaires…', controller: _descController, maxLines: 3),
+              const SizedBox(height: 14),
+              AppTextField(
+                label: 'Téléphone',
+                hint: '+21698123456',
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                validator: (v) => RegExp(r'^\+216[2-9]\d{7}$').hasMatch((v ?? '').trim()) ? null : 'Format attendu : +216XXXXXXXX',
+              ),
+              const SizedBox(height: 14),
+              AppTextField(
+                label: 'Adresse (rue)',
+                hint: 'Rue Abou El Kacem Chebbi',
+                controller: _streetController,
+                validator: (v) => (v == null || v.trim().length < 3) ? 'Adresse requise' : null,
+              ),
+              const SizedBox(height: 14),
+              AppTextField(
+                label: 'Coordonnées GPS',
+                hint: '36.7875, 10.1758',
+                helperText: 'Dans Google Maps ou Waze : appui long sur le commerce, puis copier les coordonnées.',
+                controller: _coordsController,
+                keyboardType: TextInputType.text,
+                onChanged: (v) => setState(() => _coords = _parseCoords(v)),
+                validator: (v) => _parseCoords(v ?? '') == null ? 'Coordonnées invalides' : null,
+              ),
+              if (dist != null) ...[
+                const SizedBox(height: 14),
+                GCard(
+                  color: eligible ? const Color(0xFFDDEFD9) : AppTheme.red,
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(
-                        isEligible ? Icons.check_circle_outline : Icons.error_outline,
-                        color: isEligible ? AppTheme.red : AppTheme.red,
-                      ),
+                      Icon(eligible ? Icons.check_circle_outline : Icons.block, color: eligible ? AppTheme.leaf : AppTheme.cream),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Distance ESSECT : $dist m (~$walkingMins min à pied)',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: isEligible ? AppTheme.ink : AppTheme.red,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              isEligible ? 'Éligible au réseau piéton (≤ 3 000 m)' : 'Hors périmètre autorisé',
-                              style: const TextStyle(fontSize: 13, color: AppTheme.muted),
-                            ),
-                          ],
+                        child: Text(
+                          eligible ? '$dist m de l\'ESSECT · $walking min à pied. Zone éligible.' : '$dist m de l\'ESSECT : au-delà du rayon de 3 000 m.',
+                          style: AppTheme.body(16, eligible ? AppTheme.ink : AppTheme.cream).copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                AppButton(
-                  text: 'Déposer ma candidature ESSECT →',
-                  isLoading: _isLoading,
-                  onPressed: _handleSubmit,
-                ),
-                const SizedBox(height: 20),
               ],
-            ),
+              const SizedBox(height: 22),
+              if (_error != null) ...[GNotice(_error!, icon: Icons.error_outline), const SizedBox(height: 14)],
+              GButton('Envoyer mon dossier', icon: Icons.send_outlined, loading: _isLoading, onPressed: _isLoading ? null : _submit),
+            ],
           ),
         ),
       ),

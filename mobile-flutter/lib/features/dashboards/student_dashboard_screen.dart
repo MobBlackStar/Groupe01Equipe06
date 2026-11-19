@@ -8,6 +8,7 @@ import '../../widgets/kpi_tile.dart';
 
 import '../../app/theme.dart';
 import '../../widgets/griddle.dart';
+import '../impact/impact_screen.dart';
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
 
@@ -139,7 +140,15 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     return Scaffold(
       backgroundColor: AppTheme.cream,
       
-      body: GScreenBody(eyebrow: 'Impact étudiant', title: 'Mon bilan', child: SingleChildScrollView(
+      body: GScreenBody(
+        eyebrow: 'Impact étudiant',
+        title: 'Mon bilan',
+        trailing: GIconButton(
+          icon: Icons.public,
+          tooltip: 'Impact du campus',
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ImpactScreen())),
+        ),
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

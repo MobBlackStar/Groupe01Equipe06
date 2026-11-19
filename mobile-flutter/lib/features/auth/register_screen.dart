@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
+import '../../widgets/griddle.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
 import 'validators.dart';
@@ -72,14 +73,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Créer un compte', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
+              const SizedBox(height: 14),
+              const GPageHeader(eyebrow: 'Rejoindre CampusSave', title: 'Créer un compte', titleSize: 54, lead: 'Sauvez des repas à Montfleury, gagnez des EcoPoints.'),
+              const SizedBox(height: 22),
+              Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,6 +242,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 20),
               ],
             ),
+          ),
+            ],
           ),
         ),
       ),

@@ -68,76 +68,12 @@ class _NativeRadarViewState extends State<NativeRadarView> {
     } catch (err) {
       // 💡 En cas de déconnexion réseau ou d'indisponibilité API, repli sur données de secours locales
       setState(() {
-        _errorMessage = 'Mode hors-ligne : données locales Montfleury affichées.';
-        _merchants = _getFallbackMerchants();
+        // Jamais de commerces inventés : sans réseau, la carte reste vide et le dit.
+        _errorMessage = 'Radar indisponible : vérifiez la connexion puis réessayez.';
+        _merchants = const [];
         _isLoading = false;
       });
     }
-  }
-
-  List<Map<String, dynamic>> _getFallbackMerchants() {
-    return [
-      {
-        'id': 'm1',
-        'tradeName': 'Baguette & Cie Montfleury',
-        'category': 'BAKERY',
-        'location': {'lat': 36.7885, 'lng': 10.1762},
-        'address': '12 Avenue Montfleury, Tunis',
-        'distanceFromEssectM': 210,
-        'walkingMinutes': 3,
-        'urgency': 'CLOSING_SOON',
-        'beaconUrgencyColor': '#FF5500',
-        'activeOffers': [
-          {
-            'id': 'o1',
-            'title': 'Baguettes tradition & Viennoiseries',
-            'currentPrice': 2500,
-            'isSurprise': false,
-            'rarity': 'COMMON',
-          }
-        ],
-      },
-      {
-        'id': 'm2',
-        'tradeName': 'Green Cantine Étudiante',
-        'category': 'RESTAURANT',
-        'location': {'lat': 36.7858, 'lng': 10.1729},
-        'address': 'Rue Ibn Khaldoun, Montfleury',
-        'distanceFromEssectM': 240,
-        'walkingMinutes': 3,
-        'urgency': 'NORMAL',
-        'beaconUrgencyColor': '#CCFF00',
-        'activeOffers': [
-          {
-            'id': 'o2',
-            'title': 'Bowl Végétarien & Jus Frais',
-            'currentPrice': 4500,
-            'isSurprise': true,
-            'rarity': 'EPIC',
-          }
-        ],
-      },
-      {
-        'id': 'm3',
-        'tradeName': 'Épicerie Solidaire Bab El Gorjani',
-        'category': 'GROCERY',
-        'location': {'lat': 36.7892, 'lng': 10.1715},
-        'address': 'Boulevard Bab El Gorjani',
-        'distanceFromEssectM': 380,
-        'walkingMinutes': 5,
-        'urgency': 'CRITICAL_FLASH',
-        'beaconUrgencyColor': '#FF1744',
-        'activeOffers': [
-          {
-            'id': 'o3',
-            'title': 'Panier Fruits & Légumes de Saison',
-            'currentPrice': 3000,
-            'isSurprise': false,
-            'rarity': 'RARE',
-          }
-        ],
-      },
-    ];
   }
 
   Color _parseHexColor(String? hexString, Color defaultColor) {

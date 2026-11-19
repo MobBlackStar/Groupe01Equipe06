@@ -11,19 +11,20 @@ import 'rarity_badge.dart';
 
 class OfferCard extends StatelessWidget {
   final OfferModel offer;
-  final int distanceFromEssectM;
+  final int? distanceFromEssectM;
   final VoidCallback? onTap;
 
   const OfferCard({
     super.key,
     required this.offer,
-    this.distanceFromEssectM = 220,
+    this.distanceFromEssectM,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final walkingMinutes = (distanceFromEssectM * 1.3 / 83.33).round().clamp(1, 45);
+    final dist = distanceFromEssectM;
+    final walkingMinutes = dist == null ? null : (dist * 1.3 / 83.33).round().clamp(1, 45);
     final stock = offer.remainingQuantity;
 
     return Material(
@@ -79,21 +80,23 @@ class OfferCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      const Icon(Icons.directions_walk, size: 18, color: AppTheme.red),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '$walkingMinutes min à pied · $distanceFromEssectM m',
-                          style: AppTheme.body(14, AppTheme.muted).copyWith(fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  if (walkingMinutes != null && distanceFromEssectM != null) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.directions_walk, size: 18, color: AppTheme.red),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '$walkingMinutes min à pied · $distanceFromEssectM m',
+                            style: AppTheme.body(14, AppTheme.muted).copyWith(fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,

@@ -1,215 +1,238 @@
-// 💡 Concept & Analogie : Comme le thermomètre géant d'une campagne de solidarité étudiante, cet écran célèbre l'effort écologique collectif du campus de l'ESSECT.
-// 🔄 Comparaison React / Flutter : En Flutter, `ImpactScreen` utilise des `ListView` avec défilement fluide et indicateurs de progression natifs ; en React, c'est `ImpactDashboardPage`.
-// 🎯 À retenir pour la soutenance : "L'application mobile permet à tout visiteur de constater en un geste la dynamique écologique des 5 filières et l'impact carbone certifié EPA."
+// 💡 Concept & Analogie : Le thermomètre géant d'une campagne de solidarité : il lit les vrais totaux du campus, rien n'est écrit en dur.
+// 🔄 Comparaison React / Flutter : Équivalent de la page publique `/impact` du site ; mêmes endpoints `/impact/global` et `/impact/filieres`.
+// 🎯 À retenir pour la soutenance : "L'écran d'impact affiche les chiffres renvoyés par l'API publique (repas, CO₂, équivalences EPA, classement des filières)."
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../app/theme.dart';
-class ImpactScreen extends StatelessWidget {
-  final String? studentFiliere;
+import '../../services/auth_service.dart';
+import '../../services/campus_api.dart';
+import '../../widgets/griddle.dart';
 
-  const ImpactScreen({super.key, this.studentFiliere = 'EBUSINESS_3A'});
+class ImpactScreen extends StatefulWidget {
+  const ImpactScreen({super.key});
+
+  @override
+  State<ImpactScreen> createState() => _ImpactScreenState();
+}
+
+class _ImpactScreenState extends State<ImpactScreen> {
+  Map<String, dynamic>? _global;
+  List<Map<String, dynamic>> _filieres = const [];
+  String? _error;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final global = await CampusApi.shared.fetchGlobalImpact();
+      final filieres = await CampusApi.shared.fetchFilieresImpact();
+      if (!mounted) return;
+      setState(() {
+        _global = global;
+        _filieres = filieres;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  static num _n(dynamic v) => v is num ? v : 0;
+
+  static String _int(num v) {
+    final s = v.round().toString();
+    final b = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write(' ');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+
+  static String _kg(num grams) => '${_int(grams / 1000)} kg';
 
   @override
   Widget build(BuildContext context) {
-    final filieres = [
-      {'name': '3A E-Business', 'code': 'EBUSINESS_3A', 'co2': '520 kg', 'food': '208 kg', 'pts': '10 400', 'rank': '🥇'},
-      {'name': 'Finance', 'code': 'FINANCE', 'co2': '380 kg', 'food': '152 kg', 'pts': '7 600', 'rank': '🥈'},
-      {'name': 'Marketing', 'code': 'MARKETING', 'co2': '295 kg', 'food': '118 kg', 'pts': '5 900', 'rank': '🥉'},
-      {'name': 'Gestion', 'code': 'GESTION', 'co2': '210 kg', 'food': '84 kg', 'pts': '4 200', 'rank': '#4'},
-      {'name': 'Comptabilité', 'code': 'COMPTABILITE', 'co2': '165 kg', 'food': '66 kg', 'pts': '3 300', 'rank': '#5'},
-    ];
+    final myFiliere = context.watch<AuthService>().profile?.filiereId;
 
+    // Ouvert depuis le bilan (pile de navigation) ou par la route `/impact` : un bouton retour s'ajoute quand c'est possible.
     return Scaffold(
-      backgroundColor: AppTheme.cream,
-      appBar: AppBar(
         backgroundColor: AppTheme.cream,
-        elevation: 0,
-        title: const Text(
-          'Impact Campus ESSECT 🌱',
-          style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 18),
+        body: SafeArea(
+            child: GScreenBody(
+          eyebrow: 'Campus ESSECT',
+          title: 'Impact',
+          trailing: Navigator.canPop(context)
+              ? GIconButton(
+                  icon: Icons.arrow_back,
+                  tooltip: 'Retour',
+                  onPressed: () => Navigator.maybePop(context))
+              : null,
+          child: RefreshIndicator(
+            color: AppTheme.red,
+            onRefresh: _load,
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.red))
+                : _error != null
+                    ? ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          GEmpty(
+                              icon: Icons.cloud_off_outlined,
+                              title: 'Impact indisponible',
+                              message: _error!,
+                              actionLabel: 'Réessayer',
+                              onAction: _load)
+                        ],
+                      )
+                    : _content(myFiliere),
+          ),
+        )));
+  }
+
+  Widget _content(String? myFiliere) {
+    final g =
+        Map<String, dynamic>.from((_global?['global'] as Map?) ?? const {});
+    final eq = Map<String, dynamic>.from(
+        (_global?['equivalences'] as Map?) ?? const {});
+    final meals = _n(g['mealsRescued']);
+    final food = _n(g['foodSavedGrams']);
+    final co2 = _n(g['co2SavedGrams']);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+      children: [
+        GCard(
+          ink: true,
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('SOLIDARITÉ & CLIMAT',
+                  style: AppTheme.label(AppTheme.mustard)),
+              const SizedBox(height: 6),
+              Text(_int(meals), style: AppTheme.figure(88, AppTheme.cream)),
+              Text('REPAS SAUVÉS', style: AppTheme.h3(22, AppTheme.cream)),
+              const SizedBox(height: 8),
+              Text(
+                  'Soit ${_kg(food)} de nourriture sauvée et ${_kg(co2)} de CO₂e évités sur le campus.',
+                  style: AppTheme.body(16, AppTheme.cream)),
+            ],
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+        const SizedBox(height: 20),
+        const GSectionTitle('Équivalences concrètes'),
+        const SizedBox(height: 12),
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Bandeau Héroïque
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.biscuit, AppTheme.sand],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.red.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.red.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'SOLIDARITÉ & CLIMAT',
-                      style: TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    '1 680 repas sauvés',
-                    style: TextStyle(color: AppTheme.ink, fontSize: 26, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Soit 580 kg de nourriture sauvée et 1,45 tonne de CO₂e évitée sur Montfleury.',
-                    style: TextStyle(color: AppTheme.muted, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Équivalences EPA
-            const Text(
-              'Équivalences Concrètes (EPA / FAO)',
-              style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.biscuit,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('📱', style: TextStyle(fontSize: 22)),
-                        SizedBox(height: 6),
-                        Text('145 000', style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('charges smartphone', style: TextStyle(color: AppTheme.ink, fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.biscuit,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('🚗', style: TextStyle(fontSize: 22)),
-                        SizedBox(height: 6),
-                        Text('5 940 km', style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('de voiture évités', style: TextStyle(color: AppTheme.red, fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Challenge Inter-Filières
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Challenge Inter-Filières 🏆',
-                  style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Saison 2026',
-                  style: TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            ListView.separated(
-              itemCount: filieres.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final filiere = filieres[index];
-                final isUser = filiere['code'] == studentFiliere;
-
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isUser ? AppTheme.red.withOpacity(0.08) : AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isUser ? AppTheme.red.withOpacity(0.4) : AppTheme.ink.withOpacity(0.08),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(filiere['rank']!, style: const TextStyle(fontSize: 20)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  filiere['name']!,
-                                  style: const TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                                if (isUser) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.red,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'VOUS',
-                                      style: TextStyle(color: AppTheme.cream, fontSize: 13, fontWeight: FontWeight.w900),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            Text(
-                              '${filiere['food']} sauvés • ${filiere['pts']} pts',
-                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        filiere['co2']!,
-                        style: const TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            Expanded(
+                child: GStat(
+                    label: 'Charges smartphone',
+                    value: _int(_n(eq['smartphonesCharged'])),
+                    icon: Icons.smartphone)),
+            const SizedBox(width: 12),
+            Expanded(
+                child: GStat(
+                    label: 'Km de voiture évités',
+                    value: _int(_n(eq['kmCarAvoided'])),
+                    icon: Icons.directions_car_outlined,
+                    valueColor: AppTheme.red)),
           ],
         ),
+        const SizedBox(height: 24),
+        const GSectionTitle('Challenge inter-filières'),
+        const SizedBox(height: 12),
+        if (_filieres.isEmpty)
+          const GEmpty(
+              icon: Icons.emoji_events_outlined,
+              title: 'Pas encore de classement',
+              message:
+                  'Les filières apparaîtront dès les premiers repas sauvés.')
+        else
+          for (var i = 0; i < _filieres.length; i++) ...[
+            _FiliereRow(
+                rank: i + 1,
+                data: _filieres[i],
+                isMine: _filieres[i]['filiereId'] == myFiliere),
+            const SizedBox(height: 10),
+          ],
+      ],
+    );
+  }
+}
+
+class _FiliereRow extends StatelessWidget {
+  final int rank;
+  final Map<String, dynamic> data;
+  final bool isMine;
+
+  const _FiliereRow(
+      {required this.rank, required this.data, required this.isMine});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = (data['label'] ?? data['filiereId'] ?? '').toString();
+    final meals = _ImpactScreenState._n(data['mealsRescued']);
+    final pts = _ImpactScreenState._n(data['ecoPointsTotal']);
+    final co2 = _ImpactScreenState._n(data['co2SavedGrams']);
+    return GCard(
+      color: isMine ? AppTheme.mustard : null,
+      padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+                color: rank == 1 ? AppTheme.red : AppTheme.ink,
+                shape: BoxShape.circle),
+            child: Text('$rank', style: AppTheme.figure(30, AppTheme.cream)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: AppTheme.h3(18),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Wrap(
+                  spacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                        '${_ImpactScreenState._int(meals)} repas · ${_ImpactScreenState._int(pts)} pts',
+                        style: AppTheme.body(
+                            14, isMine ? AppTheme.ink : AppTheme.muted)),
+                    if (isMine) const GPill('Vous', color: AppTheme.red),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Text(_ImpactScreenState._kg(co2),
+              style: AppTheme.figure(28, isMine ? AppTheme.ink : AppTheme.red)),
+        ],
       ),
     );
   }

@@ -9,7 +9,7 @@ import '../../core/domain/money.dart';
 import '../../core/models/order_model.dart';
 import '../../core/time/server_clock.dart';
 import '../../services/campus_api.dart';
-import '../../widgets/app_button.dart';
+import '../../widgets/griddle.dart';
 import '../ticket/ticket_screen.dart';
 import 'payment_webview_screen.dart';
 
@@ -127,192 +127,143 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Validation de Commande', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Compte à rebours 10 min
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isExpired
-                      ? AppTheme.red.withOpacity(0.15)
-                      : AppTheme.red.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isExpired ? AppTheme.red : AppTheme.red.withOpacity(0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('⏳', style: TextStyle(fontSize: 22)),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isExpired ? 'Réservation Expirée' : 'Stock Verrouillé (10 min)',
-                              style: TextStyle(
-                                color: isExpired ? AppTheme.red : AppTheme.red,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const Text(
-                              'Prix unitaire garanti au millime',
-                              style: TextStyle(color: AppTheme.muted, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '$minStr:$secStr',
-                      style: TextStyle(
-                        color: isExpired ? AppTheme.red : AppTheme.red,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: [
+            Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
+            const SizedBox(height: 14),
+            const GPageHeader(eyebrow: 'Étape 2 sur 3 · Paiement', title: 'Validation', titleSize: 58),
+            const SizedBox(height: 20),
 
-              // 2. Récapitulatif
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppTheme.biscuit,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.sand),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Compte à rebours : le stock est bloqué 10 minutes
+            GCard(
+              ink: !isExpired,
+              color: isExpired ? AppTheme.red : null,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('RÉCAPITULATIF', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppTheme.red.withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            _order.orderCode,
-                            style: const TextStyle(color: AppTheme.red, fontSize: 13, fontFamily: 'monospace', fontWeight: FontWeight.bold),
-                          ),
-                        ),
+                        Text(isExpired ? 'RÉSERVATION EXPIRÉE' : 'STOCK VERROUILLÉ', style: AppTheme.label(isExpired ? AppTheme.cream : AppTheme.mustard)),
+                        const SizedBox(height: 2),
+                        Text('Prix unitaire garanti au millime', style: AppTheme.body(15, AppTheme.cream)),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _order.offerTitle,
-                      style: const TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '🏪 ${_order.merchantName}',
-                      style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                    ),
-                    const Divider(color: AppTheme.sand, height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Quantité :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
-                        Text('x ${_order.quantity} portion(s)', style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Prix unitaire verrouillé :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
-                        Text(
-                          Money.formatTND(_order.lockedUnitPriceMillimes),
-                          style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    if (discount > 0) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Avantage fidélité :', style: TextStyle(color: AppTheme.red, fontSize: 13)),
-                          Text(
-                            '-${Money.formatTND(discount)}',
-                            style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                  ),
+                  Text('$minStr:$secStr', style: AppTheme.figure(58, isExpired ? AppTheme.cream : AppTheme.mustard)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Reçu (cs-receipt) : papier blanc, contour encre, chiffres en Space Mono
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              decoration: AppTheme.paperCard(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: Text('RÉCAPITULATIF', style: AppTheme.label())),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: AppTheme.ink, borderRadius: BorderRadius.circular(8)),
+                        child: Text(_order.orderCode, style: AppTheme.mono(13, AppTheme.mustard).copyWith(fontWeight: FontWeight.w700)),
                       ),
                     ],
-                    const Divider(color: AppTheme.sand, height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total Net à Régler :', style: TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.bold)),
-                        Text(
-                          Money.formatTND(netTotal),
-                          style: const TextStyle(color: AppTheme.red, fontSize: 22, fontWeight: FontWeight.w900),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              if (_errorMessage != null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.red.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.red),
                   ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.ink, fontSize: 13)),
-                ),
-                const SizedBox(height: 16),
-              ] else
-                const SizedBox(height: 10),
-              // 4. Boutons
-              AppButton(
-                text: _isPaying
-                    ? 'Connexion sécurisée Konnect...'
-                    : netTotal == 0
-                        ? '✨ Valider la Commande Gratuite'
-                        : '💳 Payer ${Money.formatTND(netTotal)} avec Konnect',
-                backgroundColor: AppTheme.red,
-                textColor: AppTheme.cream,
-                onPressed: isExpired || _isPaying ? null : _payWithKonnect,
+                  const SizedBox(height: 12),
+                  Text(_order.offerTitle.toUpperCase(), style: AppTheme.h3(22)),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.storefront_outlined, size: 17, color: AppTheme.red),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(_order.merchantName, style: AppTheme.body(15, AppTheme.muted))),
+                    ],
+                  ),
+                  const _ReceiptRule(),
+                  _ReceiptRow('Quantité', 'x ${_order.quantity}'),
+                  const SizedBox(height: 8),
+                  _ReceiptRow('Prix unitaire verrouillé', Money.formatTND(_order.lockedUnitPriceMillimes)),
+                  if (discount > 0) ...[
+                    const SizedBox(height: 8),
+                    _ReceiptRow('Avantage fidélité', '-${Money.formatTND(discount)}', color: AppTheme.leaf),
+                  ],
+                  const _ReceiptRule(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(child: Text('TOTAL NET À RÉGLER', style: AppTheme.h3(18))),
+                      Text(Money.formatTND(netTotal), style: AppTheme.figure(46, AppTheme.red)),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: _isPaying ? null : _cancelReservation,
-                  child: const Text('Annuler et libérer le stock', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
-                ),
-              ),
+            ),
+            const SizedBox(height: 20),
+
+            if (_errorMessage != null) ...[
+              GNotice(_errorMessage!, icon: Icons.error_outline),
+              const SizedBox(height: 16),
             ],
-          ),
+
+            GButton(
+              _isPaying
+                  ? 'Connexion sécurisée…'
+                  : netTotal == 0
+                      ? 'Valider la commande gratuite'
+                      : 'Payer ${Money.formatTND(netTotal)}',
+              icon: netTotal == 0 ? Icons.check_circle_outline : Icons.lock_outline,
+              loading: _isPaying,
+              onPressed: isExpired || _isPaying ? null : _payWithKonnect,
+            ),
+            const SizedBox(height: 12),
+            GButton('Annuler et libérer le stock', variant: GVariant.cream, small: true, onPressed: _isPaying ? null : _cancelReservation),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _ReceiptRule extends StatelessWidget {
+  const _ReceiptRule();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final n = (c.maxWidth / 9).floor();
+          return Row(
+            children: List.generate(n, (i) => Expanded(child: Container(height: 2, color: i.isEven ? AppTheme.ink : Colors.transparent))),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReceiptRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ReceiptRow(this.label, this.value, {this.color = AppTheme.ink});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: AppTheme.body(16, AppTheme.muted))),
+        Text(value, style: AppTheme.mono(15, color).copyWith(fontWeight: FontWeight.w700)),
+      ],
     );
   }
 }

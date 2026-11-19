@@ -122,6 +122,8 @@ class AuthService extends ChangeNotifier {
       filiereId: isStudent ? 'EBUSINESS_3A' : null,
       ecoPoints: isStudent ? 90 : 0,
     );
+    // Remplace les valeurs d'amorçage ci-dessus par le vrai profil du serveur (nom, EcoPoints) quand l'API répond.
+    await _loadRemoteProfile();
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(

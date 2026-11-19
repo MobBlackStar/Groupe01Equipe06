@@ -126,4 +126,75 @@ class CampusApi {
     final data = await _call(() => _dio.get(Endpoints.loyaltyMe));
     return LoyaltyStatus.fromApi(data);
   }
+
+  // --- Impact (public) ----------------------------------------------------
+
+  /// `GET /impact/global` : totaux du campus + équivalences (smartphones, km de voiture).
+  Future<Map<String, dynamic>> fetchGlobalImpact() => _call(() => _dio.get(Endpoints.impactGlobal));
+
+  /// `GET /impact/filieres` : classement inter-filières trié côté serveur.
+  Future<List<Map<String, dynamic>>> fetchFilieresImpact() async {
+    final data = await _call(() => _dio.get(Endpoints.impactFilieres));
+    final list = data['filieres'] as List? ?? const [];
+    return list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+  }
+
+  // --- Commerçant : offres ------------------------------------------------
+
+  /// `GET /merchants/me/offers` : les documents sont stockés avec un bloc `pricing` imbriqué ;
+  /// on les aplatit pour `OfferModel` (prix initial, prix cible, type de tarification).
+  Future<List<OfferModel>> fetchMyOffers() async {
+    final data = await _call(() => _dio.get(Endpoints.merchantOffers));
+    final list = data['offers'] as List? ?? const [];
+    return list
+        .whereType<Map>()
+        .map((m) => _flattenOffer(Map<String, dynamic>.from(m)))
+        .where((o) => o.status != 'DELETED')
+        .toList();
+  }
+
+  static OfferModel _flattenOffer(Map<String, dynamic> json) {
+    final pricing = json['pricing'];
+    if (pricing is Map) {
+      final dutch = pricing['mode'] == 'DUTCH_AUCTION';
+      json['pricingType'] = dutch ? 'DUTCH' : 'FIXED';
+      json['originalPriceMillimes'] ??= pricing['originalPriceMillimes'];
+      json['targetPriceMillimes'] ??= dutch ? pricing['floorPriceMillimes'] : pricing['discountedPriceMillimes'];
+    }
+    return OfferModel.fromJson(json);
+  }
+
+  /// `POST /offers` : le corps suit `createOfferSchema` (prix dans `pricing`).
+  Future<void> createOffer(Map<String, dynamic> body) => _call(() => _dio.post(Endpoints.offers, data: body));
+
+  /// `DELETE /offers/:id` : suppression définitive, ou archivage si des commandes existent.
+  Future<void> deleteOffer(String id) => _call(() => _dio.delete(Endpoints.offerById(id)));
+
+  /// `POST /ai/offer-autofill` : renvoie `{ suggestion, source }` (`ai` ou `fallback`).
+  Future<Map<String, dynamic>> offerAutofill(String rawNote) =>
+      _call(() => _dio.post(Endpoints.aiOfferAutofill, data: {'rawNote': rawNote}));
+
+  // --- Commerçant : boutique ----------------------------------------------
+
+  /// `GET /merchants/me` : le commerce du compte connecté, ou `null` s'il n'en a pas encore (404).
+  Future<Map<String, dynamic>?> fetchMyMerchant() async {
+    try {
+      final data = await _call(() => _dio.get(Endpoints.merchantsMe));
+      final m = data['merchant'];
+      return m is Map ? Map<String, dynamic>.from(m) : null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.code == 'MERCHANT_NOT_FOUND') return null;
+      rethrow;
+    }
+  }
+
+  /// `POST /merchants` : dépôt du dossier (statut PENDING jusqu'à validation par l'administration).
+  Future<void> createMerchant(Map<String, dynamic> body) => _call(() => _dio.post(Endpoints.merchants, data: body));
+
+  /// `GET /merchants/me/orders` : commandes reçues par le commerce (documents bruts, avec `studentSnapshot`).
+  Future<List<Map<String, dynamic>>> fetchMerchantOrders() async {
+    final data = await _call(() => _dio.get(Endpoints.merchantOrders));
+    final list = data['orders'] as List? ?? const [];
+    return list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+  }
 }

@@ -312,8 +312,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           for (var index = 0; index < offers.length; index++) ...[
             () {
               final offer = offers[index];
-              const distances = [180, 120, 350, 420, 520];
-              final dist = distances[index % distances.length];
+              final dist = offer.distanceFromEssectM;
               return OfferCard(
                 offer: offer,
                 distanceFromEssectM: dist,

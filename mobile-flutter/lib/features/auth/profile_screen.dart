@@ -1,311 +1,141 @@
-// 💡 Concept & Analogie : Comme la carte d'adhérent biométrique dans un club éco-responsable, cet écran résume le statut de l'utilisateur, ses badges écologiques et ses préférences d'alertes push.
-// 🔄 Comparaison React / Flutter : En Flutter, les bascules d'alertes utilisent `SwitchListTile` avec la couleur `AppTheme.red` ; en React, nous utilisons des checkboxes HTML personnalisées.
-// 🎯 À retenir pour la soutenance : "Cet écran mobile permet aux étudiants de suivre leur jauge d'ÉcoPoints en direct tout en personnalisant leurs canaux de notifications FCM."
+// 💡 Concept & Analogie : Comme la carte d'étudiant qui affiche votre vrai nom, votre solde de points et un bouton pour quitter, cet écran lit le profil connecté et ne montre rien d'inventé.
+// 🔄 Comparaison React / Flutter : Équivalent de la page profil du site : les données viennent de `AuthService.profile` (Provider), comme `useAuth()` côté React.
+// 🎯 À retenir pour la soutenance : "Le profil n'affiche que des données réelles (nom, e-mail, EcoPoints, palier) ; la déconnexion appelle vraiment AuthService.signOut()."
 
 import 'package:flutter/material.dart';
-import '../../app/theme.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/app_text_field.dart';
-import 'validators.dart';
+import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatefulWidget {
+import '../../app/theme.dart';
+import '../../services/auth_service.dart';
+import '../../widgets/griddle.dart';
+
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
-
-  final _nameController = TextEditingController(text: 'Ritej Bejaoui');
-  final _phoneController = TextEditingController(text: '+21698123456');
-  String _selectedFiliere = 'EBUSINESS_3A';
-
-  bool _pushNotifications = true;
-  bool _emailReceipts = true;
-  bool _isSaving = false;
-
-  final int _ecoPoints = 240;
-
-  final List<Map<String, String>> _filieres = const [
-    {'value': 'EBUSINESS_3A', 'label': '🎓 3ème E-Business'},
-    {'value': 'FINANCE', 'label': '📈 Finance'},
-    {'value': 'MARKETING', 'label': '🎯 Marketing'},
-    {'value': 'GESTION', 'label': '📊 Gestion'},
-    {'value': 'COMPTABILITE', 'label': '📑 Comptabilité'},
-  ];
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    super.dispose();
-  }
-
-  void _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isSaving = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: AppTheme.biscuit,
-        content: Text(
-          'Profil mis à jour avec succès !',
-          style: TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
+  static String _roleLabel(String role) {
+    switch (role.toUpperCase()) {
+      case 'MERCHANT':
+        return 'Commerçant';
+      case 'ADMIN':
+        return 'Administrateur';
+      default:
+        return 'Étudiant';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final profile = auth.profile;
+
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: const Text('Mon Profil', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // En-tête Profil avec Avatar
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.ink),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: BoxDecoration(
-                          color: AppTheme.cream,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppTheme.red.withOpacity(0.5)),
-                        ),
-                        child: const Center(
-                          child: Text('🎓', style: TextStyle(fontSize: 28)),
-                        ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: [
+            Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
+            const SizedBox(height: 14),
+            const GPageHeader(eyebrow: 'Mon compte', title: 'Mon profil', titleSize: 58),
+            const SizedBox(height: 22),
+            if (profile == null)
+              const GEmpty(icon: Icons.person_off_outlined, title: 'Non connecté', message: 'Connectez-vous pour voir votre profil.')
+            else ...[
+              GCard(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(color: AppTheme.mustard, shape: BoxShape.circle, border: Border.all(color: AppTheme.ink, width: 2)),
+                      child: Text(
+                        profile.displayName.isNotEmpty ? profile.displayName.trim()[0].toUpperCase() : '?',
+                        style: AppTheme.figure(40),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'Ritej Bejaoui',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.ink,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.red.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: AppTheme.red.withOpacity(0.4)),
-                                  ),
-                                  child: const Text(
-                                    'ÉTUDIANTE',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.red,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'donyesbejaoui27@gmail.com',
-                              style: TextStyle(fontSize: 13, color: AppTheme.muted),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Carte Jauge ÉcoPoints & Palier
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.ink),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            '🌿 Palier Pousse',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.red,
-                            ),
-                          ),
-                          Text(
-                            '$_ecoPoints ÉcoPoints',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.ink,
-                            ),
-                          ),
+                          Text(profile.displayName, style: AppTheme.h3(22), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          Text(profile.email, style: AppTheme.body(15, AppTheme.muted), overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 8),
+                          GPill(_roleLabel(profile.role), color: AppTheme.red),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: const LinearProgressIndicator(
-                          value: 240 / 300,
-                          minHeight: 10,
-                          backgroundColor: AppTheme.cream,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.red),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Plus que 60 points pour atteindre le palier ARBRE 🌳',
-                        style: TextStyle(fontSize: 13, color: AppTheme.muted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Formulaire Coordonnées
-                AppTextField(
-                  label: 'Nom & Prénom',
-                  controller: _nameController,
-                  validator: Validators.validateDisplayName,
-                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 16),
-
-                AppTextField(
-                  label: 'Téléphone Mobile',
-                  controller: _phoneController,
-                  validator: Validators.validatePhone,
-                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.muted),
-                ),
-                const SizedBox(height: 16),
-
-                const Text(
-                  'FILIÈRE ESSECT',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: AppTheme.muted,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.ink),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedFiliere,
-                      isExpanded: true,
-                      dropdownColor: AppTheme.biscuit,
-                      style: const TextStyle(color: AppTheme.ink, fontSize: 13),
-                      items: _filieres.map((f) {
-                        return DropdownMenuItem<String>(
-                          value: f['value'],
-                          child: Text(f['label']!),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedFiliere = val);
-                      },
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-
-                // Préférences Notifications
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.ink),
-                  ),
-                  child: Column(
+              ),
+              if (profile.role.toUpperCase() == 'STUDENT') ...[const SizedBox(height: 14), _PointsCard(points: profile.ecoPoints)],
+              if ((profile.phone ?? '').isNotEmpty) ...[
+                const SizedBox(height: 14),
+                GCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
                     children: [
-                      SwitchListTile(
-                        activeColor: AppTheme.red,
-                        title: const Text('Notifications Push', style: TextStyle(fontSize: 13, color: AppTheme.ink)),
-                        subtitle: const Text('Alertes offres dégressives en temps réel', style: TextStyle(fontSize: 13, color: AppTheme.muted)),
-                        value: _pushNotifications,
-                        onChanged: (val) => setState(() => _pushNotifications = val),
-                      ),
-                      const Divider(height: 1, color: AppTheme.ink),
-                      SwitchListTile(
-                        activeColor: AppTheme.red,
-                        title: const Text('Justificatifs par Email', style: TextStyle(fontSize: 13, color: AppTheme.ink)),
-                        subtitle: const Text('Reçus de paiement et billets QR', style: TextStyle(fontSize: 13, color: AppTheme.muted)),
-                        value: _emailReceipts,
-                        onChanged: (val) => setState(() => _emailReceipts = val),
-                      ),
+                      const Icon(Icons.phone_outlined, color: AppTheme.red),
+                      const SizedBox(width: 12),
+                      Text(profile.phone!, style: AppTheme.mono(16).copyWith(fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Bouton Enregistrer
-                AppButton(
-                  text: 'Enregistrer les Modifications',
-                  isLoading: _isSaving,
-                  onPressed: _handleSave,
-                ),
-                const SizedBox(height: 12),
-
-                // Bouton Déconnexion
-                AppButton(
-                  text: 'Se Déconnecter',
-                  variant: AppButtonVariant.danger,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Déconnexion effectuée')),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
               ],
+            ],
+            const SizedBox(height: 28),
+            GButton(
+              'Se déconnecter',
+              icon: Icons.logout,
+              variant: GVariant.ink,
+              onPressed: () async {
+                final nav = Navigator.of(context);
+                await context.read<AuthService>().signOut();
+                nav.popUntil((route) => route.isFirst);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Points et progression vers le prochain coupon (ALG-LOYALTY : 1 tampon = 20 points, coupon -20 % tous les 100 points).
+class _PointsCard extends StatelessWidget {
+  final int points;
+  const _PointsCard({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    final inCycle = points % 100;
+    final remaining = 100 - inCycle;
+    return GCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: Text('ECOPOINTS', style: AppTheme.label())),
+              Text('$points', style: AppTheme.figure(48, AppTheme.red)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              decoration: BoxDecoration(border: Border.all(color: AppTheme.ink, width: 2), borderRadius: BorderRadius.circular(999)),
+              child: LinearProgressIndicator(value: inCycle / 100, minHeight: 12, backgroundColor: AppTheme.cream, valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.mustard)),
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text('Encore $remaining points pour un coupon -20 %', style: AppTheme.body(15, AppTheme.muted)),
+        ],
       ),
     );
   }
