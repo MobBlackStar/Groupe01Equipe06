@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 import { MERCHANT_STATUS, USER_STATUS } from '../../../../shared/constants.js';
+import { createMerchantSchema } from '../merchants/merchants.schemas.js';
 
 export const updateMerchantStatusSchema = z.object({
   status: z.enum([
@@ -50,3 +51,19 @@ export const updateUserStatusSchema = z.object({
     path: ['statusReason'],
   }
 );
+
+/** Spot de démonstration créé par un administrateur : mêmes champs qu'un commerce (le rayon de 3 km est vérifié par le service). */
+export const createSpotSchema = createMerchantSchema;
+
+/** Déplacement d'un spot / commerce par un administrateur. */
+export const updateSpotLocationSchema = z.object({
+  location: z.object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+  }),
+});
+
+/** Suppression : archivage par défaut ; `hard=true` n'est accepté que pour un spot de démonstration sans offre active. */
+export const deleteSpotQuerySchema = z.object({
+  hard: z.enum(['true', 'false']).optional().default('false'),
+});

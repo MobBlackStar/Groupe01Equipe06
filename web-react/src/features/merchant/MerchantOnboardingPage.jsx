@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MERCHANT_TYPES, ESSECT_COORDINATES } from '@shared/constants.js';
 import { distanceFromEssect, calculateWalkingMinutes, isWithinCampusRadius } from '@shared/geo.js';
+import SpotEditor from '../radar/SpotEditor.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import {
@@ -260,31 +261,12 @@ export default function MerchantOnboardingPage() {
               </span>
             </div>
 
-            {/* Raccourcis d'adresses Montfleury */}
-            <div>
-              <span className="cs-field-label">Choisissez votre adresse</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {montfleuryPresets.map((preset, idx) => {
-                  const selected = formData.street === preset.name;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => handleSelectPreset(preset)}
-                      className={`min-h-[64px] rounded-2xl border-2 border-[#111111] px-4 py-3 text-left transition-colors ${
-                        selected ? 'bg-[#111111] text-[#FAF3E6]' : 'bg-white text-[#111111] hover:bg-[#FAF3E6]'
-                      }`}
-                    >
-                      <span className="block font-semibold text-base leading-tight">{preset.name}</span>
-                      <span className={`block text-[14px] mt-1 ${selected ? 'text-[#FFD000]' : 'text-[#5E5850]'}`}>
-                        {distanceFromEssect(preset.lat, preset.lng)} m de l'ESSECT
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Éditeur de spot : carte 3D (clic / glisser), coordonnées Google Maps, porte sur la rue */}
+            <SpotEditor
+              value={{ lat: formData.lat, lng: formData.lng }}
+              presets={montfleuryPresets}
+              onChange={(spot) => setFormData((prev) => ({ ...prev, lat: spot.lat, lng: spot.lng }))}
+            />
 
             {errors.location && <p className="cs-error-text">{errors.location}</p>}
           </div>

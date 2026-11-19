@@ -61,7 +61,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🗑️ Offre "$title" retirée du catalogue'),
-        backgroundColor: AppTheme.surfaceCard,
+        backgroundColor: AppTheme.biscuit,
       ),
     );
   }
@@ -69,7 +69,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Mes Offres Publiées', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -84,7 +84,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                     SizedBox(height: 12),
                     Text(
                       'Aucune offre active pour le moment',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(color: AppTheme.muted, fontSize: 14),
                     ),
                   ],
                 ),
@@ -100,10 +100,10 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceCard,
+                      color: AppTheme.biscuit,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSoldOut ? Colors.white10 : AppTheme.limeAccent.withOpacity(0.3),
+                        color: isSoldOut ? AppTheme.sand : AppTheme.red.withOpacity(0.3),
                       ),
                     ),
                     child: Column(
@@ -116,21 +116,21 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: isSoldOut
-                                    ? Colors.white10
-                                    : AppTheme.limeAccent.withOpacity(0.15),
+                                    ? AppTheme.sand
+                                    : AppTheme.red.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 isSoldOut ? 'ÉPUISÉ' : 'EN LIGNE',
                                 style: TextStyle(
-                                  color: isSoldOut ? Colors.white54 : AppTheme.limeAccent,
-                                  fontSize: 10,
+                                  color: isSoldOut ? AppTheme.muted : AppTheme.red,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.white38, size: 20),
+                              icon: const Icon(Icons.delete_outline, color: AppTheme.muted, size: 20),
                               onPressed: () => _deleteOffer(index),
                               tooltip: 'Supprimer l offre',
                             ),
@@ -140,7 +140,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                         Text(
                           offer.title,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.ink,
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
@@ -148,7 +148,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                         const SizedBox(height: 4),
                         Text(
                           offer.description,
-                          style: const TextStyle(color: Colors.white60, fontSize: 12),
+                          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -158,12 +158,12 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                           children: [
                             Text(
                               'Stock : ${offer.remainingQuantity} / ${offer.quantity}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                             ),
                             Text(
                               '${Money.formatTND(offer.targetPriceMillimes)} (de base ${Money.formatTND(offer.originalPriceMillimes)})',
                               style: const TextStyle(
-                                color: AppTheme.limeAccent,
+                                color: AppTheme.red,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -177,8 +177,8 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
               ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppTheme.limeAccent,
-        foregroundColor: Colors.black,
+        backgroundColor: AppTheme.red,
+        foregroundColor: AppTheme.cream,
         icon: const Icon(Icons.add),
         label: const Text('Publier une Offre', style: TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () {

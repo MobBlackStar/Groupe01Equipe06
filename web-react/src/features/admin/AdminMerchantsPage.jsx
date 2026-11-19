@@ -2,8 +2,9 @@
 // 🔄 Comparaison React / Flutter : En React, la table de validation intègre des onglets de filtrage et une modale avec motif obligatoire de rejet ; en Flutter, la même logique est portée par un écran d'administration responsive.
 // 🎯 À retenir pour la soutenance : "Toute décision administrative est enregistrée dans une transaction atomique Firestore avec l'identifiant de l'administrateur, et déclenche une notification push FCM instantanée vers le gérant concerné."
 
-import React, { useState, useEffect } from 'react';
-import { MERCHANT_STATUS } from '@shared/constants.js';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MERCHANT_STATUS, MERCHANT_TYPES } from '@shared/constants.js';
+import SpotEditor from '../radar/SpotEditor.jsx';
 import { distanceFromEssect, calculateWalkingMinutes } from '@shared/geo.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
@@ -102,20 +103,103 @@ export default function AdminMerchantsPage() {
   const [activeTab, setActiveTab] = useState('ALL');
   const [rejectModalData, setRejectModalData] = useState(null); // { merchant, reason }
   const [toast, setToast] = useState(null);
+  const [usingDemo, setUsingDemo] = useState(true); // vrai tant que la liste ne vient pas de l'API : aucune action de spot en mode démo
+  const [spotModal, setSpotModal] = useState(null); // { mode: 'create' | 'move', merchant? }
+  const [spotForm, setSpotForm] = useState({ name: '', type: MERCHANT_TYPES.FAST_FOOD, phone: '+216', street: '' });
+  const [spotLoc, setSpotLoc] = useState(null); // { lat, lng, withinRadius, ... } renvoyé par SpotEditor
+  const [spotBusy, setSpotBusy] = useState(false);
+  const [spotError, setSpotError] = useState('');
+  const [removeModal, setRemoveModal] = useState(null); // { merchant, hard }
+
+  const loadAdminMerchants = useCallback(async () => {
+    try {
+      const res = await apiClient.get(ENDPOINTS.ADMIN_MERCHANTS);
+      if (res.data?.merchants && res.data.merchants.length > 0) {
+        setMerchants(res.data.merchants);
+        setUsingDemo(false);
+      }
+    } catch (err) {
+      console.warn('API admin merchants fallback démo:', err.message);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadAdminMerchants() {
-      try {
-        const res = await apiClient.get(ENDPOINTS.ADMIN_MERCHANTS);
-        if (res.data?.merchants && res.data.merchants.length > 0) {
-          setMerchants(res.data.merchants);
-        }
-      } catch (err) {
-        console.warn('API admin merchants fallback démo:', err.message);
-      }
-    }
     loadAdminMerchants();
-  }, []);
+  }, [loadAdminMerchants]);
+
+  function apiErrorMessage(err, fallback) {
+    const e = err?.response?.data?.error;
+    if (e?.code === 'TOO_FAR') return e.message || 'Hors du rayon de 3 km autour de l\'ESSECT.';
+    if (Array.isArray(e?.details) && e.details.length > 0) return `${e.message || 'Données invalides'} : ${e.details.map((d) => `${d.field} — ${d.message}`).join(' ; ')}`;
+    if (e?.message) return e.message;
+    if (err?.response) return `${fallback} (erreur ${err.response.status})`;
+    return "Serveur injoignable : rien n'a été modifié.";
+  }
+
+  function openCreateSpot() {
+    setSpotForm({ name: '', type: MERCHANT_TYPES.FAST_FOOD, phone: '+216', street: '' });
+    setSpotLoc(null);
+    setSpotError('');
+    setSpotModal({ mode: 'create' });
+  }
+
+  function openMoveSpot(merchant) {
+    const lat = merchant.location?.lat ?? merchant.lat;
+    const lng = merchant.location?.lng ?? merchant.lng;
+    setSpotLoc(lat != null && lng != null ? { lat, lng, withinRadius: true } : null);
+    setSpotError('');
+    setSpotModal({ mode: 'move', merchant });
+  }
+
+  async function handleSaveSpot() {
+    if (!spotLoc) {
+      setSpotError('Placez le spot sur la carte ou collez des coordonnées.');
+      return;
+    }
+    if (!spotLoc.withinRadius) {
+      setSpotError('Cet emplacement est hors du rayon de 3 km autour de l\'ESSECT : le serveur le refusera.');
+      return;
+    }
+    setSpotBusy(true);
+    setSpotError('');
+    try {
+      if (spotModal.mode === 'create') {
+        await apiClient.post(ENDPOINTS.ADMIN_MERCHANTS, {
+          name: spotForm.name.trim(),
+          type: spotForm.type,
+          phone: spotForm.phone.trim(),
+          address: { street: spotForm.street.trim() || 'Montfleury' },
+          location: { lat: spotLoc.lat, lng: spotLoc.lng },
+        });
+        setToast({ type: 'success', message: `Spot « ${spotForm.name.trim()} » ajouté au radar.` });
+      } else {
+        await apiClient.patch(ENDPOINTS.ADMIN_MERCHANT_LOCATION(spotModal.merchant.id), { location: { lat: spotLoc.lat, lng: spotLoc.lng } });
+        setToast({ type: 'success', message: `« ${spotModal.merchant.name} » déplacé.` });
+      }
+      setSpotModal(null);
+      await loadAdminMerchants();
+    } catch (err) {
+      setSpotError(apiErrorMessage(err, "Impossible d'enregistrer le spot"));
+    } finally {
+      setSpotBusy(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (!removeModal) return;
+    setSpotBusy(true);
+    try {
+      await apiClient.delete(`${ENDPOINTS.ADMIN_MERCHANT(removeModal.merchant.id)}?hard=${removeModal.hard ? 'true' : 'false'}`);
+      setToast({ type: 'success', message: removeModal.hard ? 'Spot supprimé définitivement.' : 'Commerce archivé (retiré du radar, données conservées).' });
+      setRemoveModal(null);
+      await loadAdminMerchants();
+    } catch (err) {
+      setToast({ type: 'error', message: apiErrorMessage(err, 'Impossible de retirer ce commerce') });
+      setRemoveModal(null);
+    } finally {
+      setSpotBusy(false);
+    }
+  }
 
   const tabs = [
     { id: 'ALL', label: 'Tous les Commerces', count: merchants.length },
@@ -258,6 +342,24 @@ export default function AdminMerchantsPage() {
             ✕ Rejeter
           </button>
         )}
+
+        {!usingDemo && (
+          <>
+            <button type="button" onClick={() => openMoveSpot(merchant)} className={`cs-btn cs-btn-cream ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}>
+              Déplacer
+            </button>
+            {merchant.archived ? null : (
+              <button type="button" onClick={() => setRemoveModal({ merchant, hard: false })} className={`cs-btn cs-btn-cream ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}>
+                Archiver
+              </button>
+            )}
+            {merchant.isDemoSpot && (
+              <button type="button" onClick={() => setRemoveModal({ merchant, hard: true })} className={`cs-btn cs-btn-cream !text-[#DA0711] ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}>
+                Supprimer
+              </button>
+            )}
+          </>
+        )}
       </div>
     );
   };
@@ -272,6 +374,14 @@ export default function AdminMerchantsPage() {
           <p className="cs-lead mt-4 max-w-3xl">
             Contrôlez l'ancrage local (rayon ≤ 3 km de l'ESSECT) et délivrez les agréments de publication.
           </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button type="button" onClick={openCreateSpot} disabled={usingDemo} className="cs-btn cs-btn-red">
+              ＋ Ajouter un spot
+            </button>
+            {usingDemo && (
+              <span className="cs-help-text">Mode démonstration (aucun commerce réel chargé) : l'ajout, le déplacement et le retrait de spots demandent l'API.</span>
+            )}
+          </div>
         </header>
 
         {/* Filtres */}
@@ -403,6 +513,72 @@ export default function AdminMerchantsPage() {
               />
             </div>
           )}
+        </Modal>
+
+        {/* Modal Spot : ajout ou déplacement sur la carte 3D */}
+        <Modal
+          isOpen={Boolean(spotModal)}
+          onClose={() => setSpotModal(null)}
+          size="xl"
+          title={spotModal?.mode === 'create' ? 'Ajouter un spot de démonstration' : `Déplacer : ${spotModal?.merchant?.name || ''}`}
+          description="Rayon maximal : 3 km autour de l'ESSECT (vérifié aussi par le serveur)."
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={() => setSpotModal(null)}>Annuler</Button>
+              <Button variant="primary" size="sm" isLoading={spotBusy} onClick={handleSaveSpot} disabled={!spotLoc || !spotLoc.withinRadius || (spotModal?.mode === 'create' && (spotForm.name.trim().length < 2 || !/^\+216[2-9]\d{7}$/.test(spotForm.phone.trim())))}>
+                {spotModal?.mode === 'create' ? 'Ajouter au radar' : 'Enregistrer la position'}
+              </Button>
+            </>
+          }
+        >
+          {spotModal && (
+            <div className="py-2 space-y-5">
+              {spotModal.mode === 'create' && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="spot-name" className="cs-field-label">Nom du spot</label>
+                    <input id="spot-name" className="cs-input" value={spotForm.name} onChange={(e) => setSpotForm((f) => ({ ...f, name: e.target.value }))} placeholder="ex : Sandwicherie du coin" />
+                  </div>
+                  <div>
+                    <label htmlFor="spot-type" className="cs-field-label">Type</label>
+                    <select id="spot-type" className="cs-input" value={spotForm.type} onChange={(e) => setSpotForm((f) => ({ ...f, type: e.target.value }))}>
+                      {Object.entries(MERCHANT_TYPES).map(([k, v]) => (
+                        <option key={k} value={v}>{TYPE_LABELS[v] || v}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="spot-phone" className="cs-field-label">Téléphone</label>
+                    <input id="spot-phone" className="cs-input" value={spotForm.phone} onChange={(e) => setSpotForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+21671390111" />
+                  </div>
+                  <div>
+                    <label htmlFor="spot-street" className="cs-field-label">Rue</label>
+                    <input id="spot-street" className="cs-input" value={spotForm.street} onChange={(e) => setSpotForm((f) => ({ ...f, street: e.target.value }))} placeholder="ex : Avenue Habib Bourguiba" />
+                  </div>
+                </div>
+              )}
+              <SpotEditor value={spotLoc ? { lat: spotLoc.lat, lng: spotLoc.lng } : null} onChange={setSpotLoc} />
+              {spotError && <p className="cs-error-text" role="alert">{spotError}</p>}
+            </div>
+          )}
+        </Modal>
+
+        {/* Modal retrait : archivage (par défaut) ou suppression définitive d'un spot de démo */}
+        <Modal
+          isOpen={Boolean(removeModal)}
+          onClose={() => setRemoveModal(null)}
+          title={removeModal?.hard ? 'Supprimer définitivement ce spot ?' : 'Archiver ce commerce ?'}
+          description={removeModal?.hard ? 'Le spot de démonstration disparaît pour de bon. Action irréversible.' : 'Il disparaît du radar mais ses données sont conservées.'}
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={() => setRemoveModal(null)}>Annuler</Button>
+              <Button variant="danger" size="sm" isLoading={spotBusy} onClick={handleRemove}>
+                {removeModal?.hard ? 'Supprimer définitivement' : 'Archiver'}
+              </Button>
+            </>
+          }
+        >
+          {removeModal && <p className="cs-body py-2">{removeModal.merchant.name}</p>}
         </Modal>
       </div>
 

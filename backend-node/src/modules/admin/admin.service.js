@@ -6,11 +6,107 @@
 import { db, auth } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { FcmService } from '../notifications/fcm.service.js';
-import { USER_STATUS } from '../../../../shared/constants.js';
+import { USER_STATUS, MERCHANT_STATUS } from '../../../../shared/constants.js';
+import { computeLocationFields } from '../merchants/merchants.service.js';
 
 const fcmService = new FcmService();
 
+/** Trace d'audit minimale d'une action sur un spot (qui, quoi, quand). */
+async function auditSpot(adminUid, action, merchantId, details = {}) {
+  try {
+    await db.collection('admin_audit').doc().set({ adminUid, action, targetType: 'merchant', targetId: merchantId, details, createdAt: new Date() });
+  } catch {
+    /* l'audit ne doit jamais bloquer l'action */
+  }
+}
+
 export const adminService = {
+  /**
+   * Crée un spot (commerce de démonstration) sans compte commerçant : approuvé, marqué `isDemoSpot`.
+   * Le rayon de 3 km autour de l'ESSECT est appliqué comme pour un vrai commerçant (422 TOO_FAR).
+   */
+  async createSpot(adminUid, body) {
+    const { name, type, description, phone, address, location, coverImageUrl } = body;
+    const fields = computeLocationFields(location);
+    const id = `spot-${db.collection('merchants').doc().id}`;
+    const now = new Date();
+    const merchant = {
+      id,
+      ownerUid: null,
+      isDemoSpot: true,
+      createdBy: adminUid,
+      name,
+      type,
+      description: description || '',
+      phone,
+      address: { street: address.street, area: address.area || 'Montfleury', city: address.city || 'Tunis' },
+      ...fields,
+      status: MERCHANT_STATUS.APPROVED,
+      statusReason: null,
+      reviewedBy: adminUid,
+      reviewedAt: now,
+      ratingAvg: 0,
+      ratingCount: 0,
+      activeOfferCount: 0,
+      totalOffersPublished: 0,
+      totalMealsSaved: 0,
+      coverImageUrl: coverImageUrl || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.collection('merchants').doc(id).set(merchant);
+    await auditSpot(adminUid, 'SPOT_CREATED', id, { location: fields.location });
+    return { merchant };
+  },
+
+  /** Déplace un commerce ou un spot (rayon de 3 km vérifié, geohash et temps à pied recalculés). */
+  async updateSpotLocation(merchantId, location, adminUid) {
+    const ref = db.collection('merchants').doc(merchantId);
+    const snap = await ref.get();
+    if (!snap.exists) throw new AppError('Commerce introuvable', 404, 'MERCHANT_NOT_FOUND');
+    const fields = computeLocationFields(location);
+    await ref.update({ ...fields, updatedAt: new Date() });
+    await auditSpot(adminUid, 'SPOT_MOVED', merchantId, { from: snap.data().location || null, to: fields.location });
+    const merchant = (await ref.get()).data();
+    return { merchant };
+  },
+
+  /**
+   * Retire un spot. Par défaut : ARCHIVAGE (suspendu, invisible du radar, données conservées).
+   * `hard` : suppression définitive, réservée aux spots de démonstration sans offre active.
+   */
+  async deleteSpot(merchantId, { hard = false } = {}, adminUid) {
+    const ref = db.collection('merchants').doc(merchantId);
+    const snap = await ref.get();
+    if (!snap.exists) throw new AppError('Commerce introuvable', 404, 'MERCHANT_NOT_FOUND');
+    const data = snap.data();
+
+    if (hard) {
+      if (!data.isDemoSpot) {
+        throw new AppError('Seuls les spots de démonstration peuvent être supprimés définitivement ; archivez ce commerce.', 409, 'NOT_DELETABLE');
+      }
+      if ((data.activeOfferCount || 0) > 0) {
+        throw new AppError('Ce spot a encore des offres actives ; archivez-le ou retirez ses offres.', 409, 'HAS_ACTIVE_OFFERS');
+      }
+      await ref.delete();
+      await auditSpot(adminUid, 'SPOT_DELETED', merchantId);
+      return { deleted: true, id: merchantId };
+    }
+
+    const now = new Date();
+    await ref.update({
+      status: MERCHANT_STATUS.SUSPENDED,
+      statusReason: 'Archivé par un administrateur',
+      archived: true,
+      archivedAt: now,
+      reviewedBy: adminUid,
+      reviewedAt: now,
+      updatedAt: now,
+    });
+    await auditSpot(adminUid, 'SPOT_ARCHIVED', merchantId);
+    return { archived: true, merchant: (await ref.get()).data() };
+  },
+
   /**
    * Liste l'ensemble des commerces avec filtrage par statut de modération.
    */

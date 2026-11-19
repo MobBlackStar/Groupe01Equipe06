@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/domain/pricing.dart';
+import '../app/theme.dart';
 
 class CountdownChip extends StatefulWidget {
   final DateTime pickupEndAt;
@@ -41,18 +42,13 @@ class _CountdownChipState extends State<CountdownChip> {
     super.dispose();
   }
 
-  Color _parseHexColor(String hex) {
-    final clean = hex.replaceAll('#', '');
-    return Color(int.parse('FF$clean', radix: 16));
-  }
-
   @override
   Widget build(BuildContext context) {
     final endMs = widget.pickupEndAt.millisecondsSinceEpoch;
     final diffMs = endMs - _nowMs;
     final minutesLeft = diffMs > 0 ? (diffMs / 60000).floor() : 0;
     final colorHex = Pricing.computeUrgencyColor(pickupEndMs: endMs, nowMs: _nowMs);
-    final color = _parseHexColor(colorHex);
+    final color = AppTheme.urgencyFromApi(colorHex); // l'API émet du néon : traduit en moutarde / orange / rouge Griddle
 
     String label;
     if (minutesLeft <= 0) {
@@ -66,31 +62,24 @@ class _CountdownChipState extends State<CountdownChip> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: AppTheme.pill(color: AppTheme.cream),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
+              border: Border.all(color: AppTheme.ink, width: 1.5),
             ),
           ),
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTheme.body(13, AppTheme.ink).copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),

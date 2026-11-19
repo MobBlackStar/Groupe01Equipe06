@@ -75,7 +75,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🎉 Offre anti-gaspillage publiée avec succès !'),
-          backgroundColor: AppTheme.limeAccent,
+          backgroundColor: AppTheme.red,
         ),
       );
       Navigator.pop(context);
@@ -95,7 +95,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Nouvelle Offre Anti-Gaspi', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -114,7 +114,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
 
                 const Text(
                   'Détails de l Offre',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
 
@@ -137,24 +137,24 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                 const SizedBox(height: 14),
 
                 // Catégorie
-                const Text('Catégorie', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text('Catégorie', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceCard,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white12),
+                    border: Border.all(color: AppTheme.sand),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _category,
                       isExpanded: true,
-                      dropdownColor: AppTheme.surfaceCard,
+                      dropdownColor: AppTheme.biscuit,
                       items: _categories.map((c) {
                         return DropdownMenuItem(
                           value: c,
-                          child: Text(c, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                          child: Text(c, style: const TextStyle(color: AppTheme.ink, fontSize: 13)),
                         );
                       }).toList(),
                       onChanged: (val) {
@@ -166,7 +166,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                 const SizedBox(height: 18),
 
                 // Illustration rapide
-                const Text('Visuel rapide', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text('Visuel rapide', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -177,10 +177,10 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: isSel ? AppTheme.limeAccent.withOpacity(0.2) : AppTheme.surfaceCard,
+                          color: isSel ? AppTheme.red.withOpacity(0.2) : AppTheme.biscuit,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSel ? AppTheme.limeAccent : Colors.white10,
+                            color: isSel ? AppTheme.red : AppTheme.sand,
                           ),
                         ),
                         child: Text(p['emoji']!, style: const TextStyle(fontSize: 22)),
@@ -194,9 +194,9 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceCard,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
+                    border: Border.all(color: AppTheme.sand),
                   ),
                   child: Column(
                     children: [
@@ -204,17 +204,17 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text(
                           '⚡ Enchère Dégressive (Smart Decay)',
-                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                         subtitle: const Text(
                           'Le prix baisse automatiquement vers le plancher jusqu à fermeture.',
-                          style: TextStyle(color: Colors.white60, fontSize: 11),
+                          style: TextStyle(color: AppTheme.muted, fontSize: 13),
                         ),
                         value: _isDutch,
-                        activeColor: AppTheme.limeAccent,
+                        activeColor: AppTheme.red,
                         onChanged: (val) => setState(() => _isDutch = val),
                       ),
-                      const Divider(color: Colors.white10),
+                      const Divider(color: AppTheme.sand),
                       Row(
                         children: [
                           Expanded(
@@ -245,22 +245,22 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceCard,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
+                    border: Border.all(color: AppTheme.sand),
                   ),
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text(
                       '🎁 Panier Surprise (Mystery Box)',
-                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                     subtitle: const Text(
                       'Idéal pour écouler des assortiments variés avec note de rareté.',
-                      style: TextStyle(color: Colors.white60, fontSize: 11),
+                      style: TextStyle(color: AppTheme.muted, fontSize: 13),
                     ),
                     value: _isSurprise,
-                    activeColor: Colors.amber,
+                    activeColor: AppTheme.mustard,
                     onChanged: (val) => setState(() => _isSurprise = val),
                   ),
                 ),
@@ -278,8 +278,8 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                 // Bouton Publication
                 AppButton(
                   text: _isSubmitting ? 'Publication...' : '🚀 Publier l Offre Anti-Gaspi',
-                  backgroundColor: AppTheme.limeAccent,
-                  textColor: Colors.black,
+                  backgroundColor: AppTheme.red,
+                  textColor: AppTheme.cream,
                   onPressed: _isSubmitting ? null : _submit,
                 ),
               ],

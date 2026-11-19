@@ -1,5 +1,5 @@
 // 💡 Concept & Analogie : Comme la carte d'adhérent biométrique dans un club éco-responsable, cet écran résume le statut de l'utilisateur, ses badges écologiques et ses préférences d'alertes push.
-// 🔄 Comparaison React / Flutter : En Flutter, les bascules d'alertes utilisent `SwitchListTile` avec la couleur `AppTheme.limeAccent` ; en React, nous utilisons des checkboxes HTML personnalisées.
+// 🔄 Comparaison React / Flutter : En Flutter, les bascules d'alertes utilisent `SwitchListTile` avec la couleur `AppTheme.red` ; en React, nous utilisons des checkboxes HTML personnalisées.
 // 🎯 À retenir pour la soutenance : "Cet écran mobile permet aux étudiants de suivre leur jauge d'ÉcoPoints en direct tout en personnalisant leurs canaux de notifications FCM."
 
 import 'package:flutter/material.dart';
@@ -54,10 +54,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: AppTheme.biscuit,
         content: Text(
           'Profil mis à jour avec succès !',
-          style: TextStyle(color: AppTheme.limeAccent, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -66,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Mon Profil', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -83,9 +83,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderColor),
+                    border: Border.all(color: AppTheme.ink),
                   ),
                   child: Row(
                     children: [
@@ -93,9 +93,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 58,
                         height: 58,
                         decoration: BoxDecoration(
-                          color: AppTheme.darkBackground,
+                          color: AppTheme.cream,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppTheme.limeAccent.withOpacity(0.5)),
+                          border: Border.all(color: AppTheme.red.withOpacity(0.5)),
                         ),
                         child: const Center(
                           child: Text('🎓', style: TextStyle(fontSize: 28)),
@@ -113,23 +113,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: AppTheme.ink,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.limeAccent.withOpacity(0.15),
+                                    color: AppTheme.red.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: AppTheme.limeAccent.withOpacity(0.4)),
+                                    border: Border.all(color: AppTheme.red.withOpacity(0.4)),
                                   ),
                                   child: const Text(
                                     'ÉTUDIANTE',
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: AppTheme.limeAccent,
+                                      color: AppTheme.red,
                                     ),
                                   ),
                                 ),
@@ -138,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 4),
                             const Text(
                               'donyesbejaoui27@gmail.com',
-                              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                              style: TextStyle(fontSize: 13, color: AppTheme.muted),
                             ),
                           ],
                         ),
@@ -152,9 +152,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderColor),
+                    border: Border.all(color: AppTheme.ink),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.limeAccent,
+                              color: AppTheme.red,
                             ),
                           ),
                           Text(
@@ -175,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              color: AppTheme.ink,
                             ),
                           ),
                         ],
@@ -186,14 +186,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: const LinearProgressIndicator(
                           value: 240 / 300,
                           minHeight: 10,
-                          backgroundColor: AppTheme.darkBackground,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.limeAccent),
+                          backgroundColor: AppTheme.cream,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.red),
                         ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
                         'Plus que 60 points pour atteindre le palier ARBRE 🌳',
-                        style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                        style: TextStyle(fontSize: 13, color: AppTheme.muted),
                       ),
                     ],
                   ),
@@ -205,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Nom & Prénom',
                   controller: _nameController,
                   validator: Validators.validateDisplayName,
-                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
@@ -213,33 +213,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Téléphone Mobile',
                   controller: _phoneController,
                   validator: Validators.validatePhone,
-                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
                 const Text(
                   'FILIÈRE ESSECT',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: AppTheme.textMuted,
+                    color: AppTheme.muted,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.borderColor),
+                    border: Border.all(color: AppTheme.ink),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedFiliere,
                       isExpanded: true,
-                      dropdownColor: AppTheme.cardColor,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      dropdownColor: AppTheme.biscuit,
+                      style: const TextStyle(color: AppTheme.ink, fontSize: 13),
                       items: _filieres.map((f) {
                         return DropdownMenuItem<String>(
                           value: f['value'],
@@ -257,24 +257,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Préférences Notifications
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppTheme.borderColor),
+                    border: Border.all(color: AppTheme.ink),
                   ),
                   child: Column(
                     children: [
                       SwitchListTile(
-                        activeColor: AppTheme.limeAccent,
-                        title: const Text('Notifications Push', style: TextStyle(fontSize: 13, color: Colors.white)),
-                        subtitle: const Text('Alertes offres dégressives en temps réel', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                        activeColor: AppTheme.red,
+                        title: const Text('Notifications Push', style: TextStyle(fontSize: 13, color: AppTheme.ink)),
+                        subtitle: const Text('Alertes offres dégressives en temps réel', style: TextStyle(fontSize: 13, color: AppTheme.muted)),
                         value: _pushNotifications,
                         onChanged: (val) => setState(() => _pushNotifications = val),
                       ),
-                      const Divider(height: 1, color: AppTheme.borderColor),
+                      const Divider(height: 1, color: AppTheme.ink),
                       SwitchListTile(
-                        activeColor: AppTheme.limeAccent,
-                        title: const Text('Justificatifs par Email', style: TextStyle(fontSize: 13, color: Colors.white)),
-                        subtitle: const Text('Reçus de paiement et billets QR', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                        activeColor: AppTheme.red,
+                        title: const Text('Justificatifs par Email', style: TextStyle(fontSize: 13, color: AppTheme.ink)),
+                        subtitle: const Text('Reçus de paiement et billets QR', style: TextStyle(fontSize: 13, color: AppTheme.muted)),
                         value: _emailReceipts,
                         onChanged: (val) => setState(() => _emailReceipts = val),
                       ),

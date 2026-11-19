@@ -48,6 +48,8 @@ export const ENDPOINTS = {
   DASHBOARD_ADMIN: '/dashboards/admin',
   ADMIN_MERCHANTS: '/admin/merchants',
   ADMIN_MERCHANT_STATUS: (id) => `/admin/merchants/${id}/status`,
+  ADMIN_MERCHANT_LOCATION: (id) => `/admin/merchants/${id}/location`,
+  ADMIN_MERCHANT: (id) => `/admin/merchants/${id}`,
   ADMIN_USERS: '/admin/users',
   ADMIN_USER_STATUS: (uid) => `/admin/users/${uid}/status`,
   HEALTH: '/health',

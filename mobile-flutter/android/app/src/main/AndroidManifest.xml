@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Requis en release : sans elle l'APK ne peut joindre ni l'API ni la passerelle de paiement (seuls debug/profile l'avaient). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="campussave"
         android:name="${applicationName}"

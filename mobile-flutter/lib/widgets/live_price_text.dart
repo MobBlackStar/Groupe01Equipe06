@@ -97,7 +97,7 @@ class _LivePriceTextState extends State<LivePriceText> {
               formattedPrice,
               style: widget.priceStyle ??
                   TextStyle(
-                    color: widget.onCream ? AppTheme.deepInk : AppTheme.limeAccent,
+                    color: widget.onCream ? AppTheme.ink : AppTheme.red,
                     fontSize: widget.isLarge ? 28 : 17,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
@@ -108,10 +108,10 @@ class _LivePriceTextState extends State<LivePriceText> {
               Text(
                 formattedOriginal,
                 style: TextStyle(
-                  color: widget.onCream ? const Color(0xFF8C857B) : Colors.white38,
+                  color: widget.onCream ? AppTheme.muted : AppTheme.muted,
                   fontSize: widget.isLarge ? 16 : 12,
                   decoration: TextDecoration.lineThrough,
-                  decorationColor: widget.onCream ? const Color(0xFF8C857B) : Colors.white38,
+                  decorationColor: widget.onCream ? AppTheme.muted : AppTheme.muted,
                 ),
               ),
             ],
@@ -120,15 +120,15 @@ class _LivePriceTextState extends State<LivePriceText> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.griddleRed.withValues(alpha: widget.onCream ? 0.12 : 0.2),
+                  color: AppTheme.red.withValues(alpha: widget.onCream ? 0.12 : 0.2),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppTheme.griddleRed.withValues(alpha: widget.onCream ? 0.35 : 0.4)),
+                  border: Border.all(color: AppTheme.red.withValues(alpha: widget.onCream ? 0.35 : 0.4)),
                 ),
                 child: Text(
                   '-$discountPercent%',
                   style: const TextStyle(
-                    color: AppTheme.griddleRed,
-                    fontSize: 10,
+                    color: AppTheme.red,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -145,7 +145,7 @@ class _LivePriceTextState extends State<LivePriceText> {
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: widget.onCream ? AppTheme.griddleRed : AppTheme.limeAccent,
+                    color: widget.onCream ? AppTheme.red : AppTheme.red,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -153,8 +153,8 @@ class _LivePriceTextState extends State<LivePriceText> {
                 Text(
                   'Smart Decay en direct',
                   style: TextStyle(
-                    color: widget.onCream ? AppTheme.deepInk.withValues(alpha: 0.75) : AppTheme.limeAccent,
-                    fontSize: 10,
+                    color: widget.onCream ? AppTheme.ink.withValues(alpha: 0.75) : AppTheme.red,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

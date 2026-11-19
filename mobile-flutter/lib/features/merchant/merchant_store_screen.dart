@@ -56,28 +56,28 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
     IconData statusIcon;
 
     if (_status == 'APPROVED') {
-      statusColor = AppTheme.limeAccent;
+      statusColor = AppTheme.red;
       statusLabel = 'Agréé ESSECT ✓';
       statusIcon = Icons.verified;
     } else if (_status == 'REJECTED') {
-      statusColor = AppTheme.redCritical;
+      statusColor = AppTheme.red;
       statusLabel = 'Dossier Refusé ✕';
       statusIcon = Icons.cancel;
     } else {
-      statusColor = AppTheme.orangeUrgent;
+      statusColor = AppTheme.red;
       statusLabel = 'En attente de validation ⏳';
       statusIcon = Icons.hourglass_top;
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Espace Commerçant', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           IconButton(
             tooltip: 'Simuler changement de statut',
-            icon: const Icon(Icons.sync_alt, color: AppTheme.limeAccent),
+            icon: const Icon(Icons.sync_alt, color: AppTheme.red),
             onPressed: _cycleStatus,
           ),
         ],
@@ -132,12 +132,12 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                                   : _status == 'REJECTED'
                                       ? (_statusReason ?? 'Consultez le motif de refus.')
                                       : 'Votre dossier est en cours d instruction (sous 2h).',
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.white38),
+                      const Icon(Icons.chevron_right, color: AppTheme.muted),
                     ],
                   ),
                 ),
@@ -150,9 +150,9 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceCard,
+                  color: AppTheme.biscuit,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppTheme.sand),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,9 +164,9 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                           width: 54,
                           height: 54,
                           decoration: BoxDecoration(
-                            color: AppTheme.limeAccent.withOpacity(0.15),
+                            color: AppTheme.red.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.limeAccent.withOpacity(0.3)),
+                            border: Border.all(color: AppTheme.red.withOpacity(0.3)),
                           ),
                           child: const Center(
                             child: Text('🏪', style: TextStyle(fontSize: 26)),
@@ -180,7 +180,7 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                               Text(
                                 _store['name'] as String,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppTheme.ink,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -191,20 +191,20 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.08),
+                                      color: AppTheme.ink.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       _store['typeName'] as String,
-                                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                      style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Icon(Icons.star, color: Colors.amber, size: 14),
+                                  const Icon(Icons.star, color: AppTheme.mustard, size: 14),
                                   const SizedBox(width: 4),
                                   Text(
                                     '${_store['rating']}',
-                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -213,15 +213,15 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                         ),
                       ],
                     ),
-                    const Divider(color: Colors.white10, height: 24),
+                    const Divider(color: AppTheme.sand, height: 24),
                     Row(
                       children: [
-                        const Icon(Icons.place, color: AppTheme.limeAccent, size: 16),
+                        const Icon(Icons.place, color: AppTheme.red, size: 16),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             '${_store['address']} (${_store['distanceM']} m de l ESSECT • ~${_store['walkingMinutes']} min à pied)',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                           ),
                         ),
                       ],
@@ -229,11 +229,11 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.phone, color: Colors.white38, size: 16),
+                        const Icon(Icons.phone, color: AppTheme.muted, size: 16),
                         const SizedBox(width: 6),
                         Text(
                           _store['phone'] as String,
-                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                         ),
                       ],
                     ),
@@ -247,15 +247,15 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard('Offres Actives', '${_store['offersActive']}', '⚡ En ligne', AppTheme.limeAccent),
+                    child: _buildStatCard('Offres Actives', '${_store['offersActive']}', '⚡ En ligne', AppTheme.red),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard('Repas Sauvés', '${_store['savedMeals']}', '🌱 Anti-gaspi', Colors.white),
+                    child: _buildStatCard('Repas Sauvés', '${_store['savedMeals']}', '🌱 Anti-gaspi', AppTheme.ink),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard('CO₂ Évité', '${_store['co2AvoidedKg']} kg', '🌍 Impact vert', Colors.cyanAccent),
+                    child: _buildStatCard('CO₂ Évité', '${_store['co2AvoidedKg']} kg', '🌍 Impact vert', AppTheme.ink),
                   ),
                 ],
               ),
@@ -265,21 +265,21 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
               // 4. Quick Actions
               const Text(
                 'Actions Rapides',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
 
               AppButton(
                 text: '✨ Publier une Offre (IA Magique)',
                 icon: Icons.auto_awesome,
-                backgroundColor: AppTheme.limeAccent,
-                textColor: Colors.black,
+                backgroundColor: AppTheme.red,
+                textColor: AppTheme.cream,
                 onPressed: _status == 'APPROVED'
                     ? () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Ouverture du formulaire de publication IA...'),
-                            backgroundColor: AppTheme.surfaceCard,
+                            backgroundColor: AppTheme.biscuit,
                           ),
                         );
                       }
@@ -291,14 +291,14 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
               AppButton(
                 text: '📋 Gérer mon Catalogue d Offres',
                 icon: Icons.inventory_2_outlined,
-                backgroundColor: AppTheme.surfaceCard,
-                textColor: Colors.white,
+                backgroundColor: AppTheme.biscuit,
+                textColor: AppTheme.ink,
                 isOutlined: true,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Affichage du catalogue des offres'),
-                      backgroundColor: AppTheme.surfaceCard,
+                      backgroundColor: AppTheme.biscuit,
                     ),
                   );
                 },
@@ -310,7 +310,7 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                 text: '✏️ Modifier les Coordonnées de l Établissement',
                 icon: Icons.edit_location_alt_outlined,
                 backgroundColor: Colors.transparent,
-                textColor: Colors.white70,
+                textColor: AppTheme.muted,
                 isOutlined: true,
                 onPressed: () {
                   Navigator.push(
@@ -329,9 +329,9 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.03),
+                  color: AppTheme.ink.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  border: Border.all(color: AppTheme.ink.withOpacity(0.06)),
                 ),
                 child: Row(
                   children: const [
@@ -340,7 +340,7 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
                     Expanded(
                       child: Text(
                         'Astuce ESSECT : Les offres à prix dégressif dynamique se vendent 2,4x plus vite entre 15h et 18h !',
-                        style: TextStyle(color: Colors.white60, fontSize: 12),
+                        style: TextStyle(color: AppTheme.muted, fontSize: 13),
                       ),
                     ),
                   ],
@@ -357,21 +357,21 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceCard,
+        color: AppTheme.biscuit,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppTheme.sand),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          Text(label, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
           const SizedBox(height: 6),
           Text(
             value,
             style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text(sub, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+          Text(sub, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
         ],
       ),
     );

@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../app/theme.dart';
 class ImpactScreen extends StatelessWidget {
   final String? studentFiliere;
 
@@ -20,13 +21,13 @@ class ImpactScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F12),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0F12),
+        backgroundColor: AppTheme.cream,
         elevation: 0,
         title: const Text(
           'Impact Campus ESSECT 🌱',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: SingleChildScrollView(
@@ -39,12 +40,12 @@ class ImpactScreen extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF161920), Color(0xFF1C222E)],
+                  colors: [AppTheme.biscuit, AppTheme.sand],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFCCFF00).withOpacity(0.3)),
+                border: Border.all(color: AppTheme.red.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,23 +53,23 @@ class ImpactScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFCCFF00).withOpacity(0.12),
+                      color: AppTheme.red.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
                       'SOLIDARITÉ & CLIMAT',
-                      style: TextStyle(color: Color(0xFFCCFF00), fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 10),
                   const Text(
                     '1 680 repas sauvés',
-                    style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
+                    style: TextStyle(color: AppTheme.ink, fontSize: 26, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'Soit 580 kg de nourriture sauvée et 1,45 tonne de CO₂e évitée sur Montfleury.',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                    style: TextStyle(color: AppTheme.muted, fontSize: 13),
                   ),
                 ],
               ),
@@ -78,7 +79,7 @@ class ImpactScreen extends StatelessWidget {
             // Équivalences EPA
             const Text(
               'Équivalences Concrètes (EPA / FAO)',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
@@ -88,17 +89,17 @@ class ImpactScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF161920),
+                      color: AppTheme.biscuit,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
                     ),
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('📱', style: TextStyle(fontSize: 22)),
                         SizedBox(height: 6),
-                        Text('145 000', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('charges smartphone', style: TextStyle(color: Color(0xFF00E5FF), fontSize: 10)),
+                        Text('145 000', style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('charges smartphone', style: TextStyle(color: AppTheme.ink, fontSize: 13)),
                       ],
                     ),
                   ),
@@ -108,17 +109,17 @@ class ImpactScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF161920),
+                      color: AppTheme.biscuit,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
                     ),
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('🚗', style: TextStyle(fontSize: 22)),
                         SizedBox(height: 6),
-                        Text('5 940 km', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('de voiture évités', style: TextStyle(color: Color(0xFFCCFF00), fontSize: 10)),
+                        Text('5 940 km', style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('de voiture évités', style: TextStyle(color: AppTheme.red, fontSize: 13)),
                       ],
                     ),
                   ),
@@ -133,11 +134,11 @@ class ImpactScreen extends StatelessWidget {
               children: [
                 Text(
                   'Challenge Inter-Filières 🏆',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'Saison 2026',
-                  style: TextStyle(color: Color(0xFFCCFF00), fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -155,10 +156,10 @@ class ImpactScreen extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isUser ? const Color(0xFFCCFF00).withOpacity(0.08) : const Color(0xFF161920),
+                    color: isUser ? AppTheme.red.withOpacity(0.08) : AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isUser ? const Color(0xFFCCFF00).withOpacity(0.4) : Colors.white.withOpacity(0.08),
+                      color: isUser ? AppTheme.red.withOpacity(0.4) : AppTheme.ink.withOpacity(0.08),
                     ),
                   ),
                   child: Row(
@@ -173,19 +174,19 @@ class ImpactScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   filiere['name']!,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: const TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                                 if (isUser) ...[
                                   const SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFCCFF00),
+                                      color: AppTheme.red,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: const Text(
                                       'VOUS',
-                                      style: TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w900),
+                                      style: TextStyle(color: AppTheme.cream, fontSize: 13, fontWeight: FontWeight.w900),
                                     ),
                                   ),
                                 ],
@@ -193,14 +194,14 @@ class ImpactScreen extends StatelessWidget {
                             ),
                             Text(
                               '${filiere['food']} sauvés • ${filiere['pts']} pts',
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                             ),
                           ],
                         ),
                       ),
                       Text(
                         filiere['co2']!,
-                        style: const TextStyle(color: Color(0xFFCCFF00), fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ],
                   ),

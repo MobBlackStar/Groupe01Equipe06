@@ -59,10 +59,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: AppTheme.biscuit,
         content: Text(
           'Compte ${_selectedRole == "STUDENT" ? "Étudiant" : "Commerçant"} créé avec succès !',
-          style: const TextStyle(color: AppTheme.limeAccent, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -71,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Créer un compte', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -90,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
-                      color: AppTheme.limeAccent,
+                      color: AppTheme.red,
                     ),
                   ),
                 ),
@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Center(
                   child: Text(
                     "Rejoignez l'écosystème solidaire ESSECT",
-                    style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                    style: TextStyle(fontSize: 13, color: AppTheme.muted),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -107,10 +107,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text(
                   'CHOISISSEZ VOTRE PROFIL',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: AppTheme.textMuted,
+                    color: AppTheme.muted,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -143,26 +143,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const Text(
                     'FILIÈRE ESSECT',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8,
-                      color: AppTheme.textMuted,
+                      color: AppTheme.muted,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppTheme.cardColor,
+                      color: AppTheme.biscuit,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.borderColor),
+                      border: Border.all(color: AppTheme.ink),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedFiliere,
                         isExpanded: true,
-                        dropdownColor: AppTheme.cardColor,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        dropdownColor: AppTheme.biscuit,
+                        style: const TextStyle(color: AppTheme.ink, fontSize: 13),
                         items: _filieres.map((f) {
                           return DropdownMenuItem<String>(
                             value: f['value'],
@@ -184,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _nameController,
                   validator: Validators.validateDisplayName,
                   hintText: 'ex: Ritej Bejaoui',
-                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
@@ -195,7 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   validator: Validators.validateEmail,
                   hintText: 'ex: etudiant@essect.u-tunis.tn',
-                  prefixIcon: const Icon(Icons.mail_outline, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.mail_outline, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
@@ -206,7 +206,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.phone,
                   validator: Validators.validatePhone,
                   hintText: '+21698123456',
-                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
@@ -217,11 +217,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscurePassword,
                   validator: Validators.validatePassword,
                   hintText: 'Minimum 8 caractères dont 1 chiffre',
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.muted),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.textMuted,
+                      color: AppTheme.muted,
                       size: 20,
                     ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -256,10 +256,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.limeAccent.withOpacity(0.12) : AppTheme.cardColor,
+          color: isSelected ? AppTheme.red.withOpacity(0.12) : AppTheme.biscuit,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.limeAccent : AppTheme.borderColor,
+            color: isSelected ? AppTheme.red : AppTheme.ink,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -273,13 +273,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? AppTheme.limeAccent : Colors.white,
+                color: isSelected ? AppTheme.red : AppTheme.ink,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               desc,
-              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              style: const TextStyle(fontSize: 13, color: AppTheme.muted),
             ),
           ],
         ),

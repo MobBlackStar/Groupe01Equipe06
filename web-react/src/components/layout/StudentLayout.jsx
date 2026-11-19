@@ -9,6 +9,7 @@ import { ShoppingBag, MapPin, Ticket, Award, BarChart3 } from 'lucide-react';
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
+import { isEmbedded } from '../../lib/embed.js';
 
 const isExplore = (p) => p === '/app' || p === '/app/explore' || p.startsWith('/app/offers') || p.startsWith('/app/checkout');
 
@@ -28,6 +29,11 @@ export default function StudentLayout({ children }) {
   useEffect(() => {
     refreshProfile?.();
   }, [pathname, refreshProfile]);
+
+  // Affichée dans l'application mobile (WebView) : aucune navigation web, l'écran natif Flutter fournit la sienne
+  if (isEmbedded()) {
+    return <div className="min-h-screen bg-[#FAF3E6] text-[#111111]"><main>{children}</main></div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF3E6] text-[#111111] flex flex-col pb-[calc(68px+env(safe-area-inset-bottom))] lg:pb-0">

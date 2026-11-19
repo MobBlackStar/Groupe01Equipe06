@@ -667,3 +667,11 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
 .cs-time-pop__clock { font-family: 'League Gothic', 'Oswald', sans-serif; font-size: 1.9rem; line-height: 1; letter-spacing: 0.02em; }
 .cs-time-pop__chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
+
+/* ============================================================
+   16. ÉDITEUR DE SPOT (SpotEditor) : épingle déplaçable + repère ESSECT
+   ============================================================ */
+.cs-spot-pin { width: 28px; height: 28px; border-radius: 9999px; background: var(--cs-leaf); border: 3px solid var(--cs-ink); box-shadow: 0 0 0 4px rgba(250, 243, 230, 0.9); cursor: grab; }
+.cs-spot-pin.is-outside { background: var(--cs-red); }
+.cs-spot-pin:active { cursor: grabbing; }
+.cs-spot-essect { padding: 0.15rem 0.6rem; border-radius: 9999px; background: var(--cs-red); color: var(--cs-cream); border: 2px solid var(--cs-ink); font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.06em; pointer-events: none; }

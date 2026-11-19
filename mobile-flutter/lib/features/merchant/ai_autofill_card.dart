@@ -87,7 +87,7 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✨ Formulaire pré-rempli par l IA avec succès !'),
-          backgroundColor: AppTheme.limeAccent,
+          backgroundColor: AppTheme.red,
         ),
       );
     }
@@ -104,9 +104,9 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceCard,
+        color: AppTheme.biscuit,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.limeAccent.withOpacity(0.4)),
+        border: Border.all(color: AppTheme.red.withOpacity(0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +118,7 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
               Text(
                 'Assistant IA Magique',
                 style: TextStyle(
-                  color: AppTheme.limeAccent,
+                  color: AppTheme.red,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -128,29 +128,29 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
           const SizedBox(height: 6),
           const Text(
             'Tapez ce qu il vous reste en cuisine (ex: "4 makloub escalope, fermeture 17h") :',
-            style: TextStyle(color: Colors.white70, fontSize: 11),
+            style: TextStyle(color: AppTheme.muted, fontSize: 13),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _textController,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
+            style: const TextStyle(color: AppTheme.ink, fontSize: 13),
             decoration: InputDecoration(
               hintText: '4 chapati thon + 2 briks...',
-              hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+              hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
               filled: true,
-              fillColor: AppTheme.darkBackground,
+              fillColor: AppTheme.cream,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Colors.white10),
+                borderSide: const BorderSide(color: AppTheme.sand),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Colors.white10),
+                borderSide: const BorderSide(color: AppTheme.sand),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppTheme.limeAccent),
+                borderSide: const BorderSide(color: AppTheme.red),
               ),
             ),
           ),
@@ -165,13 +165,13 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                     )
-                  : const Icon(Icons.auto_awesome, size: 16, color: Colors.black),
+                  : const Icon(Icons.auto_awesome, size: 16, color: AppTheme.cream),
               label: Text(
                 _isLoading ? 'Analyse en cours...' : 'Remplissage Magique IA',
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(color: AppTheme.cream, fontWeight: FontWeight.bold, fontSize: 13),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.limeAccent,
+                backgroundColor: AppTheme.red,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),

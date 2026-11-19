@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/auth_service.dart';
 
+import '../../app/theme.dart';
 class LoginScreen extends StatefulWidget {
   final AuthService authService;
 
@@ -119,10 +120,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const campusLime = Color(0xFFCCFF00);
-    const campusDark = Color(0xFF0D0F12);
-    const campusCard = Color(0xFF16191E);
-    const campusBorder = Color(0xFF22272E);
+    const campusLime = AppTheme.red;
+    const campusDark = AppTheme.cream;
+    const campusCard = AppTheme.cream;
+    const campusBorder = AppTheme.ink;
 
     return Scaffold(
       backgroundColor: campusDark,
@@ -135,59 +136,48 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo et titre
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: campusLime,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: campusLime.withValues(alpha: 0.3),
-                          blurRadius: 18,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'CS',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  RichText(
-                    text: const TextSpan(
-                      text: 'Campus',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
+                  // En-tête Griddle : même accroche que la page de connexion du site
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        TextSpan(
-                          text: 'Save',
-                          style: TextStyle(color: campusLime),
+                        Text('CAMPUSSAVE', style: AppTheme.display(40, AppTheme.red)),
+                        const SizedBox(width: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text('essect', style: const TextStyle(fontFamily: AppTheme.fontSticker, fontSize: 16, color: AppTheme.ink)),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Anti-gaspillage & Solidarité à l ESSECT Montfleury',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 13,
+                  const SizedBox(height: 22),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('PLATEFORME OFFICIELLE ESSECT MONTFLEURY', style: AppTheme.eyebrow()),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: RichText(
+                      text: TextSpan(
+                        style: AppTheme.display(68),
+                        children: [
+                          const TextSpan(text: 'FAIT POUR\nÊTRE '),
+                          TextSpan(text: 'PARTAGÉ.', style: AppTheme.display(68, AppTheme.red)),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.',
+                      style: AppTheme.body(17, AppTheme.ink),
+                    ),
+                  ),
+                  const SizedBox(height: 26),
 
                   // Carte de Connexion
                   Container(
@@ -205,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Text(
                             'Connexion',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.ink,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -216,18 +206,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.15),
+                                color: AppTheme.red.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                                border: Border.all(color: AppTheme.red.withValues(alpha: 0.5)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                                  const Icon(Icons.error_outline, color: AppTheme.red, size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                                      style: const TextStyle(color: AppTheme.red, fontSize: 13),
                                     ),
                                   ),
                                 ],
@@ -240,8 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Text(
                             'EMAIL UNIVERSITAIRE',
                             style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
+                              color: AppTheme.muted,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
                             ),
@@ -250,13 +240,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _emailController,
                             validator: _validateEmail,
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            style: const TextStyle(color: AppTheme.ink, fontSize: 14),
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               hintText: 'etudiant@essect.u-tunis.tn',
-                              hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                              hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
                               filled: true,
-                              fillColor: campusDark,
+                              fillColor: AppTheme.paper,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -278,8 +268,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Text(
                             'MOT DE PASSE',
                             style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
+                              color: AppTheme.muted,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
                             ),
@@ -289,17 +279,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _passwordController,
                             validator: _validatePassword,
                             obscureText: _obscurePassword,
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            style: const TextStyle(color: AppTheme.ink, fontSize: 14),
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                              hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
                               filled: true,
-                              fillColor: campusDark,
+                              fillColor: AppTheme.paper,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                  color: Colors.white38,
+                                  color: AppTheme.muted,
                                   size: 18,
                                 ),
                                 onPressed: () {
@@ -327,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: _isSubmitting ? null : _handleLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: campusLime,
-                              foregroundColor: Colors.black,
+                              foregroundColor: AppTheme.cream,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -340,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 18,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.black,
+                                      color: AppTheme.cream,
                                     ),
                                   )
                                 : const Text(
@@ -376,8 +366,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text(
                               'KIT DE DÉMONSTRATION ESSECT',
                               style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
+                                color: AppTheme.muted,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
                               ),
@@ -405,11 +395,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SizedBox(height: 2),
                                     Text(
                                       'Étudiant',
-                                      style: TextStyle(color: campusLime, fontWeight: FontWeight.bold, fontSize: 12),
+                                      style: TextStyle(color: campusLime, fontWeight: FontWeight.bold, fontSize: 13),
                                     ),
                                     Text(
                                       'Yassine (EBUS)',
-                                      style: TextStyle(color: Colors.white38, fontSize: 9),
+                                      style: TextStyle(color: AppTheme.muted, fontSize: 13),
                                     ),
                                   ],
                                 ),
@@ -434,11 +424,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SizedBox(height: 2),
                                     Text(
                                       'Commerçant',
-                                      style: TextStyle(color: campusLime, fontWeight: FontWeight.bold, fontSize: 12),
+                                      style: TextStyle(color: campusLime, fontWeight: FontWeight.bold, fontSize: 13),
                                     ),
                                     Text(
                                       'Baguette & Bag.',
-                                      style: TextStyle(color: Colors.white38, fontSize: 9),
+                                      style: TextStyle(color: AppTheme.muted, fontSize: 13),
                                     ),
                                   ],
                                 ),

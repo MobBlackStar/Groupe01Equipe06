@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/crypto/ticket_crypto.dart';
 
+import '../../app/theme.dart';
 class RotatingQr extends StatefulWidget {
   final String ticketKeyHex;
   final String orderId;
@@ -89,7 +90,7 @@ class _RotatingQrState extends State<RotatingQr> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF161920),
+        color: AppTheme.biscuit,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: Colors.white.withOpacity(0.08)),
         boxShadow: [
@@ -107,9 +108,9 @@ class _RotatingQrState extends State<RotatingQr> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withOpacity(0.12),
+              color: AppTheme.leaf.withOpacity(0.12),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+              border: Border.all(color: AppTheme.leaf.withOpacity(0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -118,7 +119,7 @@ class _RotatingQrState extends State<RotatingQr> {
                   width: 8,
                   height: 8,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF34D399),
+                    color: AppTheme.leaf,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -126,8 +127,8 @@ class _RotatingQrState extends State<RotatingQr> {
                 const Text(
                   'LIVING TICKET ACTIF',
                   style: TextStyle(
-                    color: Color(0xFF34D399),
-                    fontSize: 11,
+                    color: AppTheme.leaf,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.1,
                   ),
@@ -180,7 +181,7 @@ class _RotatingQrState extends State<RotatingQr> {
           Text(
             'Code de secours (caméra indisponible) :',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               color: Colors.grey.shade400,
             ),
           ),
@@ -188,7 +189,7 @@ class _RotatingQrState extends State<RotatingQr> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D0F12),
+              color: AppTheme.cream,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
@@ -200,7 +201,7 @@ class _RotatingQrState extends State<RotatingQr> {
                 fontFamily: 'monospace',
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFFCCFF00),
+                color: AppTheme.red,
                 letterSpacing: 3,
               ),
             ),
@@ -211,7 +212,7 @@ class _RotatingQrState extends State<RotatingQr> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D0F12),
+              color: AppTheme.cream,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withOpacity(0.05)),
             ),
@@ -227,13 +228,13 @@ class _RotatingQrState extends State<RotatingQr> {
                       CircularProgressIndicator(
                         value: _secondsRemaining / 30.0,
                         backgroundColor: Colors.white.withOpacity(0.1),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.red),
                         strokeWidth: 3,
                       ),
                       Text(
                         '$_secondsRemaining',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -248,7 +249,7 @@ class _RotatingQrState extends State<RotatingQr> {
                     const Text(
                       'Renouvellement automatique',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -256,7 +257,7 @@ class _RotatingQrState extends State<RotatingQr> {
                     Text(
                       'Protection anti-capture d\'écran',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 13,
                         color: Colors.grey.shade500,
                       ),
                     ),
@@ -272,7 +273,7 @@ class _RotatingQrState extends State<RotatingQr> {
               'N° de retrait : ${widget.orderCode}',
               style: TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 12,
+                fontSize: 13,
                 color: Colors.grey.shade400,
                 fontWeight: FontWeight.w500,
               ),

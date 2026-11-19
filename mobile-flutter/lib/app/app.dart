@@ -15,7 +15,7 @@ class CampusSaveApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'CampusSave',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.theme,
       routerConfig: AppRouter.router,
     );
   }

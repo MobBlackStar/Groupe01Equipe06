@@ -203,13 +203,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final offers = _filteredOffers;
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('CampusSave • ESSECT', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune, color: AppTheme.limeAccent),
+            icon: const Icon(Icons.tune, color: AppTheme.red),
             onPressed: _openFilters,
             tooltip: 'Filtres de recherche',
           ),
@@ -227,14 +227,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() {}),
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.ink, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Rechercher un plat, sandwich, commerce...',
-                        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 20),
+                        hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search, color: AppTheme.muted, size: 20),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, color: Colors.white38, size: 18),
+                                icon: const Icon(Icons.clear, color: AppTheme.muted, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() {});
@@ -242,19 +242,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               )
                             : null,
                         filled: true,
-                        fillColor: AppTheme.surfaceCard,
+                        fillColor: AppTheme.biscuit,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white10),
+                          borderSide: const BorderSide(color: AppTheme.sand),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white10),
+                          borderSide: const BorderSide(color: AppTheme.sand),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.limeAccent),
+                          borderSide: const BorderSide(color: AppTheme.red),
                         ),
                       ),
                     ),
@@ -269,9 +269,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.limeAccent.withOpacity(0.1),
+                  color: AppTheme.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.limeAccent.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.red.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
@@ -280,7 +280,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     Expanded(
                       child: Text(
                         'Autour de l ESSECT Montfleury • ${offers.length} offre(s) en ligne',
-                        style: const TextStyle(color: AppTheme.limeAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -293,10 +293,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _loadOffers,
-                color: AppTheme.limeAccent,
-                backgroundColor: AppTheme.surfaceCard,
+                color: AppTheme.red,
+                backgroundColor: AppTheme.biscuit,
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppTheme.limeAccent))
+                    ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
                     : offers.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -311,7 +311,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 child: Text(
                                   _loadError ?? 'Aucune offre ne correspond à votre recherche',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                  style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                                 ),
                               ),
                               if (_loadError != null)
@@ -320,7 +320,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     setState(() => _isLoading = true);
                                     _loadOffers();
                                   },
-                                  child: const Text('Réessayer', style: TextStyle(color: AppTheme.limeAccent)),
+                                  child: const Text('Réessayer', style: TextStyle(color: AppTheme.red)),
                                 ),
                             ],
                           ),

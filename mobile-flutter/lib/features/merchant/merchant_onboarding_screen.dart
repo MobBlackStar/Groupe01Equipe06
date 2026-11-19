@@ -87,7 +87,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
     if (dist > 3000) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppTheme.redCritical,
+          backgroundColor: AppTheme.red,
           content: Text("L'établissement est au-delà du rayon autorisé de 3 000 m de l'ESSECT"),
         ),
       );
@@ -102,10 +102,10 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: AppTheme.biscuit,
         content: Text(
           'Dossier soumis avec succès ! Statut en attente d instruction.',
-          style: TextStyle(color: AppTheme.limeAccent, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -118,7 +118,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
     final isEligible = dist <= 3000;
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Adhésion Commerçant', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -134,16 +134,16 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 const Text(
                   'ENREGISTRER VOTRE ÉTABLISSEMENT',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: AppTheme.limeAccent,
+                    color: AppTheme.red,
                   ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   'Rejoignez le réseau anti-gaspi de Montfleury',
-                  style: TextStyle(fontSize: 14, color: AppTheme.textMuted),
+                  style: TextStyle(fontSize: 14, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 20),
 
@@ -158,7 +158,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                     return null;
                   },
                   hintText: 'ex: Baguette & Baguette Montfleury',
-                  prefixIcon: const Icon(Icons.storefront_outlined, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.storefront_outlined, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
@@ -166,26 +166,26 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 const Text(
                   'TYPE D ÉTABLISSEMENT',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: AppTheme.textMuted,
+                    color: AppTheme.muted,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.borderColor),
+                    border: Border.all(color: AppTheme.ink),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedType,
                       isExpanded: true,
-                      dropdownColor: AppTheme.cardColor,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      dropdownColor: AppTheme.biscuit,
+                      style: const TextStyle(color: AppTheme.ink, fontSize: 13),
                       items: _types.map((t) {
                         return DropdownMenuItem<String>(
                           value: t['value'],
@@ -207,7 +207,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                   keyboardType: TextInputType.phone,
                   validator: Validators.validatePhone,
                   hintText: '+21671390111',
-                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 16),
 
@@ -217,7 +217,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                   controller: _descController,
                   validator: (val) => val == null || val.trim().isEmpty ? 'La description est requise' : null,
                   hintText: 'Spécialités appréciées des étudiants...',
-                  prefixIcon: const Icon(Icons.description_outlined, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.description_outlined, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 20),
 
@@ -225,10 +225,10 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 const Text(
                   'EMPLACEMENT GÉOGRAPHIQUE MONTFLEURY',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: AppTheme.textMuted,
+                    color: AppTheme.muted,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -242,13 +242,13 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                     return ChoiceChip(
                       label: Text(p['name']),
                       selected: isSel,
-                      selectedColor: AppTheme.limeAccent,
+                      selectedColor: AppTheme.red,
                       labelStyle: TextStyle(
-                        fontSize: 11,
-                        color: isSel ? Colors.black : Colors.white,
+                        fontSize: 13,
+                        color: isSel ? Colors.black : AppTheme.ink,
                         fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                       ),
-                      backgroundColor: AppTheme.cardColor,
+                      backgroundColor: AppTheme.biscuit,
                       onSelected: (selected) {
                         if (selected) {
                           setState(() {
@@ -266,7 +266,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 AppTextField(
                   label: 'Adresse & Rue',
                   controller: _streetController,
-                  prefixIcon: const Icon(Icons.location_on_outlined, color: AppTheme.textMuted),
+                  prefixIcon: const Icon(Icons.location_on_outlined, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 12),
 
@@ -274,17 +274,17 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isEligible ? AppTheme.limeAccent.withOpacity(0.1) : AppTheme.redCritical.withOpacity(0.1),
+                    color: isEligible ? AppTheme.red.withOpacity(0.1) : AppTheme.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isEligible ? AppTheme.limeAccent.withOpacity(0.4) : AppTheme.redCritical,
+                      color: isEligible ? AppTheme.red.withOpacity(0.4) : AppTheme.red,
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         isEligible ? Icons.check_circle_outline : Icons.error_outline,
-                        color: isEligible ? AppTheme.limeAccent : AppTheme.redCritical,
+                        color: isEligible ? AppTheme.red : AppTheme.red,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -296,13 +296,13 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: isEligible ? Colors.white : AppTheme.redCritical,
+                                color: isEligible ? AppTheme.ink : AppTheme.red,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               isEligible ? 'Éligible au réseau piéton (≤ 3 000 m)' : 'Hors périmètre autorisé',
-                              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                              style: const TextStyle(fontSize: 13, color: AppTheme.muted),
                             ),
                           ],
                         ),

@@ -10,6 +10,7 @@ import 'package:dio/dio.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/endpoints.dart';
 
+import '../../app/theme.dart';
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -105,7 +106,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMsg),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppTheme.red,
         ),
       );
     } finally {
@@ -128,7 +129,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       isDismissible: false,
       enableDrag: false,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF161920),
+      backgroundColor: AppTheme.biscuit,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
@@ -142,13 +143,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.2),
+                  color: AppTheme.leaf.withOpacity(0.2),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4), width: 2),
+                  border: Border.all(color: AppTheme.leaf.withOpacity(0.4), width: 2),
                 ),
                 child: const Icon(
                   Icons.check_circle_rounded,
-                  color: Color(0xFF34D399),
+                  color: AppTheme.leaf,
                   size: 40,
                 ),
               ),
@@ -158,52 +159,52 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: AppTheme.ink,
                 ),
               ),
               const SizedBox(height: 4),
               const Text(
                 'Vous pouvez remettre la commande à l\'étudiant.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF34D399)),
+                style: TextStyle(fontSize: 13, color: AppTheme.leaf),
               ),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0D0F12),
+                  color: AppTheme.cream,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
                 ),
                 child: Column(
                   children: [
                     _buildReceiptRow('N° Commande', order['orderCode'] ?? 'CS-?????', isBold: true),
-                    const Divider(color: Colors.white10, height: 20),
+                    const Divider(color: AppTheme.sand, height: 20),
                     _buildReceiptRow(
                       'Étudiant',
                       order['studentSnapshot']?['displayName'] ?? 'Étudiant ESSECT',
                     ),
-                    const Divider(color: Colors.white10, height: 20),
+                    const Divider(color: AppTheme.sand, height: 20),
                     _buildReceiptRow(
                       'Portions',
                       '${order['quantity'] ?? 1} portion(s)',
-                      valueColor: const Color(0xFFCCFF00),
+                      valueColor: AppTheme.red,
                     ),
-                    const Divider(color: Colors.white10, height: 20),
+                    const Divider(color: AppTheme.sand, height: 20),
                     _buildReceiptRow(
                       'Points attribués',
                       '+$pointsAwarded EcoPoints',
-                      valueColor: const Color(0xFF34D399),
+                      valueColor: AppTheme.leaf,
                     ),
                     if (isSurprise && reveal != null) ...[
-                      const Divider(color: Colors.white10, height: 20),
+                      const Divider(color: AppTheme.sand, height: 20),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
                           '🎁 Contenu Mystery Box :',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Colors.amber.shade400,
+                            color: AppTheme.ink,
                           ),
                         ),
                       ),
@@ -216,14 +217,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
                             children: [
                               Text(
                                 '• ${item['name']}',
-                                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                style: const TextStyle(fontSize: 13, color: AppTheme.muted),
                               ),
                               Text(
                                 'x${item['qty']}',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.amber.shade200,
+                                  color: AppTheme.red,
                                 ),
                               ),
                             ],
@@ -245,8 +246,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   icon: const Icon(Icons.qr_code_scanner_rounded),
                   label: const Text('Scanner la commande suivante'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCCFF00),
-                    foregroundColor: Colors.black,
+                    backgroundColor: AppTheme.red,
+                    foregroundColor: AppTheme.cream,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -270,7 +271,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       context: context,
       isDismissible: false,
       enableDrag: false,
-      backgroundColor: const Color(0xFF161920),
+      backgroundColor: AppTheme.biscuit,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
@@ -284,13 +285,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.2),
+                  color: AppTheme.red.withOpacity(0.2),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.red.withOpacity(0.4), width: 2),
+                  border: Border.all(color: AppTheme.red.withOpacity(0.4), width: 2),
                 ),
                 child: const Icon(
                   Icons.close_rounded,
-                  color: Colors.redAccent,
+                  color: AppTheme.red,
                   size: 36,
                 ),
               ),
@@ -300,14 +301,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppTheme.ink,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 errorMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.red.shade300),
+                style: TextStyle(fontSize: 14, color: AppTheme.red),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -320,8 +321,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('Réessayer'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade900,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.redDark,
+                    foregroundColor: AppTheme.ink,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -342,14 +343,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          style: TextStyle(fontSize: 13, color: AppTheme.muted),
         ),
         Text(
           value,
           style: TextStyle(
             fontSize: 13,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-            color: valueColor ?? Colors.white,
+            color: valueColor ?? AppTheme.ink,
             fontFamily: isBold ? 'monospace' : null,
           ),
         ),
@@ -371,7 +372,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF161920),
+      backgroundColor: AppTheme.biscuit,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
@@ -395,12 +396,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppTheme.ink,
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: Colors.grey),
+                    icon: const Icon(Icons.close, color: AppTheme.muted),
                   ),
                 ],
               ),
@@ -409,22 +410,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 controller: orderCodeController,
                 textCapitalization: TextCapitalization.characters,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.ink,
                   fontFamily: 'monospace',
                   fontSize: 18,
                 ),
                 decoration: InputDecoration(
                   labelText: 'Code Commande (ex : CS-7H9KZ)',
-                  labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                  labelStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
                   filled: true,
-                  fillColor: const Color(0xFF0D0F12),
+                  fillColor: AppTheme.cream,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    borderSide: BorderSide(color: AppTheme.ink.withOpacity(0.1)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFCCFF00)),
+                    borderSide: const BorderSide(color: AppTheme.red),
                   ),
                 ),
               ),
@@ -435,7 +436,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 maxLength: 6,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Color(0xFFCCFF00),
+                  color: AppTheme.red,
                   fontFamily: 'monospace',
                   fontSize: 24,
                   letterSpacing: 6,
@@ -443,17 +444,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ),
                 decoration: InputDecoration(
                   labelText: 'Code à 6 chiffres sous le QR',
-                  labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                  labelStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
                   filled: true,
-                  fillColor: const Color(0xFF0D0F12),
+                  fillColor: AppTheme.cream,
                   counterText: '',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    borderSide: BorderSide(color: AppTheme.ink.withOpacity(0.1)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFCCFF00)),
+                    borderSide: const BorderSide(color: AppTheme.red),
                   ),
                 ),
               ),
@@ -468,8 +469,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCCFF00),
-                    foregroundColor: Colors.black,
+                    backgroundColor: AppTheme.red,
+                    foregroundColor: AppTheme.cream,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -492,19 +493,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F12),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text(
           'Scanner de Retrait',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        backgroundColor: const Color(0xFF161920),
+        backgroundColor: AppTheme.biscuit,
         elevation: 0,
         actions: [
           IconButton(
             icon: Icon(
               _isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-              color: _isTorchOn ? const Color(0xFFCCFF00) : Colors.white70,
+              color: _isTorchOn ? AppTheme.red : AppTheme.muted,
             ),
             onPressed: () async {
               await _controller.toggleTorch();
@@ -514,7 +515,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.cameraswitch_rounded, color: Colors.white70),
+            icon: const Icon(Icons.cameraswitch_rounded, color: AppTheme.muted),
             onPressed: () => _controller.switchCamera(),
           ),
         ],
@@ -528,23 +529,23 @@ class _ScannerScreenState extends State<ScannerScreen> {
             onDetect: _onDetect,
             errorBuilder: (context, error, child) {
               return Container(
-                color: const Color(0xFF0D0F12),
+                color: AppTheme.cream,
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(24),
                 child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.camera_alt_outlined, size: 48, color: Colors.white38),
+                    Icon(Icons.camera_alt_outlined, size: 48, color: AppTheme.muted),
                     SizedBox(height: 12),
                     Text(
                       'Caméra non disponible sur cet aperçu',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     SizedBox(height: 6),
                     Text(
                       'Utilisez la saisie manuelle ci-dessous pour valider le code à 6 chiffres.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                      style: TextStyle(color: AppTheme.muted, fontSize: 13),
                     ),
                   ],
                 ),
@@ -557,11 +558,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
             width: 260,
             height: 260,
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFCCFF00), width: 3),
+              border: Border.all(color: AppTheme.red, width: 3),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFCCFF00).withOpacity(0.2),
+                  color: AppTheme.red.withOpacity(0.2),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -580,7 +581,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
               child: const Text(
                 'Pointez la caméra vers le Living Ticket de l\'étudiant',
-                style: TextStyle(color: Colors.white, fontSize: 12),
+                style: TextStyle(color: AppTheme.ink, fontSize: 13),
               ),
             ),
           ),
@@ -595,12 +596,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
               icon: const Icon(Icons.keyboard_rounded),
               label: const Text('Saisie de secours (code à 6 chiffres)'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF161920),
-                foregroundColor: const Color(0xFFCCFF00),
+                backgroundColor: AppTheme.biscuit,
+                foregroundColor: AppTheme.red,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: const Color(0xFFCCFF00).withOpacity(0.4)),
+                  side: BorderSide(color: AppTheme.red.withOpacity(0.4)),
                 ),
                 textStyle: const TextStyle(fontWeight: FontWeight.bold),
               ),
@@ -612,7 +613,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               color: Colors.black54,
               child: const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.red),
                 ),
               ),
             ),

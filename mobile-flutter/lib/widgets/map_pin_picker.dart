@@ -6,6 +6,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
 class MapPinPicker extends StatefulWidget {
   final double initialLat;
   final double initialLng;
@@ -84,10 +85,10 @@ class _MapPinPickerState extends State<MapPinPicker> {
 
   @override
   Widget build(BuildContext context) {
-    const campusLime = Color(0xFFCCFF00);
-    const campusDark = Color(0xFF0D0F12);
-    const campusCard = Color(0xFF161920);
-    const campusBorder = Color(0xFF22272E);
+    const campusLime = AppTheme.red;
+    const campusDark = AppTheme.cream;
+    const campusCard = AppTheme.biscuit;
+    const campusBorder = AppTheme.biscuit;
 
     final isEligible = _distanceMeters <= 3000;
 
@@ -108,7 +109,7 @@ class _MapPinPickerState extends State<MapPinPicker> {
               const Text(
                 '📍 Localisation Boutique',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.ink,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -118,19 +119,19 @@ class _MapPinPickerState extends State<MapPinPicker> {
                 decoration: BoxDecoration(
                   color: isEligible
                       ? campusLime.withValues(alpha: 0.15)
-                      : Colors.red.withValues(alpha: 0.2),
+                      : AppTheme.red.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isEligible
                         ? campusLime.withValues(alpha: 0.5)
-                        : Colors.redAccent.withValues(alpha: 0.6),
+                        : AppTheme.red.withValues(alpha: 0.6),
                   ),
                 ),
                 child: Text(
                   isEligible ? '$_distanceMeters m (Éligible)' : '$_distanceMeters m (> 3 km)',
                   style: TextStyle(
-                    color: isEligible ? campusLime : Colors.redAccent,
-                    fontSize: 11,
+                    color: isEligible ? campusLime : AppTheme.red,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -140,7 +141,7 @@ class _MapPinPickerState extends State<MapPinPicker> {
           const SizedBox(height: 6),
           const Text(
             'Touchez la carte pour ajuster la position de votre établissement.',
-            style: TextStyle(color: Colors.white54, fontSize: 11),
+            style: TextStyle(color: AppTheme.muted, fontSize: 13),
           ),
           const SizedBox(height: 12),
 
@@ -196,13 +197,13 @@ class _MapPinPickerState extends State<MapPinPicker> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFF0D0F12),
+          color: AppTheme.cream,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF22272E)),
+          border: Border.all(color: AppTheme.biscuit),
         ),
         child: Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 10),
+          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
         ),
       ),
     );
@@ -237,7 +238,7 @@ class _RadarMapPainter extends CustomPainter {
     final circlePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..color = Colors.white.withValues(alpha: 0.08);
+      ..color = AppTheme.ink.withValues(alpha: 0.08);
 
     // Cercles concentriques
     canvas.drawCircle(Offset(centerX, centerY), 1000 * scale, circlePaint);
@@ -249,14 +250,14 @@ class _RadarMapPainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..color = isEligible
           ? campusLime.withValues(alpha: 0.35)
-          : Colors.redAccent.withValues(alpha: 0.4);
+          : AppTheme.red.withValues(alpha: 0.4);
     canvas.drawCircle(Offset(centerX, centerY), 3000 * scale, limitPaint);
 
     // Axes en croix
     final axisPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8
-      ..color = Colors.white.withValues(alpha: 0.05);
+      ..color = AppTheme.ink.withValues(alpha: 0.05);
     canvas.drawLine(Offset(centerX, 0), Offset(centerX, size.height), axisPaint);
     canvas.drawLine(Offset(0, centerY), Offset(size.width, centerY), axisPaint);
 
@@ -276,19 +277,19 @@ class _RadarMapPainter extends CustomPainter {
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
-      ..color = isEligible ? campusLime : Colors.redAccent;
+      ..color = isEligible ? campusLime : AppTheme.red;
     canvas.drawLine(Offset(centerX, centerY), Offset(pinX, pinY), linePaint);
 
     // Épingle boutique
     final pinPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = isEligible ? campusLime : Colors.redAccent;
+      ..color = isEligible ? campusLime : AppTheme.red;
     canvas.drawCircle(Offset(pinX, pinY), 7, pinPaint);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
-      ..color = const Color(0xFF0D0F12);
+      ..color = AppTheme.cream;
     canvas.drawCircle(Offset(pinX, pinY), 7, borderPaint);
   }
 

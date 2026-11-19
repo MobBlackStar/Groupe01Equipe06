@@ -125,7 +125,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
     final progress = (_ecoPoints % 100) / 100.0;
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text(
           'CAMPUSSAVE CLUB • FIDÉLITÉ',
@@ -136,8 +136,8 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
       body: SafeArea(
         child: RefreshIndicator(
         onRefresh: _load,
-        color: AppTheme.mustardYellow,
-        backgroundColor: AppTheme.surfaceCard,
+        color: AppTheme.mustard,
+        backgroundColor: AppTheme.biscuit,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -152,12 +152,12 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                   margin: const EdgeInsets.only(right: 4, bottom: 4),
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
                   decoration: BoxDecoration(
-                    color: AppTheme.warmIvory,
+                    color: AppTheme.paper,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.deepInk, width: 2.5),
+                    border: Border.all(color: AppTheme.ink, width: 2.5),
                     boxShadow: const [
                       BoxShadow(
-                        color: AppTheme.deepInk,
+                        color: AppTheme.ink,
                         offset: Offset(5, 5),
                         blurRadius: 0,
                       ),
@@ -171,13 +171,14 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
+                          Expanded(
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
                                 'CAMPUSSAVE CLUB',
                                 style: TextStyle(
-                                  color: AppTheme.deepInk,
+                                  color: AppTheme.ink,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -0.5,
@@ -187,25 +188,27 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                               Text(
                                 "20 points = 1 tampon. Au 5e, le club t'offre -20 %.",
                                 style: TextStyle(
-                                  color: AppTheme.deepInk.withValues(alpha: 0.7),
-                                  fontSize: 10.5,
+                                  color: AppTheme.ink.withValues(alpha: 0.7),
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.griddleRed,
+                              color: AppTheme.red,
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppTheme.deepInk, width: 1.5),
+                              border: Border.all(color: AppTheme.ink, width: 1.5),
                             ),
                             child: Text(
                               '$activeStamps/$totalStamps TAMPONS',
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10.5,
+                                color: AppTheme.cream,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.5,
                               ),
@@ -230,8 +233,8 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                           Text(
                             '${(_displayName.isEmpty ? 'ÉTUDIANT ESSECT' : _displayName).toUpperCase()} • ESSECT 2026',
                             style: TextStyle(
-                              color: AppTheme.deepInk.withValues(alpha: 0.65),
-                              fontSize: 9.5,
+                              color: AppTheme.ink.withValues(alpha: 0.65),
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
                               fontFamily: 'monospace',
                               letterSpacing: 0.5,
@@ -240,15 +243,15 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppTheme.matchaEmerald.withValues(alpha: 0.15),
+                              color: AppTheme.leaf.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppTheme.matchaEmerald, width: 1),
+                              border: Border.all(color: AppTheme.leaf, width: 1),
                             ),
                             child: Text(
                               '🌱 $_mealsRescued sauvés',
                               style: const TextStyle(
-                                color: AppTheme.matchaEmerald,
-                                fontSize: 10.5,
+                                color: AppTheme.leaf,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -266,9 +269,9 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceCard,
+                  color: AppTheme.biscuit,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: AppTheme.sand),
                 ),
                 child: Column(
                   children: [
@@ -284,12 +287,12 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                               children: [
                                 const Text(
                                   'Palier Éco-Actuel',
-                                  style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                                  style: TextStyle(color: AppTheme.muted, fontSize: 13),
                                 ),
                                 Text(
                                   tierLabel,
                                   style: const TextStyle(
-                                    color: AppTheme.warmCream,
+                                    color: AppTheme.ink,
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -301,11 +304,11 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('Solde EcoPoints', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
+                            const Text('Solde EcoPoints', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                             Text(
                               '$_ecoPoints pts',
                               style: const TextStyle(
-                                color: AppTheme.mustardYellow,
+                                color: AppTheme.red,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
                                 fontFamily: 'monospace',
@@ -320,8 +323,8 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: progress,
-                        backgroundColor: Colors.white10,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.mustardYellow),
+                        backgroundColor: AppTheme.sand,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.mustard),
                         minHeight: 6,
                       ),
                     ),
@@ -331,13 +334,13 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                       children: [
                         Text(
                           'Prochain palier à $nextMilestone pts',
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5),
+                          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                         ),
                         Text(
                           '${((1 - progress) * 100).round()} pts restants',
                           style: const TextStyle(
-                            color: AppTheme.mustardYellow,
-                            fontSize: 10.5,
+                            color: AppTheme.red,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -353,7 +356,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
               const Text(
                 'COUPONS & TICKETS GAGNÉS',
                 style: TextStyle(
-                  color: AppTheme.warmCream,
+                  color: AppTheme.cream,
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.8,
@@ -366,16 +369,16 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                   margin: const EdgeInsets.only(bottom: 12, right: 3),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isAvailable ? AppTheme.warmIvory : AppTheme.surfaceCard,
+                    color: isAvailable ? AppTheme.paper : AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isAvailable ? AppTheme.deepInk : Colors.white12,
+                      color: isAvailable ? AppTheme.ink : AppTheme.sand,
                       width: isAvailable ? 2 : 1,
                     ),
                     boxShadow: isAvailable
                         ? const [
                             BoxShadow(
-                              color: AppTheme.deepInk,
+                              color: AppTheme.ink,
                               offset: Offset(3, 3),
                               blurRadius: 0,
                             ),
@@ -389,10 +392,10 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: isAvailable ? AppTheme.mustardYellow : Colors.white.withValues(alpha: 0.05),
+                          color: isAvailable ? AppTheme.mustard : AppTheme.ink.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isAvailable ? AppTheme.deepInk : Colors.white12,
+                            color: isAvailable ? AppTheme.ink : AppTheme.sand,
                             width: isAvailable ? 2 : 1,
                           ),
                         ),
@@ -413,7 +416,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                             Text(
                               _rewardTitle(r),
                               style: TextStyle(
-                                color: isAvailable ? AppTheme.deepInk : AppTheme.textMuted,
+                                color: isAvailable ? AppTheme.ink : AppTheme.muted,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -422,16 +425,16 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                             Text(
                               _rewardSub(r),
                               style: TextStyle(
-                                color: isAvailable ? AppTheme.deepInk.withValues(alpha: 0.65) : AppTheme.textMuted,
-                                fontSize: 10,
+                                color: isAvailable ? AppTheme.ink.withValues(alpha: 0.65) : AppTheme.muted,
+                                fontSize: 13,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               r.id,
                               style: TextStyle(
-                                color: isAvailable ? AppTheme.griddleRed : AppTheme.textMuted,
-                                fontSize: 10,
+                                color: isAvailable ? AppTheme.red : AppTheme.muted,
+                                fontSize: 13,
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.w900,
                               ),
@@ -444,18 +447,18 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                         decoration: BoxDecoration(
-                          color: isAvailable ? AppTheme.matchaEmerald : Colors.white.withValues(alpha: 0.06),
+                          color: isAvailable ? AppTheme.leaf : AppTheme.ink.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: isAvailable ? AppTheme.deepInk : Colors.white12,
+                            color: isAvailable ? AppTheme.ink : AppTheme.sand,
                             width: isAvailable ? 1.5 : 1,
                           ),
                         ),
                         child: Text(
                           isAvailable ? 'DISPONIBLE' : (r.status == 'LOCKED' ? 'RÉSERVÉ' : 'UTILISÉ'),
                           style: TextStyle(
-                            color: isAvailable ? Colors.white : AppTheme.textMuted,
-                            fontSize: 9.5,
+                            color: isAvailable ? AppTheme.ink : AppTheme.muted,
+                            fontSize: 13,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -468,7 +471,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
               if (_rewards.isEmpty)
                 Text(
                   _error ?? 'Aucun coupon pour le moment : un coupon se débloque tous les 100 EcoPoints.',
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                  style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                 ),
             ],
           ),
@@ -491,10 +494,10 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
       child: CustomPaint(
         painter: DashedCirclePainter(
           color: isStamped
-              ? AppTheme.griddleRed
+              ? AppTheme.red
               : isFreeBowl
-                  ? AppTheme.griddleRed.withValues(alpha: 0.7)
-                  : const Color(0xFFC7BEB1),
+                  ? AppTheme.red.withValues(alpha: 0.7)
+                  : AppTheme.sand,
           strokeWidth: isStamped ? 2.0 : 1.3,
           dashCount: 16,
         ),
@@ -508,15 +511,15 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                       Text(
                         '(((',
                         style: TextStyle(
-                          color: AppTheme.griddleRed.withValues(alpha: 0.8),
-                          fontSize: 8,
+                          color: AppTheme.red.withValues(alpha: 0.8),
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           height: 0.8,
                         ),
                       ),
                       const Icon(
                         Icons.ramen_dining_rounded,
-                        color: AppTheme.griddleRed,
+                        color: AppTheme.red,
                         size: 26,
                       ),
                     ],
@@ -528,8 +531,8 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                           Text(
                             '-20 %',
                             style: TextStyle(
-                              color: AppTheme.griddleRed,
-                              fontSize: 7.5,
+                              color: AppTheme.red,
+                              fontSize: 13,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.5,
                             ),
@@ -537,8 +540,8 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                           Text(
                             'COUPON',
                             style: TextStyle(
-                              color: AppTheme.griddleRed,
-                              fontSize: 7.5,
+                              color: AppTheme.red,
+                              fontSize: 13,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.5,
                             ),
@@ -548,7 +551,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
                     : Text(
                         '${index + 1}',
                         style: TextStyle(
-                          color: AppTheme.deepInk.withValues(alpha: 0.25),
+                          color: AppTheme.ink.withValues(alpha: 0.25),
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),

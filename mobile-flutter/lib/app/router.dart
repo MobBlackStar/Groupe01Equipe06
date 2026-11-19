@@ -20,6 +20,7 @@ import '../features/merchant/scanner_screen.dart';
 import '../features/merchant/merchant_orders_screen.dart';
 import '../features/merchant/merchant_store_screen.dart';
 
+import 'theme.dart';
 class AppRouter {
   static final AuthService authService = AuthService();
 
@@ -149,9 +150,9 @@ class _StudentShellState extends State<StudentShell> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: const Color(0xFF161920),
-        selectedItemColor: const Color(0xFFCCFF00),
-        unselectedItemColor: const Color(0xFF64748B),
+        backgroundColor: AppTheme.biscuit,
+        selectedItemColor: AppTheme.red,
+        unselectedItemColor: AppTheme.muted,
         type: BottomNavigationBarType.fixed,
         selectedFontSize: 11,
         unselectedFontSize: 10,
@@ -196,9 +197,9 @@ class _MerchantShellState extends State<MerchantShell> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: const Color(0xFF161920),
-        selectedItemColor: const Color(0xFFFF5500),
-        unselectedItemColor: const Color(0xFF64748B),
+        backgroundColor: AppTheme.biscuit,
+        selectedItemColor: AppTheme.orange,
+        unselectedItemColor: AppTheme.muted,
         type: BottomNavigationBarType.fixed,
         selectedFontSize: 11,
         unselectedFontSize: 10,

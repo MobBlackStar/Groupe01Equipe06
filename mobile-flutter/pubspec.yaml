@@ -52,3 +52,26 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Polices du site web (OFL), embarquées pour fonctionner hors-ligne sur le téléphone
+  fonts:
+    - family: Oswald
+      fonts:
+        - asset: assets/fonts/Oswald.ttf
+    - family: LeagueGothic
+      fonts:
+        - asset: assets/fonts/LeagueGothic.ttf
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton-Regular.ttf
+    - family: BowlbyOneSC
+      fonts:
+        - asset: assets/fonts/BowlbyOneSC-Regular.ttf
+    - family: Knewave
+      fonts:
+        - asset: assets/fonts/Knewave-Regular.ttf
+    - family: SpaceMono
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+        - asset: assets/fonts/SpaceMono-Bold.ttf
+          weight: 700

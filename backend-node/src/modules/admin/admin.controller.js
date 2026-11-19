@@ -22,6 +22,21 @@ export const adminController = {
     res.json(result);
   }),
 
+  createSpot: asyncHandler(async (req, res) => {
+    const result = await adminService.createSpot(req.user.uid, req.body);
+    res.status(201).json(result);
+  }),
+
+  updateSpotLocation: asyncHandler(async (req, res) => {
+    const result = await adminService.updateSpotLocation(req.params.id, req.body.location, req.user.uid);
+    res.json(result);
+  }),
+
+  deleteSpot: asyncHandler(async (req, res) => {
+    const result = await adminService.deleteSpot(req.params.id, { hard: req.query.hard === 'true' }, req.user.uid);
+    res.json(result);
+  }),
+
   listUsers: asyncHandler(async (req, res) => {
     const result = await adminService.listUsers(req.query.role);
     res.json(result);

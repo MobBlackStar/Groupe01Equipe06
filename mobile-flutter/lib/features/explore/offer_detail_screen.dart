@@ -81,7 +81,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       if (!mounted) return;
       setState(() => _isReserving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent),
+        SnackBar(content: Text(e.toString()), backgroundColor: AppTheme.red),
       );
     }
   }
@@ -101,7 +101,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
     final totalMillimes = offer.targetPriceMillimes * _quantity;
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: Text(offer.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
@@ -125,9 +125,9 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                 height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceCard,
+                  color: AppTheme.biscuit,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppTheme.sand),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
@@ -143,7 +143,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                           const SizedBox(height: 8),
                           Text(
                             offer.title,
-                            style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -165,7 +165,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         ),
                         child: Text(
                           '📦 ${offer.remainingQuantity} portion${offer.remainingQuantity > 1 ? 's' : ''} restante${offer.remainingQuantity > 1 ? 's' : ''}',
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -180,11 +180,11 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                 children: [
                   Text(
                     '🏪 ${offer.merchantName ?? "Commerce Montfleury"}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   Text(
                     '📍 ${widget.distanceFromEssectM} m (~$walkingMin min)',
-                    style: const TextStyle(color: AppTheme.limeAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -193,14 +193,14 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               // Titre
               Text(
                 offer.title,
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: AppTheme.ink, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
 
               // Description
               Text(
                 offer.description,
-                style: const TextStyle(color: Colors.white60, fontSize: 13, height: 1.4),
+                style: const TextStyle(color: AppTheme.muted, fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 18),
 
@@ -209,14 +209,14 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceCard,
+                  color: AppTheme.biscuit,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppTheme.sand),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Prix unitaire actuel :', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    const Text('Prix unitaire actuel :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                     const SizedBox(height: 6),
                     LivePriceText(
                       pricingType: offer.pricingType,
@@ -236,9 +236,9 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  color: AppTheme.ink.withOpacity(0.04),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppTheme.sand),
                 ),
                 child: Row(
                   children: [
@@ -250,12 +250,12 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         children: [
                           Text(
                             'Impact Éco : $foodGrams g sauvés • $co2Grams g CO₂ évités',
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Équivaut à recharger ~ $phonesCharged smartphones',
-                            style: const TextStyle(color: Colors.white54, fontSize: 10),
+                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                           ),
                         ],
                       ),
@@ -269,25 +269,25 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Quantité à réserver :', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                  const Text('Quantité à réserver :', style: TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.w600)),
                   Container(
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceCard,
+                      color: AppTheme.biscuit,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white12),
+                      border: Border.all(color: AppTheme.sand),
                     ),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove, color: Colors.white, size: 18),
+                          icon: const Icon(Icons.remove, color: AppTheme.ink, size: 18),
                           onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
                         ),
                         Text(
                           '$_quantity',
-                          style: const TextStyle(color: AppTheme.limeAccent, fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: AppTheme.red, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                          icon: const Icon(Icons.add, color: AppTheme.ink, size: 18),
                           onPressed: _quantity < maxAllowed ? () => setState(() => _quantity++) : null,
                         ),
                       ],
@@ -297,7 +297,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               ),
               if (_applicableRewards.isNotEmpty) ...[
                 const SizedBox(height: 20),
-                const Text('Coupon fidélité', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                const Text('Coupon fidélité', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -310,7 +310,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                 const SizedBox(height: 4),
                 const Text(
                   'La remise est calculée par le serveur à la réservation.',
-                  style: TextStyle(color: Colors.white38, fontSize: 10),
+                  style: TextStyle(color: AppTheme.muted, fontSize: 13),
                 ),
               ],
               const SizedBox(height: 24),
@@ -321,8 +321,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.surfaceCard,
-          border: const Border(top: BorderSide(color: Colors.white10)),
+          color: AppTheme.biscuit,
+          border: const Border(top: BorderSide(color: AppTheme.sand)),
         ),
         child: SafeArea(
           child: Row(
@@ -332,10 +332,10 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Total estimé :', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    const Text('Total estimé :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                     Text(
                       Money.formatTND(totalMillimes),
-                      style: const TextStyle(color: AppTheme.limeAccent, fontSize: 20, fontWeight: FontWeight.w900),
+                      style: const TextStyle(color: AppTheme.red, fontSize: 20, fontWeight: FontWeight.w900),
                     ),
                   ],
                 ),
@@ -343,8 +343,8 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               Expanded(
                 child: AppButton(
                   text: _isReserving ? 'Blocage...' : '⚡ Réserver',
-                  backgroundColor: AppTheme.limeAccent,
-                  textColor: Colors.black,
+                  backgroundColor: AppTheme.red,
+                  textColor: AppTheme.cream,
                   onPressed: _isReserving ? null : _reserve,
                 ),
               ),
@@ -362,15 +362,15 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSel ? AppTheme.limeAccent.withOpacity(0.15) : AppTheme.surfaceCard,
+          color: isSel ? AppTheme.red.withOpacity(0.15) : AppTheme.biscuit,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSel ? AppTheme.limeAccent : Colors.white10),
+          border: Border.all(color: isSel ? AppTheme.red : AppTheme.sand),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSel ? AppTheme.limeAccent : Colors.white70,
-            fontSize: 11,
+            color: isSel ? AppTheme.red : AppTheme.muted,
+            fontSize: 13,
             fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
           ),
         ),

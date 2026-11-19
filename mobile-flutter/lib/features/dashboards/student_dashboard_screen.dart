@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../widgets/kpi_tile.dart';
 
+import '../../app/theme.dart';
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
 
@@ -51,18 +52,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
-          backgroundColor: const Color(0xFF161920),
+          backgroundColor: AppTheme.biscuit,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'Évaluer ${order['title']}',
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 'Attribuez une note de 1 à 5 étoiles :',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                style: TextStyle(color: AppTheme.muted, fontSize: 13),
               ),
               const SizedBox(height: 12),
               Row(
@@ -71,7 +72,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   return IconButton(
                     icon: Icon(
                       index < rating ? Icons.star : Icons.star_border,
-                      color: const Color(0xFFFFD700),
+                      color: AppTheme.mustard,
                       size: 32,
                     ),
                     onPressed: () {
@@ -87,12 +88,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 controller: commentController,
                 maxLength: 280,
                 maxLines: 2,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                style: const TextStyle(color: AppTheme.ink, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Commentaire optionnel...',
-                  hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                  hintStyle: const TextStyle(color: AppTheme.muted),
                   filled: true,
-                  fillColor: const Color(0xFF0D0F12),
+                  fillColor: AppTheme.cream,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -104,12 +105,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text('Annuler', style: TextStyle(color: AppTheme.muted)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFCCFF00),
-                foregroundColor: Colors.black,
+                backgroundColor: AppTheme.red,
+                foregroundColor: AppTheme.cream,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () {
@@ -120,7 +121,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Avis enregistré avec succès ! Merci pour votre retour.'),
-                    backgroundColor: Color(0xFF161920),
+                    backgroundColor: AppTheme.biscuit,
                   ),
                 );
               },
@@ -135,30 +136,30 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F12),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0F12),
+        backgroundColor: AppTheme.cream,
         elevation: 0,
         title: const Text(
           'Mon Impact Étudiant 🌱',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFCCFF00).withOpacity(0.12),
+              color: AppTheme.red.withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFCCFF00).withOpacity(0.3)),
+              border: Border.all(color: AppTheme.red.withOpacity(0.3)),
             ),
             child: const Row(
               children: [
-                Icon(Icons.eco, color: Color(0xFFCCFF00), size: 14),
+                Icon(Icons.eco, color: AppTheme.red, size: 14),
                 SizedBox(width: 4),
                 Text(
                   '280 pts',
-                  style: TextStyle(color: Color(0xFFCCFF00), fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -218,13 +219,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               children: [
                 const Text(
                   'Progression Cumulative',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161920),
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
                   ),
                   child: Row(
                     children: [
@@ -233,14 +234,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _selectedChartMetric == 0 ? const Color(0xFFCCFF00) : Colors.transparent,
+                            color: _selectedChartMetric == 0 ? AppTheme.red : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'TND',
                             style: TextStyle(
-                              color: _selectedChartMetric == 0 ? Colors.black : const Color(0xFF94A3B8),
-                              fontSize: 11,
+                              color: _selectedChartMetric == 0 ? Colors.black : AppTheme.muted,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -251,14 +252,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _selectedChartMetric == 1 ? const Color(0xFF00E5FF) : Colors.transparent,
+                            color: _selectedChartMetric == 1 ? AppTheme.ink : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'CO₂',
                             style: TextStyle(
-                              color: _selectedChartMetric == 1 ? Colors.black : const Color(0xFF94A3B8),
-                              fontSize: 11,
+                              color: _selectedChartMetric == 1 ? Colors.black : AppTheme.muted,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -275,9 +276,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               height: 200,
               padding: const EdgeInsets.only(top: 16, right: 16, left: 0, bottom: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF161920),
+                color: AppTheme.biscuit,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
               ),
               child: LineChart(
                 LineChartData(
@@ -285,7 +286,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white.withOpacity(0.05),
+                      color: AppTheme.ink.withOpacity(0.05),
                       strokeWidth: 1,
                     ),
                   ),
@@ -299,7 +300,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           const labels = ['S1', 'S2', 'S3', 'S4', 'S5'];
                           final idx = value.toInt();
                           if (idx >= 0 && idx < labels.length) {
-                            return Text(labels[idx], style: const TextStyle(color: Color(0xFF64748B), fontSize: 10));
+                            return Text(labels[idx], style: const TextStyle(color: AppTheme.muted, fontSize: 13));
                           }
                           return const SizedBox();
                         },
@@ -312,7 +313,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         getTitlesWidget: (value, meta) {
                           return Text(
                             value.toInt().toString(),
-                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 10),
+                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                           );
                         },
                       ),
@@ -337,12 +338,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                               FlSpot(4, 14.5),
                             ],
                       isCurved: true,
-                      color: _selectedChartMetric == 0 ? const Color(0xFFCCFF00) : const Color(0xFF00E5FF),
+                      color: _selectedChartMetric == 0 ? AppTheme.red : AppTheme.ink,
                       barWidth: 3,
                       dotData: const FlDotData(show: true),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: (_selectedChartMetric == 0 ? const Color(0xFFCCFF00) : const Color(0xFF00E5FF)).withOpacity(0.1),
+                        color: (_selectedChartMetric == 0 ? AppTheme.red : AppTheme.ink).withOpacity(0.1),
                       ),
                     ),
                   ],
@@ -354,7 +355,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             // Commandes récentes & notation
             const Text(
               'Derniers Repas & Évaluations',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
@@ -370,19 +371,19 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 return Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161920),
+                    color: AppTheme.biscuit,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFCCFF00).withOpacity(0.1),
+                          color: AppTheme.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.check_circle, color: Color(0xFFCCFF00), size: 20),
+                        child: const Icon(Icons.check_circle, color: AppTheme.red, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -391,11 +392,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           children: [
                             Text(
                               order['title'] as String,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                             Text(
                               '${order['merchant']} • ${order['price']}',
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                             ),
                           ],
                         ),
@@ -404,17 +405,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700).withOpacity(0.12),
+                            color: AppTheme.mustard.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                            border: Border.all(color: AppTheme.mustard.withOpacity(0.3)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.star, color: Color(0xFFFFD700), size: 12),
+                              const Icon(Icons.star, color: AppTheme.mustard, size: 12),
                               const SizedBox(width: 4),
                               Text(
                                 '$rating/5',
-                                style: const TextStyle(color: Color(0xFFFFD700), fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -422,17 +423,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       else
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFD700).withOpacity(0.15),
-                            foregroundColor: const Color(0xFFFFD700),
+                            backgroundColor: AppTheme.mustard.withOpacity(0.15),
+                            foregroundColor: AppTheme.mustard,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                              side: BorderSide(color: AppTheme.mustard.withOpacity(0.3)),
                             ),
                           ),
                           onPressed: () => _showRatingModal(order),
-                          child: const Text('⭐ Noter', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          child: const Text('⭐ Noter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                         ),
                     ],
                   ),

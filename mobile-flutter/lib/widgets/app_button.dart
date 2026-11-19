@@ -41,22 +41,22 @@ class AppButton extends StatelessWidget {
 
     switch (variant) {
       case AppButtonVariant.primary:
-        effectiveBg = AppTheme.limeAccent;
+        effectiveBg = AppTheme.red;
         effectiveFg = Colors.black;
         break;
       case AppButtonVariant.secondary:
-        effectiveBg = AppTheme.cardColor;
-        effectiveFg = Colors.white;
-        borderSide = const BorderSide(color: AppTheme.borderColor);
+        effectiveBg = AppTheme.biscuit;
+        effectiveFg = AppTheme.ink;
+        borderSide = const BorderSide(color: AppTheme.ink);
         break;
       case AppButtonVariant.outline:
         effectiveBg = Colors.transparent;
-        effectiveFg = AppTheme.limeAccent;
-        borderSide = const BorderSide(color: AppTheme.limeAccent);
+        effectiveFg = AppTheme.red;
+        borderSide = const BorderSide(color: AppTheme.red);
         break;
       case AppButtonVariant.danger:
-        effectiveBg = AppTheme.redCritical;
-        effectiveFg = Colors.white;
+        effectiveBg = AppTheme.red;
+        effectiveFg = AppTheme.ink;
         break;
     }
 
@@ -67,7 +67,7 @@ class AppButton extends StatelessWidget {
       effectiveFg = textColor!;
     }
     if (isOutlined) {
-      borderSide = BorderSide(color: textColor ?? AppTheme.borderColor);
+      borderSide = BorderSide(color: textColor ?? AppTheme.ink);
     }
 
     Widget? resolvedIcon;

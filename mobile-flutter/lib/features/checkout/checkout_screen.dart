@@ -126,7 +126,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final netTotal = _order.totalMillimes;
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Validation de Commande', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -143,11 +143,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: isExpired
-                      ? AppTheme.redCritical.withOpacity(0.15)
-                      : AppTheme.limeAccent.withOpacity(0.12),
+                      ? AppTheme.red.withOpacity(0.15)
+                      : AppTheme.red.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isExpired ? AppTheme.redCritical : AppTheme.limeAccent.withOpacity(0.4),
+                    color: isExpired ? AppTheme.red : AppTheme.red.withOpacity(0.4),
                   ),
                 ),
                 child: Row(
@@ -163,14 +163,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             Text(
                               isExpired ? 'Réservation Expirée' : 'Stock Verrouillé (10 min)',
                               style: TextStyle(
-                                color: isExpired ? AppTheme.redCritical : AppTheme.limeAccent,
+                                color: isExpired ? AppTheme.red : AppTheme.red,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
                             ),
                             const Text(
                               'Prix unitaire garanti au millime',
-                              style: TextStyle(color: Colors.white70, fontSize: 11),
+                              style: TextStyle(color: AppTheme.muted, fontSize: 13),
                             ),
                           ],
                         ),
@@ -179,7 +179,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     Text(
                       '$minStr:$secStr',
                       style: TextStyle(
-                        color: isExpired ? AppTheme.redCritical : AppTheme.limeAccent,
+                        color: isExpired ? AppTheme.red : AppTheme.red,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'monospace',
@@ -194,9 +194,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceCard,
+                  color: AppTheme.biscuit,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: AppTheme.sand),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,17 +204,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('RÉCAPITULATIF', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
+                        const Text('RÉCAPITULATIF', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.black45,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppTheme.limeAccent.withOpacity(0.3)),
+                            border: Border.all(color: AppTheme.red.withOpacity(0.3)),
                           ),
                           child: Text(
                             _order.orderCode,
-                            style: const TextStyle(color: AppTheme.limeAccent, fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: AppTheme.red, fontSize: 13, fontFamily: 'monospace', fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -222,29 +222,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const SizedBox(height: 10),
                     Text(
                       _order.offerTitle,
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '🏪 ${_order.merchantName}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                     ),
-                    const Divider(color: Colors.white10, height: 24),
+                    const Divider(color: AppTheme.sand, height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Quantité :', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                        Text('x ${_order.quantity} portion(s)', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                        const Text('Quantité :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
+                        Text('x ${_order.quantity} portion(s)', style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Prix unitaire verrouillé :', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        const Text('Prix unitaire verrouillé :', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                         Text(
                           Money.formatTND(_order.lockedUnitPriceMillimes),
-                          style: const TextStyle(color: AppTheme.limeAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -253,22 +253,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Avantage fidélité :', style: TextStyle(color: Colors.amber, fontSize: 13)),
+                          const Text('Avantage fidélité :', style: TextStyle(color: AppTheme.red, fontSize: 13)),
                           Text(
                             '-${Money.formatTND(discount)}',
-                            style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
                     ],
-                    const Divider(color: Colors.white10, height: 24),
+                    const Divider(color: AppTheme.sand, height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Net à Régler :', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        const Text('Total Net à Régler :', style: TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.bold)),
                         Text(
                           Money.formatTND(netTotal),
-                          style: const TextStyle(color: AppTheme.limeAccent, fontSize: 22, fontWeight: FontWeight.w900),
+                          style: const TextStyle(color: AppTheme.red, fontSize: 22, fontWeight: FontWeight.w900),
                         ),
                       ],
                     ),
@@ -282,11 +282,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.redCritical.withOpacity(0.15),
+                    color: AppTheme.red.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.redCritical),
+                    border: Border.all(color: AppTheme.red),
                   ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.ink, fontSize: 13)),
                 ),
                 const SizedBox(height: 16),
               ] else
@@ -298,15 +298,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     : netTotal == 0
                         ? '✨ Valider la Commande Gratuite'
                         : '💳 Payer ${Money.formatTND(netTotal)} avec Konnect',
-                backgroundColor: AppTheme.limeAccent,
-                textColor: Colors.black,
+                backgroundColor: AppTheme.red,
+                textColor: AppTheme.cream,
                 onPressed: isExpired || _isPaying ? null : _payWithKonnect,
               ),
               const SizedBox(height: 12),
               Center(
                 child: TextButton(
                   onPressed: _isPaying ? null : _cancelReservation,
-                  child: const Text('Annuler et libérer le stock', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  child: const Text('Annuler et libérer le stock', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
                 ),
               ),
             ],

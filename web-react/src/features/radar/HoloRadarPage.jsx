@@ -21,6 +21,7 @@ import { setupCircuitRoute, updateWalkingPath, getWalkRoute } from './walkingPat
 import { startWalk } from './walkMode.js';
 import WalkHud from './WalkHud.jsx';
 import TimeControl from './TimeControl.jsx';
+import { isEmbedded, postToHost } from '../../lib/embed.js';
 import { applyTimeOfDay } from './timeControl.js';
 import { nowMinutes } from './world3d/timeOfDay.js';
 import { droneSwoopToMerchant, resetToCampusHome } from './cameraFx.js';
@@ -82,6 +83,8 @@ const [walkState, setWalkState] = useState(null); // null = pas de marche ; sino
 const [walkError, setWalkError] = useState(null);
 const walkRef = useRef(null);
 const navigate = useNavigate();
+const embed = useMemo(() => isEmbedded(), []); // true dans la WebView de l'application mobile
+const readySentRef = useRef(false);
 // Ergonomie : l'interface s'efface pour laisser voir la carte (mode « vue libre », fondu pendant les gestes, panneaux repliables)
 const readUi = (key, fallback) => {
   try {
@@ -234,7 +237,10 @@ clockRef.current = clock;
       subtitle: offers.length ? `${offers.length} panier(s) à sauver` : 'Aucun panier pour le moment',
       reserveLabel: firstOfferId ? 'Réserver un panier' : 'Revenir à la carte',
       onReserve: () => {
-        if (firstOfferId) navigate(`/app/offers/${firstOfferId}`);
+        if (firstOfferId) {
+          if (embed) postToHost({ type: 'openOffer', offerId: String(firstOfferId) });
+          else navigate(`/app/offers/${firstOfferId}`);
+        }
         else walkRef.current?.stop(true);
       },
       onState: setWalkState,
@@ -319,6 +325,10 @@ clockRef.current = clock;
       applyWorld(map).then((world) => {
         applyAtmosphere(map, world || undefined);
         applyTimeOfDay(map, clockRef.current); // réapplique l'heure choisie (le calque arrive après le style)
+        if (!readySentRef.current) {
+          readySentRef.current = true;
+          postToHost({ type: 'ready', renderer: world ? 'webgl2-world' : 'map-extrusions' }); // l'application mobile peut retirer son écran d'attente
+        }
       });
       setupBeaconLayers(map, merchants, handleSelectMerchant);
       setWorldBeacons(map, merchants); // colonnes de lumière WebGL2 (si le calque 3D est actif)
@@ -370,6 +380,11 @@ clockRef.current = clock;
         ['dragend', 'rotateend', 'pitchend', 'zoomend'].forEach((ev) => map.on(ev, undim));
 
         map.on('load', () => {
+          // Dans l'application mobile : la carte est prête même si la liste de commerces est vide (pas de fausse alerte de délai)
+          if (!readySentRef.current) {
+            readySentRef.current = true;
+            postToHost({ type: 'ready', renderer: 'map' });
+          }
           // Les commerces peuvent arriver avant ou après le style : applyOverlays gère les deux ordres
           applyOverlays(map);
         });
@@ -388,6 +403,7 @@ clockRef.current = clock;
         }
       } catch (e) {
         console.warn('Initialisation WebGL impossible, bascule en vue 2D :', e);
+        postToHost({ type: 'webgl-unavailable' }); // dans l'application mobile : bascule sur la carte native
         setViewMode('2D');
       }
     } else {
@@ -418,11 +434,11 @@ clockRef.current = clock;
     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80';
 
   return (
-    <div className="relative w-full h-[calc(100vh-82px)] min-h-[560px] bg-[#FAF3E6] overflow-hidden flex flex-col font-sans text-[#111111]">
+    <div className={`relative w-full ${embed ? 'h-[100dvh]' : 'h-[calc(100vh-82px)] min-h-[560px]'} bg-[#FAF3E6] overflow-hidden flex flex-col font-sans text-[#111111]`}>
       {/* 1. BARRE DE COMMANDE SUPÉRIEURE */}
       <div className="z-30 bg-[#FAF3E6] border-b-2 border-[#111111] px-4 sm:px-6 py-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         {/* Titre & Statut */}
-        <div className="min-w-0">
+        <div className={`min-w-0 ${embed ? 'hidden' : ''}`}>
           <p className="cs-eyebrow mb-2 flex items-center gap-2">
             <Compass className="w-4 h-4" aria-hidden="true" />
             Campus ESSECT · {sortedMerchants.length} relais actifs à portée
@@ -887,7 +903,16 @@ clockRef.current = clock;
                         <span>Stock : {offer.quantityAvailable || 1}</span>
                       </div>
 
-                      <Link to={`/app/offers/${offer.id || offer.offerId}`} className="cs-btn cs-btn-red cs-btn-block">
+                      <Link
+                        to={`/app/offers/${offer.id || offer.offerId}`}
+                        onClick={(e) => {
+                          if (embed) {
+                            e.preventDefault();
+                            postToHost({ type: 'openOffer', offerId: String(offer.id || offer.offerId) });
+                          }
+                        }}
+                        className="cs-btn cs-btn-red cs-btn-block"
+                      >
                         Réserver ce panier <ArrowUpRight className="w-5 h-5" aria-hidden="true" />
                       </Link>
                     </article>

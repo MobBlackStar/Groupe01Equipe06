@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
 enum KpiAccent { lime, amber, cyan, purple, slate }
 
 class KpiTile extends StatelessWidget {
@@ -31,15 +32,15 @@ class KpiTile extends StatelessWidget {
   Color get _accentColor {
     switch (accent) {
       case KpiAccent.lime:
-        return const Color(0xFFCCFF00);
+        return AppTheme.red;
       case KpiAccent.amber:
-        return const Color(0xFFFF5500);
+        return AppTheme.orange;
       case KpiAccent.cyan:
-        return const Color(0xFF00E5FF);
+        return AppTheme.ink;
       case KpiAccent.purple:
-        return const Color(0xFFA855F7);
+        return AppTheme.red;
       case KpiAccent.slate:
-        return const Color(0xFF94A3B8);
+        return AppTheme.muted;
     }
   }
 
@@ -55,10 +56,10 @@ class KpiTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF161920),
+            color: AppTheme.biscuit,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.08),
+              color: AppTheme.ink.withOpacity(0.08),
               width: 1,
             ),
             boxShadow: [
@@ -80,8 +81,8 @@ class KpiTile extends StatelessWidget {
                     child: Text(
                       title.toUpperCase(),
                       style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11,
+                        color: AppTheme.muted,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -118,14 +119,14 @@ class KpiTile extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: (positive ? Colors.green : Colors.red).withOpacity(0.15),
+                        color: (positive ? AppTheme.leaf : AppTheme.red).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         badge!,
                         style: TextStyle(
-                          color: positive ? const Color(0xFF4ADE80) : const Color(0xFFF87171),
-                          fontSize: 10,
+                          color: positive ? AppTheme.leaf : AppTheme.red,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -138,8 +139,8 @@ class KpiTile extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 11,
+                    color: AppTheme.muted,
+                    fontSize: 13,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

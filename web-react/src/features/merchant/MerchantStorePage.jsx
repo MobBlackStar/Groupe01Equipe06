@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MERCHANT_STATUS, MERCHANT_TYPES, ESSECT_COORDINATES } from '@shared/constants.js';
 import { distanceFromEssect, calculateWalkingMinutes } from '@shared/geo.js';
+import SpotEditor from '../radar/SpotEditor.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import PendingApprovalBanner from './PendingApprovalBanner.jsx';
@@ -235,6 +236,12 @@ export default function MerchantStorePage() {
           </div>
 
           <div className="pt-2 flex justify-end">
+            {/* Position de la boutique : carte 3D, coordonnées Google Maps, porte sur la rue (rayon 3 km vérifié aussi par le serveur) */}
+            <div>
+              <span className="cs-field-label">Emplacement de la boutique</span>
+              <SpotEditor value={{ lat: store.lat, lng: store.lng }} onChange={(spot) => setStore((prev) => ({ ...prev, lat: spot.lat, lng: spot.lng }))} />
+            </div>
+
             <Button
               type="submit"
               variant="primary"

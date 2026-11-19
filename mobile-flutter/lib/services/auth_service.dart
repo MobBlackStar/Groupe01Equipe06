@@ -19,6 +19,15 @@ class AuthService extends ChangeNotifier {
   UserProfile? get profile => _profile;
   String? get role => _role;
   bool get isLoading => _isLoading;
+  /// Jeton Firebase courant (null en session de démonstration) : transmis à la WebView du radar 3D.
+  Future<String?> currentIdToken() async {
+    try {
+      return await _user?.getIdToken();
+    } catch (_) {
+      return null;
+    }
+  }
+
   bool get isAuthenticated => _user != null || _profile != null || ApiClient.demoAuthToken != null;
 
   AuthService() {

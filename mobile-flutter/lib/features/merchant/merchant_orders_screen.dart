@@ -52,14 +52,14 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: AppTheme.cream,
         appBar: AppBar(
           title: const Text('Retraits & Commandes', style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: true,
           bottom: const TabBar(
-            indicatorColor: AppTheme.limeAccent,
-            labelColor: AppTheme.limeAccent,
-            unselectedLabelColor: Colors.white54,
+            indicatorColor: AppTheme.red,
+            labelColor: AppTheme.red,
+            unselectedLabelColor: AppTheme.muted,
             tabs: [
               Tab(text: '🎟️ Payées'),
               Tab(text: '⏳ Réservées'),
@@ -75,15 +75,15 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: AppTheme.limeAccent,
-          foregroundColor: Colors.black,
+          backgroundColor: AppTheme.red,
+          foregroundColor: AppTheme.cream,
           icon: const Icon(Icons.qr_code_scanner),
           label: const Text('Scanner un Retrait', style: TextStyle(fontWeight: FontWeight.bold)),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Ouverture du scanner caméra commerçant...'),
-                backgroundColor: AppTheme.surfaceCard,
+                backgroundColor: AppTheme.biscuit,
               ),
             );
           },
@@ -102,7 +102,7 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
           children: const [
             Text('📦', style: TextStyle(fontSize: 48)),
             SizedBox(height: 12),
-            Text('Aucune commande sous ce statut', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            Text('Aucune commande sous ce statut', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
           ],
         ),
       );
@@ -118,10 +118,10 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceCard,
+            color: AppTheme.biscuit,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: status == 'PAID' ? AppTheme.limeAccent.withOpacity(0.3) : Colors.white10,
+              color: status == 'PAID' ? AppTheme.red.withOpacity(0.3) : AppTheme.sand,
             ),
           ),
           child: Column(
@@ -135,28 +135,28 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppTheme.limeAccent.withOpacity(0.4)),
+                      border: Border.all(color: AppTheme.red.withOpacity(0.4)),
                     ),
                     child: Text(
                       item['orderCode'] as String,
-                      style: const TextStyle(color: AppTheme.limeAccent, fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(color: AppTheme.red, fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                   Text(
                     item['pickupSlot'] as String,
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 item['title'] as String,
-                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: AppTheme.ink, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
                 '👤 Client : ${item['customerName']}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: const TextStyle(color: AppTheme.muted, fontSize: 13),
               ),
               const SizedBox(height: 8),
               Row(
@@ -164,11 +164,11 @@ class _MerchantOrdersScreenState extends State<MerchantOrdersScreen> {
                 children: [
                   Text(
                     'Quantité : ${item['quantity']} portion(s)',
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                   ),
                   Text(
                     Money.formatTND(item['totalPriceMillimes'] as int),
-                    style: const TextStyle(color: AppTheme.limeAccent, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: AppTheme.red, fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

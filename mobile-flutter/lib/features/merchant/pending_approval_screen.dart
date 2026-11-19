@@ -54,24 +54,24 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
     IconData statusIcon;
 
     if (_currentStatus == 'APPROVED') {
-      statusColor = AppTheme.limeAccent;
+      statusColor = AppTheme.red;
       statusTitle = 'Établissement Agréé ✓';
       statusDesc = 'Félicitations ! Votre commerce est validé. Vous pouvez dès à présent publier des offres anti-gaspillage.';
       statusIcon = Icons.check_circle_outline;
     } else if (_currentStatus == 'REJECTED') {
-      statusColor = AppTheme.redCritical;
+      statusColor = AppTheme.red;
       statusTitle = 'Dossier Non Retenu ✕';
       statusDesc = _currentReason ?? "Votre établissement ne respecte pas les critères d'éligibilité.";
       statusIcon = Icons.highlight_off;
     } else {
-      statusColor = AppTheme.orangeUrgent;
+      statusColor = AppTheme.red;
       statusTitle = 'Dossier en Cours d Instruction ⏳';
       statusDesc = 'Votre demande est en cours d examen par la commission ESSECT. Validation moyenne sous 2 heures.';
       statusIcon = Icons.hourglass_top;
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text('Statut de la Demande', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -109,7 +109,7 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
               Text(
                 statusDesc,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: AppTheme.textMuted, height: 1.5),
+                style: const TextStyle(fontSize: 13, color: AppTheme.muted, height: 1.5),
               ),
               const SizedBox(height: 36),
 
@@ -146,7 +146,7 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
                 onPressed: _toggleDemo,
                 child: Text(
                   '🎭 Basculer le statut pour la démo ($_currentStatus)',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  style: const TextStyle(fontSize: 13, color: AppTheme.muted),
                 ),
               ),
             ],

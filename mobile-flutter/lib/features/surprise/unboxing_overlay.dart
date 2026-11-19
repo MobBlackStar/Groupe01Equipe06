@@ -94,13 +94,13 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
     final items = (reveal['items'] as List<dynamic>?) ?? [];
     final pointsAwarded = reveal['pointsAwarded'] ?? 45;
 
-    Color rarityColor = const Color(0xFF00E5FF);
+    Color rarityColor = AppTheme.ink;
     String rarityTitle = 'RARE 💎';
     if (rarity == 'LEGENDARY') {
-      rarityColor = const Color(0xFFFFD700);
+      rarityColor = AppTheme.mustard;
       rarityTitle = 'LÉGENDAIRE ✨';
     } else if (rarity == 'COMMON') {
-      rarityColor = const Color(0xFF94A3B8);
+      rarityColor = AppTheme.muted;
       rarityTitle = 'COMMUN 🎁';
     }
 
@@ -114,7 +114,7 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
               constraints: const BoxConstraints(maxWidth: 420),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceCard,
+                color: AppTheme.biscuit,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: rarityColor.withOpacity(0.5), width: 1.5),
                 boxShadow: [
@@ -143,12 +143,12 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                     const SizedBox(height: 20),
                     const Text(
                       'Déballage du Panier Surprise...',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       'Suspense culinaire à Montfleury...',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      style: TextStyle(color: AppTheme.muted, fontSize: 13),
                     ),
                     const SizedBox(height: 20),
                   ] else ...[
@@ -164,14 +164,14 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                         ),
                         child: Text(
                           'RARETÉ : $rarityTitle',
-                          style: TextStyle(color: rarityColor, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          style: TextStyle(color: rarityColor, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     const Text(
                       'Contenu Dévoilé !',
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: AppTheme.ink, fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
 
@@ -182,9 +182,9 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: AppTheme.darkBackground,
+                          color: AppTheme.cream,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white10),
+                          border: Border.all(color: AppTheme.sand),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,13 +195,13 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                                 const SizedBox(width: 10),
                                 Text(
                                   m['name'] as String? ?? 'Article',
-                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
                             Text(
                               'x ${m['qty']}',
-                              style: const TextStyle(color: AppTheme.limeAccent, fontWeight: FontWeight.bold, fontSize: 12),
+                              style: const TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                           ],
                         ),
@@ -213,7 +213,7 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                       const SizedBox(height: 8),
                       Text(
                         '💬 « ${reveal['note']} »',
-                        style: const TextStyle(color: Colors.white60, fontSize: 11, fontStyle: FontStyle.italic),
+                        style: const TextStyle(color: AppTheme.muted, fontSize: 13, fontStyle: FontStyle.italic),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -224,9 +224,9 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.limeAccent.withOpacity(0.12),
+                        color: AppTheme.red.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.limeAccent.withOpacity(0.4)),
+                        border: Border.all(color: AppTheme.red.withOpacity(0.4)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -235,12 +235,12 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                             children: const [
                               Text('🌱', style: TextStyle(fontSize: 20)),
                               SizedBox(width: 8),
-                              Text('EcoPoints Gagnés :', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text('EcoPoints Gagnés :', style: TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold)),
                             ],
                           ),
                           Text(
                             '+$pointsAwarded pts',
-                            style: const TextStyle(color: AppTheme.limeAccent, fontSize: 16, fontWeight: FontWeight.w900),
+                            style: const TextStyle(color: AppTheme.red, fontSize: 16, fontWeight: FontWeight.w900),
                           ),
                         ],
                       ),
@@ -260,8 +260,8 @@ class _UnboxingOverlayState extends State<UnboxingOverlay> with TickerProviderSt
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.limeAccent,
-                          foregroundColor: Colors.black,
+                          backgroundColor: AppTheme.red,
+                          foregroundColor: AppTheme.cream,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),

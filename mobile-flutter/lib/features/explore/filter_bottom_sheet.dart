@@ -62,7 +62,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: AppTheme.darkBackground,
+        color: AppTheme.cream,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(20),
@@ -78,7 +78,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: AppTheme.sand,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -91,7 +91,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 children: [
                   const Text(
                     'Filtres de recherche',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   TextButton(
                     onPressed: () {
@@ -102,14 +102,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         _sortBy = 'distance';
                       });
                     },
-                    child: const Text('Réinitialiser', style: TextStyle(color: AppTheme.limeAccent, fontSize: 12)),
+                    child: const Text('Réinitialiser', style: TextStyle(color: AppTheme.red, fontSize: 13)),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // 1. Catégories
-              const Text('Catégories', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+              const Text('Catégories', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -122,11 +122,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     onSelected: (val) {
                       if (val) setState(() => _category = c['id']!);
                     },
-                    selectedColor: AppTheme.limeAccent,
-                    backgroundColor: AppTheme.surfaceCard,
+                    selectedColor: AppTheme.red,
+                    backgroundColor: AppTheme.biscuit,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.black : Colors.white,
-                      fontSize: 12,
+                      color: isSelected ? AppTheme.cream : AppTheme.ink,
+                      fontSize: 13,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   );
@@ -138,10 +138,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Budget Maximum', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                  const Text('Budget Maximum', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
                   Text(
                     Money.formatTND(_maxPrice.toInt()),
-                    style: const TextStyle(color: AppTheme.limeAccent, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: AppTheme.red, fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -150,14 +150,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 min: 1000,
                 max: 20000,
                 divisions: 19,
-                activeColor: AppTheme.limeAccent,
-                inactiveColor: Colors.white12,
+                activeColor: AppTheme.red,
+                inactiveColor: AppTheme.sand,
                 onChanged: (val) => setState(() => _maxPrice = val),
               ),
               const SizedBox(height: 12),
 
               // 3. Tri
-              const Text('Trier par', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+              const Text('Trier par', style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -173,9 +173,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               // 4. Panier Surprise Switch
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('🎁 Paniers Surprise uniquement', style: TextStyle(color: Colors.white, fontSize: 13)),
+                title: const Text('🎁 Paniers Surprise uniquement', style: TextStyle(color: AppTheme.ink, fontSize: 13)),
                 value: _surpriseOnly,
-                activeColor: AppTheme.limeAccent,
+                activeColor: AppTheme.red,
                 onChanged: (val) => setState(() => _surpriseOnly = val),
               ),
               const SizedBox(height: 20),
@@ -183,8 +183,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               // Bouton Appliquer
               AppButton(
                 text: 'Appliquer les filtres',
-                backgroundColor: AppTheme.limeAccent,
-                textColor: Colors.black,
+                backgroundColor: AppTheme.red,
+                textColor: AppTheme.cream,
                 onPressed: () {
                   widget.onApply(
                     category: _category,
@@ -210,16 +210,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.limeAccent : AppTheme.surfaceCard,
+            color: isSelected ? AppTheme.red : AppTheme.biscuit,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSelected ? AppTheme.limeAccent : Colors.white10),
+            border: Border.all(color: isSelected ? AppTheme.red : AppTheme.sand),
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white70,
-                fontSize: 11,
+                color: isSelected ? Colors.black : AppTheme.muted,
+                fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),

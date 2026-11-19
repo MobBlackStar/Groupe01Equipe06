@@ -53,14 +53,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: AppTheme.cream,
         appBar: AppBar(
           title: const Text('Mes Commandes', style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: true,
           bottom: const TabBar(
-            indicatorColor: AppTheme.limeAccent,
-            labelColor: AppTheme.limeAccent,
-            unselectedLabelColor: Colors.white54,
+            indicatorColor: AppTheme.red,
+            labelColor: AppTheme.red,
+            unselectedLabelColor: AppTheme.muted,
             tabs: [
               Tab(text: '⚡ En cours'),
               Tab(text: '✓ Terminées'),
@@ -81,7 +81,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
   Widget _buildOrderList(List<String> allowedStatuses) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.limeAccent));
+      return const Center(child: CircularProgressIndicator(color: AppTheme.red));
     }
 
     final nowMs = ServerClock.serverNowMs;
@@ -96,8 +96,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     if (list.isEmpty) {
       return RefreshIndicator(
         onRefresh: _load,
-        color: AppTheme.limeAccent,
-        backgroundColor: AppTheme.surfaceCard,
+        color: AppTheme.red,
+        backgroundColor: AppTheme.biscuit,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
@@ -111,7 +111,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   child: Text(
                     _error ?? 'Aucune commande dans cet onglet',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                   ),
                 ),
               ],
@@ -123,8 +123,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: AppTheme.limeAccent,
-      backgroundColor: AppTheme.surfaceCard,
+      color: AppTheme.red,
+      backgroundColor: AppTheme.biscuit,
       child: ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
@@ -135,22 +135,22 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         final status = effectiveStatus(order);
         final total = order.totalMillimes;
 
-        Color badgeColor = AppTheme.limeAccent;
+        Color badgeColor = AppTheme.red;
         String badgeText = 'PAID';
         if (status == 'RESERVED') {
-          badgeColor = AppTheme.orangeUrgent;
+          badgeColor = AppTheme.red;
           badgeText = 'RÉSERVÉ (10 MIN)';
         } else if (status == 'COMPLETED') {
-          badgeColor = Colors.greenAccent;
+          badgeColor = AppTheme.leaf;
           badgeText = 'RÉCUPÉRÉ';
         }
 
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceCard,
+            color: AppTheme.biscuit,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(color: AppTheme.sand),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +167,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     ),
                     child: Text(
                       order.orderCode,
-                      style: TextStyle(color: badgeColor, fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                      style: TextStyle(color: badgeColor, fontSize: 13, fontFamily: 'monospace', fontWeight: FontWeight.bold),
                     ),
                   ),
                   Container(
@@ -178,7 +178,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     ),
                     child: Text(
                       badgeText,
-                      style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: badgeColor, fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -186,12 +186,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
               const SizedBox(height: 8),
               Text(
                 order.offerTitle,
-                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: AppTheme.ink, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
                 '🏪 ${order.merchantName}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: const TextStyle(color: AppTheme.muted, fontSize: 13),
               ),
               const SizedBox(height: 8),
               Row(
@@ -199,7 +199,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                 children: [
                   Text(
                     'Quantité : ${order.quantity} • Total : ${Money.formatTND(total)}',
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    style: const TextStyle(color: AppTheme.muted, fontSize: 13),
                   ),
                   if (status == 'PAID')
                     ElevatedButton.icon(
@@ -211,10 +211,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.qr_code, size: 14, color: Colors.black),
-                      label: const Text('Living Ticket', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                      icon: const Icon(Icons.qr_code, size: 14, color: AppTheme.cream),
+                      label: const Text('Living Ticket', style: TextStyle(color: AppTheme.cream, fontSize: 13, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.limeAccent,
+                        backgroundColor: AppTheme.red,
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -230,11 +230,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         ).then((_) => _load());
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.orangeUrgent,
+                        backgroundColor: AppTheme.red,
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Payer (10 min)', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: const Text('Payer (10 min)', style: TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold)),
                     ),
                 ],
               ),

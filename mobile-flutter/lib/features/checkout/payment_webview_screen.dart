@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../services/campus_api.dart';
 
+import '../../app/theme.dart';
 class PaymentWebViewScreen extends StatefulWidget {
   final String payUrl;
   final String orderId;
@@ -45,7 +46,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     try {
       _webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(const Color(0xFF0D0F12))
+        ..setBackgroundColor(AppTheme.cream)
         ..setNavigationDelegate(
           NavigationDelegate(
             onProgress: (progress) {
@@ -114,7 +115,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Paiement validé avec succès ! Votre Living Ticket est prêt.'),
-            backgroundColor: Color(0xFF34D399),
+            backgroundColor: AppTheme.leaf,
           ),
         );
         Navigator.of(context).pop(true);
@@ -129,7 +130,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
   void _failVerification(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.red),
     );
     Navigator.of(context).pop(false);
   }
@@ -141,7 +142,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Paiement annulé ou non complété sur la passerelle Konnect.'),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AppTheme.red,
       ),
     );
     Navigator.of(context).pop(false);
@@ -151,13 +152,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   Widget build(BuildContext context) {
     if (kIsWeb) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0D0F12),
+        backgroundColor: AppTheme.cream,
         appBar: AppBar(
           title: const Text(
             'Paiement Konnect (Aperçu Web)',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          backgroundColor: const Color(0xFF161920),
+          backgroundColor: AppTheme.biscuit,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.close_rounded),
@@ -170,17 +171,17 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.payment_rounded, size: 64, color: Color(0xFFCCFF00)),
+                const Icon(Icons.payment_rounded, size: 64, color: AppTheme.red),
                 const SizedBox(height: 16),
                 const Text(
                   'Simulation Passerelle Konnect',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.ink),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Règlement sécurisé pour la commande : ${widget.orderId}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                  style: const TextStyle(fontSize: 13, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
@@ -188,8 +189,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                   icon: const Icon(Icons.check_circle_rounded),
                   label: Text(_isVerifying ? 'Validation...' : 'Valider le Règlement (1-Clic Démo)'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCCFF00),
-                    foregroundColor: Colors.black,
+                    backgroundColor: AppTheme.red,
+                    foregroundColor: AppTheme.cream,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
@@ -202,13 +203,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F12),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         title: const Text(
           'Paiement Sécurisé Konnect',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF161920),
+        backgroundColor: AppTheme.biscuit,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
@@ -222,13 +223,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
           if (_isLoading || _isVerifying)
             Container(
-              color: const Color(0xFF0D0F12).withOpacity(0.85),
+              color: AppTheme.cream.withOpacity(0.85),
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFCCFF00)),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.red),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -236,7 +237,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                           ? 'Validation de votre règlement...'
                           : 'Chargement de la passerelle bancaire...',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppTheme.ink,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),

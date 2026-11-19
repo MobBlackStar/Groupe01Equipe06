@@ -6,10 +6,32 @@
 import { geohashForLocation } from 'geofire-common';
 import { db } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
-import { MERCHANT_STATUS } from '../../../../shared/constants.js';
+import { MERCHANT_STATUS, BUSINESS_RULES } from '../../../../shared/constants.js';
 import { distanceFromEssect, calculateWalkingMinutes } from '../../../../shared/geo.js';
 import { DEMO_MERCHANT_UID, findDemoMerchant } from '../../utils/demoAccounts.js';
 import { resolveMerchantId } from '../../utils/merchantResolver.js';
+
+/**
+ * Règle des 3 km : calcule distance, minutes à pied et geohash d'un emplacement, ou refuse (422 TOO_FAR).
+ * Source unique utilisée par le commerçant (création / modification) et par l'administrateur (spots de démonstration).
+ */
+export function computeLocationFields(location) {
+  const maxM = BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS;
+  const distanceM = distanceFromEssect(location.lat, location.lng);
+  if (distanceM > maxM) {
+    throw new AppError(
+      `Le commerce est situé à ${Math.round(distanceM)} m de l ESSECT, ce qui dépasse le rayon maximal autorisé de ${maxM / 1000} km.`,
+      422,
+      'TOO_FAR',
+      { distanceM, maxAllowedM: maxM }
+    );
+  }
+  return {
+    location: { lat: location.lat, lng: location.lng, geohash: geohashForLocation([location.lat, location.lng], 9) },
+    distanceFromEssectM: Math.round(distanceM),
+    walkingMinutes: calculateWalkingMinutes(distanceM),
+  };
+}
 
 export const merchantsService = {
   /**
@@ -24,12 +46,12 @@ export const merchantsService = {
 
     // Calcul de la distance géodésique depuis l'ESSECT Montfleury
     const distanceM = distanceFromEssect(location.lat, location.lng);
-    if (distanceM > 3000) {
+    if (distanceM > BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS) {
       throw new AppError(
         `Le commerce est situé à ${Math.round(distanceM)} m de l ESSECT, ce qui dépasse le rayon maximal autorisé de 3 km.`,
         422,
         'TOO_FAR',
-        { distanceM, maxAllowedM: 3000 }
+        { distanceM, maxAllowedM: BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS }
       );
     }
 
@@ -136,12 +158,12 @@ export const merchantsService = {
     // Si les coordonnées changent, revalider la distance et recalculer le geohash
     if (sanitized.location) {
       const distanceM = distanceFromEssect(sanitized.location.lat, sanitized.location.lng);
-      if (distanceM > 3000) {
+      if (distanceM > BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS) {
         throw new AppError(
           `Le nouvel emplacement est situé à ${Math.round(distanceM)} m de l ESSECT, ce qui dépasse le rayon maximal autorisé de 3 km.`,
           422,
           'TOO_FAR',
-          { distanceM, maxAllowedM: 3000 }
+          { distanceM, maxAllowedM: BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS }
         );
       }
       sanitized.location.geohash = geofireCommonHash(sanitized.location.lat, sanitized.location.lng);
