@@ -13,3 +13,4 @@ export { default as EmptyState } from './EmptyState.jsx';
 export { default as Stepper } from './Stepper.jsx';
 export { default as Tabs } from './Tabs.jsx';
 export { default as Toast } from './Toast.jsx';
+export { default as ApkDownloadMascot } from './ApkDownloadMascot.jsx';

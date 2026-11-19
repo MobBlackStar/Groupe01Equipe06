@@ -42,6 +42,17 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <a
+                  href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave/releases/latest/download/CampusSave.apk'}
+                  download="CampusSave.apk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="uppercase text-lg text-[#DA0711] hover:underline font-bold transition-colors"
+                >
+                  📱 APK Android
+                </a>
+              </li>
             </ul>
           </div>
 
