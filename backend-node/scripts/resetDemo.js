@@ -27,7 +27,16 @@ export async function resetDemo() {
     console.log(`🧹 ${paymentsSnap.size} événement(s) de paiement purgé(s).`);
   }
 
-  // 3. Ré-exécution du seed officiel complet
+  // 3. Suppression des offres existantes pour injecter exactement les 20 offres officielles
+  const offersSnap = await db.collection('offers').get();
+  if (!offersSnap.empty) {
+    const batchOffers = db.batch();
+    offersSnap.docs.forEach((doc) => batchOffers.delete(doc.ref));
+    await batchOffers.commit();
+    console.log(`🧹 ${offersSnap.size} offre(s) purgée(s).`);
+  }
+
+  // 4. Ré-exécution du seed officiel complet
   await runSeed();
   console.log('✨ [RESET DEMO TERMINÉ] Plateforme prête pour la soutenance !');
 }
