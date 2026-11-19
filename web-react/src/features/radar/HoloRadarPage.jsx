@@ -20,6 +20,9 @@ import { setupBeaconLayers, createFikaNumberedMarkers } from './beaconLayer.js';
 import { setupCircuitRoute, updateWalkingPath, getWalkRoute } from './walkingPath.js';
 import { startWalk } from './walkMode.js';
 import WalkHud from './WalkHud.jsx';
+import TimeControl from './TimeControl.jsx';
+import { applyTimeOfDay } from './timeControl.js';
+import { nowMinutes } from './world3d/timeOfDay.js';
 import { droneSwoopToMerchant, resetToCampusHome } from './cameraFx.js';
 import { DepthCard } from '../../components/common/DepthCard.jsx';
 import {
@@ -101,6 +104,11 @@ const [cardsOpen, setCardsOpen] = useState(() => readUi('cards', true));
 const [introOpen, setIntroOpen] = useState(true);
 const [uiDim, setUiDim] = useState(false);
 const dimTimerRef = useRef(null);
+// Heure de la scène : null = « maintenant » ; sinon minutes depuis minuit (heure de Tunis). `clockPlaying` fait défiler le soleil.
+const [clock, setClock] = useState(null);
+const [clockPlaying, setClockPlaying] = useState(false);
+const clockRef = useRef(null);
+clockRef.current = clock;
 
   const RADIUS_OPTIONS = [500, 1000, 1500, 2500, 3000];
 
@@ -238,6 +246,21 @@ const dimTimerRef = useRef(null);
     if (import.meta.env.DEV) window.__radarWalk = walkRef.current; // hook QA (absent en production)
   }, [selectedMerchant, navigate]);
 
+  // L'heure choisie pilote le soleil, les ombres et la couleur du ciel
+  useEffect(() => {
+    if (mapRef.current) applyTimeOfDay(mapRef.current, clock);
+  }, [clock]);
+
+  // Défilement du jour : 6 minutes par pas de 90 ms (une journée en ~24 s), jamais en arrière-plan
+  useEffect(() => {
+    if (!clockPlaying) return undefined;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      setClock((c) => ((c ?? nowMinutes()) + 6) % 1440);
+    }, 90);
+    return () => clearInterval(id);
+  }, [clockPlaying]);
+
   // Le bandeau d'accroche se retire seul : il ne sert qu'à la première seconde de découverte
   useEffect(() => {
     const t = setTimeout(() => setIntroOpen(false), 7000);
@@ -293,7 +316,10 @@ const dimTimerRef = useRef(null);
       }
       add3DBuildingsLayer(map);
       // Monde pré-calculé (Overture) puis lumière/ombres/brume dessus ; sans lui, on garde les bâtiments des tuiles
-      applyWorld(map).then((world) => applyAtmosphere(map, world || undefined));
+      applyWorld(map).then((world) => {
+        applyAtmosphere(map, world || undefined);
+        applyTimeOfDay(map, clockRef.current); // réapplique l'heure choisie (le calque arrive après le style)
+      });
       setupBeaconLayers(map, merchants, handleSelectMerchant);
       setWorldBeacons(map, merchants); // colonnes de lumière WebGL2 (si le calque 3D est actif)
       setupCircuitRoute(map, merchants);
@@ -357,6 +383,7 @@ const dimTimerRef = useRef(null);
           window.__radarMap = map; // hook QA : inspection de la caméra et des calques (absent en production)
           window.__radarAtmosphere = () => atmosphereStats(map);
           window.__radarWorld = () => worldStats(map);
+          window.__radarTime = (m) => applyTimeOfDay(map, m); // hook QA : heure de la scène en minutes (null = maintenant)
           window.__radarAudit = () => auditRoutes(map); // preuve chiffrée : itinéraires vs routes/bâtiments affichés
         }
       } catch (e) {
@@ -518,6 +545,23 @@ const dimTimerRef = useRef(null);
           >
             {focusMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
           </button>
+        )}
+
+        {/* Heure de la scène : soleil, ombres, ciel et fenêtres allumées suivent */}
+        {viewMode === '3D' && !walkState && (
+          <TimeControl
+            minutes={clock}
+            playing={clockPlaying}
+            onChange={(m) => {
+              setClockPlaying(false);
+              setClock(m);
+            }}
+            onTogglePlay={() => setClockPlaying((v) => !v)}
+            onLive={() => {
+              setClockPlaying(false);
+              setClock(null);
+            }}
+          />
         )}
 
         {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}

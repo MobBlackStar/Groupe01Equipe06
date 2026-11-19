@@ -221,6 +221,7 @@ function addWorld3D(map, world, st) {
     return;
   }
   st.w3d = w3d;
+  world.w3dActive = true; // atmosphere.js : plus d'ombres en polygones, la carte d'ombres GPU prend le relais
   map.getContainer().classList.add('cs-w3d'); // le calque porte sa propre brume : le voile CSS s'allège
   softenPillars(map);
   [WORLD_LAYERS.buildings, WORLD_LAYERS.canopy, WORLD_LAYERS.trunks].forEach((id) => {
@@ -287,4 +288,10 @@ export function worldStats(map) {
   const st = states.get(map);
   if (!st || !st.world) return null;
   return { ...st.world.counts, heights: st.world.heights, source: st.world.source, renderer: st.w3d ? st.w3d.stats() : 'extrusions MapLibre' };
+}
+
+/** Le calque WebGL2 de cette carte (ou null s'il n'est pas actif). */
+export function getWorld3D(map) {
+  const st = states.get(map);
+  return st && st.w3d ? st.w3d : null;
 }

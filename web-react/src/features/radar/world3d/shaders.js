@@ -30,6 +30,32 @@ vec3 tone(vec3 c){
 }
 `;
 
+/** Lecture de la carte d'ombres (sampler à comparaison : le matériel filtre 2x2 par lecture ; on en fait 4 décalées). */
+const SHADOW_GLSL = /* glsl */ `
+uniform highp sampler2DShadow uShadow;
+uniform mat4 uLightVP;
+uniform float uShadowOn, uShadowRes;
+float shadowFactor(vec3 p, vec3 n){
+  if (uShadowOn < .5) return 1.;
+  vec4 q = uLightVP * vec4(p + n * .35, 1.);                 // la position est décalée le long de la normale : pas d'acné
+  float edge = max(abs(q.x), abs(q.y));
+  vec3 s = q.xyz * .5 + .5;
+  if (edge >= 1. || s.z >= 1. || s.z <= 0.) return 1.;       // hors de la carte : éclairé
+  float px = 1. / uShadowRes;
+  float z = s.z - .0006;
+  float sum = texture(uShadow, vec3(s.xy + vec2(-.75, -.75) * px, z))
+            + texture(uShadow, vec3(s.xy + vec2( .75, -.75) * px, z))
+            + texture(uShadow, vec3(s.xy + vec2(-.75,  .75) * px, z))
+            + texture(uShadow, vec3(s.xy + vec2( .75,  .75) * px, z));
+  return mix(sum * .25, 1., smoothstep(.80, 1., edge));       // fondu sur les 20 % du bord : aucune couture visible
+}`;
+
+/** Passe d'ombre : profondeur seule, aucun calcul de pixel. */
+export const SHADOW_FS = /* glsl */ `#version 300 es
+precision highp float;
+out vec4 o;
+void main(){ o = vec4(0.); }`;
+
 // ---------------------------------------------------------------------------------------------
 // Bâtiments : murs + toits (la façade est dessinée par le fragment shader)
 // ---------------------------------------------------------------------------------------------
@@ -53,6 +79,7 @@ precision highp int;
 ${COMMON}
 uniform vec3 uCam, uSun, uSunCol, uAmb, uGround, uFogCol;
 uniform float uFogDen, uNight, uTime;
+${SHADOW_GLSL}
 in vec3 vPos; in vec3 vN; in vec4 vMisc; in float vRoof;
 out vec4 outColor;
 
@@ -177,7 +204,8 @@ void main(){
   // --- lumière : soleil chaud, ombre froide (complémentaires), rebond du sol
   float ndl = max(dot(N, uSun), 0.);
   float wrap = max((dot(N, uSun) + .25) / 1.25, 0.);
-  vec3 sunL = uSunCol * mix(ndl, wrap, .35);
+  float sh = shadowFactor(vPos, N);
+  vec3 sunL = uSunCol * mix(ndl, wrap, .35) * sh;
   vec3 skyL = mix(uGround, uAmb, N.z * .5 + .5) * ao;
   vec3 col = albedo * (sunL + skyL);
   if (glass > .5) {
@@ -251,6 +279,7 @@ ${COMMON}
 uniform vec3 uCam, uSun, uSunCol, uAmb, uGround, uFogCol;
 uniform float uFogDen, uNight, uTime;
 uniform int uPart;
+${SHADOW_GLSL}
 in vec3 vPos; in vec3 vN; in vec4 vPar; in vec3 vLocal; in float vAux;
 out vec4 outColor;
 void main(){
@@ -281,9 +310,10 @@ void main(){
   albedo = pow(albedo, vec3(2.2));
   float ndl = max(dot(N, uSun), 0.);
   float wrap = max((dot(N, uSun) + .45) / 1.45, 0.);
-  vec3 sunL = uSunCol * wrap;
+  float sh = shadowFactor(vPos, N);
+  vec3 sunL = uSunCol * wrap * sh;
   vec3 skyL = mix(uGround, uAmb, N.z * .5 + .5);
-  vec3 col = albedo * (sunL + skyL) + albedo * vec3(.75, .9, .25) * trans * uSunCol;
+  vec3 col = albedo * (sunL + skyL) + albedo * vec3(.75, .9, .25) * trans * uSunCol * sh;
   col = applyFog(col, vPos, uCam, uFogCol, uFogDen);
   col = tone(col);
   col += (hash21(gl_FragCoord.xy + 3.) - .5) / 255.;
@@ -317,13 +347,14 @@ precision highp int;
 ${COMMON}
 uniform vec3 uCam, uSun, uSunCol, uAmb, uGround, uFogCol;
 uniform float uFogDen;
+${SHADOW_GLSL}
 in vec3 vPos; in vec3 vN; in float vCol;
 out vec4 outColor;
 void main(){
   vec3 N = normalize(vN);
   vec3 albedo = vCol < .5 ? vec3(.86, .84, .80) : vCol < 1.5 ? vec3(.18, .30, .52) : vec3(.88, .52, .34);
   albedo = pow(albedo, vec3(2.2));
-  vec3 col = albedo * (uSunCol * max(dot(N, uSun), 0.) + mix(uGround, uAmb, N.z * .5 + .5));
+  vec3 col = albedo * (uSunCol * max(dot(N, uSun), 0.) * shadowFactor(vPos, N) + mix(uGround, uAmb, N.z * .5 + .5));
   col = applyFog(col, vPos, uCam, uFogCol, uFogDen);
   col = tone(col);
   outColor = vec4(col, 1.);
@@ -479,4 +510,33 @@ void main(){
   col = tone(col);
   col += (hash21(gl_FragCoord.xy + 5.) - .5) / 255.;
   outColor = vec4(col, 1.);
+}`;
+
+// ---------------------------------------------------------------------------------------------
+// Sol : un grand quad MULTIPLICATIF. Il assombrit le fond de carte (et nos chaussées) là où l'ombre tombe, et teinte tout le
+// sol selon l'heure (rose à l'aube, bleu la nuit). Il ne dessine rien d'opaque : là où il n'y a pas d'ombre, il vaut 1.
+// ---------------------------------------------------------------------------------------------
+
+export const GROUND_VS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+uniform mat4 uMVP;
+uniform float uGroundHalf;
+in vec3 aPos;
+out vec3 vPos;
+void main(){
+  vPos = vec3(aPos.xy * uGroundHalf, .03);
+  gl_Position = uMVP * vec4(vPos, 1.);
+}`;
+
+export const GROUND_FS = /* glsl */ `#version 300 es
+precision highp float;
+precision highp int;
+${SHADOW_GLSL}
+uniform vec3 uTint, uShadowTint;
+in vec3 vPos;
+out vec4 outColor;
+void main(){
+  float f = shadowFactor(vPos, vec3(0., 0., 1.));
+  outColor = vec4(uTint * mix(uShadowTint, vec3(1.), f), 1.);
 }`;

@@ -3,9 +3,11 @@
 // 🎯 À retenir pour la soutenance : "Zéro bibliothèque 3D : WebGL2 brut, une dizaine de dessins par image, animation limitée à 30 images/s et coupée quand l'onglet est masqué."
 
 import { mapSun } from '../sun.js';
+import { paletteFor, lightDirection } from './timeOfDay.js';
 import { MAP_CONFIG } from '../mapStyle.js';
 import {
   BUILDING_VS, BUILDING_FS, TREE_VS, TREE_FS, PROP_VS, PROP_FS, BIRD_VS, BIRD_FS, BEACON_VS, BEACON_FS, ROAD_VS, ROAD_FS,
+  SHADOW_FS, GROUND_VS, GROUND_FS,
 } from './shaders.js';
 import { buildBuildingMesh, buildRoadMesh, prism, icosphere, palm, bird, column, quad, buildTreeInstances, buildBirds } from './geometry.js';
 
@@ -86,11 +88,20 @@ export function createWorld3DLayer(maplibregl, data) {
     gl: null,
     timer: 0,
     sun: mapSun(),
+    pal: null,
     night: 0,
+    shadowsOn: true,
+    shadowDirty: true,
+    shadowCenter: null,
+    shadowHalf: 0,
+    shadowL: null,
+    lightVP: new Float32Array(16),
+    shadowRedraws: 0,
     beaconCount: 0,
     pendingBeacons: null,
     stats: {},
   };
+  state.pal = paletteFor(state.sun.altitudeDeg);
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lowEnd = (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 8) <= 4) || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
 
@@ -129,6 +140,39 @@ export function createWorld3DLayer(maplibregl, data) {
         G.bird = program(gl, BIRD_VS, BIRD_FS, 'bird', { aPos: 0, iA: 3, iB: 4 });
         G.beacon = program(gl, BEACON_VS, BEACON_FS, 'beacon', { aPos: 0, iPos: 3, iCol: 4 });
         G.road = program(gl, ROAD_VS, ROAD_FS, 'road', { aPos: 0, aRd: 1 });
+        G.ground = program(gl, GROUND_VS, GROUND_FS, 'ground', { aPos: 0 });
+        // passes d'ombre : mêmes sommets que le rendu, mais aucun calcul de couleur
+        G.shBld = program(gl, BUILDING_VS, SHADOW_FS, 'shadowBuilding', { aPos: 0, aMisc: 1, aNrm: 2 });
+        G.shTree = program(gl, TREE_VS, SHADOW_FS, 'shadowTree', { aPos: 0, aNrm: 1, aAux: 2, iPos: 3, iPar: 4 });
+        G.shProp = program(gl, PROP_VS, SHADOW_FS, 'shadowProp', { aPos: 0, aNrm: 1, iA: 3, iB: 4 });
+
+        // carte d'ombres : texture de profondeur à comparaison matérielle (filtrage 2x2 gratuit), 2048² (1024² sur mobile)
+        G.shRes = lowEnd ? 1024 : 2048;
+        G.shTex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, G.shTex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, G.shRes, G.shRes, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+        G.shFBO = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, G.shFBO);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, G.shTex, 0);
+        gl.drawBuffers([gl.NONE]);
+        gl.readBuffer(gl.NONE);
+        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('framebuffer d ombre incomplet');
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+
+        // quad du sol (multiplicatif)
+        G.groundVAO = gl.createVertexArray();
+        gl.bindVertexArray(G.groundVAO);
+        buf(gl, gl.ARRAY_BUFFER, quad().pos);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.bindVertexArray(null);
 
         // --- chaussées et trottoirs
         const rm = buildRoadMesh(data.roads || []);
@@ -283,11 +327,12 @@ export function createWorld3DLayer(maplibregl, data) {
       const mvp32 = new Float32Array(mvp);
       const cam = cameraPosition(mvp);
 
-      const sun = state.sun;
-      const az = (sun.azimuthDeg * Math.PI) / 180;
-      const el = (sun.altitudeDeg * Math.PI) / 180;
-      const sunDir = [Math.sin(az) * Math.cos(el), Math.cos(az) * Math.cos(el), Math.sin(el)];
+      const pal = state.pal;
+      const sunDir = lightDirection(state.sun); // soleil, ou lune la nuit : c'est elle qui projette les ombres
+      const night = Math.max(state.night, pal.night);
       const time = (performance.now() / 1000) % 3600;
+      const skipQA = (import.meta.env.DEV && globalThis.__w3dSkip) || {};
+      const shadowsActive = state.shadowsOn && !skipQA.shadows;
 
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
@@ -301,14 +346,26 @@ export function createWorld3DLayer(maplibregl, data) {
         if (u.uCam) gl.uniform3f(u.uCam, cam[0], cam[1], cam[2]);
         if (u.uSun) gl.uniform3f(u.uSun, sunDir[0], sunDir[1], sunDir[2]);
         // soleil chaud, ombre froide (couleurs complémentaires), rebond chaud du sol
-        if (u.uSunCol) gl.uniform3f(u.uSunCol, 1.1, 0.93, 0.72);
-        if (u.uAmb) gl.uniform3f(u.uAmb, 0.30, 0.37, 0.50);
-        if (u.uGround) gl.uniform3f(u.uGround, 0.36, 0.30, 0.22);
-        if (u.uFogCol) gl.uniform3f(u.uFogCol, 0.956, 0.893, 0.79); // crème #FAF3E6 en linéaire : la brume se fond dans le fond de carte
+        if (u.uSunCol) gl.uniform3f(u.uSunCol, pal.sun[0], pal.sun[1], pal.sun[2]);
+        if (u.uAmb) gl.uniform3f(u.uAmb, pal.amb[0], pal.amb[1], pal.amb[2]);
+        if (u.uGround) gl.uniform3f(u.uGround, pal.ground[0], pal.ground[1], pal.ground[2]);
+        if (u.uFogCol) gl.uniform3f(u.uFogCol, pal.fog[0], pal.fog[1], pal.fog[2]); // le jour : crème #FAF3E6 en linéaire
         if (u.uFogDen) gl.uniform1f(u.uFogDen, 0.00062);
-        if (u.uNight) gl.uniform1f(u.uNight, state.night);
+        if (u.uNight) gl.uniform1f(u.uNight, night);
         if (u.uTime) gl.uniform1f(u.uTime, time);
+        if (u.uShadow) {
+          gl.uniform1i(u.uShadow, 5);
+          gl.uniformMatrix4fv(u.uLightVP, false, state.lightVP);
+          gl.uniform1f(u.uShadowRes, G.shRes);
+          gl.uniform1f(u.uShadowOn, shadowsActive ? 1 : 0);
+        }
       };
+
+      // carte d'ombres : mise à jour seulement si besoin (le centre a bougé, le soleil a tourné, le zoom a changé)
+      if (shadowsActive) updateShadow(gl, map, sunDir);
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, G.shTex);
+      gl.activeTexture(gl.TEXTURE0);
 
       const skip = (import.meta.env.DEV && globalThis.__w3dSkip) || {}; // hook QA : désactiver une passe pour isoler un défaut
 
@@ -320,6 +377,25 @@ export function createWorld3DLayer(maplibregl, data) {
         setCommon(G.road);
         gl.bindVertexArray(G.roadVAO);
         gl.drawElements(gl.TRIANGLES, G.roadCount, gl.UNSIGNED_INT, 0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthMask(true);
+      }
+
+      // 0b. sol multiplicatif : ombres portées sur le fond de carte + teinte de l'heure
+      if (!skip.ground) {
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.DST_COLOR, gl.ZERO);
+        gl.useProgram(G.ground.p);
+        setCommon(G.ground);
+        gl.uniform1f(G.ground.u.uGroundHalf, 2300);
+        gl.uniform3f(G.ground.u.uTint, pal.tint[0], pal.tint[1], pal.tint[2]);
+        const cold = 1 - night * 0.5; // l'ombre est froide le jour, presque neutre la nuit (tout est déjà sombre)
+        gl.uniform3f(G.ground.u.uShadowTint, 0.60 + 0.28 * (1 - cold), 0.66 + 0.22 * (1 - cold), 0.82 + 0.10 * (1 - cold));
+        gl.bindVertexArray(G.groundVAO);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.disable(gl.BLEND);
         gl.enable(gl.DEPTH_TEST);
         gl.depthMask(true);
       }
@@ -395,6 +471,108 @@ export function createWorld3DLayer(maplibregl, data) {
       }
   }
 
+  /**
+   * Carte d'ombres qui suit la caméra (technique de webgpu-lighting-atmosphere) : boîte orthographique le long de la lumière,
+   * centrée sur le milieu de l'écran, recalée sur la grille des texels (aucun scintillement), redessinée UNIQUEMENT si le centre
+   * a bougé de plus de 22 % de la demi-largeur, si le zoom change de palier, si la lumière tourne de plus de 0,2° ou si les
+   * données changent. Au repos : 0 ms.
+   */
+  function updateShadow(gl, map, L) {
+    const zoom = map.getZoom();
+    const half = Math.round(Math.max(70, Math.min(420, 80 * 2 ** (17.8 - zoom))) / 10) * 10; // m, par paliers
+    const c = map.getCenter();
+    const [cx, cy] = toLocal(c.lng, c.lat);
+    const moved = state.shadowCenter ? Math.hypot(cx - state.shadowCenter[0], cy - state.shadowCenter[1]) : Infinity;
+    const turned = state.shadowL ? Math.acos(Math.min(1, L[0] * state.shadowL[0] + L[1] * state.shadowL[1] + L[2] * state.shadowL[2])) : Infinity;
+    if (!state.shadowDirty && half === state.shadowHalf && moved < 0.22 * half && turned < 0.0035) return;
+
+    // base de la lumière : r (droite), u (haut), s (vers la lumière), r × u = s
+    const up0 = Math.abs(L[2]) > 0.95 ? [0, 1, 0] : [0, 0, 1];
+    let r = [up0[1] * L[2] - up0[2] * L[1], up0[2] * L[0] - up0[0] * L[2], up0[0] * L[1] - up0[1] * L[0]];
+    const rl = Math.hypot(...r);
+    r = r.map((v) => v / rl);
+    const u = [L[1] * r[2] - L[2] * r[1], L[2] * r[0] - L[0] * r[2], L[0] * r[1] - L[1] * r[0]];
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+    // recalage sur la grille des texels, dans le repère de la lumière
+    const texel = (2 * half) / G.shRes;
+    const c3 = [cx, cy, 0];
+    const dr = Math.round(dot(r, c3) / texel) * texel - dot(r, c3);
+    const du = Math.round(dot(u, c3) / texel) * texel - dot(u, c3);
+    const cs = [cx + r[0] * dr + u[0] * du, cy + r[1] * dr + u[1] * du, r[2] * dr + u[2] * du];
+
+    const D = 450; // demi-profondeur de la boîte (m)
+    const m = state.lightVP;
+    m[0] = r[0] / half; m[1] = u[0] / half; m[2] = -L[0] / D; m[3] = 0;
+    m[4] = r[1] / half; m[5] = u[1] / half; m[6] = -L[1] / D; m[7] = 0;
+    m[8] = r[2] / half; m[9] = u[2] / half; m[10] = -L[2] / D; m[11] = 0;
+    m[12] = -dot(r, cs) / half; m[13] = -dot(u, cs) / half; m[14] = dot(L, cs) / D; m[15] = 1;
+
+    // --- passe de profondeur
+    const prevFB = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+    const prevVP = gl.getParameter(gl.VIEWPORT);
+    const prevDR = gl.getParameter(gl.DEPTH_RANGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, G.shFBO);
+    gl.viewport(0, 0, G.shRes, G.shRes);
+    gl.depthRange(0, 1); // la profondeur stockée doit correspondre à `s.z` lu par le shader
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.depthMask(true);
+    gl.colorMask(false, false, false, false);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(2, 4);
+    gl.clearDepth(1);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+
+    gl.useProgram(G.shBld.p);
+    gl.uniformMatrix4fv(G.shBld.u.uMVP, false, m);
+    gl.bindVertexArray(G.bldVAO);
+    gl.drawElements(gl.TRIANGLES, G.bldCount, gl.UNSIGNED_INT, 0);
+
+    gl.useProgram(G.shProp.p);
+    gl.uniformMatrix4fv(G.shProp.u.uMVP, false, m);
+    if (G.tankCount) {
+      gl.bindVertexArray(G.tank.vao);
+      gl.drawElementsInstanced(gl.TRIANGLES, G.tank.count, gl.UNSIGNED_SHORT, 0, G.tankCount);
+    }
+    if (G.boxCount) {
+      gl.bindVertexArray(G.box.vao);
+      gl.drawElementsInstanced(gl.TRIANGLES, G.box.count, gl.UNSIGNED_SHORT, 0, G.boxCount);
+    }
+
+    gl.useProgram(G.shTree.p);
+    gl.uniformMatrix4fv(G.shTree.u.uMVP, false, m);
+    gl.uniform1f(G.shTree.u.uTime, 0); // ombre de feuillage figée : pas de balancement dans la carte mise en cache
+    if (G.roundCount) {
+      gl.uniform1i(G.shTree.u.uPart, 1);
+      gl.bindVertexArray(G.trunk.vao);
+      gl.drawElementsInstanced(gl.TRIANGLES, G.trunk.count, gl.UNSIGNED_SHORT, 0, G.roundCount);
+      gl.uniform1i(G.shTree.u.uPart, 0);
+      gl.bindVertexArray(G.canopy.vao);
+      gl.drawElementsInstanced(gl.TRIANGLES, G.canopy.count, gl.UNSIGNED_SHORT, 0, G.roundCount);
+    }
+    if (G.palmCount) {
+      gl.uniform1i(G.shTree.u.uPart, 2);
+      gl.bindVertexArray(G.palm.vao);
+      gl.drawElementsInstanced(gl.TRIANGLES, G.palm.count, gl.UNSIGNED_SHORT, 0, G.palmCount);
+    }
+
+    gl.bindVertexArray(null);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    gl.colorMask(true, true, true, true);
+    gl.depthRange(prevDR[0], prevDR[1]);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, prevFB);
+    gl.viewport(prevVP[0], prevVP[1], prevVP[2], prevVP[3]);
+
+    state.shadowCenter = [cx, cy];
+    state.shadowHalf = half;
+    state.shadowL = L;
+    state.shadowDirty = false;
+    state.shadowRedraws += 1;
+  }
+
   layer.onRemove = function onRemove() {
     clearTimeout(state.timer);
     state.timer = 0;
@@ -406,7 +584,7 @@ export function createWorld3DLayer(maplibregl, data) {
     get ok() {
       return state.ok;
     },
-    stats: () => ({ ...state.stats, beacons: state.beaconCount, sun: state.sun, night: state.night }),
+    stats: () => ({ ...state.stats, beacons: state.beaconCount, sun: state.sun, night: Math.max(state.night, state.pal.night), shadowRes: G.shRes, shadowRedraws: state.shadowRedraws, shadowHalfWidthM: state.shadowHalf }),
     /** Balises : [{ lng, lat, color: '#RRGGBB' }] */
     setBeacons(list) {
       if (!state.ok) return;
@@ -423,9 +601,17 @@ export function createWorld3DLayer(maplibregl, data) {
       state.map?.triggerRepaint();
     },
     /** Soleil et ambiance (QA / futur sélecteur d'heure) : azimut (° depuis le nord), hauteur (°), nuit 0..1 */
-    setSun(azimuthDeg, altitudeDeg, night = state.night) {
-      state.sun = { azimuthDeg, altitudeDeg, real: true };
-      state.night = night;
+    setSun(azimuthDeg, altitudeDeg, real = true) {
+      state.sun = { azimuthDeg, altitudeDeg, real };
+      state.pal = paletteFor(altitudeDeg);
+      state.shadowDirty = true;
+      state.map?.triggerRepaint();
+      return state.pal;
+    },
+    palette: () => state.pal,
+    /** Active / coupe les ombres portées (QA, ou repli si un appareil peine). */
+    setShadows(on) {
+      state.shadowsOn = Boolean(on);
       state.map?.triggerRepaint();
     },
     setNight(v) {

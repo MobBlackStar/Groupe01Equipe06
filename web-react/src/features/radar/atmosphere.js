@@ -141,6 +141,7 @@ function ensureLayers(map, st) {
         id: SHADOW_LAYER,
         type: 'fill',
         source: SHADOW_SRC,
+        layout: { visibility: st.world && st.world.w3dActive ? 'none' : 'visible' }, // le calque WebGL2 projette de vraies ombres
         paint: { 'fill-color': '#4A3A24', 'fill-opacity': 0.22, 'fill-antialias': true },
       },
       before
@@ -150,6 +151,7 @@ function ensureLayers(map, st) {
 
 /** Calcule les ombres des bâtiments nouvellement chargés (cache : un bâtiment n'est traité qu'une fois). */
 function refreshShadows(map, st) {
+  if (st.world && st.world.w3dActive) return; // ombres calculées par la carte d'ombres GPU : rien à faire ici
   if (!map.getSource(SHADOW_SRC)) return;
   if (st.world && st.worldDone) return; // données pré-calculées : une seule passe suffit
   if (!st.world && (!map.getSource('openmaptiles') || map.getZoom() < 14.5)) return;
@@ -208,6 +210,7 @@ function mountHaze(map, st) {
   map.on('rotate', update);
   update();
   st.hazeEl = el;
+  st.updateHaze = update;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -252,4 +255,21 @@ export function applyAtmosphere(map, world) {
 export function atmosphereStats(map) {
   const st = states.get(map);
   return st ? { sun: st.sun, shadows: st.shadowCount, cached: st.cache.size } : null;
+}
+
+/**
+ * Change le soleil après coup (sélecteur d'heure) : lumière MapLibre des volumes restants et lueur de la brume.
+ * @param {object} map
+ * @param {{azimuthDeg:number, altitudeDeg:number, real:boolean}} sun - déjà borné (jamais sous l'horizon)
+ */
+export function setAtmosphereSun(map, sun) {
+  const st = states.get(map);
+  if (!st) return;
+  st.sun = sun;
+  try {
+    applyLight(map, sun);
+  } catch {
+    /* style pas encore prêt : la lumière sera posée au prochain applyAtmosphere */
+  }
+  if (st.updateHaze) st.updateHaze();
 }
