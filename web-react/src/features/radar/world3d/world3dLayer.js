@@ -1,3 +1,4 @@
+import { isEmbedded } from '../../../lib/embed.js';
 // 💡 Concept & Analogie : Comme un théâtre de marionnettes monté DANS la carte : MapLibre dessine le sol, les routes et les textes, et ce calque ajoute, sur la même scène, les immeubles, les arbres, les oiseaux et les balises, avec sa propre lumière.
 // 🔄 Comparaison React / Flutter : Un « CustomLayer » MapLibre est l'équivalent d'un `CustomPainter` : on reçoit le contexte graphique (WebGL2) et la matrice de la caméra, et on dessine à la main.
 // 🎯 À retenir pour la soutenance : "Zéro bibliothèque 3D : WebGL2 brut, une dizaine de dessins par image, animation limitée à 30 images/s et coupée quand l'onglet est masqué."
@@ -90,7 +91,7 @@ export function createWorld3DLayer(maplibregl, data) {
     sun: mapSun(),
     pal: null,
     night: 0,
-    shadowsOn: true,
+    shadowsOn: !isMobileOrEmbed,
     shadowDirty: true,
     shadowCenter: null,
     shadowHalf: 0,
@@ -104,6 +105,8 @@ export function createWorld3DLayer(maplibregl, data) {
   state.pal = paletteFor(state.sun.altitudeDeg);
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lowEnd = (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 8) <= 4) || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  const isMobileOrEmbed = isEmbedded() || (typeof window !== 'undefined' && (window.innerWidth < 768 || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches && window.innerWidth < 1024)));
+  const cullDistanceM = isMobileOrEmbed ? 650 : undefined;
 
   const origin = MAP_CONFIG.ESSECT_COORDS;
   const merc = maplibregl.MercatorCoordinate.fromLngLat(origin, 0);
@@ -188,7 +191,7 @@ export function createWorld3DLayer(maplibregl, data) {
         G.roadCount = rm.idx.length;
 
         // --- immeubles
-        const bm = buildBuildingMesh(data.buildings);
+        const bm = buildBuildingMesh(data.buildings, cullDistanceM);
         G.bldVAO = gl.createVertexArray();
         gl.bindVertexArray(G.bldVAO);
         buf(gl, gl.ARRAY_BUFFER, bm.pos);
@@ -231,7 +234,7 @@ export function createWorld3DLayer(maplibregl, data) {
         };
 
         // --- arbres
-        const trees = buildTreeInstances(data.trees);
+        const trees = buildTreeInstances(data.trees, cullDistanceM);
         const keep = lowEnd ? 0.55 : 1;
         G.treeInst = buf(gl, gl.ARRAY_BUFFER, trees.round);
         G.palmInst = buf(gl, gl.ARRAY_BUFFER, trees.palms);

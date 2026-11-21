@@ -14,9 +14,10 @@ import {
   AlertCircle,
   CheckCircle,
   ExternalLink,
+  RotateCcw,
 } from 'lucide-react';
 import { KpiCard, BarChartCard } from '../../components/charts/index.js';
-import { Spinner } from '../../components/ui/index.js';
+import { Spinner, Button, Modal, Toast } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
@@ -55,6 +56,32 @@ const DEMO_ADMIN_DASHBOARD = {
 export default function AdminDashboard() {
   const [data, setData] = useState(DEMO_ADMIN_DASHBOARD);
   const [loading, setLoading] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  async function handleResetDemo() {
+    setResetting(true);
+    try {
+      const res = await apiClient.post('/api/v1/admin/reset-demo');
+      setToast({
+        type: 'success',
+        message: `Plateforme réinitialisée avec succès (${res.data?.offersCount || 20} offres, ${res.data?.merchantsCount || 6} commerces) !`,
+      });
+      setResetModalOpen(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+    } catch (err) {
+      console.error('Erreur reset-demo:', err);
+      setToast({
+        type: 'error',
+        message: err.response?.data?.message || 'Erreur lors de la réinitialisation de la démo.',
+      });
+    } finally {
+      setResetting(false);
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -154,6 +181,15 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setResetModalOpen(true)}
+              className="cs-btn cs-btn-cream text-xs !py-2.5 !px-3.5 hover:!bg-[#FFD000] hover:text-[#111111] transition-colors"
+              title="Réinitialiser les données pour la soutenance (20 offres officielles, 6 commerces)"
+            >
+              <RotateCcw className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />
+              <span>Réinitialiser la démo</span>
+            </button>
             <Link to="/admin/merchants" className="cs-btn cs-btn-cream">
               <Store className="w-5 h-5 text-[#DA0711]" aria-hidden="true" />
               <span>Commerces</span>
@@ -281,6 +317,48 @@ export default function AdminDashboard() {
             />
           </div>
         </section>
+
+        {/* Modal de confirmation de réinitialisation démo */}
+        <Modal
+          isOpen={resetModalOpen}
+          onClose={() => !resetting && setResetModalOpen(false)}
+          title="Réinitialiser l'environnement de démo ?"
+          description="Cette action purgera toutes les commandes et réinjectera les 20 offres officielles, les 6 commerces de Montfleury (dont 1 en attente pour validation live) et réinitialisera le cache 30s."
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={resetting}
+                onClick={() => setResetModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                isLoading={resetting}
+                onClick={handleResetDemo}
+              >
+                Confirmer le reset
+              </Button>
+            </>
+          }
+        >
+          <div className="py-2 text-sm text-[#5E5850]">
+            <p>
+              Pratique entre deux passages devant le jury pour repartir instantanément d'un état propre.
+            </p>
+          </div>
+        </Modal>
+
+        {toast && (
+          <Toast
+            type={toast.type}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        )}
       </div>
     </div>
   );

@@ -235,19 +235,22 @@ export default function MerchantStorePage() {
             />
           </div>
 
-          <div className="pt-2 flex justify-end">
-            {/* Position de la boutique : carte 3D, coordonnées Google Maps, porte sur la rue (rayon 3 km vérifié aussi par le serveur) */}
-            <div>
-              <span className="cs-field-label">Emplacement de la boutique</span>
-              <SpotEditor value={{ lat: store.lat, lng: store.lng }} onChange={(spot) => setStore((prev) => ({ ...prev, lat: spot.lat, lng: spot.lng }))} />
-            </div>
+          {/* Position de la boutique : carte 3D, coordonnées Google Maps, porte sur la rue (rayon 3 km vérifié aussi par le serveur) */}
+          <div className="pt-2 space-y-3">
+            <span className="cs-field-label block">Emplacement de la boutique</span>
+            <SpotEditor
+              value={{ lat: store.lat, lng: store.lng }}
+              onChange={(spot) => setStore((prev) => ({ ...prev, lat: spot.lat, lng: spot.lng }))}
+            />
+          </div>
 
+          <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-4 border-t border-[#111111]/10">
             <Button
               type="submit"
               variant="primary"
               size="lg"
               isLoading={loading}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold shadow-sm"
             >
               Enregistrer
             </Button>

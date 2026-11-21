@@ -55,7 +55,7 @@ export default function ApkDownloadMascot() {
           ========================================================================= */}
       <aside
         aria-label="Téléchargement de l'application Android"
-        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 select-none animate-bounce-subtle"
+        className="fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] animate-bounce-subtle"
       >
         {isDismissed ? (
           /* Version miniature discrète après fermeture */
@@ -70,7 +70,7 @@ export default function ApkDownloadMascot() {
           </button>
         ) : (
           /* Mascotte Griddle complète avec bulle d'appel */
-          <div className="relative group">
+          <div className="relative group max-w-full">
             {/* Bouton croix pour minimiser */}
             <button
               type="button"
@@ -86,10 +86,10 @@ export default function ApkDownloadMascot() {
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="relative flex items-center gap-2 p-2 rounded-3xl bg-[#FAF3E6] border-2 border-[#111111] shadow-[4px_4px_0px_#111111] hover:shadow-[2px_2px_0px_#111111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer group-hover:border-[#DA0711]"
+              className="relative flex items-center gap-2 p-2 rounded-3xl bg-[#FAF3E6] border-2 border-[#111111] shadow-[4px_4px_0px_#111111] hover:shadow-[2px_2px_0px_#111111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer group-hover:border-[#DA0711] max-w-full"
             >
               {/* Mascotte SVG Griddle : Burger Burger rétro tenant un smartphone */}
-              <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
+              <div className="relative w-12 sm:w-14 h-12 sm:h-14 shrink-0 flex items-center justify-center">
                 <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
                   {/* Bun supérieur */}
                   <path
@@ -159,16 +159,16 @@ export default function ApkDownloadMascot() {
                 </span>
               </div>
 
-              {/* Texte d'appel du widget */}
-              <div className="text-left pr-2 hidden sm:block">
-                <span className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#DA0711]">
+              {/* Texte d'appel du widget avec copy concise anti-dépassement */}
+              <div className="text-left pr-2 hidden sm:block truncate">
+                <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#DA0711]">
                   ✦ Soutenance 2026
                 </span>
-                <span className="block font-black text-sm text-[#111111] leading-tight">
-                  Installer l'APK Android
+                <span className="block font-black text-xs sm:text-sm text-[#111111] leading-tight truncate">
+                  App Android • Scan QR / APK
                 </span>
-                <span className="block text-[11px] text-[#666] font-medium">
-                  Scan QR ou Téléchargement direct
+                <span className="block text-[10px] sm:text-[11px] text-[#666] font-medium truncate">
+                  Installation directe jury
                 </span>
               </div>
             </button>

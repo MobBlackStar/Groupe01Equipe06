@@ -19,18 +19,41 @@ class ScannerScreen extends StatefulWidget {
   State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends State<ScannerScreen> {
-  final MobileScannerController _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-    torchEnabled: false,
-  );
+class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserver {
+  late final MobileScannerController _controller;
 
   bool _isProcessing = false;
   bool _isTorchOn = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    if (state == AppLifecycleState.resumed) {
+      // Reprise d'activité (ex: retour après avoir accordé la permission Caméra)
+      try {
+        _controller.start();
+      } catch (_) {}
+    } else if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      try {
+        _controller.stop();
+      } catch (_) {}
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }
@@ -391,7 +414,34 @@ class _ScannerScreenState extends State<ScannerScreen> {
                               const SizedBox(height: 12),
                               Text('CAMÉRA INDISPONIBLE', style: AppTheme.h3(22)),
                               const SizedBox(height: 6),
-                              Text('Utilisez la saisie de secours pour valider le code à 6 chiffres.', textAlign: TextAlign.center, style: AppTheme.body(15, AppTheme.muted)),
+                              Text(
+                                'Utilisez la saisie de secours pour valider le code à 6 chiffres.',
+                                textAlign: TextAlign.center,
+                                style: AppTheme.body(15, AppTheme.muted),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.ink.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Diagnostic : ${error.errorCode.name}',
+                                  style: AppTheme.mono(12, AppTheme.ink),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              GButton(
+                                'Réessayer la caméra',
+                                icon: Icons.refresh_rounded,
+                                variant: GVariant.mustard,
+                                onPressed: () {
+                                  try {
+                                    _controller.start();
+                                  } catch (_) {}
+                                },
+                              ),
                             ],
                           ),
                         );

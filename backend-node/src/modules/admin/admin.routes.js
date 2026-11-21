@@ -36,3 +36,6 @@ adminRouter.patch(
   validate({ body: updateUserStatusSchema }),
   adminController.updateUserStatus
 );
+
+// Réinitialisation de démonstration (1-clic pour la soutenance)
+adminRouter.post('/reset-demo', adminController.resetDemo);

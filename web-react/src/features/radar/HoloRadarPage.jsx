@@ -344,6 +344,9 @@ clockRef.current = clock;
 
     if (!mapRef.current) {
       try {
+        const isMobileOrEmbed = isEmbedded() || (typeof window !== 'undefined' && window.innerWidth < 768);
+        const effectivePixelRatio = isMobileOrEmbed ? 1.25 : (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+
         const map = new maplibregl.Map({
           container: mapContainerRef.current,
           style: MAP_CONFIG.DEFAULT_STYLE,
@@ -351,7 +354,8 @@ clockRef.current = clock;
           zoom: MAP_CONFIG.DEFAULT_CAMERA.zoom,
           pitch: MAP_CONFIG.DEFAULT_CAMERA.pitch,
           bearing: MAP_CONFIG.DEFAULT_CAMERA.bearing,
-          antialias: true,
+          pixelRatio: effectivePixelRatio,
+          antialias: !isMobileOrEmbed,
           maxPitch: 85, // le mode Marcher regarde presque à l'horizontale
           attributionControl: false,
         });

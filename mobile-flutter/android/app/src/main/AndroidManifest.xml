@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Requis en release : sans elle l'APK ne peut joindre ni l'API ni la passerelle de paiement (seuls debug/profile l'avaient). -->
+    <!-- Requis en release : communication réseau et scanner de billets Living Ticket -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="campussave"
         android:name="${applicationName}"

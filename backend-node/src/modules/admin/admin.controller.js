@@ -51,4 +51,17 @@ export const adminController = {
     );
     res.json(result);
   }),
+
+  resetDemo: asyncHandler(async (req, res) => {
+    const isAllowed = process.env.ALLOW_DEMO_TOKENS === 'true' || process.env.NODE_ENV !== 'production';
+    if (!isAllowed) {
+      return res.status(403).json({
+        ok: false,
+        code: 'FORBIDDEN',
+        message: 'La réinitialisation de démonstration est restreinte aux environnements de démonstration.',
+      });
+    }
+    const result = await adminService.resetDemo();
+    res.json(result);
+  }),
 };

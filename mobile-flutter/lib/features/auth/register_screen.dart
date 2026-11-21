@@ -3,6 +3,10 @@
 // 🎯 À retenir pour la soutenance : "Cet écran mobile offre un sélecteur de rôle visuel et injecte immédiatement le custom claim correspondant via notre API sécurisée."
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
+import '../../services/auth_service.dart';
 import '../../app/theme.dart';
 import '../../widgets/griddle.dart';
 import '../../widgets/app_button.dart';
@@ -52,21 +56,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    // Simulation de création et appel API
-    await Future.delayed(const Duration(milliseconds: 1200));
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final phone = _phoneController.text.trim();
+      await authService.registerWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        role: _selectedRole,
+        displayName: _nameController.text.trim(),
+        phone: phone.isNotEmpty ? phone : null,
+        filiereId: _selectedRole == 'STUDENT' ? _selectedFiliere : null,
+      );
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppTheme.biscuit,
-        content: Text(
-          'Compte ${_selectedRole == "STUDENT" ? "Étudiant" : "Commerçant"} créé avec succès !',
-          style: const TextStyle(color: AppTheme.red, fontWeight: FontWeight.bold),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.leaf,
+          content: Text(
+            'Compte ${_selectedRole == "STUDENT" ? "Étudiant" : "Commerçant"} créé avec succès !',
+            style: const TextStyle(color: AppTheme.cream, fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-    );
+      );
+      Navigator.of(context).pop();
+    } on FirebaseAuthException catch (e) {
+      String msg = 'Erreur d\'inscription Firebase';
+      if (e.code == 'email-already-in-use') {
+        msg = 'Cette adresse email est déjà associée à un compte existant.';
+      } else if (e.code == 'weak-password') {
+        msg = 'Le mot de passe doit comporter au moins 6 caractères.';
+      } else if (e.code == 'invalid-email') {
+        msg = 'L\'adresse email saisie est invalide.';
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        msg = e.message!;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.red,
+          content: Text(msg, style: const TextStyle(color: AppTheme.cream, fontWeight: FontWeight.bold)),
+        ),
+      );
+    } on DioException catch (e) {
+      String msg = 'Erreur lors de la configuration du profil';
+      final errData = e.response?.data;
+      if (errData is Map && errData['error'] != null) {
+        msg = errData['error']['message'] ?? msg;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.red,
+          content: Text(msg, style: const TextStyle(color: AppTheme.cream, fontWeight: FontWeight.bold)),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.red,
+          content: Text('Erreur inattendue : $e', style: const TextStyle(color: AppTheme.cream, fontWeight: FontWeight.bold)),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override

@@ -242,4 +242,15 @@ export const adminService = {
 
     return { user: { ...prevUser, ...updates } };
   },
+
+  /**
+   * Réinitialise l'environnement complet de démonstration : commandes purgées, 20 offres officielles réinjectées, cache invalidé.
+   */
+  async resetDemo() {
+    const { resetDemo } = await import('../../../scripts/resetDemo.js');
+    await resetDemo();
+    const { clearReadCache } = await import('../../middleware/readCache.js');
+    clearReadCache();
+    return { ok: true, offersCount: 20, merchantsCount: 6 };
+  },
 };

@@ -100,6 +100,47 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Inscription avec création de compte Firebase + enregistrement du profil backend
+  Future<void> registerWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String role,
+    required String displayName,
+    String? phone,
+    String? filiereId,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    ApiClient.demoAuthToken = null;
+
+    try {
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      _user = credential.user;
+
+      // Enregistrer le profil auprès de l'API CampusSave pour injecter le rôle et créer le document utilisateur Firestore
+      await ApiClient.dio.post(
+        Endpoints.registerProfile,
+        data: {
+          'role': role,
+          'displayName': displayName,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+          if (filiereId != null) 'filiereId': filiereId,
+        },
+      );
+
+      // Rafraîchir les custom claims pour récupérer le rôle
+      final tokenResult = await _user?.getIdTokenResult(true);
+      _role = tokenResult?.claims?['role'] as String? ?? role;
+      await _loadRemoteProfile();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Connexion 1-clic pour le kit de démonstration (Étudiant ou Commerçant)
   Future<void> signInDemo(String roleType) async {
     _isLoading = true;

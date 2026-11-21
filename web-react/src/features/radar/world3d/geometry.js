@@ -37,7 +37,7 @@ function pointInRing(x, y, flat) {
  * Tous les immeubles dans UN maillage (murs + toits) et la liste des accessoires de toit.
  * @param {Array<{r:number[], h:number, k:number, u:number}>} buildings - anneaux en décimètres
  */
-export function buildBuildingMesh(buildings) {
+export function buildBuildingMesh(buildings, maxDistanceM) {
   let vMax = 0;
   let iMax = 0;
   for (const b of buildings) {
@@ -58,6 +58,14 @@ export function buildBuildingMesh(buildings) {
     if (n < 3) continue;
     let flat = new Array(n * 2);
     for (let i = 0; i < n * 2; i++) flat[i] = b.r[i] / 10; // décimètres -> mètres
+    if (Number.isFinite(maxDistanceM) && maxDistanceM > 0) {
+      let cx = 0; let cy = 0;
+      for (let i = 0; i < n; i++) {
+        cx += flat[2 * i]; cy += flat[2 * i + 1];
+      }
+      cx /= n; cy /= n;
+      if (Math.hypot(cx, cy) > maxDistanceM) continue;
+    }
     if (signedArea(flat) < 0) {
       const rev = new Array(n * 2);
       for (let i = 0; i < n; i++) {
@@ -318,12 +326,13 @@ export function quad() {
 }
 
 /** Instances d'arbres : (x, y, sol) + (rayon, graine, hauteur de tronc, variante). Les palmiers sont séparés. */
-export function buildTreeInstances(trees) {
+export function buildTreeInstances(trees, maxDistanceM) {
   const round = [];
   const palms = [];
   trees.forEach(([xDm, yDm], i) => {
     const x = xDm / 10;
     const y = yDm / 10;
+    if (Number.isFinite(maxDistanceM) && maxDistanceM > 0 && Math.hypot(x, y) > maxDistanceM) return;
     const seed = frac(i * 1.618 + xDm * 0.013 + yDm * 0.0071);
     const isPalm = seed > 0.88;
     if (isPalm) {
