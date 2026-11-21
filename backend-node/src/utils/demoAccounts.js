@@ -8,10 +8,107 @@ import { MERCHANT_STATUS } from '../../../shared/constants.js';
 /** Uids des comptes de démonstration (web + mobile). */
 export const DEMO_MERCHANT_UID = 'm-baguette';
 export const DEMO_STUDENT_UID = 'student-yassine';
+export const DEMO_ADMIN_UID = 'admin-uid';
 
 const PREFERRED_DEMO_STORE_ID = 'merchant-baguette-baguette';
 
 export { demoTokensAllowed } from './demoTokenPolicy.js';
+
+export const KNOWN_DEMO_USERS = {
+  [DEMO_STUDENT_UID]: {
+    uid: DEMO_STUDENT_UID,
+    email: 'etudiant@essect.u-tunis.tn',
+    displayName: 'Yassine Trabelsi',
+    role: 'STUDENT',
+    filiereId: 'EBUSINESS_3A',
+    phone: '+21698123456',
+    ecoPoints: 90,
+    loyaltyTier: 'GRAINE',
+    nextRewardAt: 100,
+    totalMealsRescued: 4,
+    status: 'ACTIVE',
+    unlockedRewards: [],
+    stats: { ordersCompleted: 0, totalSpentMillimes: 0, totalSavedMillimes: 0, foodSavedGrams: 0, co2SavedGrams: 0, noShows: 0 },
+  },
+  'student-demo-uid': {
+    uid: 'student-demo-uid',
+    email: 'etudiant@essect.u-tunis.tn',
+    displayName: 'Étudiant Démo ESSECT',
+    role: 'STUDENT',
+    filiereId: 'EBUSINESS_3A',
+    phone: '+21698123456',
+    ecoPoints: 90,
+    loyaltyTier: 'GRAINE',
+    nextRewardAt: 100,
+    totalMealsRescued: 4,
+    status: 'ACTIVE',
+    unlockedRewards: [],
+    stats: { ordersCompleted: 0, totalSpentMillimes: 0, totalSavedMillimes: 0, foodSavedGrams: 0, co2SavedGrams: 0, noShows: 0 },
+  },
+  [DEMO_MERCHANT_UID]: {
+    uid: DEMO_MERCHANT_UID,
+    email: 'commercant@baguette.tn',
+    displayName: 'Baguette & Baguette Montfleury',
+    role: 'MERCHANT',
+    phone: '+21671390111',
+    status: 'ACTIVE',
+    stats: { offersPublished: 14, ordersPaid: 28, ordersCompleted: 26 },
+  },
+  'merchant-demo-uid': {
+    uid: 'merchant-demo-uid',
+    email: 'commercant@baguette.tn',
+    displayName: 'Baguette & Baguette Montfleury',
+    role: 'MERCHANT',
+    phone: '+21671390111',
+    status: 'ACTIVE',
+    stats: { offersPublished: 14, ordersPaid: 28, ordersCompleted: 26 },
+  },
+  [DEMO_ADMIN_UID]: {
+    uid: DEMO_ADMIN_UID,
+    email: 'admin@campussave.tn',
+    displayName: 'Direction ESSECT',
+    role: 'ADMIN',
+    phone: '+21671390000',
+    status: 'ACTIVE',
+  },
+  'admin-demo-uid': {
+    uid: 'admin-demo-uid',
+    email: 'admin@campussave.tn',
+    displayName: 'Direction ESSECT',
+    role: 'ADMIN',
+    phone: '+21671390000',
+    status: 'ACTIVE',
+  },
+  'test-uid': {
+    uid: 'test-uid',
+    email: 'test@essect.u-tunis.tn',
+    displayName: 'Utilisateur Test',
+    role: 'STUDENT',
+    status: 'ACTIVE',
+  },
+};
+
+/**
+ * Récupère ou auto-provisionne le profil utilisateur pour les comptes démo reconnus.
+ */
+export async function getOrProvisionDemoUser(uid) {
+  const demoData = KNOWN_DEMO_USERS[uid];
+  if (!demoData) return null;
+
+  const ref = db.collection('users').doc(uid);
+  try {
+    const snap = await ref.get();
+    if (snap.exists) {
+      return snap.data();
+    }
+    const now = new Date();
+    const docData = { ...demoData, createdAt: now, updatedAt: now };
+    await ref.set(docData);
+    return docData;
+  } catch {
+    return { ...demoData, createdAt: new Date(), updatedAt: new Date() };
+  }
+}
 
 /** Document du commerce relié au compte commerçant démo : `m-baguette`, sinon la boutique seed, sinon le 1er approuvé. */
 export async function findDemoMerchant() {
@@ -33,27 +130,6 @@ let demoStudentReady = false;
  */
 export async function ensureDemoStudent() {
   if (demoStudentReady) return;
-  const ref = db.collection('users').doc(DEMO_STUDENT_UID);
-  const snap = await ref.get();
-  if (!snap.exists) {
-    const now = new Date();
-    await ref.set({
-      uid: DEMO_STUDENT_UID,
-      email: 'yassine@essect.u-tunis.tn',
-      displayName: 'Yassine Trabelsi',
-      role: 'STUDENT',
-      filiereId: 'EBUSINESS_3A',
-      phone: '+21698123456',
-      ecoPoints: 90,
-      loyaltyTier: 'GRAINE',
-      nextRewardAt: 100,
-      totalMealsRescued: 4,
-      status: 'ACTIVE',
-      unlockedRewards: [],
-      stats: { ordersCompleted: 0, totalSpentMillimes: 0, totalSavedMillimes: 0, foodSavedGrams: 0, co2SavedGrams: 0, noShows: 0 },
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
+  await getOrProvisionDemoUser(DEMO_STUDENT_UID);
   demoStudentReady = true;
 }

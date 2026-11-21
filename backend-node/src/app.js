@@ -15,6 +15,9 @@ import { apiRouter } from './routes.js';
 
 const app = express();
 
+// Configuration du reverse proxy (Render, Cloudflare, etc.) pour express-rate-limit
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(compression());
 app.use(cors(corsOptions));

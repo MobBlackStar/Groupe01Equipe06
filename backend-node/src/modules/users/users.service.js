@@ -7,10 +7,14 @@ import admin from 'firebase-admin';
 import { db } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { ROLES } from '../../../../shared/constants.js';
+import { env } from '../../config/env.js';
+import { demoTokensAllowed, getOrProvisionDemoUser, findDemoMerchant, DEMO_MERCHANT_UID } from '../../utils/demoAccounts.js';
+import { resolveMerchantId } from '../../utils/merchantResolver.js';
 
 export const usersService = {
   /**
    * Récupère le profil complet de l'utilisateur connecté, avec les informations du commerce s'il est commerçant.
+   * Auto-provisionne les comptes démo reconnus pour éviter tout 404 lors des démonstrations.
    */
   async getMe(uid) {
     if (!uid) {
@@ -19,18 +23,46 @@ export const usersService = {
 
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
+    let user = null;
 
-    if (!userDoc.exists) {
-      throw new AppError('Profil utilisateur introuvable', 404, 'USER_NOT_FOUND');
+    if (userDoc.exists) {
+      user = userDoc.data();
+    } else {
+      // Si l'utilisateur n'existe pas en Firestore, vérifier s'il s'agit d'un compte de démo autorisé
+      const isDemoAllowed = demoTokensAllowed({ NODE_ENV: env.NODE_ENV, ALLOW_DEMO_TOKENS: env.ALLOW_DEMO_TOKENS });
+      if (isDemoAllowed) {
+        user = await getOrProvisionDemoUser(uid);
+      }
+      if (!user) {
+        throw new AppError('Profil utilisateur introuvable', 404, 'USER_NOT_FOUND');
+      }
     }
 
-    const user = userDoc.data();
     let merchant = null;
 
     if (user.role === ROLES.MERCHANT) {
+      // 1. Recherche directe par id
       const merchantDoc = await db.collection('merchants').doc(uid).get();
       if (merchantDoc.exists) {
         merchant = merchantDoc.data();
+      } else {
+        // 2. Recherche par ownerUid
+        const ownedSnap = await db.collection('merchants').where('ownerUid', '==', uid).limit(1).get();
+        if (!ownedSnap.empty) {
+          merchant = ownedSnap.docs[0].data();
+        } else {
+          // 3. Résolution via resolveMerchantId / findDemoMerchant pour les comptes démo
+          const resolvedId = await resolveMerchantId(uid);
+          if (resolvedId) {
+            const resolvedDoc = await db.collection('merchants').doc(resolvedId).get();
+            if (resolvedDoc.exists) {
+              merchant = resolvedDoc.data();
+            }
+          }
+          if (!merchant && (uid === DEMO_MERCHANT_UID || uid === 'merchant-demo-uid')) {
+            merchant = await findDemoMerchant();
+          }
+        }
       }
     }
 
