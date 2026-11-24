@@ -5,9 +5,9 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ArrowRight } from 'lucide-react';
+import { MapPin, ArrowRight, Store } from 'lucide-react';
 import SearchBar from './SearchBar.jsx';
-import FilterPanel from './FilterPanel.jsx';
+import FilterPanel, { MAX_BUDGET_UNLIMITED } from './FilterPanel.jsx';
 import { OfferCard, MysteryBoxCard } from '../../components/offers/index.js';
 import { EmptyState, Spinner } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
@@ -26,7 +26,7 @@ export default function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedMerchant, setSelectedMerchant] = useState('ALL');
-  const [maxPriceMillimes, setMaxPriceMillimes] = useState(20000);
+  const [maxPriceMillimes, setMaxPriceMillimes] = useState(MAX_BUDGET_UNLIMITED);
   const [surpriseOnly, setSurpriseOnly] = useState(false);
   const [sortBy, setSortBy] = useState('distance');
 
@@ -40,7 +40,7 @@ export default function BrowsePage() {
       setLoading(true);
       setLoadError('');
       try {
-        const res = await apiClient.get(ENDPOINTS.OFFERS);
+        const res = await apiClient.get(ENDPOINTS.OFFERS, { params: { limit: 50 } });
         if (isMounted && res.data && Array.isArray(res.data.offers)) {
           // Le catalogue du serveur fait foi, même vide : jamais d'offres inventées qu'on ne pourrait pas réserver
           setOffers(res.data.offers);
@@ -61,7 +61,7 @@ export default function BrowsePage() {
     setSearchQuery('');
     setSelectedCategory('ALL');
     setSelectedMerchant('ALL');
-    setMaxPriceMillimes(20000);
+    setMaxPriceMillimes(MAX_BUDGET_UNLIMITED);
     setSurpriseOnly(false);
     setSortBy('distance');
   }, []);
@@ -81,7 +81,7 @@ export default function BrowsePage() {
     return d.getTime();
   }, [scrubberHour]);
 
-  // Liste unique des commerces présents dans le catalogue
+  // Liste unique des commerces présents dans le catalogue (triés par nombre d'offres puis nom)
   const merchantList = useMemo(() => {
     const map = new Map();
     offers.forEach((o) => {
@@ -94,18 +94,57 @@ export default function BrowsePage() {
         map.get(name).count += 1;
       }
     });
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+    return Array.from(map.values()).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'fr'));
   }, [offers]);
 
-  // Décomptes de catégories
+  // Filtre partagé (recherche, restaurant, mystère, budget) utilisé pour le catalogue et les compteurs de catégories
+  const matchesNonCategoryFilters = useCallback(
+    (offer, now) => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = (offer.title || '').toLowerCase().includes(q);
+        const matchMerchant = (offer.merchantName || offer.merchantSnapshot?.name || offer.merchant?.name || '').toLowerCase().includes(q);
+        const matchDesc = (offer.description || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchMerchant && !matchDesc) return false;
+      }
+
+      if (selectedMerchant !== 'ALL') {
+        const mName = (offer.merchantName || offer.merchantSnapshot?.name || offer.merchant?.name || '').toLowerCase();
+        const mId = offer.merchantId || offer.merchantSnapshot?.id || offer.merchant?.id;
+        if (mId !== selectedMerchant && mName !== selectedMerchant.toLowerCase()) {
+          return false;
+        }
+      }
+
+      if (surpriseOnly && !(offer.isSurpriseBasket || offer.surprise)) {
+        return false;
+      }
+
+      if (maxPriceMillimes < MAX_BUDGET_UNLIMITED) {
+        const currentPrice = computeUnitPrice(offer, now);
+        if (currentPrice > maxPriceMillimes) return false;
+      }
+
+      return true;
+    },
+    [searchQuery, selectedMerchant, surpriseOnly, maxPriceMillimes]
+  );
+
+  // Décomptes dynamiques des catégories selon les filtres actifs (évite les catégories à 0 résultat)
   const categoryCounts = useMemo(() => {
+    const now = Date.now();
     const counts = {};
     offers.forEach((o) => {
+      try {
+        if (!matchesNonCategoryFilters(o, now)) return;
+      } catch {
+        // garde l'offre en cas de champ incomplet
+      }
       const cat = o.category || 'MIXTE';
       counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
-  }, [offers]);
+  }, [offers, matchesNonCategoryFilters]);
 
   // Filtrage et Tri
   const filteredOffers = useMemo(() => {
@@ -113,36 +152,10 @@ export default function BrowsePage() {
 
     return offers.filter((offer) => {
       try {
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase().trim();
-          const matchTitle = (offer.title || '').toLowerCase().includes(q);
-          const matchMerchant = (offer.merchantName || offer.merchantSnapshot?.name || offer.merchant?.name || '').toLowerCase().includes(q);
-          const matchDesc = (offer.description || '').toLowerCase().includes(q);
-          if (!matchTitle && !matchMerchant && !matchDesc) return false;
-        }
-
         if (selectedCategory !== 'ALL' && offer.category !== selectedCategory) {
           return false;
         }
-
-        if (selectedMerchant !== 'ALL') {
-          const mName = (offer.merchantName || offer.merchantSnapshot?.name || offer.merchant?.name || '').toLowerCase();
-          const mId = offer.merchantId || offer.merchantSnapshot?.id || offer.merchant?.id;
-          if (mId !== selectedMerchant && mName !== selectedMerchant.toLowerCase()) {
-            return false;
-          }
-        }
-
-        if (surpriseOnly && !(offer.isSurpriseBasket || offer.surprise)) {
-          return false;
-        }
-
-        const currentPrice = computeUnitPrice(offer, now);
-        if (currentPrice > maxPriceMillimes) {
-          return false;
-        }
-
-        return true;
+        return matchesNonCategoryFilters(offer, now);
       } catch {
         return true;
       }
@@ -165,7 +178,48 @@ export default function BrowsePage() {
         return 0;
       }
     });
-  }, [offers, searchQuery, selectedCategory, selectedMerchant, maxPriceMillimes, surpriseOnly, sortBy]);
+  }, [offers, selectedCategory, matchesNonCategoryFilters, sortBy]);
+
+  const activeFilters = useMemo(() => {
+    const list = [];
+    if (searchQuery.trim()) {
+      list.push({ key: 'search', label: `🔍 "${searchQuery.trim()}"`, onClear: () => setSearchQuery('') });
+    }
+    if (selectedMerchant !== 'ALL') {
+      list.push({ key: 'merchant', label: `🏪 ${selectedMerchant}`, onClear: () => setSelectedMerchant('ALL') });
+    }
+    if (selectedCategory !== 'ALL') {
+      const catLabels = {
+        [OFFER_CATEGORIES.SANDWICH]: 'Sandwichs',
+        [OFFER_CATEGORIES.PLAT_CHAUD]: 'Plats chauds',
+        [OFFER_CATEGORIES.PIZZA]: 'Pizzas',
+        [OFFER_CATEGORIES.VIENNOISERIE]: 'Viennoiseries',
+        [OFFER_CATEGORIES.PATISSERIE]: 'Pâtisseries',
+        [OFFER_CATEGORIES.SALADE]: 'Salades',
+        [OFFER_CATEGORIES.SNACK]: 'Snacks & frites',
+        [OFFER_CATEGORIES.BOISSON]: 'Boissons',
+        [OFFER_CATEGORIES.MIXTE]: 'Paniers mixtes',
+      };
+      list.push({
+        key: 'category',
+        label: catLabels[selectedCategory] || selectedCategory,
+        onClear: () => setSelectedCategory('ALL'),
+      });
+    }
+    if (maxPriceMillimes < MAX_BUDGET_UNLIMITED) {
+      list.push({
+        key: 'budget',
+        label: `≤ ${formatTND(maxPriceMillimes)}`,
+        onClear: () => setMaxPriceMillimes(MAX_BUDGET_UNLIMITED),
+      });
+    }
+    if (surpriseOnly) {
+      list.push({ key: 'surprise', label: '✨ Paniers mystères', onClear: () => setSurpriseOnly(false) });
+    }
+    return list;
+  }, [searchQuery, selectedMerchant, selectedCategory, maxPriceMillimes, surpriseOnly]);
+
+  const hasActiveFilters = activeFilters.length > 0 || sortBy !== 'distance';
 
   // Items du Time Scrubber Hero
   const scrubberShowcaseItems = useMemo(() => {
@@ -244,55 +298,47 @@ export default function BrowsePage() {
         </div>
 
         <div className="space-y-4 mb-8">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Un plat, une baguette farcie, un restaurant…"
-          />
-
-          {/* Filtre rapide par restaurant / établissement partenaire */}
-          {merchantList.length > 0 && (
-            <div className="pt-1">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                <span className="cs-eyebrow !text-xs !tracking-wider flex items-center gap-1.5 text-[#5E5850]">
-                  <span>🏪</span> Établissements partenaires de Montfleury
-                </span>
-                {selectedMerchant !== 'ALL' && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMerchant('ALL')}
-                    className="text-xs font-bold text-[#DA0711] hover:underline"
-                  >
-                    Voir tous les restaurants ({offers.length} offres)
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <button
-                  type="button"
-                  onClick={() => setSelectedMerchant('ALL')}
-                  className={`cs-chip shrink-0 ${selectedMerchant === 'ALL' ? '!bg-[#111111] !text-[#FAF3E6]' : ''}`}
-                  aria-pressed={selectedMerchant === 'ALL'}
-                >
-                  Tous ({offers.length})
-                </button>
-                {merchantList.map((m) => {
-                  const isSel = selectedMerchant === m.id || selectedMerchant === m.name;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setSelectedMerchant(isSel ? 'ALL' : m.name)}
-                      className={`cs-chip shrink-0 ${isSel ? '!bg-[#DA0711] !text-white !border-[#DA0711]' : ''}`}
-                      aria-pressed={isSel}
-                    >
-                      {m.name} ({m.count})
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Barre unifiée : Recherche + Sélecteur d'établissement */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div className="md:col-span-7 lg:col-span-8">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Un plat, une baguette farcie, un restaurant…"
+              />
             </div>
-          )}
+            {merchantList.length > 0 && (
+              <div className="md:col-span-5 lg:col-span-4 relative">
+                <label htmlFor="merchant-filter" className="sr-only">
+                  Filtrer par établissement partenaire
+                </label>
+                <Store
+                  className={`absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${
+                    selectedMerchant !== 'ALL' ? 'text-[#DA0711]' : 'text-[#5E5850]'
+                  }`}
+                  strokeWidth={2.3}
+                  aria-hidden="true"
+                />
+                <select
+                  id="merchant-filter"
+                  value={selectedMerchant}
+                  onChange={(e) => setSelectedMerchant(e.target.value)}
+                  className={`cs-input !min-h-[4rem] !pl-14 !pr-11 !text-base !font-semibold cursor-pointer ${
+                    selectedMerchant !== 'ALL'
+                      ? '!border-[#DA0711] !bg-[#FFF5F5] !text-[#DA0711]'
+                      : ''
+                  }`}
+                >
+                  <option value="ALL">Tous les restaurants ({offers.length})</option>
+                  {merchantList.map((m) => (
+                    <option key={m.id} value={m.name}>
+                      {m.name} ({m.count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
           <FilterPanel
             selectedCategory={selectedCategory}
@@ -305,6 +351,8 @@ export default function BrowsePage() {
             onChangeSortBy={setSortBy}
             onResetFilters={handleResetFilters}
             categoryCounts={categoryCounts}
+            activeFilters={activeFilters}
+            hasActiveFilters={hasActiveFilters}
           />
         </div>
 
