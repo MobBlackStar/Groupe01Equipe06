@@ -1,14 +1,16 @@
-// 💡 Concept & Analogie : Comme le carnet de vol d'un jeune pilote récapitulant chaque heure de vol accomplie, cet écran synthétise chaque sauvetage de repas réussi par l'étudiant.
-// 🔄 Comparaison React / Flutter : En Flutter, `StudentDashboardScreen` s'appuie sur `fl_chart` pour le tracé fluide de courbes vectorielles avec grille customisée ; en React, nous utilisons Recharts.
-// 🎯 À retenir pour la soutenance : "Ce dashboard mobile permet à l'étudiant de mesurer son impact en temps réel directement entre deux cours à l'ESSECT."
+// 💡 Concept & Analogie : Le carnet de vol de l'étudiant : repas sauvés, euros économisés et CO₂ évité, tirés de ses vraies commandes.
+// 🔄 Comparaison React / Flutter : Équivalent de `StudentDashboard.jsx` : `GET /dashboards/student`, notation via `POST /orders/:id/rating`.
+// 🎯 À retenir pour la soutenance : "Le bilan n'invente rien : les totaux viennent du profil serveur, le graphique cumule les économies réelles par semaine, et la note d'une commande terminée est réellement enregistrée."
 
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../widgets/kpi_tile.dart';
+import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/domain/money.dart';
+import '../../services/campus_api.dart';
 import '../../widgets/griddle.dart';
 import '../impact/impact_screen.dart';
+
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
 
@@ -17,414 +19,330 @@ class StudentDashboardScreen extends StatefulWidget {
 }
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
-  int _selectedChartMetric = 0; // 0: Dinars, 1: CO2 kg
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+  bool _showCo2 = false;
 
-  final List<Map<String, dynamic>> _recentOrders = [
-    {
-      'code': 'CS-8K4M9',
-      'title': 'Baguette Farcie Escalope',
-      'merchant': 'Baguette & Baguette',
-      'price': '3,800 DT',
-      'saved': '4,000 DT',
-      'rating': 5,
-    },
-    {
-      'code': 'CS-3T7X1',
-      'title': 'Panier Surprise Viennoiseries',
-      'merchant': 'Cafétéria L\'Étoile',
-      'price': '2,500 DT',
-      'saved': '3,500 DT',
-      'rating': null,
-    },
-    {
-      'code': 'CS-9M2K4',
-      'title': 'Ojja Royale aux Merguez',
-      'merchant': 'Restaurant Le Dôme',
-      'price': '4,500 DT',
-      'saved': '4,000 DT',
-      'rating': 4,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
 
-  void _showRatingModal(Map<String, dynamic> order) {
-    int rating = 5;
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await CampusApi.shared.fetchStudentDashboard();
+      if (!mounted) return;
+      setState(() {
+        _data = data;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  static num _n(dynamic v) => v is num ? v : 0;
+
+  static List<Map<String, dynamic>> _list(dynamic v) => ((v as List?) ?? const []).whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+
+  Future<void> _rate(Map<String, dynamic> order) async {
+    final id = (order['id'] ?? order['orderId'] ?? '').toString();
+    final title = ((order['offerSnapshot'] as Map?)?['title'] ?? 'cette commande').toString();
+    int stars = 5;
     final commentController = TextEditingController();
+    String? error;
+    bool sending = false;
 
-    showDialog(
+    final done = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          backgroundColor: AppTheme.biscuit,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'Évaluer ${order['title']}',
-            style: const TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+        builder: (ctx, setModal) => AlertDialog(
+          title: Text('Noter $title', style: AppTheme.h3(22)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Attribuez une note de 1 à 5 étoiles :',
-                style: TextStyle(color: AppTheme.muted, fontSize: 13),
-              ),
-              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < rating ? Icons.star : Icons.star_border,
-                      color: AppTheme.mustard,
-                      size: 32,
+                children: [
+                  for (var i = 1; i <= 5; i++)
+                    IconButton(
+                      tooltip: '$i étoile${i > 1 ? 's' : ''}',
+                      iconSize: 34,
+                      icon: Icon(i <= stars ? Icons.star : Icons.star_border, color: AppTheme.orange),
+                      onPressed: () => setModal(() => stars = i),
                     ),
-                    onPressed: () {
-                      setModalState(() {
-                        rating = index + 1;
-                      });
-                    },
-                  );
-                }),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: commentController,
-                maxLength: 280,
-                maxLines: 2,
-                style: const TextStyle(color: AppTheme.ink, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Commentaire optionnel...',
-                  hintStyle: const TextStyle(color: AppTheme.muted),
-                  filled: true,
-                  fillColor: AppTheme.cream,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
+              TextField(controller: commentController, maxLength: 280, maxLines: 2, decoration: const InputDecoration(hintText: 'Un commentaire (facultatif)')),
+              if (error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(error!, style: AppTheme.body(14, AppTheme.red))),
             ],
           ),
           actions: [
+            TextButton(onPressed: sending ? null : () => Navigator.pop(ctx, false), child: const Text('Annuler')),
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler', style: TextStyle(color: AppTheme.muted)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.red,
-                foregroundColor: AppTheme.cream,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
-                setState(() {
-                  order['rating'] = rating;
-                });
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Avis enregistré avec succès ! Merci pour votre retour.'),
-                    backgroundColor: AppTheme.biscuit,
-                  ),
-                );
-              },
-              child: const Text('Enregistrer', style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      setModal(() {
+                        sending = true;
+                        error = null;
+                      });
+                      try {
+                        await CampusApi.shared.rateOrder(id, stars, comment: commentController.text);
+                        if (ctx.mounted) Navigator.pop(ctx, true);
+                      } catch (e) {
+                        setModal(() {
+                          sending = false;
+                          error = e.toString();
+                        });
+                      }
+                    },
+              child: Text(sending ? 'Envoi…' : 'Envoyer'),
             ),
           ],
         ),
       ),
     );
+    commentController.dispose();
+    if (done == true) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Merci pour votre avis !')));
+      _load();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.cream,
-      
-      body: GScreenBody(
-        eyebrow: 'Impact étudiant',
-        title: 'Mon bilan',
-        trailing: GIconButton(
-          icon: Icons.public,
-          tooltip: 'Impact du campus',
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ImpactScreen())),
-        ),
-        child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Grille KPI
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: const [
-                KpiTile(
-                  title: 'Repas Sauvés',
-                  value: '14',
-                  subtitle: 'Invendus rachetés',
-                  icon: Icons.shopping_bag_outlined,
-                  accent: KpiAccent.lime,
-                  badge: '+3 sem.',
-                ),
-                KpiTile(
-                  title: 'Dinars Économisés',
-                  value: '46,5 DT',
-                  subtitle: 'Pouvoir d\'achat',
-                  icon: Icons.savings_outlined,
-                  accent: KpiAccent.amber,
-                  badge: 'Direct',
-                ),
-                KpiTile(
-                  title: 'Nourriture Sauvée',
-                  value: '5.8 kg',
-                  subtitle: 'Anti-gaspillage',
-                  icon: Icons.restaurant_outlined,
-                  accent: KpiAccent.cyan,
-                ),
-                KpiTile(
-                  title: 'CO₂e Évité',
-                  value: '14.5 kg',
-                  subtitle: 'Standard FAO (2.5x)',
-                  icon: Icons.forest_outlined,
-                  accent: KpiAccent.purple,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Sélecteur & Graphique FL_Chart
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Progression Cumulative',
-                  style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-                  ),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => setState(() => _selectedChartMetric = 0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _selectedChartMetric == 0 ? AppTheme.red : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'TND',
-                            style: TextStyle(
-                              color: _selectedChartMetric == 0 ? Colors.black : AppTheme.muted,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => setState(() => _selectedChartMetric = 1),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _selectedChartMetric == 1 ? AppTheme.ink : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'CO₂',
-                            style: TextStyle(
-                              color: _selectedChartMetric == 1 ? Colors.black : AppTheme.muted,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            Container(
-              height: 200,
-              padding: const EdgeInsets.only(top: 16, right: 16, left: 0, bottom: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.biscuit,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-              ),
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppTheme.ink.withOpacity(0.05),
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          const labels = ['S1', 'S2', 'S3', 'S4', 'S5'];
-                          final idx = value.toInt();
-                          if (idx >= 0 && idx < labels.length) {
-                            return Text(labels[idx], style: const TextStyle(color: AppTheme.muted, fontSize: 13));
-                          }
-                          return const SizedBox();
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 32,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: _selectedChartMetric == 0
-                          ? const [
-                              FlSpot(0, 7.5),
-                              FlSpot(1, 14),
-                              FlSpot(2, 26),
-                              FlSpot(3, 36),
-                              FlSpot(4, 46.5),
-                            ]
-                          : const [
-                              FlSpot(0, 2.2),
-                              FlSpot(1, 4.1),
-                              FlSpot(2, 7.8),
-                              FlSpot(3, 11.2),
-                              FlSpot(4, 14.5),
-                            ],
-                      isCurved: true,
-                      color: _selectedChartMetric == 0 ? AppTheme.red : AppTheme.ink,
-                      barWidth: 3,
-                      dotData: const FlDotData(show: true),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: (_selectedChartMetric == 0 ? AppTheme.red : AppTheme.ink).withOpacity(0.1),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Commandes récentes & notation
-            const Text(
-              'Derniers Repas & Évaluations',
-              style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            ListView.separated(
-              itemCount: _recentOrders.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final order = _recentOrders[index];
-                final rating = order['rating'] as int?;
-
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.red.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.check_circle, color: AppTheme.red, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              order['title'] as String,
-                              style: const TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                            Text(
-                              '${order['merchant']} • ${order['price']}',
-                              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (rating != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.mustard.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.mustard.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.star, color: AppTheme.mustard, size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$rating/5',
-                                style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.mustard.withOpacity(0.15),
-                            foregroundColor: AppTheme.mustard,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(color: AppTheme.mustard.withOpacity(0.3)),
-                            ),
-                          ),
-                          onPressed: () => _showRatingModal(order),
-                          child: const Text('⭐ Noter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      )),
+    return GScreenBody(
+      eyebrow: 'Impact étudiant',
+      title: 'Mon bilan',
+      trailing: GIconButton(
+        icon: Icons.public,
+        tooltip: 'Impact du campus',
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ImpactScreen())),
+      ),
+      child: RefreshIndicator(
+        color: AppTheme.red,
+        onRefresh: _load,
+        child: _data == null && _loading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
+            : _error != null && _data == null
+                ? ListView(padding: const EdgeInsets.all(20), children: [GEmpty(icon: Icons.cloud_off_outlined, title: 'Bilan indisponible', message: _error!, actionLabel: 'Réessayer', onAction: _load)])
+                : _content(_data ?? const {}),
+      ),
     );
   }
+
+  Widget _content(Map<String, dynamic> d) {
+    final stats = Map<String, dynamic>.from((d['stats'] as Map?) ?? const {});
+    final loyalty = Map<String, dynamic>.from((d['loyalty'] as Map?) ?? const {});
+    final eq = Map<String, dynamic>.from((d['equivalences'] as Map?) ?? const {});
+    final history = _list(d['savingsHistory']);
+    final orders = _list(d['recentOrders']);
+
+    final meals = _n(loyalty['totalMealsRescued']).toInt() > 0 ? _n(loyalty['totalMealsRescued']).toInt() : _n(stats['ordersCompleted']).toInt();
+    final saved = _n(stats['totalSavedMillimes']).toInt();
+    final foodKg = _n(stats['foodSavedGrams']) / 1000;
+    final co2Kg = _n(stats['co2SavedGrams']) / 1000;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: GStat(label: 'Repas sauvés', value: '$meals', icon: Icons.shopping_bag_outlined, valueColor: AppTheme.red)),
+            const SizedBox(width: 12),
+            Expanded(child: GStat(label: 'Économisé', value: Money.formatTND(saved), icon: Icons.savings_outlined, valueColor: AppTheme.orange)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: GStat(label: 'Nourriture sauvée', value: '${foodKg.toStringAsFixed(1)} kg', icon: Icons.restaurant_outlined)),
+            const SizedBox(width: 12),
+            Expanded(child: GStat(label: 'CO₂ évité', value: '${co2Kg.toStringAsFixed(1)} kg', icon: Icons.eco_outlined, valueColor: AppTheme.leaf, hint: 'Standard FAO (2,5×)')),
+          ],
+        ),
+        if (_n(eq['smartphonesCharged']) > 0 || _n(eq['kmCarAvoided']) > 0) ...[
+          const SizedBox(height: 12),
+          GCard(
+            color: const Color(0xFFDDEFD9),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(Icons.bolt, color: AppTheme.leaf, size: 30),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Soit ${_n(eq['smartphonesCharged']).toInt()} recharges de smartphone et ${_n(eq['kmCarAvoided'])} km de voiture évités.',
+                    style: AppTheme.body(16).copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        const GSectionTitle('Progression cumulée'),
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, children: [
+          GChip('Dinars', selected: !_showCo2, onTap: () => setState(() => _showCo2 = false)),
+          GChip('CO₂ (kg)', selected: _showCo2, onTap: () => setState(() => _showCo2 = true)),
+        ]),
+        const SizedBox(height: 12),
+        GCard(
+          padding: const EdgeInsets.fromLTRB(8, 18, 18, 10),
+          child: SizedBox(height: 190, child: history.isEmpty || history.every((e) => _n(_showCo2 ? e['co2'] : e['value']) == 0) ? Center(child: Text('Passez votre première commande pour voir votre courbe.', textAlign: TextAlign.center, style: AppTheme.body(15, AppTheme.muted))) : _SavingsChart(history: history, co2: _showCo2)),
+        ),
+        const SizedBox(height: 24),
+        const GSectionTitle('Dernières commandes'),
+        const SizedBox(height: 12),
+        if (orders.isEmpty)
+          const GEmpty(icon: Icons.receipt_long_outlined, title: 'Aucune commande', message: 'Vos commandes récentes apparaîtront ici.')
+        else
+          for (final o in orders) ...[_OrderTile(order: o, onRate: () => _rate(o)), const SizedBox(height: 10)],
+      ],
+    );
+  }
+}
+
+class _SavingsChart extends StatelessWidget {
+  final List<Map<String, dynamic>> history;
+  final bool co2;
+
+  const _SavingsChart({required this.history, required this.co2});
+
+  @override
+  Widget build(BuildContext context) {
+    final spots = <FlSpot>[
+      for (var i = 0; i < history.length; i++) FlSpot(i.toDouble(), co2 ? ((history[i]['co2'] as num?) ?? 0).toDouble() : ((history[i]['value'] as num?) ?? 0) / 1000),
+    ];
+    final maxY = spots.fold<double>(0, (a, s) => s.y > a ? s.y : a);
+    final top = maxY <= 0 ? 1.0 : maxY * 1.2;
+    final step = (top / 4).clamp(0.5, double.infinity).toDouble();
+    return LineChart(
+      LineChartData(
+        minY: 0,
+        maxY: top,
+        gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: step, getDrawingHorizontalLine: (_) => const FlLine(color: AppTheme.sand, strokeWidth: 1)),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              interval: step,
+              getTitlesWidget: (v, meta) => v == meta.max ? const SizedBox.shrink() : Text(v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1), style: AppTheme.mono(13, AppTheme.muted)),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 26,
+              interval: 1,
+              getTitlesWidget: (v, meta) {
+                final i = v.toInt();
+                if (i < 0 || i >= history.length || v != i.toDouble()) return const SizedBox.shrink();
+                return Padding(padding: const EdgeInsets.only(top: 6), child: Text((history[i]['label'] ?? '').toString(), style: AppTheme.mono(12, AppTheme.muted)));
+              },
+            ),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            curveSmoothness: 0.25,
+            preventCurveOverShooting: true,
+            color: co2 ? AppTheme.leaf : AppTheme.red,
+            barWidth: 4,
+            dotData: const FlDotData(show: true),
+            belowBarData: BarAreaData(show: true, color: (co2 ? AppTheme.leaf : AppTheme.red).withOpacity(0.12)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderTile extends StatelessWidget {
+  final Map<String, dynamic> order;
+  final VoidCallback onRate;
+
+  const _OrderTile({required this.order, required this.onRate});
+
+  @override
+  Widget build(BuildContext context) {
+    final offer = Map<String, dynamic>.from((order['offerSnapshot'] as Map?) ?? const {});
+    final merchant = Map<String, dynamic>.from((order['merchantSnapshot'] as Map?) ?? const {});
+    final pricing = Map<String, dynamic>.from((order['pricing'] as Map?) ?? const {});
+    final status = (order['status'] ?? '').toString();
+    final rating = order['rating'];
+    final stars = rating is Map ? (rating['stars'] as num?)?.toInt() : null;
+    final canRate = status == 'COMPLETED' && rating == null;
+    final total = (pricing['totalMillimes'] as num?)?.toInt() ?? 0;
+    final saved = ((pricing['savedMillimes'] ?? pricing['moneySavedMillimes']) as num?)?.toInt() ?? 0;
+
+    return GCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: AppTheme.ink, borderRadius: BorderRadius.circular(8)),
+                child: Text((order['orderCode'] ?? '').toString(), style: AppTheme.mono(13, AppTheme.mustard).copyWith(fontWeight: FontWeight.w700)),
+              ),
+              const Spacer(),
+              GPill(_statusLabel(status), color: status == 'COMPLETED' ? AppTheme.leaf : (status == 'CANCELLED' || status == 'EXPIRED' || status == 'NO_SHOW' ? AppTheme.muted : AppTheme.orange)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text((offer['title'] ?? '').toString().toUpperCase(), style: AppTheme.h3(19), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text((merchant['name'] ?? '').toString(), style: AppTheme.body(15, AppTheme.muted)),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: Text(saved > 0 ? 'Économisé : ${Money.formatTND(saved)}' : '', style: AppTheme.body(14, AppTheme.leaf).copyWith(fontWeight: FontWeight.w700))),
+              Text(Money.formatTND(total), style: AppTheme.figure(30, AppTheme.red)),
+            ],
+          ),
+          if (stars != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(children: [for (var i = 1; i <= 5; i++) Icon(i <= stars ? Icons.star : Icons.star_border, size: 20, color: AppTheme.orange)]),
+            ),
+          if (canRate) ...[const SizedBox(height: 10), GButton('Noter cette commande', icon: Icons.star_outline, variant: GVariant.mustard, small: true, onPressed: onRate)],
+        ],
+      ),
+    );
+  }
+
+  static String _statusLabel(String s) => switch (s) {
+        'RESERVED' => 'Réservée',
+        'PAID' => 'À retirer',
+        'COMPLETED' => 'Retirée',
+        'CANCELLED' => 'Annulée',
+        'EXPIRED' => 'Expirée',
+        'NO_SHOW' => 'Non retirée',
+        _ => s,
+      };
 }

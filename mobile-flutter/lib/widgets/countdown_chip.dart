@@ -2,8 +2,9 @@
 // 🔄 Comparaison React / Flutter : En Flutter, ce composant utilise `Pricing.computeUrgencyColor` et `Timer.periodic` ; en React, c'est le composant `CountdownChip`.
 // 🎯 À retenir pour la soutenance : "Alerte visuelle tripartite (>60m lime, 20-60m orange, <20m rouge pulsant) pour inciter les étudiants au passage à l'acte."
 
-import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/time/second_ticker.dart';
+import '../core/time/server_clock.dart';
 import '../core/domain/pricing.dart';
 import '../app/theme.dart';
 
@@ -20,25 +21,23 @@ class CountdownChip extends StatefulWidget {
 }
 
 class _CountdownChipState extends State<CountdownChip> {
-  Timer? _timer;
   late int _nowMs;
 
   @override
   void initState() {
     super.initState();
-    _nowMs = DateTime.now().millisecondsSinceEpoch;
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _nowMs = DateTime.now().millisecondsSinceEpoch;
-        });
-      }
-    });
+    // Horloge serveur (comme le prix) : un téléphone mal réglé n'affiche plus un faux « Clôturé » ou un faux temps restant.
+    _nowMs = ServerClock.serverNowMs;
+    SecondTicker.instance.addListener(_tick);
+  }
+
+  void _tick() {
+    if (mounted) setState(() => _nowMs = ServerClock.serverNowMs);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    SecondTicker.instance.removeListener(_tick);
     super.dispose();
   }
 

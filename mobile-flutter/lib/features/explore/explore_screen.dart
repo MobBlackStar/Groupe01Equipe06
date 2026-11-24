@@ -290,7 +290,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         const SizedBox(height: 14),
 
         if (_isLoading)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator(color: AppTheme.red)))
+          Column(children: const [GSkeletonCard(), SizedBox(height: 16), GSkeletonCard()])
         else if (offers.isEmpty)
           GEmpty(
             icon: _loadError != null ? Icons.cloud_off : Icons.search_off,

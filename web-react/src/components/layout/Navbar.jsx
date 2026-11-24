@@ -134,10 +134,10 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2.5">
+        {/* Actions : une action principale + un seul menu de compte (au lieu de 5 boutons côte à côte) */}
+        <div className="flex items-center gap-2.5 shrink-0">
           {role === ROLES.MERCHANT && (
-            <Link to="/merchant/offers/new" className="cs-btn cs-btn-red cs-btn-sm hidden md:inline-flex">
+            <Link to="/merchant/offers/new" className="cs-btn cs-btn-red cs-btn-sm hidden md:inline-flex whitespace-nowrap">
               <Plus className="w-4 h-4" strokeWidth={3} />
               Publier
             </Link>
@@ -146,7 +146,7 @@ export default function Navbar() {
           {role === ROLES.STUDENT && (
             <Link
               to="/app/loyalty"
-              className="hidden md:inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-[#FFD000] border-2 border-[#111111] font-semibold uppercase text-[0.95rem] hover:-translate-y-0.5 transition-transform"
+              className="hidden md:inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-[#FFD000] border-2 border-[#111111] font-semibold uppercase text-[0.95rem] hover:-translate-y-0.5 transition-transform whitespace-nowrap"
               title="Mes EcoPoints"
             >
               <span className="font-display text-[1.45rem] leading-none tabular-nums">{ecoPoints}</span>
@@ -156,110 +156,130 @@ export default function Navbar() {
 
           <Link
             to="/impact"
-            className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3 font-semibold uppercase text-[0.95rem] hover:text-[#DA0711] transition-colors"
+            className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3 font-semibold uppercase text-[0.95rem] hover:text-[#DA0711] transition-colors whitespace-nowrap"
           >
             <Globe className="w-4 h-4" />
             Impact
           </Link>
 
-          {/* Sélecteur de mode : Démo Jury 1-Clic vs Compte Réel */}
-          {authMode === 'DEMO' ? (
-            <>
-              {/* Commutateur de rôle 1-clic (démo jury) */}
-              <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setDemoMenuOpen((o) => !o)}
-                  aria-expanded={demoMenuOpen}
-                  aria-haspopup="menu"
-                  className="inline-flex items-center gap-2 h-10 pl-3 pr-2.5 rounded-full border-2 border-[#111111] bg-[#FAF3E6] hover:bg-white font-semibold uppercase text-[0.95rem] transition-colors"
-                >
-                  <currentDemo.icon className="w-4 h-4 text-[#DA0711]" />
-                  <span className="hidden sm:inline font-bold text-xs bg-[#FFD000]/25 px-1.5 py-0.5 rounded border border-[#FFD000]">DÉMO</span>
-                  <span className="hidden sm:inline">{currentDemo.short}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${demoMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {demoMenuOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 mt-3 w-72 rounded-[1.25rem] bg-[#FAF3E6] border-2 border-[#111111] p-2 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.45)] z-50 animate-fadeIn"
-                  >
-                    <p className="cs-label px-3 pt-2 pb-2.5">⚡ Changer de rôle · Démo Jury</p>
-                    {DEMO_ROLES.map((d) => {
-                      const selected = d.role === role;
-                      return (
-                        <button
-                          key={d.role}
-                          role="menuitem"
-                          type="button"
-                          onClick={() => handleRoleSwitch(d.role)}
-                          className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base transition-colors ${
-                            selected ? 'bg-[#111111] text-[#FAF3E6]' : 'hover:bg-[#EDE6D7]'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2.5">
-                            <d.icon className="w-[18px] h-[18px]" />
-                            {d.label}
-                          </span>
-                          {selected && <Check className="w-[18px] h-[18px] text-[#FFD000]" />}
-                        </button>
-                      );
-                    })}
-                  </div>
+          {user || authMode === 'DEMO' ? (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setDemoMenuOpen((o) => !o)}
+                aria-expanded={demoMenuOpen}
+                aria-haspopup="menu"
+                aria-label="Menu du compte"
+                className="inline-flex items-center gap-2 h-10 pl-3 pr-2.5 rounded-full border-2 border-[#111111] bg-[#FAF3E6] hover:bg-white font-semibold uppercase text-[0.95rem] transition-colors whitespace-nowrap max-w-[16rem]"
+              >
+                {authMode === 'DEMO' ? (
+                  <>
+                    <currentDemo.icon className="w-4 h-4 text-[#DA0711] shrink-0" />
+                    <span className="hidden sm:inline font-bold text-[0.7rem] leading-none bg-[#FFD000] px-1.5 py-1 rounded border border-[#111111]">DÉMO</span>
+                    <span className="hidden sm:inline">{currentDemo.short}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#00875A] shrink-0" />
+                    <span className="hidden sm:inline truncate normal-case">{user?.email?.split('@')[0] || 'Mon compte'}</span>
+                  </>
                 )}
-              </div>
-
-              {/* Bouton pour basculer vers un vrai compte */}
-              <button
-                type="button"
-                onClick={async () => {
-                  await switchToRealMode();
-                  navigate('/login');
-                }}
-                className="hidden sm:inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full border-2 border-[#111111] bg-white hover:bg-[#EDE6D7] font-semibold text-xs uppercase tracking-wider transition-all"
-                title="Basculer en Mode Compte Réel pour tester l'inscription ou la connexion"
-              >
-                <Lock className="w-3.5 h-3.5 text-[#DA0711]" />
-                <span>Tester Vrai Compte</span>
+                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${demoMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            </>
-          ) : (
-            <>
-              {/* Badge Compte Réel connecté */}
-              <div
-                className="hidden md:inline-flex items-center gap-2 h-10 px-3 rounded-full border-2 border-[#00875A] bg-[#00875A]/10 text-xs font-bold uppercase tracking-wider text-[#00875A]"
-                title={user?.email || 'Compte Réel'}
-              >
-                <span className="w-2 h-2 rounded-full bg-[#00875A] animate-pulse" />
-                <span className="truncate max-w-[120px]">{user?.email?.split('@')[0] || 'Utilisateur'}</span>
-                <span className="px-1.5 py-0.5 rounded bg-[#111111] text-[#FAF3E6] text-[10px]">
-                  {role === ROLES.ADMIN ? 'Admin' : (role === ROLES.MERCHANT ? 'Commerçant' : 'Étudiant')}
-                </span>
-              </div>
 
-              {/* Bouton pour revenir au Mode Démo 1-Clic Jury */}
-              <button
-                type="button"
-                onClick={async () => {
-                  await switchToDemoMode('student');
-                  navigate('/app/explore');
-                }}
-                className="hidden sm:inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full border-2 border-[#111111] bg-[#FFD000] hover:bg-[#FFD000]/80 font-bold text-xs uppercase tracking-wider transition-all shadow-[2px_2px_0_#111111]"
-                title="Revenir au Mode Démo 1-Clic pour le jury"
-              >
-                <Zap className="w-3.5 h-3.5 fill-[#111111]" />
-                <span>Démo Jury</span>
-              </button>
-            </>
-          )}
+              {demoMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-3 w-[min(20rem,calc(100vw-2rem))] rounded-[1.25rem] bg-[#FAF3E6] border-2 border-[#111111] p-2 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.45)] z-50 animate-fadeIn"
+                >
+                  {authMode === 'DEMO' ? (
+                    <>
+                      <p className="cs-label px-3 pt-2 pb-2.5">⚡ Mode démo jury · changer de rôle</p>
+                      {DEMO_ROLES.map((d) => {
+                        const selected = d.role === role;
+                        return (
+                          <button
+                            key={d.role}
+                            role="menuitem"
+                            type="button"
+                            onClick={() => handleRoleSwitch(d.role)}
+                            className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base transition-colors ${
+                              selected ? 'bg-[#111111] text-[#FAF3E6]' : 'hover:bg-[#EDE6D7]'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <d.icon className="w-[18px] h-[18px]" />
+                              {d.label}
+                            </span>
+                            {selected && <Check className="w-[18px] h-[18px] text-[#FFD000]" />}
+                          </button>
+                        );
+                      })}
+                      <div className="my-2 border-t-2 border-[#111111]/15" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={async () => {
+                          setDemoMenuOpen(false);
+                          await switchToRealMode();
+                          navigate('/login');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base hover:bg-[#EDE6D7] transition-colors"
+                        title="Basculer en mode compte réel pour tester l'inscription ou la connexion"
+                      >
+                        <Lock className="w-[18px] h-[18px] text-[#DA0711]" />
+                        Tester un vrai compte
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="px-3 pt-2 pb-2.5">
+                        <p className="cs-label">🟢 Compte réel</p>
+                        <p className="font-semibold text-base truncate" title={user?.email}>{user?.email}</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded bg-[#111111] text-[#FAF3E6] text-xs font-bold uppercase">
+                          {role === ROLES.ADMIN ? 'Admin' : role === ROLES.MERCHANT ? 'Commerçant' : 'Étudiant'}
+                        </span>
+                      </div>
+                      <div className="my-2 border-t-2 border-[#111111]/15" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={async () => {
+                          setDemoMenuOpen(false);
+                          await switchToDemoMode('student');
+                          navigate('/app/explore');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base hover:bg-[#EDE6D7] transition-colors"
+                        title="Revenir au mode démo 1-clic pour le jury"
+                      >
+                        <Zap className="w-[18px] h-[18px] text-[#DA0711]" />
+                        Revenir en démo jury
+                      </button>
+                    </>
+                  )}
 
-          {user ? (
-            <button type="button" onClick={logout} title="Se déconnecter" aria-label="Se déconnecter" className="cs-icon-btn hidden sm:inline-flex">
-              <LogOut className="w-[18px] h-[18px]" />
-            </button>
+                  {user && (
+                    <>
+                      <div className="my-2 border-t-2 border-[#111111]/15" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setDemoMenuOpen(false);
+                          logout();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base hover:bg-[#EDE6D7] transition-colors"
+                      >
+                        <LogOut className="w-[18px] h-[18px]" />
+                        Se déconnecter
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
-            <Link to="/login" className="cs-btn cs-btn-red cs-btn-sm">
+            <Link to="/login" className="cs-btn cs-btn-red cs-btn-sm whitespace-nowrap">
               Connexion
             </Link>
           )}

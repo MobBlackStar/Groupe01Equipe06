@@ -5,13 +5,17 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/models/offer_model.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/griddle.dart';
 import 'ai_autofill_card.dart';
 
 class OfferFormScreen extends StatefulWidget {
-  const OfferFormScreen({super.key});
+  /// Offre à modifier ; `null` = création.
+  final OfferModel? offer;
+
+  const OfferFormScreen({super.key, this.offer});
 
   @override
   State<OfferFormScreen> createState() => _OfferFormScreenState();
@@ -55,11 +59,51 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
   @override
   void initState() {
     super.initState();
+    final o = widget.offer;
+    if (o != null) {
+      _prefill(o);
+      return;
+    }
     final nowTunis = DateTime.now().toUtc().add(_tunisOffset);
     _pickupStart = TimeOfDay(hour: nowTunis.hour, minute: nowTunis.minute);
     final endMinutes = (nowTunis.hour * 60 + nowTunis.minute + 120).clamp(0, 23 * 60 + 59);
     _pickupEnd = TimeOfDay(hour: endMinutes ~/ 60, minute: endMinutes % 60);
   }
+
+  bool get _isEditing => widget.offer != null;
+
+  /// Pré-remplit le formulaire avec l'offre existante (heures converties à l'heure de Tunis).
+  void _prefill(OfferModel o) {
+    _titleController.text = o.title;
+    _descController.text = o.description;
+    _category = _categories.containsKey(o.category) ? o.category : 'SANDWICH';
+    _isDutch = o.pricingType == 'DUTCH' || o.pricingType == 'DUTCH_AUCTION';
+    _isSurprise = o.isSurpriseBasket;
+    _originalPriceController.text = _fromMillimes(o.originalPriceMillimes);
+    if (_isDutch) {
+      _pricePrimaryController.text = _fromMillimes(o.startPriceMillimes ?? o.originalPriceMillimes);
+      _priceFloorController.text = _fromMillimes(o.targetPriceMillimes);
+    } else {
+      _pricePrimaryController.text = _fromMillimes(o.targetPriceMillimes);
+    }
+    _quantityController.text = '${o.quantity}';
+    _photoController.text = o.photoUrl ?? '';
+    final s = o.pickupStartAt.toUtc().add(_tunisOffset);
+    final e = o.pickupEndAt.toUtc().add(_tunisOffset);
+    _pickupStart = TimeOfDay(hour: s.hour, minute: s.minute);
+    _pickupEnd = TimeOfDay(hour: e.hour, minute: e.minute);
+    _tunisDay = DateTime.utc(s.year, s.month, s.day);
+    _initialPrices = _priceSignature();
+    _initialTimes = _timeSignature();
+  }
+
+  /// Jour (Tunis) du retrait : aujourd'hui en création, jour d'origine en modification.
+  DateTime? _tunisDay;
+  String? _initialPrices;
+  String? _initialTimes;
+
+  String _priceSignature() => [_isDutch, _originalPriceController.text.trim(), _pricePrimaryController.text.trim(), _priceFloorController.text.trim()].join('|');
+  String _timeSignature() => '${_pickupStart.hour}:${_pickupStart.minute}-${_pickupEnd.hour}:${_pickupEnd.minute}';
 
   @override
   void dispose() {
@@ -79,8 +123,8 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
   static String _fromMillimes(num m) => (m / 1000).toStringAsFixed(3);
 
   DateTime _utcAtTunisTime(TimeOfDay t) {
-    final nowTunis = DateTime.now().toUtc().add(_tunisOffset);
-    return DateTime.utc(nowTunis.year, nowTunis.month, nowTunis.day, t.hour, t.minute).subtract(_tunisOffset);
+    final day = _tunisDay ?? DateTime.now().toUtc().add(_tunisOffset);
+    return DateTime.utc(day.year, day.month, day.day, t.hour, t.minute).subtract(_tunisOffset);
   }
 
   Future<void> _pickTime(bool start) async {
@@ -130,25 +174,64 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
     }
 
     final contents = _contentsController.text.split(RegExp(r'[,\n]')).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final pricing = _isDutch
+        ? {
+            'mode': 'DUTCH_AUCTION',
+            'originalPriceMillimes': original,
+            'startPriceMillimes': primary,
+            'floorPriceMillimes': floor,
+            'decayStartAt': start.toIso8601String(),
+            'roundingStepMillimes': 100,
+          }
+        : {
+            'mode': 'FIXED',
+            'originalPriceMillimes': original,
+            'discountedPriceMillimes': primary,
+            'roundingStepMillimes': 100,
+          };
+
+    if (_isEditing) {
+      // Modification : on n'envoie que ce qui a changé (le prix est verrouillé côté serveur dès qu'une réservation existe).
+      final o = widget.offer!;
+      final edit = <String, dynamic>{};
+      if (_titleController.text.trim() != o.title) edit['title'] = _titleController.text.trim();
+      if (_descController.text.trim() != o.description) edit['description'] = _descController.text.trim();
+      if (_category != o.category) edit['category'] = _category;
+      final photo = _photoController.text.trim();
+      if (photo.isNotEmpty && photo != (o.photoUrl ?? '')) edit['photoUrl'] = photo;
+      final qty = int.parse(_quantityController.text.trim());
+      if (qty != o.quantity) edit['quantity'] = qty;
+      if (_timeSignature() != _initialTimes) {
+        edit['pickupStartAt'] = start.toIso8601String();
+        edit['pickupEndAt'] = end.toIso8601String();
+      }
+      if (_priceSignature() != _initialPrices) edit['pricing'] = pricing;
+      if (edit.isEmpty) {
+        setState(() => _error = 'Aucune modification à enregistrer.');
+        return;
+      }
+      setState(() {
+        _isSubmitting = true;
+        _error = null;
+      });
+      try {
+        await CampusApi.shared.updateOffer(o.id, edit);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offre mise à jour.')));
+        Navigator.pop(context, true);
+      } catch (e) {
+        if (mounted) setState(() => _error = e.toString());
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
+      }
+      return;
+    }
+
     final body = <String, dynamic>{
       'title': _titleController.text.trim(),
       'description': _descController.text.trim(),
       'category': _category,
-      'pricing': _isDutch
-          ? {
-              'mode': 'DUTCH_AUCTION',
-              'originalPriceMillimes': original,
-              'startPriceMillimes': primary,
-              'floorPriceMillimes': floor,
-              'decayStartAt': start.toIso8601String(),
-              'roundingStepMillimes': 100,
-            }
-          : {
-              'mode': 'FIXED',
-              'originalPriceMillimes': original,
-              'discountedPriceMillimes': primary,
-              'roundingStepMillimes': 100,
-            },
+      'pricing': pricing,
       'quantity': int.parse(_quantityController.text.trim()),
       'pickupStartAt': start.toIso8601String(),
       'pickupEndAt': end.toIso8601String(),
@@ -185,10 +268,9 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
             children: [
               Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
               const SizedBox(height: 14),
-              const GPageHeader(eyebrow: 'Espace commerçant', title: 'Nouvelle offre', titleSize: 54, lead: 'Prix en dinars (ex. 7.500). Le créneau est à l\'heure de Tunis, sur la journée en cours.'),
+              GPageHeader(eyebrow: 'Espace commerçant', title: _isEditing ? 'Modifier l\'offre' : 'Nouvelle offre', titleSize: 54, lead: _isEditing ? 'Seuls les champs modifiés sont envoyés. Le prix est verrouillé dès qu\'une réservation existe.' : 'Prix en dinars (ex. 7.500). Le créneau est à l\'heure de Tunis, sur la journée en cours.'),
               const SizedBox(height: 20),
-              AiAutofillCard(onAutofill: _applyAutofill),
-              const SizedBox(height: 22),
+              if (!_isEditing) ...[AiAutofillCard(onAutofill: _applyAutofill), const SizedBox(height: 22)],
               Text('DÉTAILS', style: AppTheme.h3(20)),
               const SizedBox(height: 12),
               AppTextField(
@@ -283,7 +365,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                       subtitle: Text('Le contenu n\'est dévoilé qu\'après la réservation.', style: AppTheme.body(14, AppTheme.muted)),
                       value: _isSurprise,
                       activeColor: AppTheme.red,
-                      onChanged: (v) => setState(() => _isSurprise = v),
+                      onChanged: _isEditing ? null : (v) => setState(() => _isSurprise = v),
                     ),
                     if (_isSurprise) ...[
                       const SizedBox(height: 8),
@@ -315,7 +397,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
               ),
               const SizedBox(height: 22),
               if (_error != null) ...[GNotice(_error!, icon: Icons.error_outline), const SizedBox(height: 14)],
-              GButton('Publier l\'offre', icon: Icons.rocket_launch_outlined, loading: _isSubmitting, onPressed: _isSubmitting ? null : _submit),
+              GButton(_isEditing ? 'Enregistrer' : 'Publier l\'offre', icon: _isEditing ? Icons.check : Icons.rocket_launch_outlined, loading: _isSubmitting, onPressed: _isSubmitting ? null : _submit),
             ],
           ),
         ),

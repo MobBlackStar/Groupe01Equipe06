@@ -55,6 +55,11 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
     if (created == true) _load();
   }
 
+  Future<void> _edit(OfferModel offer) async {
+    final saved = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => OfferFormScreen(offer: offer)));
+    if (saved == true) _load();
+  }
+
   Future<void> _delete(OfferModel offer) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -101,7 +106,7 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                         itemCount: _offers.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, i) => _OfferTile(offer: _offers[i], onDelete: () => _delete(_offers[i])),
+                        itemBuilder: (context, i) => _OfferTile(offer: _offers[i], onEdit: () => _edit(_offers[i]), onDelete: () => _delete(_offers[i])),
                       ),
       ),
     );
@@ -110,9 +115,10 @@ class _MerchantOffersScreenState extends State<MerchantOffersScreen> {
 
 class _OfferTile extends StatelessWidget {
   final OfferModel offer;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _OfferTile({required this.offer, required this.onDelete});
+  const _OfferTile({required this.offer, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +136,7 @@ class _OfferTile extends StatelessWidget {
             children: [
               GPill(label, color: color),
               const Spacer(),
+              IconButton(icon: const Icon(Icons.edit_outlined, color: AppTheme.ink), tooltip: 'Modifier l\'offre', onPressed: onEdit),
               IconButton(icon: const Icon(Icons.delete_outline, color: AppTheme.ink), tooltip: 'Retirer l\'offre', onPressed: onDelete),
             ],
           ),

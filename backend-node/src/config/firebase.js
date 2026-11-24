@@ -41,6 +41,8 @@ if (isFirebaseConfigured) {
     }
     auth = admin.auth(app);
     db = admin.firestore(app);
+    // Un champ `undefined` fait échouer set()/update() sur le vrai Firestore (le mode mémoire le tolère) : on l'ignore.
+    db.settings({ ignoreUndefinedProperties: true });
     messaging = admin.messaging(app);
   } catch (err) {
     console.warn('⚠️ Échec initialisation Firebase Admin SDK Cloud, bascule sur le mode mémoire :', err.message);

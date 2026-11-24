@@ -8,6 +8,7 @@ import '../app/theme.dart';
 import 'live_price_text.dart';
 import 'countdown_chip.dart';
 import 'rarity_badge.dart';
+import 'griddle.dart';
 
 class OfferCard extends StatelessWidget {
   final OfferModel offer;
@@ -24,109 +25,127 @@ class OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dist = distanceFromEssectM;
-    final walkingMinutes = dist == null ? null : (dist * 1.3 / 83.33).round().clamp(1, 45);
+    final walkingMinutes =
+        dist == null ? null : (dist * 1.3 / 83.33).round().clamp(1, 45);
     final stock = offer.remainingQuantity;
 
-    return Material(
-      color: AppTheme.biscuit,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Photo qui remplit son cadre (jamais de miniature flottante dans du vide)
-            AspectRatio(
-              aspectRatio: 16 / 10,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (offer.photoUrl != null && offer.photoUrl!.isNotEmpty)
-                    Image.network(
-                      offer.photoUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const _PhotoPlaceholder(),
-                    )
-                  else
-                    const _PhotoPlaceholder(),
-                  Positioned(top: 10, right: 10, child: CountdownChip(pickupEndAt: offer.pickupEndAt)),
-                  if (offer.isSurpriseBasket)
-                    const Positioned(top: 10, left: 10, child: RarityBadge(rarity: 'RARE', score: 0.65)),
-                  Positioned(
-                    bottom: 10,
-                    left: 10,
-                    child: _Sticker(
-                      icon: Icons.shopping_bag_outlined,
-                      text: stock > 1 ? '$stock restants' : '$stock restant',
-                      color: AppTheme.ink,
-                      textColor: AppTheme.cream,
+    // RepaintBoundary : le prix et le décompte changent chaque seconde, seule cette carte est redessinée.
+    return RepaintBoundary(
+      child: Material(
+        color: AppTheme.biscuit,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Photo qui remplit son cadre (jamais de miniature flottante dans du vide)
+              AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (offer.photoUrl != null && offer.photoUrl!.isNotEmpty)
+                      GImage(
+                          url: offer.photoUrl!,
+                          placeholder: const _PhotoPlaceholder())
+                    else
+                      const _PhotoPlaceholder(),
+                    Positioned(
+                        top: 10,
+                        right: 10,
+                        child: CountdownChip(pickupEndAt: offer.pickupEndAt)),
+                    if (offer.isSurpriseBasket)
+                      const Positioned(
+                          top: 10,
+                          left: 10,
+                          child: RarityBadge(rarity: 'RARE', score: 0.65)),
+                    Positioned(
+                      bottom: 10,
+                      left: 10,
+                      child: _Sticker(
+                        icon: Icons.shopping_bag_outlined,
+                        text: stock > 1 ? '$stock restants' : '$stock restant',
+                        color: AppTheme.ink,
+                        textColor: AppTheme.cream,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text((offer.merchantName ?? 'Commerce Montfleury').toUpperCase(), style: AppTheme.label(), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  Text(
-                    offer.title.toUpperCase(),
-                    style: AppTheme.h3(21),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (walkingMinutes != null && distanceFromEssectM != null) ...[
-                    const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        (offer.merchantName ?? 'Commerce Montfleury')
+                            .toUpperCase(),
+                        style: AppTheme.label(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text(
+                      offer.title.toUpperCase(),
+                      style: AppTheme.h3(21),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (walkingMinutes != null &&
+                        distanceFromEssectM != null) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Icon(Icons.directions_walk,
+                              size: 18, color: AppTheme.red),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              '$walkingMinutes min à pied · $distanceFromEssectM m',
+                              style: AppTheme.body(14, AppTheme.muted)
+                                  .copyWith(fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 14),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Icon(Icons.directions_walk, size: 18, color: AppTheme.red),
-                        const SizedBox(width: 6),
-                        Flexible(
+                        Expanded(
+                          child: LivePriceText(
+                            pricingType: offer.pricingType,
+                            originalPriceMillimes: offer.originalPriceMillimes,
+                            targetPriceMillimes: offer.targetPriceMillimes,
+                            pickupStartAt: offer.pickupStartAt,
+                            pickupEndAt: offer.pickupEndAt,
+                            stepMillimes: offer.stepMillimes,
+                            onCream: true,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          decoration: AppTheme.pill(color: AppTheme.red),
                           child: Text(
-                            '$walkingMinutes min à pied · $distanceFromEssectM m',
-                            style: AppTheme.body(14, AppTheme.muted).copyWith(fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            'RÉSERVER',
+                            style: AppTheme.h3(16, AppTheme.cream)
+                                .copyWith(letterSpacing: 0.8),
                           ),
                         ),
                       ],
                     ),
                   ],
-                  const SizedBox(height: 14),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: LivePriceText(
-                          pricingType: offer.pricingType,
-                          originalPriceMillimes: offer.originalPriceMillimes,
-                          targetPriceMillimes: offer.targetPriceMillimes,
-                          pickupStartAt: offer.pickupStartAt,
-                          pickupEndAt: offer.pickupEndAt,
-                          stepMillimes: offer.stepMillimes,
-                          onCream: true,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        decoration: AppTheme.pill(color: AppTheme.red),
-                        child: Text(
-                          'RÉSERVER',
-                          style: AppTheme.h3(16, AppTheme.cream).copyWith(letterSpacing: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -160,7 +179,11 @@ class _Sticker extends StatelessWidget {
   final Color color;
   final Color textColor;
 
-  const _Sticker({this.icon, required this.text, this.color = AppTheme.mustard, this.textColor = AppTheme.ink});
+  const _Sticker(
+      {this.icon,
+      required this.text,
+      this.color = AppTheme.mustard,
+      this.textColor = AppTheme.ink});
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +193,13 @@ class _Sticker extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: 15, color: textColor), const SizedBox(width: 5)],
-          Text(text, style: AppTheme.body(13, textColor).copyWith(fontWeight: FontWeight.w700)),
+          if (icon != null) ...[
+            Icon(icon, size: 15, color: textColor),
+            const SizedBox(width: 5)
+          ],
+          Text(text,
+              style: AppTheme.body(13, textColor)
+                  .copyWith(fontWeight: FontWeight.w700)),
         ],
       ),
     );

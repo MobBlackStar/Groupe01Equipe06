@@ -62,6 +62,8 @@ void main() {
     expect(offers[0].targetPriceMillimes, 3800);
     expect(offers[1].pricingType, 'DUTCH');
     expect(offers[1].targetPriceMillimes, 2500);
+    expect(offers[1].startPriceMillimes, 6000);
+    expect(offers[0].startPriceMillimes, isNull);
   });
 
   test('fetchMyMerchant renvoie null quand le commerçant n\'a pas encore de boutique (404)', () async {

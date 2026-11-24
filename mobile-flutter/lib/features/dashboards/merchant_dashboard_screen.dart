@@ -1,13 +1,15 @@
-// 💡 Concept & Analogie : Comme la caisse enregistreuse intelligente d'une enseigne moderne, cet écran détaille les flux de trésorerie récupérés et les invendus sauvés de la benne.
-// 🔄 Comparaison React / Flutter : En Flutter, `MerchantDashboardScreen` utilise les diagrammes en barres `BarChart` de `fl_chart` adaptés pour écrans tactiles ; en React, nous utilisons `BarChartCard`.
-// 🎯 À retenir pour la soutenance : "Le commerçant dispose d'une visibilité claire sur ses recettes journalières et son taux de non-présentation, démontrant la viabilité économique du modèle anti-gaspi."
+// 💡 Concept & Analogie : La caisse enregistreuse intelligente du commerçant : recettes, retraits et note, lus dans ses vrais chiffres.
+// 🔄 Comparaison React / Flutter : Équivalent de `MerchantDashboard.jsx` : `GET /dashboards/merchant?range=7d|30d`, tracé en barres avec `fl_chart`.
+// 🎯 À retenir pour la soutenance : "Aucun chiffre n'est écrit en dur : recettes, repas sauvés, taux de no-show et top offres viennent de l'API ; un nouveau commerce voit des zéros, pas des valeurs inventées."
 
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../widgets/kpi_tile.dart';
+import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/domain/money.dart';
+import '../../services/campus_api.dart';
 import '../../widgets/griddle.dart';
+
 class MerchantDashboardScreen extends StatefulWidget {
   const MerchantDashboardScreen({super.key});
 
@@ -16,256 +18,220 @@ class MerchantDashboardScreen extends StatefulWidget {
 }
 
 class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
-  int _selectedRange = 0; // 0: 7 jours, 1: 30 jours
+  bool _is7d = true;
+  Map<String, dynamic>? _data;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await CampusApi.shared.fetchMerchantDashboard(range: _is7d ? '7d' : '30d');
+      if (!mounted) return;
+      setState(() {
+        _data = data;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  void _setRange(bool is7d) {
+    if (_is7d == is7d) return;
+    _is7d = is7d;
+    _load();
+  }
+
+  static num _n(dynamic v) => v is num ? v : 0;
 
   @override
   Widget build(BuildContext context) {
-    final is7d = _selectedRange == 0;
+    return GScreenBody(
+      eyebrow: 'Espace commerçant',
+      title: 'Mes ventes',
+      child: RefreshIndicator(
+        color: AppTheme.red,
+        onRefresh: _load,
+        child: _data == null && _loading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.red))
+            : _error != null && _data == null
+                ? ListView(padding: const EdgeInsets.all(20), children: [GEmpty(icon: Icons.cloud_off_outlined, title: 'Bilan indisponible', message: _error!, actionLabel: 'Réessayer', onAction: _load)])
+                : _content(_data ?? const {}),
+      ),
+    );
+  }
 
-    return Scaffold(
-      backgroundColor: AppTheme.cream,
-      
-      body: GScreenBody(eyebrow: 'Espace commerçant', title: 'Mes ventes', child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+  Widget _content(Map<String, dynamic> d) {
+    final kpis = Map<String, dynamic>.from((d['kpis'] as Map?) ?? const {});
+    final series = ((d['dailySeries'] as List?) ?? const []).whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    final top = ((d['topOffers'] as List?) ?? const []).whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    final rating = _n(kpis['ratingAvg']).toDouble();
+    final reviews = _n(kpis['reviewsCount']).toInt();
+    final noShow = _n(kpis['noShowsPercent']).toDouble();
+    final totalRevenue = series.fold<num>(0, (a, e) => a + _n(e['value']));
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+      children: [
+        Wrap(
+          spacing: 8,
+          children: [
+            GChip('7 derniers jours', selected: _is7d, onTap: () => _setRange(true)),
+            GChip('30 derniers jours', selected: !_is7d, onTap: () => _setRange(false)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Bascule de période
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppTheme.biscuit,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedRange = 0),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: is7d ? AppTheme.red : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '7 derniers jours',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: is7d ? Colors.black : AppTheme.muted,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedRange = 1),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: !is7d ? AppTheme.red : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '30 derniers jours',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: !is7d ? Colors.black : AppTheme.muted,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Grille KPI
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                KpiTile(
-                  title: 'Recettes Anti-Gaspi',
-                  value: is7d ? '184,5 DT' : '742,0 DT',
-                  subtitle: 'Revenu additionnel',
-                  icon: Icons.payments_outlined,
-                  accent: KpiAccent.lime,
-                  badge: is7d ? '+18%' : '+24%',
-                ),
-                KpiTile(
-                  title: 'Repas Sauvés',
-                  value: is7d ? '52' : '215',
-                  subtitle: 'Invendus valorisés',
-                  icon: Icons.shopping_basket_outlined,
-                  accent: KpiAccent.amber,
-                ),
-                KpiTile(
-                  title: 'Taux de Retrait',
-                  value: is7d ? '96%' : '97%',
-                  subtitle: 'Commandes honorées',
-                  icon: Icons.verified_outlined,
-                  accent: KpiAccent.cyan,
-                  badge: 'Fiable',
-                ),
-                const KpiTile(
-                  title: 'Note Moyenne',
-                  value: '4.8 / 5',
-                  subtitle: '38 avis étudiants',
-                  icon: Icons.star_rate_rounded,
-                  accent: KpiAccent.amber,
-                  badge: '⭐ Top',
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // BarChart fl_chart
-            const Text(
-              'Recettes Journalières (TND)',
-              style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            Container(
-              height: 200,
-              padding: const EdgeInsets.only(top: 16, right: 16, left: 0, bottom: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.biscuit,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-              ),
-              child: BarChart(
-                BarChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppTheme.ink.withOpacity(0.05),
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-                          final idx = value.toInt();
-                          if (idx >= 0 && idx < days.length) {
-                            return Text(days[idx], style: const TextStyle(color: AppTheme.muted, fontSize: 13));
-                          }
-                          return const SizedBox();
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 28,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            '${value.toInt()}k',
-                            style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: [
-                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 24, color: AppTheme.red, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 31, color: AppTheme.red, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                    BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 28, color: AppTheme.red, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                    BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 36, color: AppTheme.red, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                    BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 42, color: AppTheme.orange, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                    BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 15, color: AppTheme.red, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                    BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 8, color: AppTheme.red, width: 14, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))]),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Top 3 Offres
-            const Text(
-              'Offres les Plus Sauvées',
-              style: TextStyle(color: AppTheme.ink, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.biscuit,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.ink.withOpacity(0.08)),
-              ),
-              child: Column(
-                children: [
-                  _buildTopRow('1', 'Baguette Farcie Escalope Panée', '24 sauvés', '91,200 DT'),
-                  const Divider(color: AppTheme.sand, height: 20),
-                  _buildTopRow('2', 'Panier Surprise Viennoiseries', '16 sauvés', '40,000 DT'),
-                  const Divider(color: AppTheme.sand, height: 20),
-                  _buildTopRow('3', 'Makloub Poulet Mariné', '12 sauvés', '53,300 DT'),
-                ],
+            Expanded(child: GStat(label: 'Recettes', value: Money.formatTND(totalRevenue.toInt()), icon: Icons.payments_outlined, valueColor: AppTheme.red)),
+            const SizedBox(width: 12),
+            Expanded(child: GStat(label: 'Repas sauvés', value: '${_n(kpis['mealsRescued']).toInt()}', icon: Icons.shopping_basket_outlined, valueColor: AppTheme.leaf)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: GStat(label: 'Non retirés', value: '${noShow.toStringAsFixed(noShow == noShow.roundToDouble() ? 0 : 1)} %', icon: Icons.event_busy_outlined)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: GStat(
+                label: 'Note moyenne',
+                value: reviews > 0 ? rating.toStringAsFixed(1) : '—',
+                hint: reviews > 0 ? '$reviews avis' : 'Pas encore d\'avis',
+                icon: Icons.star_outline,
+                valueColor: AppTheme.orange,
               ),
             ),
           ],
         ),
-      )),
+        const SizedBox(height: 24),
+        const GSectionTitle('Recettes par jour'),
+        const SizedBox(height: 12),
+        GCard(
+          padding: const EdgeInsets.fromLTRB(8, 18, 16, 10),
+          child: SizedBox(height: 200, child: totalRevenue <= 0 ? const _NoSales() : _RevenueChart(series: series, is7d: _is7d)),
+        ),
+        const SizedBox(height: 24),
+        const GSectionTitle('Offres les plus vendues'),
+        const SizedBox(height: 12),
+        if (top.isEmpty)
+          const GEmpty(icon: Icons.local_offer_outlined, title: 'Pas encore de ventes', message: 'Vos meilleures offres apparaîtront ici dès les premiers retraits.')
+        else
+          for (final o in top) ...[_TopOfferTile(offer: o), const SizedBox(height: 10)],
+      ],
     );
   }
+}
 
-  Widget _buildTopRow(String rank, String title, String count, String revenue) {
-    return Row(
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: AppTheme.ink.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(6),
+class _NoSales extends StatelessWidget {
+  const _NoSales();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Aucune recette sur la période.', style: AppTheme.body(16, AppTheme.muted)));
+  }
+}
+
+class _RevenueChart extends StatelessWidget {
+  final List<Map<String, dynamic>> series;
+  final bool is7d;
+
+  const _RevenueChart({required this.series, required this.is7d});
+
+  @override
+  Widget build(BuildContext context) {
+    // Valeurs en dinars ; l'axe est calé sur le maximum réel (pas de graduation qui se chevauche).
+    final values = [for (final e in series) ((e['value'] as num?) ?? 0) / 1000];
+    final maxV = values.fold<double>(0, (a, b) => b > a ? b : a);
+    final top = maxV <= 0 ? 1.0 : maxV * 1.15;
+    final step = (top / 4).clamp(1, double.infinity).toDouble();
+    return BarChart(
+      BarChartData(
+        maxY: top,
+        alignment: BarChartAlignment.spaceAround,
+        gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: step, getDrawingHorizontalLine: (_) => const FlLine(color: AppTheme.sand, strokeWidth: 1)),
+        borderData: FlBorderData(show: false),
+        barTouchData: BarTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              interval: step,
+              getTitlesWidget: (v, meta) => v > top - step * 0.2 && v != meta.max
+                  ? const SizedBox.shrink()
+                  : Text(v.round().toString(), style: AppTheme.mono(13, AppTheme.muted)),
+            ),
           ),
-          alignment: Alignment.center,
-          child: Text(
-            '#$rank',
-            style: const TextStyle(color: AppTheme.red, fontSize: 13, fontWeight: FontWeight.bold),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 26,
+              getTitlesWidget: (v, meta) {
+                final i = v.toInt();
+                if (i < 0 || i >= series.length) return const SizedBox.shrink();
+                if (!is7d && i % 5 != 0) return const SizedBox.shrink(); // 30 jours : une graduation sur 5
+                final label = (series[i]['label'] ?? '').toString();
+                return Padding(padding: const EdgeInsets.only(top: 6), child: Text(label, style: AppTheme.mono(12, AppTheme.muted)));
+              },
+            ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(count, style: const TextStyle(color: AppTheme.muted, fontSize: 13)),
-            ],
+        barGroups: [
+          for (var i = 0; i < values.length; i++)
+            BarChartGroupData(x: i, barRods: [
+              BarChartRodData(toY: values[i], color: values[i] == maxV && maxV > 0 ? AppTheme.orange : AppTheme.red, width: is7d ? 16 : 6, borderRadius: const BorderRadius.vertical(top: Radius.circular(4))),
+            ]),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopOfferTile extends StatelessWidget {
+  final Map<String, dynamic> offer;
+
+  const _TopOfferTile({required this.offer});
+
+  @override
+  Widget build(BuildContext context) {
+    final sold = (offer['quantitySold'] as num?)?.toInt() ?? 0;
+    final revenue = (offer['revenueMillimes'] as num?)?.toInt() ?? 0;
+    return GCard(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text((offer['title'] ?? '').toString().toUpperCase(), style: AppTheme.h3(18), maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text('$sold vendu${sold > 1 ? 's' : ''} · ${offer['decayType'] ?? ''}', style: AppTheme.body(14, AppTheme.muted)),
+              ],
+            ),
           ),
-        ),
-        Text(
-          revenue,
-          style: const TextStyle(color: AppTheme.leaf, fontSize: 13, fontWeight: FontWeight.bold),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Text(Money.formatTND(revenue), style: AppTheme.figure(30, AppTheme.red)),
+        ],
+      ),
     );
   }
 }

@@ -198,7 +198,7 @@ class _MerchantShellState extends State<MerchantShell> {
     GTab('Bilan', Icons.bar_chart_outlined, Icons.bar_chart),
     GTab('Offres', Icons.storefront_outlined, Icons.storefront),
     GTab('Scanner', Icons.qr_code_scanner_outlined, Icons.qr_code_scanner),
-    GTab('Commandes', Icons.receipt_long_outlined, Icons.receipt_long),
+    GTab('Retraits', Icons.receipt_long_outlined, Icons.receipt_long),
     GTab('Boutique', Icons.store_outlined, Icons.store),
   ];
 

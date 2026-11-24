@@ -2,6 +2,7 @@
 // 🔄 Comparaison React / Flutter : Équivalent de `tailwind.config.js` + `griddleTheme.css` du site web : mêmes valeurs hexadécimales, mêmes polices, mêmes règles (texte >= 13 px, contours encre épais, boutons en pilule).
 // 🎯 À retenir pour la soutenance : "Le mobile et le web partagent exactement la même charte Griddle : crème #FAF3E6, encre #111111, rouge #DA0711, moutarde #FFD000 ; aucune couleur sombre ni néon."
 
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 /// Charte Griddle de CampusSave : identique au site web (voir `web-react/src/styles/README.md`).
@@ -99,6 +100,15 @@ class AppTheme {
   static ThemeData get theme {
     final base = ThemeData(
       useMaterial3: true,
+      // Transition « iOS » partout : glissement fluide et retour par balayage depuis le bord gauche (ergonomique au pouce).
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.fuchsia: CupertinoPageTransitionsBuilder(),
+      }),
       brightness: Brightness.light,
       fontFamily: fontBody,
       scaffoldBackgroundColor: cream,

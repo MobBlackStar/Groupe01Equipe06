@@ -2,8 +2,8 @@
 // 🔄 Comparaison React / Flutter : En Flutter, nous utilisons un `Timer.periodic` dans un `StatefulWidget` pour déclencher `setState` toutes les 1 000 ms sans reconstruire toute la page ; en React, c'est l'équivalent direct de `PriceTicker`.
 // 🎯 À retenir pour la soutenance : "L'animation de dégressivité continue sur smartphone garantit une expérience utilisateur dynamique à la seconde près, avec un rafraîchissement économe en batterie."
 
-import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/time/second_ticker.dart';
 import '../core/domain/pricing.dart';
 import '../core/domain/money.dart';
 import '../core/time/server_clock.dart';
@@ -40,25 +40,22 @@ class LivePriceText extends StatefulWidget {
 }
 
 class _LivePriceTextState extends State<LivePriceText> {
-  Timer? _timer;
   late int _nowMs;
 
   @override
   void initState() {
     super.initState();
     _nowMs = ServerClock.serverNowMs;
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _nowMs = ServerClock.serverNowMs;
-        });
-      }
-    });
+    SecondTicker.instance.addListener(_tick);
+  }
+
+  void _tick() {
+    if (mounted) setState(() => _nowMs = ServerClock.serverNowMs);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    SecondTicker.instance.removeListener(_tick);
     super.dispose();
   }
 

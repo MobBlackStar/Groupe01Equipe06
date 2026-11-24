@@ -159,6 +159,7 @@ class CampusApi {
       final dutch = pricing['mode'] == 'DUTCH_AUCTION';
       json['pricingType'] = dutch ? 'DUTCH' : 'FIXED';
       json['originalPriceMillimes'] ??= pricing['originalPriceMillimes'];
+      if (dutch) json['startPriceMillimes'] ??= pricing['startPriceMillimes'];
       json['targetPriceMillimes'] ??= dutch ? pricing['floorPriceMillimes'] : pricing['discountedPriceMillimes'];
     }
     return OfferModel.fromJson(json);
@@ -166,6 +167,9 @@ class CampusApi {
 
   /// `POST /offers` : le corps suit `createOfferSchema` (prix dans `pricing`).
   Future<void> createOffer(Map<String, dynamic> body) => _call(() => _dio.post(Endpoints.offers, data: body));
+
+  /// `PATCH /offers/:id` : mise à jour partielle (le serveur refuse de changer le prix une fois une réservation faite).
+  Future<void> updateOffer(String id, Map<String, dynamic> body) => _call(() => _dio.patch(Endpoints.offerById(id), data: body));
 
   /// `DELETE /offers/:id` : suppression définitive, ou archivage si des commandes existent.
   Future<void> deleteOffer(String id) => _call(() => _dio.delete(Endpoints.offerById(id)));
@@ -197,4 +201,17 @@ class CampusApi {
     final list = data['orders'] as List? ?? const [];
     return list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
   }
+
+  // --- Tableaux de bord ---------------------------------------------------
+
+  /// `GET /dashboards/student` : impact personnel, fidélité, historique d'économies et dernières commandes.
+  Future<Map<String, dynamic>> fetchStudentDashboard() => _call(() => _dio.get(Endpoints.dashboardsStudent));
+
+  /// `GET /dashboards/merchant?range=7d|30d` : recettes, retraits, no-shows, série journalière et top offres.
+  Future<Map<String, dynamic>> fetchMerchantDashboard({String range = '7d'}) =>
+      _call(() => _dio.get(Endpoints.dashboardsMerchant, queryParameters: {'range': range}));
+
+  /// `POST /orders/:id/rating` : note de 1 à 5 d'une commande terminée (une seule fois).
+  Future<void> rateOrder(String orderId, int stars, {String comment = ''}) =>
+      _call(() => _dio.post(Endpoints.rateOrder(orderId), data: {'stars': stars, if (comment.trim().isNotEmpty) 'comment': comment.trim()}));
 }

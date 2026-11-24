@@ -25,6 +25,7 @@ class OfferModel {
   final String status; // 'ACTIVE', 'SOLD_OUT', 'EXPIRED'
   final String? photoUrl;
   final String? rarity; // COMMON | RARE | LEGENDARY (paniers surprise)
+  final int? startPriceMillimes; // départ d'une enchère dégressive (null pour un prix fixe)
   final int? distanceFromEssectM; // distance réelle du commerce (merchantSnapshot), null si inconnue
 
   const OfferModel({
@@ -47,6 +48,7 @@ class OfferModel {
     this.status = 'ACTIVE',
     this.photoUrl,
     this.rarity,
+    this.startPriceMillimes,
     this.distanceFromEssectM,
   });
 
@@ -75,6 +77,7 @@ class OfferModel {
       rarity: json['rarity'] as String?,
       status: json['status'] as String? ?? 'ACTIVE',
       photoUrl: json['photoUrl'] as String?,
+      startPriceMillimes: (json['startPriceMillimes'] as num?)?.toInt(),
       distanceFromEssectM: (json['distanceFromEssectM'] as num?)?.toInt() ??
           (json['merchantSnapshot'] is Map ? ((json['merchantSnapshot'] as Map)['distanceFromEssectM'] as num?)?.toInt() : null),
     );

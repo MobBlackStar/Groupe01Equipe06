@@ -332,6 +332,7 @@ class GPage extends StatelessWidget {
     final list = ListView(
       padding: padding,
       physics: const AlwaysScrollableScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
         if (header != null) ...[header!, const SizedBox(height: 22)],
         ...children,
@@ -635,6 +636,91 @@ class GScreenBody extends StatelessWidget {
           if (bottom != null) Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: bottom),
           Expanded(child: child),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Image réseau : décodée à la bonne taille, fondu à l'apparition, repli propre en cas d'erreur
+// ---------------------------------------------------------------------------------------------
+
+class GImage extends StatelessWidget {
+  final String url;
+  final Widget placeholder;
+  final int cacheWidth;
+
+  const GImage({super.key, required this.url, required this.placeholder, this.cacheWidth = 900});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        placeholder,
+        Image.network(
+          url,
+          fit: BoxFit.cover,
+          cacheWidth: cacheWidth, // décode à la taille d'affichage : bien moins de mémoire, défilement plus fluide
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.low,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded) return child;
+            return AnimatedOpacity(opacity: frame == null ? 0 : 1, duration: const Duration(milliseconds: 250), curve: Curves.easeOut, child: child);
+          },
+          errorBuilder: (context, error, stackTrace) => placeholder,
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Squelette de chargement : garde la mise en page stable pendant que les offres arrivent
+// ---------------------------------------------------------------------------------------------
+
+class GSkeletonCard extends StatefulWidget {
+  const GSkeletonCard({super.key});
+
+  @override
+  State<GSkeletonCard> createState() => _GSkeletonCardState();
+}
+
+class _GSkeletonCardState extends State<GSkeletonCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final tone = Color.lerp(AppTheme.biscuit, AppTheme.sand, _c.value)!;
+          Widget bar(double w, double h) => Container(width: w, height: h, decoration: BoxDecoration(color: tone, borderRadius: BorderRadius.circular(8)));
+          return Container(
+            decoration: BoxDecoration(color: AppTheme.cream, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppTheme.sand, width: 2)),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(aspectRatio: 16 / 10, child: ColoredBox(color: tone)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [bar(120, 12), const SizedBox(height: 10), bar(240, 22), const SizedBox(height: 14), bar(90, 28)],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

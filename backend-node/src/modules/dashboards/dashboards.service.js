@@ -99,7 +99,7 @@ export const dashboardsService = {
 
       if (order.status === ORDER_STATUS.COMPLETED || order.status === ORDER_STATUS.PAID) {
         const orderTimeMs = order.createdAt?.toDate ? order.createdAt.toDate().getTime() : new Date(order.createdAt).getTime();
-        const saved = order.pricing?.moneySavedMillimes || 0;
+        const saved = order.pricing?.savedMillimes ?? order.pricing?.moneySavedMillimes ?? 0;
 
         if (orderTimeMs >= sevenDaysAgoMs) {
           weeklySavedMillimes += saved;
@@ -110,13 +110,22 @@ export const dashboardsService = {
       }
     });
 
-    const savingsHistory = [
-      { label: 'Sem 1', value: Math.round((stats.totalSavedMillimes || 46500) * 0.2), co2: Number((((stats.co2SavedGrams || 14500) * 0.2) / 1000).toFixed(1)) },
-      { label: 'Sem 2', value: Math.round((stats.totalSavedMillimes || 46500) * 0.4), co2: Number((((stats.co2SavedGrams || 14500) * 0.4) / 1000).toFixed(1)) },
-      { label: 'Sem 3', value: Math.round((stats.totalSavedMillimes || 46500) * 0.65), co2: Number((((stats.co2SavedGrams || 14500) * 0.65) / 1000).toFixed(1)) },
-      { label: 'Sem 4', value: Math.round((stats.totalSavedMillimes || 46500) * 0.85), co2: Number((((stats.co2SavedGrams || 14500) * 0.85) / 1000).toFixed(1)) },
-      { label: 'Sem 5', value: stats.totalSavedMillimes || 46500, co2: Number(((stats.co2SavedGrams || 14500) / 1000).toFixed(1)) },
-    ];
+    // Cumul réel des économies et du CO2 évité sur les 5 dernières semaines (commandes payées ou retirées)
+    const savingsHistory = [];
+    for (let w = 4; w >= 0; w--) {
+      const untilMs = nowMs - w * 7 * 24 * 60 * 60 * 1000;
+      let cumSaved = 0;
+      let cumCo2 = 0;
+      allStudentOrders.forEach((order) => {
+        if (order.status !== ORDER_STATUS.COMPLETED && order.status !== ORDER_STATUS.PAID) return;
+        const t = order.createdAt?.toDate ? order.createdAt.toDate().getTime() : new Date(order.createdAt).getTime();
+        if (Number.isFinite(t) && t <= untilMs) {
+          cumSaved += order.pricing?.savedMillimes ?? order.pricing?.moneySavedMillimes ?? 0;
+          cumCo2 += order.impact?.co2SavedGrams ?? 0;
+        }
+      });
+      savingsHistory.push({ label: `Sem ${5 - w}`, value: cumSaved, co2: Number((cumCo2 / 1000).toFixed(1)) });
+    }
 
     return {
       stats,
@@ -228,8 +237,9 @@ export const dashboardsService = {
           off.floorPriceMillimes ||
           off.pricing?.startPriceMillimes ||
           off.originalPriceMillimes ||
-          4200;
-        const sold = Math.max(off.quantitySold || off.rescuedCount || 0, 2);
+          0;
+        const sold = off.quantitySold || off.rescuedCount || 0;
+        if (sold <= 0) return; // une offre jamais vendue n'est pas un « top »
         allOffers.push({
           id: doc.id,
           title: off.title,

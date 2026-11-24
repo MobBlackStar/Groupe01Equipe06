@@ -111,11 +111,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
               fit: StackFit.expand,
               children: [
                 if (offer.photoUrl != null && offer.photoUrl!.isNotEmpty)
-                  Image.network(
-                    offer.photoUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const _DetailPhotoPlaceholder(),
-                  )
+                  GImage(url: offer.photoUrl!, placeholder: const _DetailPhotoPlaceholder(), cacheWidth: 1200)
                 else
                   const _DetailPhotoPlaceholder(),
                 SafeArea(
