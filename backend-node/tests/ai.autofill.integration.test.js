@@ -1,16 +1,18 @@
-// 💡 Concept : Suite de tests d'intégration validant de bout en bout l'autocomplétion d'offres (parseur dialectal, schémas Zod et route Express sécurisée).
-// 🎯 Pour la soutenance : "Ces tests prouvent que l'endpoint /ai/offer-autofill applique les contrôles RBAC, accepte les notes tunisiennes avec pluriels et prix, et garantit un JSON strictement conforme au formulaire."
+// 💡 Concept : Suite de tests d'intégration validant de bout en bout l'autocomplétion d'offres (Gemini 2.5 Flash mocké, parseur multilingue FR/EN/derja, schémas Zod et route Express).
+// 🎯 Pour la soutenance : "Ces tests prouvent que l'endpoint /ai/offer-autofill appelle Gemini 2.5 Flash avec JSON Schema strict, bascule sur le parseur local en cas de panne réseau, et applique les contrôles RBAC."
 
-import { test, describe, before, after } from 'node:test';
+import { test, describe, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import axios from 'axios';
 import app from '../src/app.js';
+import { env } from '../src/config/env.js';
 import { parseRawNote } from '../src/modules/ai/fallbackParser.js';
 import { aiSuggestionSchema } from '../src/modules/ai/ai.schema.js';
 import { aiService } from '../src/modules/ai/ai.service.js';
 import { OFFER_CATEGORIES } from '../../shared/constants.js';
 
-describe('Autocomplétion IA — Parseur avancé et intégration HTTP', () => {
+describe('Autocomplétion IA — Gemini 2.5 Flash, parseur et intégration HTTP', () => {
   let server;
   let baseUrl;
 
@@ -55,6 +57,18 @@ describe('Autocomplétion IA — Parseur avancé et intégration HTTP', () => {
     assert.doesNotThrow(() => aiSuggestionSchema.parse(s));
   });
 
+  test('comprend les produits simples en anglais ("eggs", "salad") sans activer le panier surprise', () => {
+    const eggs = parseRawNote('eggs');
+    assert.equal(eggs.category, OFFER_CATEGORIES.SNACK);
+    assert.equal(eggs.isSurpriseBasket, false);
+    assert.match(eggs.title, /Œufs/i);
+
+    const salad = parseRawNote('2 fresh salad');
+    assert.equal(salad.category, OFFER_CATEGORIES.SALADE);
+    assert.equal(salad.isSurpriseBasket, false);
+    assert.equal(salad.quantityTotal, 2);
+  });
+
   test('détecte un panier surprise pâtisserie avec quantité suffixée ("5 pièces")', () => {
     const s = parseRawNote('panier surprise pâtisserie 5 pièces');
     assert.equal(s.isSurpriseBasket, true);
@@ -64,11 +78,87 @@ describe('Autocomplétion IA — Parseur avancé et intégration HTTP', () => {
     assert.doesNotThrow(() => aiSuggestionSchema.parse(s));
   });
 
-  test('aiService.autofillOffer prend en compte closingTime explicite et bascule en fallback', async () => {
-    const result = await aiService.autofillOffer('4 makloub escalope', { closingTime: '20:15' });
-    assert.equal(result.source, 'fallback');
-    assert.equal(result.suggestion.suggestedPickupEndAt, '20:15');
-    assert.equal(result.suggestion.suggestedPickupStartAt, '18:15');
+  test('aiService.autofillOffer appelle Gemini 2.5 Flash quand la clé API est configurée et valide le schéma', async () => {
+    const prevProvider = env.AI_PROVIDER;
+    const prevKey = env.GEMINI_API_KEY;
+    const prevModel = env.AI_MODEL;
+
+    env.AI_PROVIDER = 'gemini';
+    env.GEMINI_API_KEY = 'AIzaSyMockedTestKeyForUnitTests';
+    env.AI_MODEL = 'gemini-2.5-flash';
+
+    const mockPost = mock.method(axios, 'post', async (url, payload, config) => {
+      assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.5-flash:generateContent/);
+      assert.equal(config.headers['x-goog-api-key'], 'AIzaSyMockedTestKeyForUnitTests');
+      assert.equal(payload.generationConfig.responseMimeType, 'application/json');
+      assert.ok(payload.generationConfig.responseSchema);
+
+      return {
+        data: {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      title: 'Boîte de 6 œufs frais fermiers',
+                      description: 'Œufs fermiers du jour à sauver avant la fermeture du magasin.',
+                      category: 'SNACK',
+                      originalPriceMillimes: 4200,
+                      discountedPriceMillimes: 2500,
+                      pricingMode: 'FIXED',
+                      quantityTotal: 2,
+                      weightGramsPerUnit: 360,
+                      isSurpriseBasket: false,
+                      suggestedPickupStartAt: '17:30',
+                      suggestedPickupEndAt: '19:30',
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      };
+    });
+
+    try {
+      const result = await aiService.autofillOffer('eggs');
+      assert.equal(result.source, 'GEMINI');
+      assert.equal(result.suggestion.title, 'Boîte de 6 œufs frais fermiers');
+      assert.equal(result.suggestion.category, OFFER_CATEGORIES.SNACK);
+      assert.equal(result.suggestion.isSurpriseBasket, false);
+      assert.equal(result.suggestion.discountedPriceMillimes, 2500);
+      assert.equal(mockPost.mock.callCount(), 1);
+    } finally {
+      mockPost.mock.restore();
+      env.AI_PROVIDER = prevProvider;
+      env.GEMINI_API_KEY = prevKey;
+      env.AI_MODEL = prevModel;
+    }
+  });
+
+  test('aiService.autofillOffer bascule proprement sur FALLBACK en cas d erreur réseau Gemini', async () => {
+    const prevProvider = env.AI_PROVIDER;
+    const prevKey = env.GEMINI_API_KEY;
+
+    env.AI_PROVIDER = 'gemini';
+    env.GEMINI_API_KEY = 'AIzaSyMockedTestKeyForUnitTests';
+
+    const mockPost = mock.method(axios, 'post', async () => {
+      throw new Error('ECONNABORTED timeout exceeded');
+    });
+
+    try {
+      const result = await aiService.autofillOffer('4 makloub escalope', { closingTime: '20:15' });
+      assert.equal(result.source, 'FALLBACK');
+      assert.equal(result.suggestion.suggestedPickupEndAt, '20:15');
+      assert.equal(result.suggestion.suggestedPickupStartAt, '18:15');
+    } finally {
+      mockPost.mock.restore();
+      env.AI_PROVIDER = prevProvider;
+      env.GEMINI_API_KEY = prevKey;
+    }
   });
 
   test('POST /ai/offer-autofill refuse les requêtes non authentifiées (401)', async () => {
@@ -117,7 +207,7 @@ describe('Autocomplétion IA — Parseur avancé et intégration HTTP', () => {
     });
     assert.equal(res.status, 200);
     const data = await res.json();
-    assert.equal(data.source, 'fallback');
+    assert.equal(data.source, 'FALLBACK');
     assert.equal(data.suggestion.isSurpriseBasket, true);
     assert.equal(data.suggestion.quantityTotal, 7);
     assert.equal(data.suggestion.suggestedPickupEndAt, '17:00');

@@ -255,7 +255,7 @@ describe('Jour 3 — Commerces, Administration, Offres & Moteur IA', () => {
       const result = await aiService.autofillOffer(rawText);
 
       assert.ok(result.suggestion);
-      assert.ok(['ai', 'fallback'].includes(result.source));
+      assert.ok(['GEMINI', 'ANTHROPIC', 'FALLBACK', 'ai', 'fallback'].includes(result.source));
 
       const { suggestion } = result;
       // Multiples articles : panier surprise activé
