@@ -100,6 +100,15 @@ Le projet s'appuie sur une architecture 3-tiers à haute intégrité :
 
 ---
 
+## 🌐 Liens de Déploiement Officiels & Production
+
+- **Application Web (Vercel Production) :** [https://campussave-rouge.vercel.app](https://campussave-rouge.vercel.app)
+- **API REST Backend (Render Cloud) :** [https://campussave.onrender.com/api/v1](https://campussave.onrender.com/api/v1)
+- **Téléchargement APK Android (GitHub Releases) :** [CampusSave.apk (Release v1.0.0)](https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk)
+- **Rapport de Synthèse Académique :** `docs-uml-mockups/report/CampusSave_Rapport.pdf` (31 pages)
+
+---
+
 ## 📁 Structure du Monorepo
 
 ```text
@@ -108,25 +117,26 @@ campussave/
 │   ├── pricing.js            # Algorithme Smart Decay
 │   ├── loyalty.js            # Algorithme des 5 tampons et paliers
 │   ├── impact.js             # Facteurs officiels FAO et US EPA
-│   └── test-vectors/         # Vecteurs officiels HMAC cross-runtime
+│   └── test-vectors/         # 41 tests automatisés cross-runtime (100% passing)
 ├── firebase/                 # Configuration Cloud
 │   ├── firestore.rules       # Règles de sécurité granulaires par rôle
 │   └── firestore.indexes.json# Index composites de requêtes
 ├── backend-node/             # API REST Express & Services
 │   ├── src/modules/          # Modules (auth, merchants, offers, orders, radar, dashboards)
 │   ├── src/jobs/             # Tâche d'arrière-plan noShowSweeper
-│   └── tests/                # 91 tests automatisés (100% passing)
+│   └── tests/                # 146 tests automatisés (100% passing)
 ├── web-react/                # Application Web React 18 & Vite
-│   ├── src/components/       # UI Kit Dark Obsidian, charts Recharts, layouts
+│   ├── src/components/       # UI Kit Griddle Street Food, charts Recharts, layouts
 │   ├── src/features/         # Écrans Étudiant, Commerçant, Admin, Impact
 │   └── src/lib/              # Client Axios, endpoints, dictionnaire d'erreurs
 ├── mobile-flutter/           # Application Mobile Flutter 3 & Dart
 │   ├── lib/features/         # Écrans mobiles équivalents (explore, radar, loyalty, dashboards)
-│   └── lib/widgets/          # Composants mobiles réutilisables (KpiTile, CountdownChip)
+│   ├── lib/widgets/          # Composants mobiles réutilisables (KpiTile, CountdownChip)
+│   └── test/                 # 21 tests unitaires & widgets (100% passing)
 └── docs-uml-mockups/         # Dossier académique complet
     ├── uml/svg/              # 12 diagrammes UML haute résolution
     ├── mockups/final-screens/# Planches graphiques vectorielles des écrans finaux
-    ├── report/               # Rapport académique complet ESSECT (Markdown & PDF)
+    ├── report/               # Rapport académique complet ESSECT (Markdown & PDF 31 pages)
     └── demo/                 # Script de soutenance (7 min) et fiches Q&A jury
 ```
 
@@ -151,7 +161,7 @@ cd campussave
 cd backend-node
 cp .env.example .env
 npm install
-npm test            # Exécute la suite complète des 91 tests
+npm test            # Exécute la suite complète des 146 tests backend
 npm run dev         # Démarre l'API sur http://localhost:5000
 ```
 
