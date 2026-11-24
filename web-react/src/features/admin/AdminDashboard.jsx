@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   async function handleResetDemo() {
     setResetting(true);
     try {
-      const res = await apiClient.post('/api/v1/admin/reset-demo');
+      const res = await apiClient.post(ENDPOINTS.ADMIN_RESET_DEMO || '/admin/reset-demo');
       setToast({
         type: 'success',
         message: `Plateforme réinitialisée avec succès (${res.data?.offersCount || 20} offres, ${res.data?.merchantsCount || 6} commerces) !`,

@@ -25,8 +25,12 @@ export const corsOptions = {
       return callback(null, true);
     }
 
-    // 3. En production : validation stricte contre la liste autorisée
-    if (allowedOrigins.includes(origin)) {
+    // 3. En production : validation contre la liste autorisée et déploiements Vercel
+    const isVercel = /^https:\/\/campussave[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+                     origin === 'https://campussave-rouge.vercel.app' ||
+                     /^https:\/\/.*\.vercel\.app$/.test(origin);
+
+    if (allowedOrigins.includes(origin) || isVercel) {
       return callback(null, true);
     }
 

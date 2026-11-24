@@ -7,7 +7,8 @@ import { apiClient } from './api.js';
 import { ENDPOINTS } from './endpoints.js';
 
 const TOKEN_KEY = 'cs.fcm_token';
-const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+const DEFAULT_VAPID_KEY = 'BGbbtY6VlRiqMVqesc7eDPpfx-dHUP3ay_Rlo4cJTm7Y0uim_80z6Ge4ySa7jpvXzEIVxjthsImJxhhr-hHL-gc';
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || DEFAULT_VAPID_KEY;
 
 /** Statuts possibles : `unsupported` | `unconfigured` | `denied` | `default` (jamais demandé) | `granted` (autorisé, pas encore enregistré) | `active`. */
 export function getPushStatus() {
@@ -21,10 +22,10 @@ export function getPushStatus() {
 /** Le service worker reçoit la configuration PUBLIQUE de Firebase par son URL (il ne lit pas `import.meta.env`). */
 function swUrl() {
   const q = new URLSearchParams({
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDfgGOud941Mf8uBdMKxdjbyGRpyNOM-ug',
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'campussave-dev',
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '219958634271',
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:219958634271:web:bbd4887b9f1ba29391722a',
   });
   return `/firebase-messaging-sw.js?${q.toString()}`;
 }

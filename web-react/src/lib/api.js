@@ -7,10 +7,25 @@ import axios from 'axios';
 import { auth } from './firebase.js';
 import { updateServerOffset } from './serverClock.js';
 
-// URL de l'API : celle configurée au build (VITE_API_BASE_URL, ex. le backend hébergé) ; localhost seulement en développement.
-// Aucune adresse n'est devinée à partir de l'hôte de la page : un site hébergé sur GitHub Pages ne doit jamais viser `http://<hôte>:4000`.
+// URL de l'API : celle configurée au build (VITE_API_BASE_URL, ex. le backend hébergé) ;
+// en production ou sur tout hôte distant (ex: Vercel), bascule automatique sur le backend Render hébergé.
 function computeBaseUrl() {
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+  const configured = import.meta.env.VITE_API_BASE_URL;
+  if (configured && !configured.includes('localhost') && !configured.includes('127.0.0.1')) {
+    return configured;
+  }
+  // En environnement navigateur non-local (ex: https://campussave-rouge.vercel.app)
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return 'https://campussave.onrender.com/api/v1';
+    }
+  }
+  // En mode production bundlé
+  if (import.meta.env.PROD) {
+    return 'https://campussave.onrender.com/api/v1';
+  }
+  return configured || 'http://localhost:4000/api/v1';
 }
 
 export const apiClient = axios.create({
