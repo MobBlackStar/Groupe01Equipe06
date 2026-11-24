@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ArrowRight, Store } from 'lucide-react';
+import { MapPin, ArrowRight, Store, ChevronDown } from 'lucide-react';
 import SearchBar from './SearchBar.jsx';
 import FilterPanel, { MAX_BUDGET_UNLIMITED } from './FilterPanel.jsx';
 import { OfferCard, MysteryBoxCard } from '../../components/offers/index.js';
@@ -304,31 +304,49 @@ export default function BrowsePage() {
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Un plat, une baguette farcie, un restaurant…"
+                placeholder="Plat, sandwich, restaurant…"
               />
             </div>
             {merchantList.length > 0 && (
-              <div className="md:col-span-5 lg:col-span-4 relative">
+              <div className="md:col-span-5 lg:col-span-4 relative rounded-full focus-within:ring-4 focus-within:ring-[#FFD000]/55">
                 <label htmlFor="merchant-filter" className="sr-only">
                   Filtrer par établissement partenaire
                 </label>
-                <Store
-                  className={`absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none ${
-                    selectedMerchant !== 'ALL' ? 'text-[#DA0711]' : 'text-[#5E5850]'
+                {/* Affichage visuel Griddle pur (zéro double-flèche navigateur) + <select> natif superposé */}
+                <div
+                  className={`cs-input !min-h-[4rem] !px-5 flex items-center justify-between gap-3 pointer-events-none transition-colors ${
+                    selectedMerchant !== 'ALL'
+                      ? '!border-[#DA0711] !bg-[#FFF5F5] !text-[#DA0711]'
+                      : 'bg-white text-[#111111]'
                   }`}
-                  strokeWidth={2.3}
-                  aria-hidden="true"
-                />
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Store
+                      className={`w-5 h-5 shrink-0 ${
+                        selectedMerchant !== 'ALL' ? 'text-[#DA0711]' : 'text-[#5E5850]'
+                      }`}
+                      strokeWidth={2.3}
+                      aria-hidden="true"
+                    />
+                    <span className="truncate font-semibold text-base">
+                      {selectedMerchant === 'ALL'
+                        ? `Tous les restaurants (${offers.length})`
+                        : `${selectedMerchant} (${merchantList.find((m) => m.name === selectedMerchant)?.count ?? filteredOffers.length})`}
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`w-5 h-5 shrink-0 ${
+                      selectedMerchant !== 'ALL' ? 'text-[#DA0711]' : 'text-[#111111]'
+                    }`}
+                    strokeWidth={2.4}
+                    aria-hidden="true"
+                  />
+                </div>
                 <select
                   id="merchant-filter"
                   value={selectedMerchant}
                   onChange={(e) => setSelectedMerchant(e.target.value)}
-                  style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-                  className={`cs-input !appearance-none !min-h-[4rem] !pl-14 !pr-11 !text-base !font-semibold cursor-pointer ${
-                    selectedMerchant !== 'ALL'
-                      ? '!border-[#DA0711] !bg-[#FFF5F5] !text-[#DA0711]'
-                      : ''
-                  }`}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
                 >
                   <option value="ALL">Tous les restaurants ({offers.length})</option>
                   {merchantList.map((m) => (
