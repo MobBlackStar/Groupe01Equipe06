@@ -58,7 +58,7 @@ export default function ApkDownloadMascot() {
           ========================================================================= */}
       <aside
         aria-label="Téléchargement de l'application Android"
-        className={`fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] w-auto animate-bounce-subtle ${
+        className={`fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] sm:bottom-5 right-4 sm:right-5 z-40 select-none max-w-[calc(100vw-2rem)] w-auto ${
           isAuthPage ? 'hidden sm:block' : ''
         }`}
       >
