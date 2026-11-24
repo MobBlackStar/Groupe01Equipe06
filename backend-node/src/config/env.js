@@ -29,7 +29,7 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default('gemini-3-flash-preview'),
-  AI_TIMEOUT_MS: z.coerce.number().default(8000),
+  AI_TIMEOUT_MS: z.coerce.number().default(12000),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
