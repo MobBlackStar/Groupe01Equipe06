@@ -155,6 +155,13 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
     }
   }
 
+  static TimeOfDay? _parseHhMm(dynamic raw) {
+    if (raw is! String) return null;
+    final m = RegExp(r'^([01]?\d|2[0-3]):([0-5]\d)$').firstMatch(raw.trim());
+    if (m == null) return null;
+    return TimeOfDay(hour: int.parse(m.group(1)!), minute: int.parse(m.group(2)!));
+  }
+
   void _applyAutofill(Map<String, dynamic> s) {
     setState(() {
       _titleController.text = s['title'] as String? ?? _titleController.text;
@@ -163,19 +170,43 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
       if (cat != null && _categories.containsKey(cat)) _category = cat;
       final original = s['originalPriceMillimes'];
       final discounted = s['discountedPriceMillimes'];
+      final startP = s['startPriceMillimes'];
+      final floorP = s['floorPriceMillimes'];
       if (original is num) _originalPriceController.text = _fromMillimes(original);
       _isDutch = s['pricingMode'] == 'DUTCH_AUCTION';
-      if (discounted is num) {
-        if (_isDutch) {
-          _pricePrimaryController.text = original is num ? _fromMillimes(original) : '';
-          _priceFloorController.text = _fromMillimes(discounted);
-        } else {
-          _pricePrimaryController.text = _fromMillimes(discounted);
-        }
+      if (_isDutch) {
+        final fallbackStart = original is num ? ((original * 0.8) / 100).round() * 100 : null;
+        final resolvedStart = startP is num ? startP : fallbackStart;
+        final resolvedFloor = floorP is num ? floorP : discounted;
+        if (resolvedStart is num) _pricePrimaryController.text = _fromMillimes(resolvedStart);
+        if (resolvedFloor is num) _priceFloorController.text = _fromMillimes(resolvedFloor);
+      } else if (discounted is num) {
+        _pricePrimaryController.text = _fromMillimes(discounted);
       }
       final qty = s['quantityTotal'];
       if (qty is num) _quantityController.text = '${qty.toInt()}';
+
+      final parsedStart = _parseHhMm(s['suggestedPickupStartAt']);
+      final parsedEnd = _parseHhMm(s['suggestedPickupEndAt']);
+      if (parsedEnd != null) {
+        _pickupEnd = parsedEnd;
+        _pickupStart = parsedStart ?? TimeOfDay(hour: (parsedEnd.hour - 2).clamp(0, 23), minute: parsedEnd.minute);
+      } else if (s['closingHour'] is num) {
+        final h = (s['closingHour'] as num).toInt().clamp(0, 23);
+        final min = s['closingMinute'] is num ? (s['closingMinute'] as num).toInt().clamp(0, 59) : 0;
+        _pickupEnd = TimeOfDay(hour: h, minute: min);
+        _pickupStart = TimeOfDay(hour: (h - 2).clamp(0, 23), minute: min);
+      }
+
       _isSurprise = s['isSurpriseBasket'] == true;
+      if (_isSurprise) {
+        final contents = s['surpriseContents'];
+        if (contents is String && contents.trim().isNotEmpty) {
+          _contentsController.text = contents;
+        } else if (s['surprise'] is Map && s['surprise']['teaser'] is String) {
+          _contentsController.text = s['surprise']['teaser'] as String;
+        }
+      }
     });
   }
 

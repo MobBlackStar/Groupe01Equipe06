@@ -23,10 +23,15 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
   String? _error;
   String? _source;
 
-  Future<void> _runAutofill() async {
-    final note = _textController.text.trim();
-    if (note.length < 5) {
-      setState(() => _error = 'Décrivez vos invendus en au moins 5 caractères.');
+  static const _examples = [
+    '4 makloub escalope + 3 brik, fermeture 17h',
+    '3 baguettes farcies croustillantes, ferme à 19h30',
+  ];
+
+  Future<void> _runAutofill([String? overrideNote]) async {
+    final note = (overrideNote ?? _textController.text).trim();
+    if (note.length < 3) {
+      setState(() => _error = 'Décrivez vos invendus en au moins 3 caractères.');
       return;
     }
     setState(() {
@@ -35,7 +40,7 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
     });
     try {
       final res = await CampusApi.shared.offerAutofill(note);
-      final suggestion = res['suggestion'];
+      final suggestion = res['suggestion'] ?? res['offer'];
       if (suggestion is! Map) throw Exception('Réponse inattendue du serveur');
       if (!mounted) return;
       setState(() => _source = res['source'] == 'ai' ? 'Intelligence artificielle' : 'Analyseur du serveur');
@@ -79,7 +84,26 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
             decoration: const InputDecoration(hintText: '4 chapati thon + 2 briks, fermeture 18h'),
           ),
           const SizedBox(height: 12),
-          GButton('Remplir avec l\'IA', icon: Icons.auto_awesome, variant: GVariant.ink, loading: _isLoading, onPressed: _isLoading ? null : _runAutofill),
+          GButton('Remplir avec l\'IA', icon: Icons.auto_awesome, variant: GVariant.ink, loading: _isLoading, onPressed: _isLoading ? null : () => _runAutofill()),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: _examples
+                .map(
+                  (ex) => ActionChip(
+                    label: Text(ex, style: const TextStyle(fontSize: 13)),
+                    backgroundColor: AppTheme.cream,
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            _textController.text = ex;
+                            _runAutofill(ex);
+                          },
+                  ),
+                )
+                .toList(),
+          ),
           if (_source != null) ...[const SizedBox(height: 10), Text('Source : $_source', style: AppTheme.label())],
           if (_error != null) ...[const SizedBox(height: 10), GNotice(_error!, icon: Icons.error_outline)],
         ],
