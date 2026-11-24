@@ -9,9 +9,7 @@ import PriceTicker from './PriceTicker.jsx';
 import CountdownChip from './CountdownChip.jsx';
 import RarityBadge from './RarityBadge.jsx';
 import { calculateWalkingMinutes } from '@shared/geo.js';
-import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
-
-const SAFE_FALLBACK_IMG = '/assets/griddle/food/takeaway-counter.webp';
+import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
 
 const STICKERS = [
   { text: '#1', cls: 'cs-sticker-red' },
@@ -63,7 +61,15 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
   const distanceM = offer.distanceFromEssectM ?? offer.merchantSnapshot?.distanceFromEssectM ?? offer.merchant?.distanceFromEssectM;
   const walkingMin = Number.isFinite(distanceM) ? calculateWalkingMinutes(distanceM) : null;
 
-  const imageUrl = offer.imageUrl || offer.photoUrl || getDistinctGriddleFoodImage(category, id || title);
+  const imageUrl =
+    offer.imageUrl ||
+    offer.photoUrl ||
+    resolveOfferImage({
+      category,
+      title,
+      description: offer.description,
+      isSurpriseBasket: isSurprise,
+    });
 
   return (
     <Link
@@ -79,7 +85,7 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
           decoding="async"
           onError={(e) => {
             e.currentTarget.onerror = null;
-            e.currentTarget.src = SAFE_FALLBACK_IMG;
+            e.currentTarget.src = SAFE_FOOD_FALLBACK_IMG;
           }}
         />
         <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">

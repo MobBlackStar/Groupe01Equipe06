@@ -15,7 +15,7 @@ import { formatTND } from '@shared/money.js';
 import { rewardKey } from '@shared/loyalty.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
 import { calculateImpact, calculateEquivalences } from '@shared/impact.js';
-import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
+import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
 import { formatTunisTime } from '../../lib/formatters.js';
 import { Store, Clock, Flame, Minus, Plus, MapPin, ArrowLeft, ArrowRight, Lock } from 'lucide-react';
 import { formatCategory } from '../../components/offers/OfferCard.jsx';
@@ -186,7 +186,16 @@ export default function OfferDetailPage() {
     }
   };
 
-  const foodImage = currentOffer.imageUrl || currentOffer.photoUrl || getDistinctGriddleFoodImage(currentOffer.category || 'fast-food', currentOffer.id);
+  const foodImage =
+    currentOffer.imageUrl ||
+    currentOffer.photoUrl ||
+    resolveOfferImage({
+      category: currentOffer.category,
+      title: currentOffer.title,
+      description: currentOffer.description,
+      surpriseContents: currentOffer.surpriseContents,
+      isSurpriseBasket: Boolean(currentOffer.isSurpriseBasket),
+    });
   const merchantName = currentOffer.merchantName || currentOffer.merchantSnapshot?.name || currentOffer.merchant?.name || 'Commerce Montfleury';
   const money = (v) => (Number.isFinite(v) ? formatTND(v) : '—');
   const originalUnit = currentOffer.originalPriceMillimes || 7800;
@@ -223,7 +232,7 @@ export default function OfferDetailPage() {
                 alt={currentOffer.title}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = getDistinctGriddleFoodImage(currentOffer.category);
+                  e.currentTarget.src = SAFE_FOOD_FALLBACK_IMG;
                 }}
               />
             </div>

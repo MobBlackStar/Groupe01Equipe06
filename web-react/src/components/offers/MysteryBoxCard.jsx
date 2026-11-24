@@ -10,7 +10,7 @@ import CountdownChip from './CountdownChip.jsx';
 import RarityBadge from './RarityBadge.jsx';
 import { SURPRISE_RARITY } from '@shared/constants.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
-import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
+import { resolveOfferImage } from '../../lib/offerImages.js';
 
 export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
   if (!offer) return null;
@@ -30,7 +30,16 @@ export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
   const walkingMin = Number.isFinite(distanceM) ? calculateWalkingMinutes(distanceM) : null;
 
   // Photo floutée du commerce : on devine, on ne voit pas
-  const teaserImage = offer.photoUrl || getDistinctGriddleFoodImage(offer.category || 'patisserie', id || index);
+  const teaserImage =
+    offer.imageUrl ||
+    offer.photoUrl ||
+    resolveOfferImage({
+      category: offer.category || 'MIXTE',
+      title: offer.title,
+      surpriseContents: offer.surpriseContents,
+      description: teaser,
+      isSurpriseBasket: true,
+    });
 
   return (
     <Link

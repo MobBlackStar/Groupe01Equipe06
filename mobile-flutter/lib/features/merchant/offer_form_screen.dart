@@ -37,11 +37,56 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
   String _category = 'SANDWICH';
   bool _isDutch = false;
   bool _isSurprise = false;
+  bool _hasCustomPhoto = false;
   bool _isSubmitting = false;
   bool _photoUploading = false;
   String? _error;
   late TimeOfDay _pickupStart;
   late TimeOfDay _pickupEnd;
+
+  static const _categoryDefaultImages = <String, String>{
+    'SANDWICH': 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
+    'PLAT_CHAUD': 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=800&q=80',
+    'PIZZA': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80',
+    'PATISSERIE': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80',
+    'VIENNOISERIE': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
+    'SALADE': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
+    'BOISSON': 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80',
+    'SNACK': 'https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&w=800&q=80',
+    'MIXTE': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
+  };
+
+  static final _keywordImageRules = <MapEntry<RegExp, String>>[
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:makloubs?|chawarmas?|shawarmas?|chapatis?|ml[ae]wis?|wraps?|tacos|kaskrouts?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])baguettes?(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:cheeseburgers?|burgers?|smash)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:sandwichs?|sandwiches|paninis?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])margherita(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:pizzas?|calzones?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])croissants?(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:pains?\s+au\s+chocolat|chocolatines?|viennoiseries?|brioches?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1530610476181-d83430b64dcd?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])briks?(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])omelettes?(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:eggs?|oeufs?|œufs?|adham)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:salades?|salads?|bowls?|c[eé]sar)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:couscous|kosksi|riz)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:p[aâ]tes|pasta|spaghettis?|lasagnes?|maqarouna)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:caf[eé]s?|coffees?|espressos?|cappuccinos?|lattes?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:boissons?|jus|limonades?|sodas?|smoothies?|th[eé]s?|drinks?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:g[aâ]teaux?|gateaux?|tartes?|p[aâ]tisseries?|patisseries?|cheesecakes?|baklavas?|makroudhs?|bambalounis?|[eé]clairs?|cookies?|biscuits?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80'),
+    MapEntry(RegExp(r'(?:^|[^a-zA-Z\u00C0-\u017F0-9])(?:frites?|fries|nuggets?|fricass[eé]e?s?|snacks?)(?=$|[^a-zA-Z\u00C0-\u017F0-9])', caseSensitive: false), 'https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&w=800&q=80'),
+  ];
+
+  static String _resolveOfferImageUrl(String category, String title, [String contents = '']) {
+    for (final candidate in [title, contents]) {
+      final text = candidate.trim();
+      if (text.isEmpty) continue;
+      for (final rule in _keywordImageRules) {
+        if (rule.key.hasMatch(text)) return rule.value;
+      }
+    }
+    return _categoryDefaultImages[category.toUpperCase()] ?? _categoryDefaultImages['MIXTE']!;
+  }
 
   static const _categories = {
     'SANDWICH': 'Sandwichs',
@@ -90,6 +135,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
     }
     _quantityController.text = '${o.quantity}';
     _photoController.text = o.photoUrl ?? '';
+    _hasCustomPhoto = (o.photoUrl ?? '').trim().isNotEmpty;
     final s = o.pickupStartAt.toUtc().add(_tunisOffset);
     final e = o.pickupEndAt.toUtc().add(_tunisOffset);
     _pickupStart = TimeOfDay(hour: s.hour, minute: s.minute);
@@ -147,7 +193,12 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
       final lower = picked.name.toLowerCase();
       final type = lower.endsWith('.png') ? 'image/png' : (lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
       final url = await CampusApi.shared.uploadImage(bytes, filename: picked.name, contentType: type);
-      if (mounted) setState(() => _photoController.text = url);
+      if (mounted) {
+        setState(() {
+          _hasCustomPhoto = true;
+          _photoController.text = url;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
@@ -199,13 +250,19 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
       }
 
       _isSurprise = s['isSurpriseBasket'] == true;
+      var surpriseText = '';
       if (_isSurprise) {
         final contents = s['surpriseContents'];
         if (contents is String && contents.trim().isNotEmpty) {
           _contentsController.text = contents;
+          surpriseText = contents;
         } else if (s['surprise'] is Map && s['surprise']['teaser'] is String) {
           _contentsController.text = s['surprise']['teaser'] as String;
+          surpriseText = _contentsController.text;
         }
+      }
+      if (!_hasCustomPhoto) {
+        _photoController.text = _resolveOfferImageUrl(_category, _titleController.text, surpriseText);
       }
     });
   }
