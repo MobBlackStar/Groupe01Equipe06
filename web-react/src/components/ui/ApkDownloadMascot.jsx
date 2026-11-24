@@ -4,6 +4,7 @@
 // Module : Interface Web React & Téléchargement Mobile
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { isEmbedded } from '../../lib/embed.js';
 
@@ -11,6 +12,8 @@ const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave-releases/rel
 const STORAGE_KEY = 'cs.mascot_dismissed';
 
 export default function ApkDownloadMascot() {
+  const { pathname } = useLocation();
+  const isAuthPage = pathname === '/login' || pathname === '/register';
   const [isOpen, setIsOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const apkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL || DEFAULT_APK_URL;
@@ -55,7 +58,9 @@ export default function ApkDownloadMascot() {
           ========================================================================= */}
       <aside
         aria-label="Téléchargement de l'application Android"
-        className="fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] w-auto animate-bounce-subtle"
+        className={`fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] w-auto animate-bounce-subtle ${
+          isAuthPage ? 'hidden sm:block' : ''
+        }`}
       >
         {isDismissed ? (
           /* Version miniature discrète après fermeture */
