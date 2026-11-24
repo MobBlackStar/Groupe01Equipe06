@@ -140,6 +140,10 @@ export default function LivingTicketPage() {
     ? { ...order, id: order.orderId || order.id || id, merchantName: order.merchantSnapshot?.name, offerTitle: order.offerSnapshot?.title }
     : null;
 
+  const rawRating = order?.rating;
+  const stars = typeof rawRating === 'object' && rawRating !== null ? rawRating.stars : rawRating;
+  const hasUserRating = Boolean(Number.isFinite(Number(stars)) && Number(stars) > 0);
+
   return (
     <div className="cs-container cs-page text-[#111111]">
       {/* En-tête navigation */}
@@ -166,7 +170,7 @@ export default function LivingTicketPage() {
             {isSurprise && hasReveal && (
               <button type="button" onClick={() => setShowUnboxing(true)} className="cs-btn cs-btn-mustard cs-btn-sm">🎁 Voir mon panier</button>
             )}
-            {!order?.rating && (
+            {!hasUserRating && (
               <button type="button" onClick={() => setShowRating(true)} className="cs-btn cs-btn-red cs-btn-sm">⭐ Noter la commande</button>
             )}
           </div>

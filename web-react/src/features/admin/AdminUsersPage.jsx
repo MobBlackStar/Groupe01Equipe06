@@ -92,7 +92,12 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [suspendModalUser, setSuspendModalUser] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
+  const [editModalUser, setEditModalUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({ displayName: '', phone: '', filiereId: '', role: ROLES.STUDENT });
+  const [deleteModalUser, setDeleteModalUser] = useState(null);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [editBusy, setEditBusy] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -183,6 +188,77 @@ export default function AdminUsersPage() {
     setSuspendModalUser(null);
   }
 
+  function openEditModal(targetUser) {
+    setEditModalUser(targetUser);
+    setEditFormData({
+      displayName: targetUser.displayName || '',
+      phone: targetUser.phone || '',
+      filiereId: targetUser.filiereId || '',
+      role: targetUser.role || ROLES.STUDENT,
+    });
+  }
+
+  async function handleSaveEdit(e) {
+    if (e) e.preventDefault();
+    if (!editModalUser) return;
+    if (!editFormData.displayName.trim() || editFormData.displayName.trim().length < 2) {
+      setToast({ type: 'error', message: 'Le nom doit comporter au moins 2 caractères.' });
+      return;
+    }
+
+    setEditBusy(true);
+    try {
+      const payload = {
+        displayName: editFormData.displayName.trim(),
+        phone: editFormData.phone.trim() || null,
+        filiereId: editFormData.filiereId || null,
+        role: editFormData.role,
+      };
+      const res = await apiClient.patch(ENDPOINTS.ADMIN_USER(editModalUser.uid), payload);
+      const updatedUser = res.data?.user || { ...editModalUser, ...payload };
+
+      setUsers((prev) =>
+        prev.map((u) => (u.uid === editModalUser.uid ? { ...u, ...updatedUser } : u))
+      );
+
+      setToast({
+        type: 'success',
+        message: `Profil de ${updatedUser.displayName} mis à jour avec succès.`,
+      });
+      setEditModalUser(null);
+    } catch (err) {
+      console.error('Erreur modification utilisateur:', err);
+      setToast({
+        type: 'error',
+        message: err?.response?.data?.message || err?.response?.data?.error?.message || 'Erreur lors de la modification du compte.',
+      });
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!deleteModalUser) return;
+    setDeleteBusy(true);
+    try {
+      await apiClient.delete(ENDPOINTS.ADMIN_USER(deleteModalUser.uid));
+      setUsers((prev) => prev.filter((u) => u.uid !== deleteModalUser.uid));
+      setToast({
+        type: 'success',
+        message: `Compte de ${deleteModalUser.displayName} supprimé avec succès.`,
+      });
+      setDeleteModalUser(null);
+    } catch (err) {
+      console.error('Erreur suppression utilisateur:', err);
+      setToast({
+        type: 'error',
+        message: err?.response?.data?.message || err?.response?.data?.error?.message || 'Erreur lors de la suppression du compte.',
+      });
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
   const isUserActive = (u) =>
     u?.status === USER_STATUS.ACTIVE ||
     u?.status === 'ACTIVE' ||
@@ -214,14 +290,57 @@ export default function AdminUsersPage() {
       return <span className="cs-pill cs-pill-outline">Protégé</span>;
     }
     const isActive = isUserActive(user);
+    if (block) {
+      return (
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => openEditModal(user)}
+            className="cs-btn cs-btn-sm cs-btn-cream w-full"
+          >
+            Modifier
+          </button>
+          <button
+            type="button"
+            onClick={() => setSuspendModalUser(user)}
+            className={`cs-btn cs-btn-sm w-full ${isActive ? 'cs-btn-cream !text-[#DA0711]' : 'cs-btn-ink'}`}
+          >
+            {isActive ? 'Suspendre' : 'Réactiver'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeleteModalUser(user)}
+            className="cs-btn cs-btn-sm cs-btn-cream !text-[#DA0711] hover:!bg-[#DA0711] hover:!text-white w-full"
+          >
+            Supprimer
+          </button>
+        </div>
+      );
+    }
     return (
-      <button
-        type="button"
-        onClick={() => setSuspendModalUser(user)}
-        className={`cs-btn ${block ? 'cs-btn-block' : 'cs-btn-sm'} ${isActive ? 'cs-btn-cream !text-[#DA0711]' : 'cs-btn-ink'}`}
-      >
-        {isActive ? 'Suspendre' : 'Réactiver'}
-      </button>
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => openEditModal(user)}
+          className="cs-btn cs-btn-sm cs-btn-cream"
+        >
+          Modifier
+        </button>
+        <button
+          type="button"
+          onClick={() => setSuspendModalUser(user)}
+          className={`cs-btn cs-btn-sm ${isActive ? 'cs-btn-cream !text-[#DA0711]' : 'cs-btn-ink'}`}
+        >
+          {isActive ? 'Suspendre' : 'Réactiver'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setDeleteModalUser(user)}
+          className="cs-btn cs-btn-sm cs-btn-cream !text-[#DA0711] hover:!bg-[#DA0711] hover:!text-white"
+        >
+          Supprimer
+        </button>
+      </div>
     );
   };
 
@@ -375,6 +494,136 @@ export default function AdminUsersPage() {
                 placeholder="ex : Comportement abusif signalé, no-shows répétés…"
                 className="cs-input"
               />
+            </div>
+          )}
+        </Modal>
+
+        {/* Modal Modifier Utilisateur */}
+        <Modal
+          isOpen={Boolean(editModalUser)}
+          onClose={() => !editBusy && setEditModalUser(null)}
+          title="Modifier le compte utilisateur"
+          description={`Modification des données administratives pour ${editModalUser?.email || ''}`}
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={editBusy}
+                onClick={() => setEditModalUser(null)}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                isLoading={editBusy}
+                onClick={handleSaveEdit}
+              >
+                Enregistrer
+              </Button>
+            </>
+          }
+        >
+          {editModalUser && (
+            <form onSubmit={handleSaveEdit} className="space-y-4 py-2">
+              <div>
+                <label htmlFor="edit-user-name" className="cs-field-label">Nom complet</label>
+                <input
+                  id="edit-user-name"
+                  type="text"
+                  required
+                  value={editFormData.displayName}
+                  onChange={(e) => setEditFormData((prev) => ({ ...prev, displayName: e.target.value }))}
+                  className="cs-input"
+                  placeholder="Nom complet"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-user-phone" className="cs-field-label">Téléphone (+216...)</label>
+                <input
+                  id="edit-user-phone"
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                  className="cs-input"
+                  placeholder="+21698000000"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-user-role" className="cs-field-label">Rôle</label>
+                <select
+                  id="edit-user-role"
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData((prev) => ({ ...prev, role: e.target.value }))}
+                  className="cs-input cursor-pointer"
+                >
+                  <option value={ROLES.STUDENT}>Étudiant ESSECT</option>
+                  <option value={ROLES.MERCHANT}>Commerçant</option>
+                  <option value={ROLES.ADMIN}>Administrateur</option>
+                </select>
+              </div>
+
+              {editFormData.role === ROLES.STUDENT && (
+                <div>
+                  <label htmlFor="edit-user-filiere" className="cs-field-label">Filière ESSECT</label>
+                  <select
+                    id="edit-user-filiere"
+                    value={editFormData.filiereId || ''}
+                    onChange={(e) => setEditFormData((prev) => ({ ...prev, filiereId: e.target.value || null }))}
+                    className="cs-input cursor-pointer"
+                  >
+                    <option value="">— Non renseignée —</option>
+                    <option value={FILIERES.EBUSINESS_3A}>3A E-Business</option>
+                    <option value={FILIERES.FINANCE}>Finance</option>
+                    <option value={FILIERES.MARKETING}>Marketing</option>
+                    <option value={FILIERES.GESTION}>Gestion</option>
+                    <option value={FILIERES.COMPTABILITE}>Comptabilité</option>
+                  </select>
+                </div>
+              )}
+            </form>
+          )}
+        </Modal>
+
+        {/* Modal Supprimer Utilisateur */}
+        <Modal
+          isOpen={Boolean(deleteModalUser)}
+          onClose={() => !deleteBusy && setDeleteModalUser(null)}
+          title="Supprimer définitivement l'utilisateur"
+          description="Cette action est irréversible et supprimera le compte de la base de données."
+          footer={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={deleteBusy}
+                onClick={() => setDeleteModalUser(null)}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                isLoading={deleteBusy}
+                onClick={handleDeleteUser}
+              >
+                Supprimer définitivement
+              </Button>
+            </>
+          }
+        >
+          {deleteModalUser && (
+            <div className="py-2 text-sm text-[#111111] space-y-2">
+              <p>
+                Êtes-vous certain de vouloir supprimer le compte de{' '}
+                <strong className="font-semibold text-[#DA0711]">{deleteModalUser.displayName}</strong> ?
+              </p>
+              <p className="text-xs text-[#5E5850]">
+                Email : <span className="font-mono">{deleteModalUser.email}</span> · Rôle : <span className="font-semibold">{deleteModalUser.role}</span>
+              </p>
             </div>
           )}
         </Modal>

@@ -52,6 +52,16 @@ export const adminController = {
     res.json(result);
   }),
 
+  updateUser: asyncHandler(async (req, res) => {
+    const result = await adminService.updateUser(req.params.uid, req.body, req.user.uid);
+    res.json(result);
+  }),
+
+  deleteUser: asyncHandler(async (req, res) => {
+    const result = await adminService.deleteUser(req.params.uid, req.user.uid);
+    res.json(result);
+  }),
+
   resetDemo: asyncHandler(async (req, res) => {
     const isAllowed = process.env.ALLOW_DEMO_TOKENS === 'true' || process.env.NODE_ENV !== 'production';
     if (!isAllowed) {

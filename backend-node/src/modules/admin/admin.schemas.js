@@ -4,7 +4,7 @@
 // Module : Administration & Modération
 
 import { z } from 'zod';
-import { MERCHANT_STATUS, USER_STATUS } from '../../../../shared/constants.js';
+import { MERCHANT_STATUS, USER_STATUS, ROLES } from '../../../../shared/constants.js';
 import { createMerchantSchema } from '../merchants/merchants.schemas.js';
 
 export const updateMerchantStatusSchema = z.object({
@@ -51,6 +51,14 @@ export const updateUserStatusSchema = z.object({
     path: ['statusReason'],
   }
 );
+
+/** Modification complète d'un utilisateur par un administrateur. */
+export const updateUserDataSchema = z.object({
+  displayName: z.string().min(2, 'Le nom doit comporter au moins 2 caractères').max(80).optional(),
+  phone: z.string().regex(/^\+?[0-9]{8,15}$/, 'Format de téléphone invalide (+216...)').optional().nullable(),
+  filiereId: z.string().optional().nullable(),
+  role: z.enum([ROLES.STUDENT, ROLES.MERCHANT, ROLES.ADMIN]).optional(),
+});
 
 /** Spot de démonstration créé par un administrateur : mêmes champs qu'un commerce (le rayon de 3 km est vérifié par le service). */
 export const createSpotSchema = createMerchantSchema;

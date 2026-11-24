@@ -246,6 +246,105 @@ export const adminService = {
   },
 
   /**
+   * Modifie les informations d'un utilisateur (nom, téléphone, filière, rôle)
+   * avec protection stricte contre la modification de son propre compte ou de l'administrateur principal.
+   */
+  async updateUser(uid, data, adminUid) {
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      throw new AppError('Utilisateur introuvable', 404, 'USER_NOT_FOUND');
+    }
+
+    const prevUser = userDoc.data();
+
+    // 1. Garde-fous de protection du compte administrateur
+    if (uid === adminUid) {
+      throw new AppError('Impossible de modifier son propre compte administrateur depuis cette console', 403, 'FORBIDDEN');
+    }
+    if (prevUser.email === 'admin@campussave.tn' || uid === 'admin-uid' || uid === 'admin') {
+      throw new AppError('Le compte administrateur principal est protégé contre toute modification', 403, 'FORBIDDEN');
+    }
+
+    const now = new Date();
+    const updates = { updatedAt: now };
+
+    if (data.displayName !== undefined) updates.displayName = data.displayName;
+    if (data.phone !== undefined) updates.phone = data.phone;
+    if (data.filiereId !== undefined) updates.filiereId = data.filiereId;
+    if (data.role !== undefined) updates.role = data.role;
+
+    await userRef.update(updates);
+
+    // Synchronisation facultative avec Firebase Auth
+    try {
+      const authUpdates = {};
+      if (data.displayName) authUpdates.displayName = data.displayName;
+      if (Object.keys(authUpdates).length > 0) {
+        await auth.updateUser(uid, authUpdates);
+      }
+    } catch {
+      // Tolérance pour les environnements de test
+    }
+
+    await db.collection('admin_audit').add({
+      action: 'UPDATE_USER',
+      targetId: uid,
+      targetType: 'USER',
+      performedBy: adminUid,
+      changes: updates,
+      performedAt: now,
+    });
+
+    return { user: { ...prevUser, ...updates } };
+  },
+
+  /**
+   * Supprime définitivement un utilisateur de Firestore et de Firebase Auth
+   * avec protection stricte contre la suppression de soi-même ou de l'administrateur principal.
+   */
+  async deleteUser(uid, adminUid) {
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      throw new AppError('Utilisateur introuvable', 404, 'USER_NOT_FOUND');
+    }
+
+    const prevUser = userDoc.data();
+
+    // 1. Garde-fous de protection du compte administrateur
+    if (uid === adminUid) {
+      throw new AppError('Impossible de supprimer son propre compte administrateur', 403, 'FORBIDDEN');
+    }
+    if (prevUser.email === 'admin@campussave.tn' || uid === 'admin-uid' || uid === 'admin') {
+      throw new AppError('Le compte administrateur principal est protégé contre toute suppression', 403, 'FORBIDDEN');
+    }
+
+    // 2. Suppression de Firebase Auth si présent
+    try {
+      await auth.deleteUser(uid);
+    } catch {
+      // Tolérance si l'utilisateur n'existe pas dans Auth ou en test
+    }
+
+    // 3. Suppression du document Firestore
+    await userRef.delete();
+
+    // 4. Journal d'audit administratif infalsifiable
+    await db.collection('admin_audit').add({
+      action: 'DELETE_USER',
+      targetId: uid,
+      targetType: 'USER',
+      performedBy: adminUid,
+      deletedEmail: prevUser.email || null,
+      deletedRole: prevUser.role || null,
+      performedAt: new Date(),
+    });
+
+    return { ok: true, deletedUid: uid };
+  },
+
+  /**
    * Réinitialise l'environnement complet de démonstration : commandes purgées, 20 offres officielles réinjectées, cache invalidé.
    */
   async resetDemo() {

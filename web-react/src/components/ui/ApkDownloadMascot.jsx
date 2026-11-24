@@ -55,14 +55,14 @@ export default function ApkDownloadMascot() {
           ========================================================================= */}
       <aside
         aria-label="Téléchargement de l'application Android"
-        className="fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] animate-bounce-subtle"
+        className="fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] w-auto animate-bounce-subtle"
       >
         {isDismissed ? (
           /* Version miniature discrète après fermeture */
           <button
             type="button"
             onClick={handleRestore}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#EDE6D7] border-2 border-[#111111] text-[#111111] text-xs font-black shadow-[3px_3px_0px_#111111] hover:bg-[#FFD000] transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#EDE6D7] border-2 border-[#111111] text-[#111111] text-xs font-black shadow-[3px_3px_0px_#111111] hover:bg-[#FFD000] transition-all cursor-pointer whitespace-nowrap"
             title="Afficher le widget APK Android"
           >
             <span className="text-base">📱</span>
@@ -70,7 +70,7 @@ export default function ApkDownloadMascot() {
           </button>
         ) : (
           /* Mascotte Griddle complète avec bulle d'appel */
-          <div className="relative group max-w-full">
+          <div className="relative group max-w-full w-auto">
             {/* Bouton croix pour minimiser */}
             <button
               type="button"
@@ -86,7 +86,7 @@ export default function ApkDownloadMascot() {
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="relative flex items-center gap-2 p-2 rounded-3xl bg-[#FAF3E6] border-2 border-[#111111] shadow-[4px_4px_0px_#111111] hover:shadow-[2px_2px_0px_#111111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer group-hover:border-[#DA0711] max-w-full"
+              className="relative flex items-center gap-2 p-2 pr-3.5 rounded-3xl bg-[#FAF3E6] border-2 border-[#111111] shadow-[4px_4px_0px_#111111] hover:shadow-[2px_2px_0px_#111111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer group-hover:border-[#DA0711] max-w-[calc(100vw-2rem)] w-auto"
             >
               {/* Mascotte officielle CampusSave */}
               <div className="relative w-12 sm:w-14 h-12 sm:h-14 shrink-0 flex items-center justify-center">
@@ -99,14 +99,14 @@ export default function ApkDownloadMascot() {
               </div>
 
               {/* Texte d'appel du widget avec copy concise anti-dépassement */}
-              <div className="text-left pr-2 hidden sm:block truncate">
+              <div className="text-left pr-1 hidden sm:block whitespace-nowrap min-w-0">
                 <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#DA0711]">
                   ✦ Soutenance 2026
                 </span>
-                <span className="block font-black text-xs sm:text-sm text-[#111111] leading-tight truncate">
+                <span className="block font-black text-xs sm:text-sm text-[#111111] leading-tight">
                   App Android • Scan QR / APK
                 </span>
-                <span className="block text-[10px] sm:text-[11px] text-[#666] font-medium truncate">
+                <span className="block text-[10px] sm:text-[11px] text-[#666] font-medium">
                   Installation directe jury
                 </span>
               </div>

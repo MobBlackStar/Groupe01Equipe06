@@ -106,7 +106,9 @@ export default function OrderRow({ order, onRate, onCancel }) {
     (Number.isFinite(Number(unitPrice)) ? Number(unitPrice) * quantity : null);
   const totalLabel = displayMoney(total);
 
-  const userRating = order.rating || order.review?.rating;
+  const rawRating = order.rating ?? order.review?.rating;
+  const stars = typeof rawRating === 'object' && rawRating !== null ? rawRating.stars : rawRating;
+  const userRating = Number.isFinite(Number(stars)) && Number(stars) > 0 ? Number(stars) : null;
   const dateStr = formatTunisDate(toDateInput(order.createdAt) || Date.now());
   const pickupWindow = formatTunisTimeWindow(
     toDateInput(order.pickupStartAt || snapshot.pickupStartAt),

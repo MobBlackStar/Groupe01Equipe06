@@ -52,6 +52,7 @@ export const ENDPOINTS = {
   ADMIN_MERCHANT: (id) => `/admin/merchants/${id}`,
   ADMIN_USERS: '/admin/users',
   ADMIN_USER_STATUS: (uid) => `/admin/users/${uid}/status`,
+  ADMIN_USER: (uid) => `/admin/users/${uid}`,
   ADMIN_RESET_DEMO: '/admin/reset-demo',
   HEALTH: '/health',
 };

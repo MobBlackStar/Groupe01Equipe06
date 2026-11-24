@@ -207,9 +207,12 @@ export default function StudentDashboard() {
       };
     });
 
-  const renderRating = (order, block) =>
-    order.rating ? (
-      <span className="cs-pill cs-pill-mustard">⭐ {order.rating}/5</span>
+  const renderRating = (order, block) => {
+    const raw = order.rating;
+    const stars = typeof raw === 'object' && raw !== null ? raw.stars : raw;
+    const numStars = Number.isFinite(Number(stars)) && Number(stars) > 0 ? Number(stars) : null;
+    return numStars ? (
+      <span className="cs-pill cs-pill-mustard">⭐ {numStars}/5</span>
     ) : (
       <button
         type="button"
@@ -219,6 +222,7 @@ export default function StudentDashboard() {
         ⭐ Noter
       </button>
     );
+  };
 
   return (
     <div className="bg-[#FAF3E6] text-[#111111] min-h-screen">

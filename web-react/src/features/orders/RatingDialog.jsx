@@ -17,9 +17,13 @@ const RATING_LABELS = {
 };
 
 export default function RatingDialog({ isOpen, onClose, order, onSuccess }) {
-  const [rating, setRating] = useState(5);
+  const existingStars = typeof order?.rating === 'object' && order?.rating !== null ? order.rating.stars : order?.rating;
+  const initialStars = Number.isFinite(Number(existingStars)) && Number(existingStars) >= 1 && Number(existingStars) <= 5 ? Number(existingStars) : 5;
+  const initialComment = (typeof order?.rating === 'object' && order?.rating?.comment) || '';
+
+  const [rating, setRating] = useState(initialStars);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState(initialComment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
