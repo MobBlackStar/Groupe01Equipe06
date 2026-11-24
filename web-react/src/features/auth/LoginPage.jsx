@@ -152,21 +152,20 @@ export function LoginPage() {
           </div>
 
           {/* =========================================================================
-              COLONNE DROITE : HEADLINE MONUMENTALE + FORMULAIRE + 1-CLICK DEMO BAR
+              COLONNE DROITE : HEADLINE + DÉMO 1-CLIC + FORMULAIRE COMPACT ZERO-SCROLL
               ========================================================================= */}
-          <div className="order-1 lg:order-2 lg:col-span-7 w-full max-w-xl lg:max-w-none mx-auto lg:mx-0">
-            <header className="mb-10">
-              <p className="cs-eyebrow mb-4 inline-flex items-center gap-2">
+          <div className="order-1 lg:order-2 lg:col-span-7 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
+            <header className="mb-4">
+              <p className="cs-eyebrow mb-1.5 inline-flex items-center gap-2">
                 <Flame className="w-4 h-4" aria-hidden="true" />
                 Plateforme officielle ESSECT Montfleury
               </p>
-              <h1 className="cs-hero text-[clamp(4rem,8vw,8.5rem)]">
+              <h1 className="cs-hero !text-[clamp(2.6rem,4.6vw,4.5rem)] !leading-[0.88]">
                 {'FAIT POUR '}
-                <br />
-                ÊTRE <span className="text-[#DA0711]">PARTAGÉ.</span>
+                <span className="text-[#DA0711]">ÊTRE PARTAGÉ.</span>
               </h1>
-              <p className="cs-lead mt-6 max-w-lg">
-                Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.
+              <p className="mt-2 text-sm sm:text-base text-[#5E5850] leading-snug max-w-xl">
+                Sauvez les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.
               </p>
             </header>
 
@@ -174,41 +173,40 @@ export function LoginPage() {
             {serverError && (
               <div
                 role="alert"
-                className="mb-6 flex items-start gap-3 rounded-2xl border-2 border-[#DA0711] bg-white px-5 py-4 text-base font-semibold text-[#DA0711]"
+                className="mb-3 flex items-start gap-2.5 rounded-2xl border-2 border-[#DA0711] bg-white px-4 py-2.5 text-sm font-semibold text-[#DA0711]"
               >
-                <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 <span>{serverError}</span>
               </div>
             )}
 
             {/* OPTION A : 1-CLICK DEMO BAR (JURY SOUTENANCE) */}
-            <section className="mb-8 p-5 rounded-2xl border-2 border-[#111111] bg-white shadow-[3px_3px_0_#111111]" aria-label="Accès rapide démo jury">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                <h2 className="cs-h3 inline-flex items-center gap-2 text-[#DA0711]">
-                  <Zap className="w-5 h-5 fill-[#DA0711]" aria-hidden="true" />
+            <section className="mb-3.5 p-3.5 sm:p-4 rounded-2xl border-2 border-[#111111] bg-white shadow-[3px_3px_0_#111111]" aria-label="Accès rapide démo jury">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <h2 className="cs-h3 !text-lg inline-flex items-center gap-2 text-[#DA0711]">
+                  <Zap className="w-4 h-4 fill-[#DA0711]" aria-hidden="true" />
                   Option A · Démo 1-Clic Jury
                 </h2>
-                <span className="cs-label bg-[#FFD000]/25 px-2 py-0.5 rounded border border-[#FFD000]">Sans mot de passe</span>
+                <span className="cs-label !text-[13px] bg-[#FFD000]/25 px-2.5 py-0.5 rounded border border-[#FFD000] text-[#111111]">
+                  Sans mot de passe
+                </span>
               </div>
-              <p className="text-xs text-[#5E5850] mb-3">
-                Accès instantané aux personas pré-configurés pour tester le flux de soutenance :
-              </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {DEMO_ROLES.map(({ type, label, hint, Icon, iconClass }) => (
                   <button
                     key={type}
                     type="button"
                     onClick={() => handleDemoLogin(type)}
                     disabled={isSubmitting}
-                    className="flex items-center gap-3 min-h-[64px] px-3.5 py-2.5 rounded-xl border-2 border-[#111111] bg-[#FAF3E6] text-left cursor-pointer transition-all duration-200 hover:bg-[#FFD000]/20 hover:-translate-y-0.5 hover:shadow-[0_4px_0_#111111] active:translate-y-0 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2.5 min-h-[52px] px-3 py-2 rounded-xl border-2 border-[#111111] bg-[#FAF3E6] text-left cursor-pointer transition-all duration-200 hover:bg-[#FFD000]/20 hover:-translate-y-0.5 hover:shadow-[0_3px_0_#111111] active:translate-y-0 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
-                      <Icon className="w-5 h-5" aria-hidden="true" />
+                    <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
+                      <Icon className="w-4 h-4" aria-hidden="true" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block font-semibold uppercase text-base leading-tight">{label}</span>
-                      <span className="block cs-mono text-[12px] text-[#5E5850] leading-tight mt-0.5">{hint}</span>
+                      <span className="block font-semibold uppercase text-[15px] leading-tight">{label}</span>
+                      <span className="block cs-mono text-[13px] text-[#5E5850] leading-tight mt-0.5">{hint}</span>
                     </span>
                   </button>
                 ))}
@@ -216,104 +214,103 @@ export function LoginPage() {
             </section>
 
             {/* SÉPARATEUR VISUEL OU */}
-            <div className="my-8 flex items-center gap-4" aria-hidden="true">
-              <div className="h-[2px] flex-1 bg-[#111111]" />
-              <span className="font-bold text-xs uppercase px-3 py-1 bg-[#FAF3E6] border-2 border-[#111111] rounded-full text-[#111111] tracking-wider">
+            <div className="my-3 flex items-center gap-3" aria-hidden="true">
+              <div className="h-[2px] flex-1 bg-[#111111]/85" />
+              <span className="font-bold text-[13px] uppercase px-3 py-0.5 bg-[#FAF3E6] border-2 border-[#111111] rounded-full text-[#111111] tracking-wider">
                 OU COMPTE RÉEL
               </span>
-              <div className="h-[2px] flex-1 bg-[#111111]" />
+              <div className="h-[2px] flex-1 bg-[#111111]/85" />
             </div>
 
             {/* OPTION B : FORMULAIRE COMPTE RÉEL FIREBASE */}
-            <section aria-label="Connexion compte réel">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                <h2 className="cs-h3 inline-flex items-center gap-2">
+            <section aria-label="Connexion compte réel" className="p-3.5 sm:p-4 rounded-2xl border-2 border-[#111111]/15 bg-[#FFFDF8]">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <h2 className="cs-h3 !text-lg inline-flex items-center gap-2">
                   <span>🔐 Option B · Compte Réel Firebase</span>
                 </h2>
-                <span className="cs-label">Email &amp; Mot de passe</span>
+                <span className="cs-label !text-[13px]">Email &amp; Mot de passe</span>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                <div>
-                  <label htmlFor="login-email" className="cs-field-label">
-                    Adresse email
-                  </label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
-                    }}
-                    placeholder="etudiant@essect.u-tunis.tn"
-                    aria-invalid={errors.email ? 'true' : undefined}
-                    className="cs-input"
-                  />
-                  {errors.email && <p className="cs-error-text">{errors.email}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="login-password" className="cs-field-label">
-                    Mot de passe
-                  </label>
-                  <div className="relative">
+              <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="login-email" className="cs-field-label !text-[13px] !mb-1">
+                      Adresse email
+                    </label>
                     <input
-                      id="login-password"
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="current-password"
-                      value={password}
+                      id="login-email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
                       onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
+                        setEmail(e.target.value);
+                        if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
                       }}
-                      placeholder="••••••••"
-                      aria-invalid={errors.password ? 'true' : undefined}
-                      className="cs-input pr-16"
+                      placeholder="etudiant@essect.u-tunis.tn"
+                      aria-invalid={errors.email ? 'true' : undefined}
+                      className="cs-input !min-h-[2.85rem] !py-1.5 !px-4 !text-[15px]"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
+                    {errors.email && <p className="cs-error-text !text-[13px] !mt-1">{errors.email}</p>}
                   </div>
-                  {errors.password && <p className="cs-error-text">{errors.password}</p>}
+
+                  <div>
+                    <label htmlFor="login-password" className="cs-field-label !text-[13px] !mb-1">
+                      Mot de passe
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="login-password"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
+                        }}
+                        placeholder="••••••••"
+                        aria-invalid={errors.password ? 'true' : undefined}
+                        className="cs-input !min-h-[2.85rem] !py-1.5 !pl-4 !pr-12 !text-[15px]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="cs-error-text !text-[13px] !mt-1">{errors.password}</p>}
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
+                  className="cs-btn cs-btn-red cs-btn-block !min-h-[3rem] !px-4 !text-[15px] sm:!text-base"
                 >
                   <span>{isSubmitting ? 'Connexion en cours...' : 'Se connecter au compte réel'}</span>
-                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
+                  <ArrowRight className="w-5 h-5 shrink-0" aria-hidden="true" />
                 </button>
               </form>
             </section>
 
-            {/* Lien d'inscription */}
-            <p className="mt-10 text-base text-[#5E5850]">
-              Pas encore inscrit sur CampusSave ?{' '}
-              <Link to="/register" className="cs-link text-[#DA0711]">
-                Créer un compte étudiant ou commerçant →
-              </Link>
-            </p>
-
-            {/* Téléchargement APK Android */}
-            <div className="mt-4 pt-4 border-t border-dashed border-[#111111]/20 flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="text-[#5E5850]">Vous préférez tester sur mobile ?</span>
+            {/* Liens bas de formulaire regroupés à gauche pour éviter la mascotte flottante bas-droite */}
+            <div className="mt-3 pt-2.5 border-t border-dashed border-[#111111]/20 flex flex-wrap items-center justify-start gap-x-6 gap-y-1.5 text-[14px]">
+              <p className="text-[#5E5850]">
+                Pas encore inscrit ?{' '}
+                <Link to="/register" className="cs-link text-[#DA0711]">
+                  Créer un compte →
+                </Link>
+              </p>
               <a
                 href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk'}
                 download="CampusSave.apk"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-[#DA0711] hover:underline flex items-center gap-1.5"
+                className="font-bold text-[#DA0711] hover:underline inline-flex items-center gap-1"
               >
-                <span>📱 Télécharger l'APK Android →</span>
+                <span>📱 APK Android →</span>
               </a>
             </div>
           </div>
