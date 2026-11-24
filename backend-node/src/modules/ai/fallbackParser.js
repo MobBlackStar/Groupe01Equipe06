@@ -24,8 +24,11 @@ export const TUNISIAN_LEXICON = [
   { keywords: ['pizza'], pattern: 'pizzas?', name: 'Pizza', weight: 500, category: OFFER_CATEGORIES.PIZZA, defaultPrice: 8000 },
   { keywords: ['chawarma', 'shawarma', 'tacos', 'burger', 'panini'], pattern: '(?:chawarmas?|shawarmas?|tacos|burgers?|paninis?)', name: 'Spécialité Grill', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7000 },
   { keywords: ['sandwich thon', 'sandwich'], pattern: '(?:sandwichs?\\s+au\\s+thon|sandwichs?\\s+thon|sandwiches|sandwichs?)', name: 'Sandwich', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 4500 },
-  { keywords: ['salade'], pattern: 'salades?', name: 'Salade', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
-  { keywords: ['jus', 'soda', 'eau', 'boisson'], pattern: '(?:jus|sodas?|eaux?|boissons?)', name: 'Boisson', weight: 300, category: OFFER_CATEGORIES.BOISSON, defaultPrice: 2000 },
+  { keywords: ['salade', 'salad'], pattern: 'salade?s?', name: 'Salade', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
+  { keywords: ['eggs', 'oeufs', 'œufs'], pattern: '(?<!avec\\s)(?<!au\\s)(?:eggs?|oeufs?|œufs|adham)', name: 'Œufs frais fermiers', weight: 360, category: OFFER_CATEGORIES.SNACK, defaultPrice: 3500 },
+  { keywords: ['pasta', 'pâtes', 'pates', 'spaghetti'], pattern: '(?:pasta|p[aâ]tes|spaghettis?|lasagnes?|maqarouna)', name: 'Pâtes maison', weight: 400, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 7000 },
+  { keywords: ['couscous', 'kosksi'], pattern: '(?:couscous|kosksi)', name: 'Couscous tunisien', weight: 450, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 7500 },
+  { keywords: ['jus', 'soda', 'eau', 'boisson', 'coffee', 'café'], pattern: '(?:jus|sodas?|eaux?|boissons?|coffees?|caf[eé]s?)', name: 'Boisson', weight: 300, category: OFFER_CATEGORIES.BOISSON, defaultPrice: 2000 },
 ];
 
 /** Convertit une valeur textuelle monétaire (ex: "8", "3.5", "7500") + unité en millimes entiers. */
@@ -113,12 +116,14 @@ export function parseRawNote(rawNote, options = {}) {
     }
   }
 
-  // Si aucune quantité préfixe n'a été détectée (ex: "panier surprise pâtisserie 5 pièces")
+  // Si aucune quantité préfixe directe n'a été détectée (ex: "panier surprise pâtisserie 5 pièces" ou "2 fresh salad")
   const trailingQtyMatch = normalized.match(/(\d+)\s*(?:pi[eè]ces?|portions?|parts?|articles?|unit[eé]s?)/i);
-  if (trailingQtyMatch) {
-    const trailingQty = Math.min(50, Math.max(1, parseInt(trailingQtyMatch[1], 10)));
-    if (foundItems.length === 1 && !foundItems[0].hasExplicitQty) {
-      foundItems[0].matchedQty = trailingQty;
+  const leadingQtyMatch = normalized.match(/^\s*(\d+)\s+(?!dt\b|tnd\b|millimes?\b|h\b)/i);
+  if (foundItems.length === 1 && !foundItems[0].hasExplicitQty) {
+    if (trailingQtyMatch) {
+      foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(trailingQtyMatch[1], 10)));
+    } else if (leadingQtyMatch) {
+      foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(leadingQtyMatch[1], 10)));
     }
   }
 
