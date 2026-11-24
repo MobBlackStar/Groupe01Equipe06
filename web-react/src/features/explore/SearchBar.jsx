@@ -43,14 +43,14 @@ export default function SearchBar({
   return (
     <div className={`relative w-full ${className}`}>
       <label htmlFor="offer-search" className="sr-only">Rechercher une offre</label>
-      <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none" strokeWidth={2.5} />
+      <Search className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 pointer-events-none" strokeWidth={2.5} />
       <input
         id="offer-search"
         type="search"
         value={localQuery}
         onChange={(e) => setLocalQuery(e.target.value)}
         placeholder={placeholder}
-        className="cs-input !min-h-[4rem] !pl-16 !pr-16 !text-xl"
+        className="cs-input !min-h-[4rem] !pl-14 sm:!pl-16 !pr-12 !text-base sm:!text-xl"
       />
       {localQuery && (
         <button

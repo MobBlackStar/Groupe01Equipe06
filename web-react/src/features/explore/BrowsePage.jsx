@@ -323,7 +323,8 @@ export default function BrowsePage() {
                   id="merchant-filter"
                   value={selectedMerchant}
                   onChange={(e) => setSelectedMerchant(e.target.value)}
-                  className={`cs-input !min-h-[4rem] !pl-14 !pr-11 !text-base !font-semibold cursor-pointer ${
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+                  className={`cs-input !appearance-none !min-h-[4rem] !pl-14 !pr-11 !text-base !font-semibold cursor-pointer ${
                     selectedMerchant !== 'ALL'
                       ? '!border-[#DA0711] !bg-[#FFF5F5] !text-[#DA0711]'
                       : ''
