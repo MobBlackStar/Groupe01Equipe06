@@ -184,7 +184,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
       const suggestion = res.data?.suggestion || res.data?.offer;
       if (suggestion && typeof suggestion === 'object') {
         setLastSource(formatSourceLabel(res.data?.source));
-        onAutoFill(suggestion);
+        onAutoFill(suggestion, trimmed);
         return;
       }
 
@@ -193,7 +193,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
       // Bascule transparente sur le parseur tunisien local si l'API est injoignable ou limitée
       const parsed = clientParseRawNote(trimmed);
       setLastSource(parsed.sourceLabel);
-      onAutoFill(parsed);
+      onAutoFill(parsed, trimmed);
     } finally {
       setLoading(false);
     }

@@ -12,37 +12,9 @@ import { formatTND } from '@shared/money.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import AiAutoFillBox from './AiAutoFillBox.jsx';
+import PhotoDropzone from './PhotoDropzone.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
-import { getDistinctGriddleFoodImage, GRIDDLE_FOOD_POOLS } from '../../lib/griddleAssets.js';
-
-// Catégorie d'offre → visuel Griddle représentatif (l'aperçu s'adapte à la catégorie et aux mots-clés du plat)
-const CATEGORY_IMAGE_BY_TYPE = {
-  SANDWICH: '/assets/griddle/food/sandwich-hot-chicken.png',
-  PLAT_CHAUD: '/assets/griddle/food/teriyaki-poulet-bowl.webp',
-  PIZZA: '/assets/griddle/food/pain-campagne-levain.png',
-  PATISSERIE: '/assets/griddle/food/tarte-citron-meringuee.png',
-  VIENNOISERIE: '/assets/griddle/food/croissant-beurre.png',
-  SALADE: '/assets/griddle/food/burger-veggie-stack.png',
-  BOISSON: '/assets/griddle/food/drink-classic-lemonade.png',
-  SNACK: '/assets/griddle/food/sides-cheese-fries.png',
-  MIXTE: '/assets/griddle/food/box-assortiment-fika.png',
-};
-
-function categoryImage(category, title) {
-  const t = String(title || '').toLowerCase();
-  if (/croissant/.test(t)) return '/assets/griddle/food/croissant-beurre.png';
-  if (/pain au chocolat|brioche|cinnamon|viennoiserie/.test(t)) return '/assets/griddle/food/cinnamon-bun.png';
-  if (/makloub|chapati|baguette|sandwich|kaskrout|mlewi/.test(t)) return '/assets/griddle/food/sandwich-hot-chicken.png';
-  if (/burger|tacos|chawarma|crispy/.test(t)) return '/assets/griddle/food/burger-double-smash.png';
-  if (/œuf|oeuf|egg|adham/.test(t)) return '/assets/griddle/food/morning-bun.png';
-  if (/salade|salad/.test(t)) return '/assets/griddle/food/burger-veggie-stack.png';
-  if (/boisson|jus|soda|caf[eé]|th[eé]|limonade/.test(t)) return '/assets/griddle/food/drink-mango-yuzu.png';
-  if (/ojja|lablabi|kafteji|couscous|p[aâ]tes|pasta/.test(t)) return '/assets/griddle/food/riz-saute-crevettes.webp';
-  if (category === 'MIXTE' && /brik|sandwich|frite|pizza/.test(t)) {
-    return '/assets/griddle/food/hero-double-smash-tray.png';
-  }
-  return CATEGORY_IMAGE_BY_TYPE[category] || getDistinctGriddleFoodImage('fast-food', title || category || 0);
-}
+import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
 import { Sparkles, Clock, ArrowRight, Gift, Leaf, AlertTriangle } from 'lucide-react';
 
 // Affichage sûr : jamais de NaN / 0,000 DT à l'écran
@@ -162,7 +134,10 @@ export default function OfferFormPage() {
     quantityTotal: 4,
     maxPerOrder: 3,
     weightGramsPerUnit: 400,
-    photoUrl: '',
+    photoUrl: resolveOfferImage({
+      category: OFFER_CATEGORIES.SANDWICH,
+      title: 'Baguette Farcie Escalope & Fromage',
+    }),
     ...computeDefaultPickupHours(),
     isSurpriseBasket: false,
     surprise: {
@@ -172,6 +147,8 @@ export default function OfferFormPage() {
     },
   });
 
+  const [hasCustomPhoto, setHasCustomPhoto] = useState(false);
+  const [lastRawNote, setLastRawNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
@@ -191,6 +168,7 @@ export default function OfferFormPage() {
       .then((res) => {
         if (!alive) return;
         const o = res.data?.offer || res.data;
+        if (o?.photoUrl) setHasCustomPhoto(true);
         setFormData((prev) => {
           const next = offerToForm(o, prev);
           setInitialForm(next);
@@ -225,25 +203,18 @@ export default function OfferFormPage() {
   const [uploadError, setUploadError] = useState('');
 
   // Photo de l'offre : téléversement réel (POST /uploads/image, 5 Mo max, JPEG/PNG/WEBP) ; l'URL renvoyée est enregistrée avec l'offre
-  async function handlePhotoPick(event) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+  async function uploadOfferFile(file) {
     if (!file) return;
     setUploadError('');
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setUploadError('Format non supporté : utilisez JPEG, PNG ou WEBP.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('Image trop lourde (5 Mo maximum).');
-      return;
-    }
     setUploading(true);
     try {
       const body = new FormData();
       body.append('file', file);
       const res = await apiClient.post(ENDPOINTS.UPLOAD_IMAGE, body, { headers: { 'Content-Type': 'multipart/form-data' } });
-      if (res.data?.url) handleChange('photoUrl', res.data.url);
+      if (res.data?.url) {
+        setHasCustomPhoto(true);
+        handleChange('photoUrl', res.data.url);
+      }
     } catch (err) {
       setUploadError(err?.response?.data?.error?.message || 'Téléversement impossible : réessayez.');
     } finally {
@@ -266,7 +237,8 @@ export default function OfferFormPage() {
     return formatted || fallback;
   }
 
-  function handleAiAutoFill(aiData) {
+  function handleAiAutoFill(aiData, rawNote = '') {
+    setLastRawNote(rawNote);
     setFormData((prev) => {
       const orig = Math.max(500, Math.round(Number(aiData.originalPriceMillimes) || prev.originalPriceMillimes || 7000));
       const rawDisc = Number(aiData.discountedPriceMillimes ?? aiData.fixedDiscountedMillimes);
@@ -294,17 +266,31 @@ export default function OfferFormPage() {
       const computedStart = `${String(Math.floor(defaultStartMins / 60)).padStart(2, '0')}:${String(defaultStartMins % 60).padStart(2, '0')}`;
       const nextStart = parseAiTime(aiData.suggestedPickupStartAt, computedStart);
 
+      const nextTitle = aiData.title || prev.title;
+      const nextDescription = aiData.description || prev.description;
+      const nextCategory = OFFER_CATEGORIES[aiData.category] ? aiData.category : (aiData.category || prev.category);
+      const nextIsSurprise = typeof aiData.isSurpriseBasket === 'boolean' ? aiData.isSurpriseBasket : false;
+
       const nextPrivateContents =
         aiData.surpriseContents ||
         (Array.isArray(aiData.surpriseItems) && aiData.surpriseItems.length > 0
           ? aiData.surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
           : aiData.surprise?.teaser || prev.surprise.privateContents);
 
+      const autoPhoto = resolveOfferImage({
+        category: nextCategory,
+        title: nextTitle,
+        rawNote,
+        surpriseContents: nextPrivateContents,
+        description: nextDescription,
+        isSurpriseBasket: nextIsSurprise,
+      });
+
       return {
         ...prev,
-        title: aiData.title || prev.title,
-        description: aiData.description || prev.description,
-        category: OFFER_CATEGORIES[aiData.category] ? aiData.category : (aiData.category || prev.category),
+        title: nextTitle,
+        description: nextDescription,
+        category: nextCategory,
         pricingMode: PRICING_MODES[aiData.pricingMode] ? aiData.pricingMode : prev.pricingMode,
         originalPriceMillimes: orig,
         startPriceMillimes: startP,
@@ -314,7 +300,8 @@ export default function OfferFormPage() {
         weightGramsPerUnit: Math.round(Number(aiData.weightGramsPerUnit) || prev.weightGramsPerUnit),
         pickupStartAt: nextStart,
         pickupEndAt: nextEnd,
-        isSurpriseBasket: typeof aiData.isSurpriseBasket === 'boolean' ? aiData.isSurpriseBasket : prev.isSurpriseBasket,
+        photoUrl: hasCustomPhoto ? prev.photoUrl : autoPhoto,
+        isSurpriseBasket: nextIsSurprise,
         surprise: {
           ...prev.surprise,
           teaser: aiData.surprise?.teaser || prev.surprise.teaser,
@@ -441,8 +428,14 @@ export default function OfferFormPage() {
     }
   }
 
-  // Image d'illustration en direct déterministe
-  const previewImage = categoryImage(formData.category, formData.title);
+  // Image d'illustration en direct déterministe (mots-clés du plat + repli catégorie)
+  const previewImage = resolveOfferImage({
+    category: formData.category,
+    title: formData.title,
+    rawNote: lastRawNote,
+    description: formData.description,
+    isSurpriseBasket: formData.isSurpriseBasket,
+  });
 
   const isDutch = formData.pricingMode === PRICING_MODES.DUTCH_AUCTION;
   const previewPhoto = formData.photoUrl || previewImage;
@@ -510,7 +503,19 @@ export default function OfferFormPage() {
                     key={cat.id}
                     type="button"
                     aria-pressed={isSelected}
-                    onClick={() => handleChange('category', cat.id)}
+                    onClick={() => {
+                      setLastRawNote('');
+                      setFormData((prev) => ({
+                        ...prev,
+                        category: cat.id,
+                        photoUrl: hasCustomPhoto
+                          ? prev.photoUrl
+                          : resolveOfferImage({
+                              category: cat.id,
+                              isSurpriseBasket: cat.id === OFFER_CATEGORIES.MIXTE,
+                            }),
+                      }));
+                    }}
                     className={`min-h-[64px] rounded-2xl border-2 border-[#111111] px-4 py-3 text-left flex items-center gap-3 transition-colors cursor-pointer ${
                       isSelected ? 'bg-[#DA0711] text-[#FAF3E6]' : 'bg-white text-[#111111] hover:bg-[#FAF3E6]'
                     }`}
@@ -528,17 +533,29 @@ export default function OfferFormPage() {
             <StepHeading n="02" title="Détails & prix" />
 
             <div className="space-y-6">
-              <div className="flex flex-wrap items-center gap-4">
-                <label className="cs-btn cs-btn-cream cs-btn-sm cursor-pointer">
-                  <span aria-hidden="true">📷</span>
-                  <span>{uploading ? 'Envoi en cours…' : formData.photoUrl ? 'Changer la photo' : 'Ajouter une photo'}</span>
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handlePhotoPick} disabled={uploading} />
-                </label>
-                {formData.photoUrl && (
-                  <button type="button" onClick={() => handleChange('photoUrl', '')} className="cs-link text-base">Retirer la photo</button>
-                )}
-                {uploadError && <p role="alert" className="text-base text-[#DA0711]">{uploadError}</p>}
-              </div>
+              <PhotoDropzone
+                photoUrl={formData.photoUrl}
+                uploading={uploading}
+                uploadError={uploadError}
+                onFileUpload={uploadOfferFile}
+                onPhotoChange={(url) => {
+                  setHasCustomPhoto(Boolean(url));
+                  handleChange('photoUrl', url);
+                }}
+                onClearPhoto={() => {
+                  setHasCustomPhoto(false);
+                  handleChange(
+                    'photoUrl',
+                    resolveOfferImage({
+                      category: formData.category,
+                      title: formData.title,
+                      rawNote: lastRawNote,
+                      description: formData.description,
+                      isSurpriseBasket: formData.isSurpriseBasket,
+                    })
+                  );
+                }}
+              />
 
               <div>
                 <label htmlFor="offer-title" className="cs-field-label">
@@ -548,7 +565,23 @@ export default function OfferFormPage() {
                   id="offer-title"
                   type="text"
                   value={formData.title}
-                  onChange={(e) => handleChange('title', e.target.value)}
+                  onChange={(e) => {
+                    const nextTitle = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      title: nextTitle,
+                      photoUrl: hasCustomPhoto
+                        ? prev.photoUrl
+                        : resolveOfferImage({
+                            category: prev.category,
+                            title: nextTitle,
+                            rawNote: lastRawNote,
+                            description: prev.description,
+                            isSurpriseBasket: prev.isSurpriseBasket,
+                          }),
+                    }));
+                    if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+                  }}
                   placeholder="ex : Baguette Farcie Escalope & Fromage"
                   aria-invalid={errors.title ? 'true' : undefined}
                   className="cs-input"
@@ -709,7 +742,7 @@ export default function OfferFormPage() {
                 alt={formData.title || 'Aperçu du plat'}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = previewImage;
+                  e.currentTarget.src = SAFE_FOOD_FALLBACK_IMG;
                 }}
               />
               <div className="absolute top-3 left-3 right-3 z-10 flex items-start justify-between gap-2">
