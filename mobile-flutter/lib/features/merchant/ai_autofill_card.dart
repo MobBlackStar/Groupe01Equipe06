@@ -43,7 +43,9 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
       final suggestion = res['suggestion'] ?? res['offer'];
       if (suggestion is! Map) throw Exception('Réponse inattendue du serveur');
       if (!mounted) return;
-      setState(() => _source = res['source'] == 'ai' ? 'Intelligence artificielle' : 'Analyseur du serveur');
+      final src = res['source'];
+      final isLiveAi = src == 'GEMINI' || src == 'ANTHROPIC' || src == 'ai';
+      setState(() => _source = src == 'GEMINI' ? 'Gemini 2.5 Flash' : (isLiveAi ? 'Intelligence artificielle' : 'Mode hors-ligne'));
       widget.onAutofill(Map<String, dynamic>.from(suggestion));
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
