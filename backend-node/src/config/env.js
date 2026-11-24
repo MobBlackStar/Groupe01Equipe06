@@ -27,7 +27,7 @@ const envSchema = z.object({
   RESERVATION_HOLD_MINUTES: z.coerce.number().default(10),
   AI_PROVIDER: z.enum(['anthropic', 'none']).default('none'),
   ANTHROPIC_API_KEY: z.string().optional(),
-  AI_MODEL: z.string().default('claude-opus-5-5'),
+  AI_MODEL: z.string().default('claude-sonnet-4-5-20250929'),
   AI_TIMEOUT_MS: z.coerce.number().default(8000),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),

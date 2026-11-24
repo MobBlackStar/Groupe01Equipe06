@@ -8,7 +8,9 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 export const aiController = {
   autofillOffer: asyncHandler(async (req, res) => {
-    const result = await aiService.autofillOffer(req.body.text);
+    const result = await aiService.autofillOffer(req.body.text, {
+      closingTime: req.body.closingTime,
+    });
     res.json(result);
   }),
 };

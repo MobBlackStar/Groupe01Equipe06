@@ -5,10 +5,10 @@
 
 import { z } from 'zod';
 
-// Contrat du plan : { rawNote (5..300), closingTime? "HH:mm" }. `text` reste accepté (ancien nom) pour la rétro-compatibilité.
+// Contrat du plan : { rawNote (3..500), closingTime? "HH:mm" }. `text` reste accepté (ancien nom) pour la rétro-compatibilité.
 export const offerAutofillSchema = z
   .object({
-    rawNote: z.string().trim().min(5, 'Veuillez fournir au moins 5 caractères de description').max(300).optional(),
+    rawNote: z.string().trim().min(3, 'Veuillez fournir au moins 3 caractères de description').max(500).optional(),
     text: z.string().trim().min(3, 'Veuillez fournir au moins 3 caractères de description').max(500).optional(),
     closingTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Heure attendue au format HH:mm').optional(),
   })
