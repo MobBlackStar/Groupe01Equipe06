@@ -15,25 +15,33 @@ import AiAutoFillBox from './AiAutoFillBox.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
 import { getDistinctGriddleFoodImage, GRIDDLE_FOOD_POOLS } from '../../lib/griddleAssets.js';
 
-// Catégorie d'offre → famille de photos Griddle (l'aperçu suit la catégorie choisie)
-const CATEGORY_POOL = {
-  SANDWICH: 'fast-food',
-  SNACK: 'fast-food',
-  PLAT_CHAUD: 'restaurant',
-  SALADE: 'restaurant',
-  PIZZA: 'pizza',
-  PATISSERIE: 'patisserie',
-  VIENNOISERIE: 'cafeteria',
-  BOISSON: 'cafeteria',
-  MIXTE: 'patisserie',
+// Catégorie d'offre → visuel Griddle représentatif (l'aperçu s'adapte à la catégorie et aux mots-clés du plat)
+const CATEGORY_IMAGE_BY_TYPE = {
+  SANDWICH: '/assets/griddle/food/sandwich-hot-chicken.png',
+  PLAT_CHAUD: '/assets/griddle/food/teriyaki-poulet-bowl.webp',
+  PIZZA: '/assets/griddle/food/pain-campagne-levain.png',
+  PATISSERIE: '/assets/griddle/food/tarte-citron-meringuee.png',
+  VIENNOISERIE: '/assets/griddle/food/croissant-beurre.png',
+  SALADE: '/assets/griddle/food/burger-veggie-stack.png',
+  BOISSON: '/assets/griddle/food/drink-classic-lemonade.png',
+  SNACK: '/assets/griddle/food/sides-cheese-fries.png',
+  MIXTE: '/assets/griddle/food/box-assortiment-fika.png',
 };
 
 function categoryImage(category, title) {
-  if (category === 'SANDWICH') {
-    const wrap = (GRIDDLE_FOOD_POOLS['fast-food'] || []).find((it) => /makloub/i.test(it.name));
-    if (wrap) return wrap.src;
+  const t = String(title || '').toLowerCase();
+  if (/croissant/.test(t)) return '/assets/griddle/food/croissant-beurre.png';
+  if (/pain au chocolat|brioche|cinnamon|viennoiserie/.test(t)) return '/assets/griddle/food/cinnamon-bun.png';
+  if (/makloub|chapati|baguette|sandwich|kaskrout|mlewi/.test(t)) return '/assets/griddle/food/sandwich-hot-chicken.png';
+  if (/burger|tacos|chawarma|crispy/.test(t)) return '/assets/griddle/food/burger-double-smash.png';
+  if (/œuf|oeuf|egg|adham/.test(t)) return '/assets/griddle/food/morning-bun.png';
+  if (/salade|salad/.test(t)) return '/assets/griddle/food/burger-veggie-stack.png';
+  if (/boisson|jus|soda|caf[eé]|th[eé]|limonade/.test(t)) return '/assets/griddle/food/drink-mango-yuzu.png';
+  if (/ojja|lablabi|kafteji|couscous|p[aâ]tes|pasta/.test(t)) return '/assets/griddle/food/riz-saute-crevettes.webp';
+  if (category === 'MIXTE' && /brik|sandwich|frite|pizza/.test(t)) {
+    return '/assets/griddle/food/hero-double-smash-tray.png';
   }
-  return getDistinctGriddleFoodImage(CATEGORY_POOL[category] || 'fast-food', title || category || 0);
+  return CATEGORY_IMAGE_BY_TYPE[category] || getDistinctGriddleFoodImage('fast-food', title || category || 0);
 }
 import { Sparkles, Clock, ArrowRight, Gift, Leaf, AlertTriangle } from 'lucide-react';
 
@@ -131,7 +139,9 @@ const CATEGORY_ITEMS = [
   { id: OFFER_CATEGORIES.PIZZA, label: 'Pizza Calzone', icon: '🍕' },
   { id: OFFER_CATEGORIES.PATISSERIE, label: 'Pâtisserie Fine', icon: '🧁' },
   { id: OFFER_CATEGORIES.VIENNOISERIE, label: 'Croissant / Viennoiserie', icon: '🥐' },
-  { id: OFFER_CATEGORIES.SNACK, label: 'Frites / Snack', icon: '🍟' },
+  { id: OFFER_CATEGORIES.SALADE, label: 'Salade / Bowl', icon: '🥗' },
+  { id: OFFER_CATEGORIES.BOISSON, label: 'Boisson / Café', icon: '🥤' },
+  { id: OFFER_CATEGORIES.SNACK, label: 'Snack / Produit frais', icon: '🍟' },
   { id: OFFER_CATEGORIES.MIXTE, label: 'Panier Surprise', icon: '🎁' },
 ];
 
@@ -445,9 +455,9 @@ export default function OfferFormPage() {
   const co2Kg = Number.isFinite(impact?.co2SavedGrams) ? (impact.co2SavedGrams / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : null;
 
   return (
-    <div className="cs-container cs-page">
-      {/* En-tête */}
-      <header className="mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+    <div className="cs-container pt-10 sm:pt-12 lg:pt-14 pb-16 sm:pb-24">
+      {/* En-tête avec marge haute généreuse sous la Navbar sticky */}
+      <header className="mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="min-w-0">
           <p className="cs-eyebrow mb-3">Espace commerçant</p>
           <h1 className="cs-display">
@@ -689,7 +699,7 @@ export default function OfferFormPage() {
         {/* =========================================================================
             COLONNE DROITE : APERÇU EN DIRECT
             ========================================================================= */}
-        <aside className="lg:col-span-5 lg:sticky lg:top-24" aria-label="Aperçu de l'offre">
+        <aside className="lg:col-span-5 lg:sticky lg:top-28" aria-label="Aperçu de l'offre">
           <p className="cs-eyebrow mb-4">Aperçu en direct</p>
 
           <div className="cs-card p-3">

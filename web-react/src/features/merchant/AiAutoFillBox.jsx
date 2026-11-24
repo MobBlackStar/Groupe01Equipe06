@@ -29,8 +29,11 @@ const CLIENT_TUNISIAN_LEXICON = [
   { pattern: 'pizzas?', name: 'Pizza', weight: 500, category: OFFER_CATEGORIES.PIZZA, defaultPrice: 8500 },
   { pattern: '(?:chawarmas?|shawarmas?|tacos|burgers?|paninis?)', name: 'Spécialité Grill', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7000 },
   { pattern: '(?:sandwichs?\\s+au\\s+thon|sandwichs?\\s+thon|sandwiches|sandwichs?)', name: 'Sandwich', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 4500 },
-  { pattern: 'salades?', name: 'Salade', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
-  { pattern: '(?:jus|sodas?|eaux?|boissons?)', name: 'Boisson', weight: 300, category: OFFER_CATEGORIES.BOISSON, defaultPrice: 2000 },
+  { pattern: 'salade?s?', name: 'Salade', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
+  { pattern: '(?<!avec\\s)(?<!au\\s)(?:eggs?|oeufs?|œufs|adham)', name: 'Œufs frais fermiers', weight: 360, category: OFFER_CATEGORIES.SNACK, defaultPrice: 3500 },
+  { pattern: '(?:pasta|p[aâ]tes|spaghettis?|lasagnes?|maqarouna)', name: 'Pâtes maison', weight: 400, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 7000 },
+  { pattern: '(?:couscous|kosksi)', name: 'Couscous tunisien', weight: 450, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 7500 },
+  { pattern: '(?:jus|sodas?|eaux?|boissons?|coffees?|caf[eé]s?)', name: 'Boisson Fraîche', weight: 300, category: OFFER_CATEGORIES.BOISSON, defaultPrice: 2000 },
 ];
 
 function parseMoneyToken(rawValue, unit = '') {
@@ -54,8 +57,13 @@ function clientParseRawNote(rawNote) {
   }
 
   const trailingQtyMatch = normalized.match(/(\d+)\s*(?:pi[eè]ces?|portions?|parts?|articles?|unit[eé]s?)/i);
-  if (trailingQtyMatch && foundItems.length === 1 && !foundItems[0].hasExplicitQty) {
-    foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(trailingQtyMatch[1], 10)));
+  const leadingQtyMatch = normalized.match(/^\s*(\d+)\s+(?!dt\b|tnd\b|millimes?\b|h\b)/i);
+  if (foundItems.length === 1 && !foundItems[0].hasExplicitQty) {
+    if (trailingQtyMatch) {
+      foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(trailingQtyMatch[1], 10)));
+    } else if (leadingQtyMatch) {
+      foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(leadingQtyMatch[1], 10)));
+    }
   }
 
   const closingMatch =
@@ -134,8 +142,15 @@ function clientParseRawNote(rawNote) {
     closingMinute,
     suggestedPickupStartAt: fmtTime(startMinutes),
     suggestedPickupEndAt: fmtTime(endMinutes),
-    sourceLabel: 'Parseur Culinaire Tunisien (Mode local)',
+    sourceLabel: 'Mode hors-ligne',
   };
+}
+
+function formatSourceLabel(source) {
+  if (source === 'GEMINI') return '✨ Gemini 2.5 Flash';
+  if (source === 'ANTHROPIC' || source === 'ai') return '✨ Intelligence Artificielle';
+  if (source === 'FALLBACK' || source === 'fallback') return 'Mode hors-ligne';
+  return 'Mode hors-ligne';
 }
 
 export default function AiAutoFillBox({ onAutoFill, className = '' }) {
@@ -165,14 +180,10 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
         rawNote: trimmed,
       });
 
-      // Contrat API unifié : { suggestion, source: 'ai' | 'fallback' }
+      // Contrat API unifié : { suggestion, source: 'GEMINI' | 'FALLBACK' }
       const suggestion = res.data?.suggestion || res.data?.offer;
       if (suggestion && typeof suggestion === 'object') {
-        const sourceLabel =
-          res.data?.source === 'ai'
-            ? 'Intelligence Artificielle'
-            : 'Analyseur culinaire du serveur';
-        setLastSource(sourceLabel);
+        setLastSource(formatSourceLabel(res.data?.source));
         onAutoFill(suggestion);
         return;
       }
