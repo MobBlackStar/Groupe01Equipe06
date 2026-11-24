@@ -45,7 +45,7 @@ class _AiAutofillCardState extends State<AiAutofillCard> {
       if (!mounted) return;
       final src = res['source'];
       final isLiveAi = src == 'GEMINI' || src == 'ANTHROPIC' || src == 'ai';
-      setState(() => _source = src == 'GEMINI' ? 'Gemini 2.5 Flash' : (isLiveAi ? 'Intelligence artificielle' : 'Mode hors-ligne'));
+      setState(() => _source = src == 'GEMINI' ? 'Gemini Flash' : (isLiveAi ? 'Intelligence artificielle' : 'Mode hors-ligne'));
       widget.onAutofill(Map<String, dynamic>.from(suggestion));
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());

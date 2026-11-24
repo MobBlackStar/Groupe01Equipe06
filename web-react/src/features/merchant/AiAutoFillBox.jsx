@@ -147,7 +147,7 @@ function clientParseRawNote(rawNote) {
 }
 
 function formatSourceLabel(source) {
-  if (source === 'GEMINI') return '✨ Gemini 2.5 Flash';
+  if (source === 'GEMINI') return '✨ Gemini Flash';
   if (source === 'ANTHROPIC' || source === 'ai') return '✨ Intelligence Artificielle';
   if (source === 'FALLBACK' || source === 'fallback') return 'Mode hors-ligne';
   return 'Mode hors-ligne';
