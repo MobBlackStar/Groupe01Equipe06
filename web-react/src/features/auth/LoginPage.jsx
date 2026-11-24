@@ -176,77 +176,18 @@ export function LoginPage() {
               </div>
             )}
 
-            {/* Formulaire d'authentification */}
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              <div>
-                <label htmlFor="login-email" className="cs-field-label">
-                  Adresse email universitaire
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
-                  }}
-                  placeholder="nom@essect.u-tunis.tn"
-                  aria-invalid={errors.email ? 'true' : undefined}
-                  className="cs-input"
-                />
-                {errors.email && <p className="cs-error-text">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="login-password" className="cs-field-label">
-                  Mot de passe
-                </label>
-                <div className="relative">
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
-                    }}
-                    placeholder="••••••••"
-                    aria-invalid={errors.password ? 'true' : undefined}
-                    className="cs-input pr-16"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                {errors.password && <p className="cs-error-text">{errors.password}</p>}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
-              >
-                <span>{isSubmitting ? 'Connexion en cours...' : 'Se connecter'}</span>
-                <ArrowRight className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </form>
-
-            {/* 1-Click Demo Bar (Jury Soutenance) */}
-            <section className="mt-12 pt-8 border-t-2 border-[#111111]" aria-label="Accès rapide démo">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-5">
-                <h2 className="cs-h3 inline-flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-[#DA0711]" aria-hidden="true" />
-                  Accès rapide 1-clic · Jury
+            {/* OPTION A : 1-CLICK DEMO BAR (JURY SOUTENANCE) */}
+            <section className="mb-8 p-5 rounded-2xl border-2 border-[#111111] bg-white shadow-[3px_3px_0_#111111]" aria-label="Accès rapide démo jury">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                <h2 className="cs-h3 inline-flex items-center gap-2 text-[#DA0711]">
+                  <Zap className="w-5 h-5 fill-[#DA0711]" aria-hidden="true" />
+                  Option A · Démo 1-Clic Jury
                 </h2>
-                <span className="cs-label">Sans mot de passe</span>
+                <span className="cs-label bg-[#FFD000]/25 px-2 py-0.5 rounded border border-[#FFD000]">Sans mot de passe</span>
               </div>
+              <p className="text-xs text-[#5E5850] mb-3">
+                Accès instantané aux personas pré-configurés pour tester le flux de soutenance :
+              </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {DEMO_ROLES.map(({ type, label, hint, Icon, iconClass }) => (
@@ -255,18 +196,98 @@ export function LoginPage() {
                     type="button"
                     onClick={() => handleDemoLogin(type)}
                     disabled={isSubmitting}
-                    className="flex items-center gap-3 min-h-[64px] px-4 py-3 rounded-2xl border-2 border-[#111111] bg-[#FAF3E6] text-left cursor-pointer transition-all duration-200 hover:bg-white hover:-translate-y-0.5 hover:shadow-[0_4px_0_#111111] active:translate-y-0 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                    className="flex items-center gap-3 min-h-[64px] px-3.5 py-2.5 rounded-xl border-2 border-[#111111] bg-[#FAF3E6] text-left cursor-pointer transition-all duration-200 hover:bg-[#FFD000]/20 hover:-translate-y-0.5 hover:shadow-[0_4px_0_#111111] active:translate-y-0 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
+                    <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
                       <Icon className="w-5 h-5" aria-hidden="true" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block font-semibold uppercase text-lg leading-tight">{label}</span>
-                      <span className="block cs-mono text-[13px] text-[#5E5850] leading-tight mt-0.5">{hint}</span>
+                      <span className="block font-semibold uppercase text-base leading-tight">{label}</span>
+                      <span className="block cs-mono text-[12px] text-[#5E5850] leading-tight mt-0.5">{hint}</span>
                     </span>
                   </button>
                 ))}
               </div>
+            </section>
+
+            {/* SÉPARATEUR VISUEL OU */}
+            <div className="my-8 flex items-center gap-4" aria-hidden="true">
+              <div className="h-[2px] flex-1 bg-[#111111]" />
+              <span className="font-bold text-xs uppercase px-3 py-1 bg-[#FAF3E6] border-2 border-[#111111] rounded-full text-[#111111] tracking-wider">
+                OU COMPTE RÉEL
+              </span>
+              <div className="h-[2px] flex-1 bg-[#111111]" />
+            </div>
+
+            {/* OPTION B : FORMULAIRE COMPTE RÉEL FIREBASE */}
+            <section aria-label="Connexion compte réel">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                <h2 className="cs-h3 inline-flex items-center gap-2">
+                  <span>🔐 Option B · Compte Réel Firebase</span>
+                </h2>
+                <span className="cs-label">Email &amp; Mot de passe</span>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                <div>
+                  <label htmlFor="login-email" className="cs-field-label">
+                    Adresse email
+                  </label>
+                  <input
+                    id="login-email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors((prev) => ({ ...prev, email: null }));
+                    }}
+                    placeholder="etudiant@essect.u-tunis.tn"
+                    aria-invalid={errors.email ? 'true' : undefined}
+                    className="cs-input"
+                  />
+                  {errors.email && <p className="cs-error-text">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="login-password" className="cs-field-label">
+                    Mot de passe
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errors.password) setErrors((prev) => ({ ...prev, password: null }));
+                      }}
+                      placeholder="••••••••"
+                      aria-invalid={errors.password ? 'true' : undefined}
+                      className="cs-input pr-16"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="cs-error-text">{errors.password}</p>}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
+                >
+                  <span>{isSubmitting ? 'Connexion en cours...' : 'Se connecter au compte réel'}</span>
+                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </form>
             </section>
 
             {/* Lien d'inscription */}

@@ -91,7 +91,16 @@ export const ticketsService = {
       }
 
       // Vérification 2 : Appartenance de la commande au commerçant connecté
-      if (order.merchantId !== merchantUid) {
+      let isOwner = order.merchantId === merchantUid;
+      if (!isOwner && db) {
+        try {
+          const mDoc = await transaction.get(db.collection('merchants').doc(order.merchantId));
+          if (mDoc.exists && mDoc.data()?.ownerUid === merchantUid) {
+            isOwner = true;
+          }
+        } catch {}
+      }
+      if (!isOwner) {
         throw new AppError('Cette commande ne concerne pas votre établissement', 403, 'WRONG_MERCHANT');
       }
 

@@ -48,7 +48,7 @@ export const KNOWN_DEMO_USERS = {
   [DEMO_MERCHANT_UID]: {
     uid: DEMO_MERCHANT_UID,
     email: 'commercant@baguette.tn',
-    displayName: 'Baguette & Baguette Montfleury',
+    displayName: 'Munchies & Baguette Ali Trad',
     role: 'MERCHANT',
     phone: '+21671390111',
     status: 'ACTIVE',
@@ -57,7 +57,7 @@ export const KNOWN_DEMO_USERS = {
   'merchant-demo-uid': {
     uid: 'merchant-demo-uid',
     email: 'commercant@baguette.tn',
-    displayName: 'Baguette & Baguette Montfleury',
+    displayName: 'Munchies & Baguette Ali Trad',
     role: 'MERCHANT',
     phone: '+21671390111',
     status: 'ACTIVE',

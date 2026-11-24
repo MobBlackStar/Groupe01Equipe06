@@ -36,7 +36,7 @@ export const demoAccounts = {
   merchant: {
     email: 'commercant@baguette.tn',
     password: 'CampusSave2026!',
-    displayName: 'Baguette & Baguette Montfleury',
+    displayName: 'Munchies & Baguette Ali Trad',
     role: ROLES.MERCHANT,
     merchantId: 'merchant-baguette-baguette',
     phone: '+21671390111',
@@ -57,7 +57,7 @@ export const mockOffers = [
   {
     id: 'off-01',
     merchantId: 'merchant-baguette-baguette',
-    merchantName: 'Baguette & Baguette Montfleury',
+    merchantName: 'Munchies & Baguette Ali Trad',
     title: 'Baguette Farcie Escalope Panée & Frites',
     description: 'Baguette artisanale chaude garnie d escalope panée, frites maison et fromage.',
     category: 'SANDWICH',
@@ -79,7 +79,7 @@ export const mockOffers = [
   {
     id: 'off-02',
     merchantId: 'merchant-baguette-baguette',
-    merchantName: 'Baguette & Baguette Montfleury',
+    merchantName: 'Munchies & Baguette Ali Trad',
     title: 'Makloub Chawarma Poulet Épicé',
     description: 'Pâte à pizza fine roulée garnie de poulet mariné et salade fraîche.',
     category: 'SANDWICH',
@@ -99,7 +99,7 @@ export const mockOffers = [
   {
     id: 'off-03',
     merchantId: 'merchant-baguette-baguette',
-    merchantName: 'Baguette & Baguette Montfleury',
+    merchantName: 'Munchies & Baguette Ali Trad',
     title: 'Salade César Tunisienne & Poulet Grillé',
     description: 'Laitue croquante, poulet grillé, croûtons à l ail et copeaux de fromage.',
     category: 'SALADE',
@@ -121,7 +121,7 @@ export const mockOffers = [
   {
     id: 'off-04-mystery-rare',
     merchantId: 'merchant-baguette-baguette',
-    merchantName: 'Baguette & Baguette Montfleury',
+    merchantName: 'Munchies & Baguette Ali Trad',
     title: 'Mystery Box Salée — Spécialités Chaudes',
     description: 'Panier surprise scellé composé de plusieurs articles salés cuisinés ce midi.',
     category: 'MIXTE',
@@ -494,8 +494,8 @@ export const mockOrders = [
     studentId: 'student-demo-uid',
     merchantId: 'merchant-baguette-baguette',
     merchantSnapshot: {
-      name: 'Baguette & Baguette Montfleury',
-      location: { lat: 36.7865, lng: 10.1752 },
+      name: 'Munchies & Baguette Ali Trad',
+      location: { lat: 36.7869, lng: 10.1753 },
     },
     offerId: 'off-01',
     offerSnapshot: {

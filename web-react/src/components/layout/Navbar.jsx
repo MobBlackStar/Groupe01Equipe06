@@ -15,6 +15,8 @@ import {
   Store,
   ShieldCheck,
   Check,
+  Zap,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLES } from '@shared/constants.js';
@@ -48,7 +50,7 @@ const DEMO_ROLES = [
 ];
 
 export default function Navbar() {
-  const { user, profile, role, logout, loginDemo } = useAuth();
+  const { user, profile, role, authMode, switchToRealMode, switchToDemoMode, logout, loginDemo } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [demoMenuOpen, setDemoMenuOpen] = useState(false);
   const location = useLocation();
@@ -160,49 +162,97 @@ export default function Navbar() {
             Impact
           </Link>
 
-          {/* Commutateur de rôle 1-clic (démo jury) */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setDemoMenuOpen((o) => !o)}
-              aria-expanded={demoMenuOpen}
-              aria-haspopup="menu"
-              className="inline-flex items-center gap-2 h-10 pl-3 pr-2.5 rounded-full border-2 border-[#111111] bg-[#FAF3E6] hover:bg-white font-semibold uppercase text-[0.95rem] transition-colors"
-            >
-              <currentDemo.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{currentDemo.short}</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${demoMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
+          {/* Sélecteur de mode : Démo Jury 1-Clic vs Compte Réel */}
+          {authMode === 'DEMO' ? (
+            <>
+              {/* Commutateur de rôle 1-clic (démo jury) */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  onClick={() => setDemoMenuOpen((o) => !o)}
+                  aria-expanded={demoMenuOpen}
+                  aria-haspopup="menu"
+                  className="inline-flex items-center gap-2 h-10 pl-3 pr-2.5 rounded-full border-2 border-[#111111] bg-[#FAF3E6] hover:bg-white font-semibold uppercase text-[0.95rem] transition-colors"
+                >
+                  <currentDemo.icon className="w-4 h-4 text-[#DA0711]" />
+                  <span className="hidden sm:inline font-bold text-xs bg-[#FFD000]/25 px-1.5 py-0.5 rounded border border-[#FFD000]">DÉMO</span>
+                  <span className="hidden sm:inline">{currentDemo.short}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${demoMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-            {demoMenuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 mt-3 w-72 rounded-[1.25rem] bg-[#FAF3E6] border-2 border-[#111111] p-2 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.45)] z-50 animate-fadeIn"
-              >
-                <p className="cs-label px-3 pt-2 pb-2.5">Changer de rôle · démo jury</p>
-                {DEMO_ROLES.map((d) => {
-                  const selected = d.role === role;
-                  return (
-                    <button
-                      key={d.role}
-                      role="menuitem"
-                      type="button"
-                      onClick={() => handleRoleSwitch(d.role)}
-                      className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base transition-colors ${
-                        selected ? 'bg-[#111111] text-[#FAF3E6]' : 'hover:bg-[#EDE6D7]'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <d.icon className="w-[18px] h-[18px]" />
-                        {d.label}
-                      </span>
-                      {selected && <Check className="w-[18px] h-[18px] text-[#FFD000]" />}
-                    </button>
-                  );
-                })}
+                {demoMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-3 w-72 rounded-[1.25rem] bg-[#FAF3E6] border-2 border-[#111111] p-2 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.45)] z-50 animate-fadeIn"
+                  >
+                    <p className="cs-label px-3 pt-2 pb-2.5">⚡ Changer de rôle · Démo Jury</p>
+                    {DEMO_ROLES.map((d) => {
+                      const selected = d.role === role;
+                      return (
+                        <button
+                          key={d.role}
+                          role="menuitem"
+                          type="button"
+                          onClick={() => handleRoleSwitch(d.role)}
+                          className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base transition-colors ${
+                            selected ? 'bg-[#111111] text-[#FAF3E6]' : 'hover:bg-[#EDE6D7]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <d.icon className="w-[18px] h-[18px]" />
+                            {d.label}
+                          </span>
+                          {selected && <Check className="w-[18px] h-[18px] text-[#FFD000]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* Bouton pour basculer vers un vrai compte */}
+              <button
+                type="button"
+                onClick={async () => {
+                  await switchToRealMode();
+                  navigate('/login');
+                }}
+                className="hidden sm:inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full border-2 border-[#111111] bg-white hover:bg-[#EDE6D7] font-semibold text-xs uppercase tracking-wider transition-all"
+                title="Basculer en Mode Compte Réel pour tester l'inscription ou la connexion"
+              >
+                <Lock className="w-3.5 h-3.5 text-[#DA0711]" />
+                <span>Tester Vrai Compte</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Badge Compte Réel connecté */}
+              <div
+                className="hidden md:inline-flex items-center gap-2 h-10 px-3 rounded-full border-2 border-[#00875A] bg-[#00875A]/10 text-xs font-bold uppercase tracking-wider text-[#00875A]"
+                title={user?.email || 'Compte Réel'}
+              >
+                <span className="w-2 h-2 rounded-full bg-[#00875A] animate-pulse" />
+                <span className="truncate max-w-[120px]">{user?.email?.split('@')[0] || 'Utilisateur'}</span>
+                <span className="px-1.5 py-0.5 rounded bg-[#111111] text-[#FAF3E6] text-[10px]">
+                  {role === ROLES.ADMIN ? 'Admin' : (role === ROLES.MERCHANT ? 'Commerçant' : 'Étudiant')}
+                </span>
+              </div>
+
+              {/* Bouton pour revenir au Mode Démo 1-Clic Jury */}
+              <button
+                type="button"
+                onClick={async () => {
+                  await switchToDemoMode('student');
+                  navigate('/app/explore');
+                }}
+                className="hidden sm:inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full border-2 border-[#111111] bg-[#FFD000] hover:bg-[#FFD000]/80 font-bold text-xs uppercase tracking-wider transition-all shadow-[2px_2px_0_#111111]"
+                title="Revenir au Mode Démo 1-Clic pour le jury"
+              >
+                <Zap className="w-3.5 h-3.5 fill-[#111111]" />
+                <span>Démo Jury</span>
+              </button>
+            </>
+          )}
 
           {user ? (
             <button type="button" onClick={logout} title="Se déconnecter" aria-label="Se déconnecter" className="cs-icon-btn hidden sm:inline-flex">
@@ -244,7 +294,55 @@ export default function Navbar() {
             <Link to="/impact" className="font-display uppercase text-[2.75rem] leading-[1.05] py-1 hover:text-[#DA0711]">
               Impact campus
             </Link>
-            <div className="mt-6 pt-6 border-t-2 border-[#111111] flex flex-wrap gap-3">
+
+            <div className="mt-6 pt-6 border-t-2 border-[#111111] flex flex-col gap-3">
+              {authMode === 'DEMO' ? (
+                <>
+                  <p className="cs-label">⚡ Mode Démo Jury actif</p>
+                  <div className="flex flex-wrap gap-2">
+                    {DEMO_ROLES.map((d) => (
+                      <button
+                        key={d.role}
+                        type="button"
+                        onClick={() => handleRoleSwitch(d.role)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold uppercase border-2 border-[#111111] ${d.role === role ? 'bg-[#111111] text-[#FAF3E6]' : 'bg-white text-[#111111]'}`}
+                      >
+                        {d.short}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      await switchToRealMode();
+                      navigate('/login');
+                    }}
+                    className="cs-btn cs-btn-cream text-xs"
+                  >
+                    <Lock className="w-4 h-4 text-[#DA0711]" /> 🔐 Tester un Vrai Compte
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="text-xs font-bold uppercase text-[#00875A] flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#00875A]" />
+                    <span>🟢 Compte Réel : {user?.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      await switchToDemoMode('student');
+                      navigate('/app/explore');
+                    }}
+                    className="cs-btn cs-btn-mustard text-xs"
+                  >
+                    <Zap className="w-4 h-4" /> ⚡ Revenir en Démo Jury
+                  </button>
+                </>
+              )}
+
               {role === ROLES.MERCHANT && (
                 <Link to="/merchant/offers/new" className="cs-btn cs-btn-red">
                   <Plus className="w-4 h-4" strokeWidth={3} /> Publier une offre

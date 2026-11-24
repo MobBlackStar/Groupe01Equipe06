@@ -434,7 +434,7 @@ export class InMemoryFirestore {
 
     for (let i = 0; i < rawMerchants.length; i++) {
       const m = rawMerchants[i];
-      const status = i === 5 ? MERCHANT_STATUS.PENDING : MERCHANT_STATUS.APPROVED;
+      const status = m.id === 'merchant-nice-view-bellevue' ? MERCHANT_STATUS.PENDING : (m.status || (i === 5 ? MERCHANT_STATUS.PENDING : MERCHANT_STATUS.APPROVED));
       this._store.set(`merchants/${m.id}`, {
         id: m.id,
         name: m.name,

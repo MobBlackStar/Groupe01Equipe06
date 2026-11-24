@@ -24,8 +24,8 @@ describe('Jour 8 — Intégrité des Données de Démonstration (Seed & Reset)',
   const merchantsRaw = JSON.parse(readFileSync(merchantsJsonPath, 'utf8'));
   const merchants = merchantsRaw.merchants || [];
 
-  test('1. Les commerces de Montfleury sont exactement au nombre de 6', () => {
-    assert.equal(merchants.length, 6, 'Le jeu de données doit contenir 6 commerces');
+  test('1. Les commerces de Montfleury sont exactement au nombre de 12', () => {
+    assert.equal(merchants.length, 12, 'Le jeu de données doit contenir 12 commerces');
   });
 
   test('2. Rayon piéton des commerces : tous situés à <= 3000 m de l ESSECT', () => {
@@ -41,16 +41,15 @@ describe('Jour 8 — Intégrité des Données de Démonstration (Seed & Reset)',
     }
   });
 
-  test('3. Statuts des commerces : 5 APPROVED et 1 PENDING (pour la démo admin)', () => {
-    // Dans le script seed, les 5 premiers sont APPROVED et le 6ème est PENDING
-    const statuses = merchants.map((m, index) =>
-      index === 5 ? MERCHANT_STATUS.PENDING : MERCHANT_STATUS.APPROVED
+  test('3. Statuts des commerces : 11 APPROVED et 1 PENDING (pour la démo admin)', () => {
+    const statuses = merchants.map((m) =>
+      m.id === 'merchant-nice-view-bellevue' ? MERCHANT_STATUS.PENDING : (m.status || MERCHANT_STATUS.APPROVED)
     );
     const approvedCount = statuses.filter((s) => s === MERCHANT_STATUS.APPROVED).length;
     const pendingCount = statuses.filter((s) => s === MERCHANT_STATUS.PENDING).length;
 
-    assert.equal(approvedCount, 5, 'Il doit y avoir 5 commerces approuvés');
-    assert.equal(pendingCount, 1, 'Le 6ème commerce doit être PENDING pour la démo de validation admin');
+    assert.equal(approvedCount, 11, 'Il doit y avoir 11 commerces approuvés');
+    assert.equal(pendingCount, 1, 'Le commerce Bellevue doit être PENDING pour la démo de validation admin');
   });
 
   test('4. Vérification du fichier seed.js pour les 20 offres et 3 paniers surprises', () => {

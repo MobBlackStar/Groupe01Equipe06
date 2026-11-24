@@ -50,7 +50,7 @@ function RouteFallback() {
  * Aiguillage intelligent de la racine `/` selon l'état d'authentification et le rôle actif
  */
 function RootRedirect() {
-  const { isAuthenticated, role, loading } = useAuth();
+  const { isAuthenticated, role, merchant, loading } = useAuth();
 
   if (loading) {
     return (
@@ -65,6 +65,9 @@ function RootRedirect() {
   }
 
   if (role === ROLES.MERCHANT) {
+    if (!merchant) {
+      return <Navigate to="/merchant/onboarding" replace />;
+    }
     return <Navigate to="/merchant/dashboard" replace />;
   }
 

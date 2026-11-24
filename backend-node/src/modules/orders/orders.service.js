@@ -12,6 +12,7 @@ import { computeUnitPrice } from '../../../../shared/pricing.js';
 import { rewardKey } from '../../../../shared/loyalty.js';
 import { generateOrderCode } from '../../utils/orderCode.js';
 import { deriveTicketKey } from '../tickets/ticket.crypto.js';
+import { resolveMerchantId } from '../../utils/merchantResolver.js';
 
 export const ordersService = {
   /**
@@ -346,8 +347,9 @@ export const ordersService = {
 
     const order = orderDoc.data();
 
+    const resolvedMerchantId = currentUser.role === 'MERCHANT' ? (currentUser.merchantId || (await resolveMerchantId(currentUser.uid)) || currentUser.uid) : null;
     const isOwner = currentUser.uid === order.studentId;
-    const isMerchant = currentUser.uid === order.merchantId;
+    const isMerchant = currentUser.uid === order.merchantId || (resolvedMerchantId && resolvedMerchantId === order.merchantId);
     const isAdmin = currentUser.role === 'ADMIN';
 
     if (!isOwner && !isMerchant && !isAdmin) {
@@ -413,7 +415,8 @@ export const ordersService = {
     if (currentUser.role === 'STUDENT') {
       queryRef = queryRef.where('studentId', '==', currentUser.uid);
     } else if (currentUser.role === 'MERCHANT') {
-      queryRef = queryRef.where('merchantId', '==', currentUser.uid);
+      const merchantId = currentUser.merchantId || (await resolveMerchantId(currentUser.uid)) || currentUser.uid;
+      queryRef = queryRef.where('merchantId', '==', merchantId);
     }
 
     const snapshot = await queryRef.get();

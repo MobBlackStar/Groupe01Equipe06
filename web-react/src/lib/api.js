@@ -21,8 +21,28 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  // 1. Si utilisateur Firebase réel connecté, priorité absolue à son ID Token officiel
+  const authMode = localStorage.getItem('campussave_auth_mode') || 'DEMO';
   const currentUser = auth?.currentUser;
+
+  // 1. En Mode Réel : envoyer UNIQUEMENT le vrai jeton Firebase ID Token
+  if (authMode === 'REAL') {
+    if (currentUser) {
+      try {
+        const token = await currentUser.getIdToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+          return config;
+        }
+      } catch (e) {
+        console.warn('Erreur récupération idToken Firebase:', e);
+      }
+    }
+    // Si aucun utilisateur Firebase connecté en mode réel, NE JAMAIS injecter de jeton démo
+    delete config.headers.Authorization;
+    return config;
+  }
+
+  // 2. En Mode Démo : session de démonstration locale (ou utilisateur Firebase si présent)
   if (currentUser) {
     try {
       const token = await currentUser.getIdToken();
@@ -30,12 +50,9 @@ apiClient.interceptors.request.use(async (config) => {
         config.headers.Authorization = `Bearer ${token}`;
         return config;
       }
-    } catch (e) {
-      console.warn('Erreur récupération idToken Firebase:', e);
-    }
+    } catch (e) {}
   }
 
-  // 2. Repli : jetons de session locale / démo 1-clic uniquement si aucun utilisateur Firebase réel
   const savedToken = localStorage.getItem('campussave_token');
   const savedDemo = localStorage.getItem('campussave_demo_session');
   if (savedToken || savedDemo) {
@@ -47,6 +64,7 @@ apiClient.interceptors.request.use(async (config) => {
     } catch {}
   }
 
+  delete config.headers.Authorization;
   return config;
 });
 

@@ -23,16 +23,18 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [role, setRole] = useState(null);
   const [merchant, setMerchant] = useState(null);
+  const [authMode, setAuthMode] = useState(() => localStorage.getItem('campussave_auth_mode') || 'DEMO');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Synchronisation initiale Session Démo / Firebase Auth
   useEffect(() => {
     let isMounted = true;
+    const currentMode = localStorage.getItem('campussave_auth_mode') || 'DEMO';
 
-    // 1. Restauration prioritaire d'une session de démonstration locale
+    // 1. Restauration prioritaire d'une session de démonstration locale uniquement si mode DEMO
     const savedDemo = localStorage.getItem('campussave_demo_session');
-    if (savedDemo) {
+    if (currentMode === 'DEMO' && savedDemo) {
       try {
         const parsed = JSON.parse(savedDemo);
         setUser({ uid: parsed.uid || 'demo-uid', email: parsed.email, displayName: parsed.displayName });
@@ -40,11 +42,11 @@ export function AuthProvider({ children }) {
         setRole(parsed.role || ROLES.STUDENT);
         if (parsed.role === ROLES.MERCHANT) {
           setMerchant({
-            id: parsed.merchantId || 'merch-01',
+            id: parsed.merchantId || 'merchant-baguette-baguette',
             name: parsed.displayName,
             status: 'APPROVED',
             type: 'FAST_FOOD',
-            location: { lat: 36.7885, lng: 10.1762 },
+            location: { lat: 36.7869, lng: 10.1753 },
           });
         }
         setLoading(false);
@@ -66,11 +68,14 @@ export function AuthProvider({ children }) {
       const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
         if (!isMounted) return;
 
+        const activeMode = localStorage.getItem('campussave_auth_mode') || 'DEMO';
         const currentDemo = localStorage.getItem('campussave_demo_session');
 
         if (firebaseUser) {
           localStorage.removeItem('campussave_demo_session');
           localStorage.removeItem('campussave_token');
+          localStorage.setItem('campussave_auth_mode', 'REAL');
+          setAuthMode('REAL');
           setUser(firebaseUser);
           try {
             const tokenResult = await firebaseUser.getIdTokenResult(true);
@@ -97,8 +102,8 @@ export function AuthProvider({ children }) {
               });
             }
           }
-        } else if (!currentDemo) {
-          // Uniquement si AUCUNE session de démonstration locale n'est active
+        } else if (activeMode === 'REAL' || !currentDemo) {
+          // Uniquement si mode réel sans utilisateur ou aucune session de démonstration
           setUser(null);
           setProfile(null);
           setRole(null);
@@ -123,6 +128,8 @@ export function AuthProvider({ children }) {
    */
   const loginDemo = useCallback(async (typeOrRole) => {
     setError(null);
+    localStorage.setItem('campussave_auth_mode', 'DEMO');
+    setAuthMode('DEMO');
     if (auth?.currentUser) {
       try {
         await fbSignOut(auth);
@@ -138,11 +145,11 @@ export function AuthProvider({ children }) {
     if (demo.role === ROLES.MERCHANT) {
       token = 'test-token:m-baguette:MERCHANT:commercant@baguette.tn';
       merchantData = {
-        id: demo.merchantId || 'merch-01',
+        id: demo.merchantId || 'merchant-baguette-baguette',
         name: demo.displayName,
         status: 'APPROVED',
         type: 'FAST_FOOD',
-        location: { lat: 36.7885, lng: 10.1762 },
+        location: { lat: 36.7869, lng: 10.1753 },
       };
     } else if (demo.role === ROLES.ADMIN) {
       token = 'test-token:admin-uid:ADMIN:admin@campussave.tn';
@@ -191,6 +198,8 @@ export function AuthProvider({ children }) {
    */
   const login = useCallback(async (email, password) => {
     setError(null);
+    localStorage.setItem('campussave_auth_mode', 'REAL');
+    setAuthMode('REAL');
     localStorage.removeItem('campussave_demo_session');
     localStorage.removeItem('campussave_token');
 
@@ -240,6 +249,8 @@ export function AuthProvider({ children }) {
    */
   const register = useCallback(async (email, password, additionalData = {}) => {
     setError(null);
+    localStorage.setItem('campussave_auth_mode', 'REAL');
+    setAuthMode('REAL');
     localStorage.removeItem('campussave_demo_session');
     localStorage.removeItem('campussave_token');
     if (!auth) {
@@ -285,6 +296,36 @@ export function AuthProvider({ children }) {
    * Commutateur de rôle rapide pour la démonstration
    */
   const switchRole = useCallback(async (targetRole) => {
+    return loginDemo(targetRole);
+  }, [loginDemo]);
+
+  /**
+   * Bascule explicite vers le Mode Compte Réel (nettoyage démo, prêt pour login/register)
+   */
+  const switchToRealMode = useCallback(async () => {
+    localStorage.removeItem('campussave_demo_session');
+    localStorage.removeItem('campussave_token');
+    localStorage.setItem('campussave_auth_mode', 'REAL');
+    setAuthMode('REAL');
+    if (!auth?.currentUser) {
+      setUser(null);
+      setProfile(null);
+      setRole(null);
+      setMerchant(null);
+    }
+  }, []);
+
+  /**
+   * Bascule explicite vers le Mode Démo Jury (déconnexion compte réel, activation persona démo)
+   */
+  const switchToDemoMode = useCallback(async (targetRole = 'student') => {
+    if (auth?.currentUser) {
+      try {
+        await fbSignOut(auth);
+      } catch {}
+    }
+    localStorage.setItem('campussave_auth_mode', 'DEMO');
+    setAuthMode('DEMO');
     return loginDemo(targetRole);
   }, [loginDemo]);
 
@@ -378,6 +419,9 @@ export function AuthProvider({ children }) {
     profile,
     role,
     merchant,
+    authMode,
+    isDemoMode: authMode === 'DEMO',
+    isRealMode: authMode === 'REAL',
     loading,
     isAuthenticated: !!user,
     error,
@@ -388,6 +432,8 @@ export function AuthProvider({ children }) {
     loginAsDemo: loginDemo,
     loginDemo,
     switchRole,
+    switchToRealMode,
+    switchToDemoMode,
     logout,
     refreshProfile,
     updateProfile,

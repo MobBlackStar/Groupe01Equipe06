@@ -19,15 +19,15 @@ export async function runSeed() {
   const nowMs = now.getTime();
 
   // =========================================================================
-  // 1. LES 6 COMMERCES DE MONTFLEURY (5 APPROUVÉS, 1 EN ATTENTE POUR LA DÉMO)
+  // 1. LES 12 COMMERCES DE MONTFLEURY (11 APPROUVÉS, 1 EN ATTENTE POUR LA DÉMO)
   // =========================================================================
   const rawMerchants = merchantsData.merchants || [];
   const seededMerchants = [];
 
   for (let i = 0; i < rawMerchants.length; i++) {
     const m = rawMerchants[i];
-    // Le 6ème commerce (Fast-Food Le Phare) est laissé en PENDING pour la validation live par l'Admin !
-    const status = i === 5 ? MERCHANT_STATUS.PENDING : MERCHANT_STATUS.APPROVED;
+    // Le commerce Bellevue (merchant-nice-view-bellevue) est laissé en PENDING pour la validation live par l'Admin !
+    const status = m.id === 'merchant-nice-view-bellevue' ? MERCHANT_STATUS.PENDING : (m.status || MERCHANT_STATUS.APPROVED);
 
     const merchantDoc = {
       id: m.id,
@@ -61,7 +61,7 @@ export async function runSeed() {
     batch.set(db.collection('merchants').doc(m.id), merchantDoc);
     seededMerchants.push(merchantDoc);
   }
-  console.log(`✅ 6 Commerces configurés (5 APPROVED, 1 PENDING pour la démo admin).`);
+  console.log(`✅ 12 Commerces configurés (11 APPROVED, 1 PENDING pour la démo admin).`);
 
   // =========================================================================
   // 2. LES 20 OFFRES ALIMENTAIRES RÉALISTES & PANIERS MYSTÈRE
