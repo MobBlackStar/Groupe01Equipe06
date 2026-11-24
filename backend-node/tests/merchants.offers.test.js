@@ -11,6 +11,7 @@ import { offersService } from '../src/modules/offers/offers.service.js';
 import { generateSearchKeywords, normalizeText } from '../src/modules/offers/keywords.js';
 import { aiService } from '../src/modules/ai/ai.service.js';
 import { offerAutofillSchema } from '../src/modules/ai/ai.schemas.js';
+import { env } from '../src/config/env.js';
 import { distanceFromEssect, isWithinCampusRadius } from '../../shared/geo.js';
 import { MERCHANT_STATUS, USER_STATUS, OFFER_CATEGORIES, PRICING_MODES } from '../../shared/constants.js';
 
@@ -251,19 +252,25 @@ describe('Jour 3 — Commerces, Administration, Offres & Moteur IA', () => {
     });
 
     test('aiService.autofillOffer analyse fidèlement la note culinaire réelle', async () => {
-      const rawText = '4 makloub escalope + 3 brik, fermeture 17h';
-      const result = await aiService.autofillOffer(rawText);
+      const prevProvider = env.AI_PROVIDER;
+      env.AI_PROVIDER = 'none';
+      try {
+        const rawText = '4 makloub escalope + 3 brik, fermeture 17h';
+        const result = await aiService.autofillOffer(rawText);
 
-      assert.ok(result.suggestion);
-      assert.ok(['GEMINI', 'ANTHROPIC', 'FALLBACK', 'ai', 'fallback'].includes(result.source));
+        assert.ok(result.suggestion);
+        assert.ok(['GEMINI', 'ANTHROPIC', 'FALLBACK', 'ai', 'fallback'].includes(result.source));
 
-      const { suggestion } = result;
-      // Multiples articles : panier surprise activé
-      assert.equal(suggestion.isSurpriseBasket, true);
-      assert.equal(suggestion.category, OFFER_CATEGORIES.MIXTE);
-      assert.equal(suggestion.quantityTotal, 7); // 4 + 3
-      assert.ok(suggestion.originalPriceMillimes > 0);
-      assert.ok(suggestion.discountedPriceMillimes < suggestion.originalPriceMillimes);
+        const { suggestion } = result;
+        // Multiples articles : panier surprise activé
+        assert.equal(suggestion.isSurpriseBasket, true);
+        assert.equal(suggestion.category, OFFER_CATEGORIES.MIXTE);
+        assert.equal(suggestion.quantityTotal, 7); // 4 + 3
+        assert.ok(suggestion.originalPriceMillimes > 0);
+        assert.ok(suggestion.discountedPriceMillimes < suggestion.originalPriceMillimes);
+      } finally {
+        env.AI_PROVIDER = prevProvider;
+      }
     });
   });
 });

@@ -78,17 +78,17 @@ describe('Autocomplétion IA — Gemini 2.5 Flash, parseur et intégration HTTP'
     assert.doesNotThrow(() => aiSuggestionSchema.parse(s));
   });
 
-  test('aiService.autofillOffer appelle Gemini 2.5 Flash quand la clé API est configurée et valide le schéma', async () => {
+  test('aiService.autofillOffer appelle Gemini Flash quand la clé API est configurée et valide le schéma', async () => {
     const prevProvider = env.AI_PROVIDER;
     const prevKey = env.GEMINI_API_KEY;
     const prevModel = env.AI_MODEL;
 
     env.AI_PROVIDER = 'gemini';
     env.GEMINI_API_KEY = 'AIzaSyMockedTestKeyForUnitTests';
-    env.AI_MODEL = 'gemini-2.5-flash';
+    env.AI_MODEL = 'gemini-3-flash-preview';
 
     const mockPost = mock.method(axios, 'post', async (url, payload, config) => {
-      assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.5-flash:generateContent/);
+      assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-3-flash-preview:generateContent/);
       assert.equal(config.headers['x-goog-api-key'], 'AIzaSyMockedTestKeyForUnitTests');
       assert.equal(payload.generationConfig.responseMimeType, 'application/json');
       assert.ok(payload.generationConfig.responseSchema);
@@ -110,6 +110,7 @@ describe('Autocomplétion IA — Gemini 2.5 Flash, parseur et intégration HTTP'
                       quantityTotal: 2,
                       weightGramsPerUnit: 360,
                       isSurpriseBasket: false,
+                      surpriseContents: 'null',
                       suggestedPickupStartAt: '17:30',
                       suggestedPickupEndAt: '19:30',
                     }),
@@ -130,6 +131,65 @@ describe('Autocomplétion IA — Gemini 2.5 Flash, parseur et intégration HTTP'
       assert.equal(result.suggestion.isSurpriseBasket, false);
       assert.equal(result.suggestion.discountedPriceMillimes, 2500);
       assert.equal(mockPost.mock.callCount(), 1);
+    } finally {
+      mockPost.mock.restore();
+      env.AI_PROVIDER = prevProvider;
+      env.GEMINI_API_KEY = prevKey;
+      env.AI_MODEL = prevModel;
+    }
+  });
+
+  test('aiService.autofillOffer bascule vers gemini-3-flash-preview si le modèle configuré retourne 404', async () => {
+    const prevProvider = env.AI_PROVIDER;
+    const prevKey = env.GEMINI_API_KEY;
+    const prevModel = env.AI_MODEL;
+
+    env.AI_PROVIDER = 'gemini';
+    env.GEMINI_API_KEY = 'AIzaSyMockedTestKeyForUnitTests';
+    env.AI_MODEL = 'gemini-2.5-flash';
+
+    const calledUrls = [];
+    const mockPost = mock.method(axios, 'post', async (url) => {
+      calledUrls.push(url);
+      if (url.includes('gemini-2.5-flash')) {
+        const err = new Error('Request failed with status code 404');
+        err.response = { status: 404 };
+        throw err;
+      }
+      return {
+        data: {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      title: 'Assortiment 4 Makloub & 3 Brik',
+                      description: 'Invendus chauds préparés le jour même pour sauver un bon repas.',
+                      category: 'PLAT_CHAUD',
+                      originalPriceMillimes: 18000,
+                      discountedPriceMillimes: 9000,
+                      pricingMode: 'FIXED',
+                      quantityTotal: 3,
+                      weightGramsPerUnit: 500,
+                      isSurpriseBasket: false,
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      };
+    });
+
+    try {
+      const result = await aiService.autofillOffer('4 makloub + 3 brik');
+      assert.equal(result.source, 'GEMINI');
+      assert.equal(result.suggestion.title, 'Assortiment 4 Makloub & 3 Brik');
+      assert.equal(calledUrls.length, 2);
+      assert.match(calledUrls[0], /gemini-2\.5-flash:generateContent/);
+      assert.match(calledUrls[1], /gemini-3-flash-preview:generateContent/);
     } finally {
       mockPost.mock.restore();
       env.AI_PROVIDER = prevProvider;
@@ -195,22 +255,28 @@ describe('Autocomplétion IA — Gemini 2.5 Flash, parseur et intégration HTTP'
   });
 
   test('POST /ai/offer-autofill retourne 200 et une suggestion validée pour un commerçant', async () => {
-    const res = await fetch(`${baseUrl}/ai/offer-autofill`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-token:m-baguette:MERCHANT:commercant@baguette.tn',
-      },
-      body: JSON.stringify({
-        rawNote: '4 makloub escalope + 3 brik, fermeture 17h',
-      }),
-    });
-    assert.equal(res.status, 200);
-    const data = await res.json();
-    assert.equal(data.source, 'FALLBACK');
-    assert.equal(data.suggestion.isSurpriseBasket, true);
-    assert.equal(data.suggestion.quantityTotal, 7);
-    assert.equal(data.suggestion.suggestedPickupEndAt, '17:00');
-    assert.doesNotThrow(() => aiSuggestionSchema.parse(data.suggestion));
+    const prevProvider = env.AI_PROVIDER;
+    env.AI_PROVIDER = 'none';
+    try {
+      const res = await fetch(`${baseUrl}/ai/offer-autofill`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token:m-baguette:MERCHANT:commercant@baguette.tn',
+        },
+        body: JSON.stringify({
+          rawNote: '4 makloub escalope + 3 brik, fermeture 17h',
+        }),
+      });
+      assert.equal(res.status, 200);
+      const data = await res.json();
+      assert.equal(data.source, 'FALLBACK');
+      assert.equal(data.suggestion.isSurpriseBasket, true);
+      assert.equal(data.suggestion.quantityTotal, 7);
+      assert.equal(data.suggestion.suggestedPickupEndAt, '17:00');
+      assert.doesNotThrow(() => aiSuggestionSchema.parse(data.suggestion));
+    } finally {
+      env.AI_PROVIDER = prevProvider;
+    }
   });
 });

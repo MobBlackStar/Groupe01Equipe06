@@ -1,5 +1,5 @@
-// 💡 Concept : Comme un interprète simultané polyglotte relié à Google Gemini 2.5 Flash avec disjoncteur automatique, ce service extrait les offres structurées via l'API Gemini et bascule sans latence sur le parseur culinaire local en cas d'indisponibilité.
-// 🎯 Pour la soutenance : "Nous exploitons Google Gemini 2.5 Flash avec Structured Output JSON Schema (timeout 8s) et circuit-breaker déterministe vers le parseur local."
+// 💡 Concept : Comme un interprète simultané polyglotte relié à Google Gemini Flash avec disjoncteur automatique, ce service extrait les offres structurées via l'API Gemini (avec bascule automatique vers les modèles Flash actifs) et retombe sans latence sur le parseur culinaire local en cas d'indisponibilité.
+// 🎯 Pour la soutenance : "Nous exploitons Google Gemini Flash avec Structured Output JSON Schema (timeout 8s), cascade automatique de modèles et circuit-breaker déterministe vers le parseur local."
 // Module : Intelligence Artificielle & Automatisation
 
 import axios from 'axios';
@@ -92,48 +92,119 @@ function normalizeSuggestion(suggestion, rawText, options = {}) {
   };
 }
 
+const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
+const GEMINI_FALLBACK_MODELS = ['gemini-3-flash-preview', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
+
+function isRetryableGeminiModelError(error) {
+  const status = error?.response?.status;
+  return status === 404 || status === 400 || status === 429 || status === 503;
+}
+
+/** Nettoie les valeurs limites retournées par le LLM avant la validation stricte Zod. */
+function sanitizeParsedSuggestion(raw) {
+  if (!raw || typeof raw !== 'object') return raw;
+  const clean = { ...raw };
+
+  for (const key of ['surpriseContents', 'suggestedPickupStartAt', 'suggestedPickupEndAt']) {
+    if (clean[key] == null || clean[key] === 'null' || clean[key] === '') {
+      delete clean[key];
+    } else {
+      clean[key] = String(clean[key]).trim();
+    }
+  }
+
+  for (const key of ['startPriceMillimes', 'floorPriceMillimes', 'closingHour', 'closingMinute']) {
+    if (clean[key] == null) delete clean[key];
+  }
+
+  if (typeof clean.title === 'string') clean.title = clean.title.trim().slice(0, 80);
+  if (typeof clean.description === 'string') clean.description = clean.description.trim().slice(0, 500);
+  if (typeof clean.surpriseContents === 'string') clean.surpriseContents = clean.surpriseContents.slice(0, 300);
+
+  if (Number.isFinite(Number(clean.originalPriceMillimes))) {
+    clean.originalPriceMillimes = Math.min(100000, Math.max(500, Math.round(Number(clean.originalPriceMillimes))));
+  }
+  if (Number.isFinite(Number(clean.discountedPriceMillimes))) {
+    clean.discountedPriceMillimes = Math.max(100, Math.round(Number(clean.discountedPriceMillimes)));
+  }
+  if (Number.isFinite(Number(clean.quantityTotal))) {
+    clean.quantityTotal = Math.min(100, Math.max(1, Math.round(Number(clean.quantityTotal))));
+  }
+  if (Number.isFinite(Number(clean.weightGramsPerUnit))) {
+    clean.weightGramsPerUnit = Math.min(5000, Math.max(50, Math.round(Number(clean.weightGramsPerUnit))));
+  }
+
+  if (!clean.isSurpriseBasket) {
+    delete clean.surprise;
+    delete clean.surpriseContents;
+  } else if (clean.surprise && typeof clean.surprise === 'object') {
+    clean.surprise = {
+      ...clean.surprise,
+      teaser: String(clean.surprise.teaser || clean.surpriseContents || 'Assortiment surprise').slice(0, 120),
+      itemCountHint: Math.min(10, Math.max(1, Math.round(Number(clean.surprise.itemCountHint) || 3))),
+    };
+  }
+
+  return clean;
+}
+
 async function callGemini(text, options = {}) {
-  const model = env.AI_MODEL && env.AI_MODEL.includes('gemini') ? env.AI_MODEL : 'gemini-2.5-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const configured = env.AI_MODEL && env.AI_MODEL.includes('gemini') ? env.AI_MODEL : DEFAULT_GEMINI_MODEL;
+  const candidateModels = [...new Set([configured, ...GEMINI_FALLBACK_MODELS])];
   const timeoutMs = env.AI_TIMEOUT_MS || 8000;
 
   const userPrompt = `Analyse cette note (français, anglais ou derja) et génère une offre CampusSave en français : "${text}"${
     options.closingTime ? ` (heure de fermeture : ${options.closingTime})` : ''
   }`;
 
-  const response = await axios.post(
-    url,
-    {
-      systemInstruction: {
-        parts: [{ text: AI_SYSTEM_PROMPT }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: userPrompt }],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.2,
-        responseMimeType: 'application/json',
-        responseSchema: GEMINI_RESPONSE_SCHEMA,
-      },
+  const payload = {
+    systemInstruction: {
+      parts: [{ text: AI_SYSTEM_PROMPT }],
     },
-    {
-      timeout: timeoutMs,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': env.GEMINI_API_KEY,
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: userPrompt }],
       },
-    }
-  );
+    ],
+    generationConfig: {
+      temperature: 0.2,
+      responseMimeType: 'application/json',
+      responseSchema: GEMINI_RESPONSE_SCHEMA,
+    },
+  };
 
-  const rawJson = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  let response;
+  for (let i = 0; i < candidateModels.length; i += 1) {
+    const model = candidateModels[i];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    try {
+      response = await axios.post(url, payload, {
+        timeout: timeoutMs,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': env.GEMINI_API_KEY,
+        },
+      });
+      break;
+    } catch (error) {
+      const hasMore = i < candidateModels.length - 1;
+      if (hasMore && isRetryableGeminiModelError(error)) {
+        logger.warn({ model, status: error?.response?.status }, 'Modèle Gemini indisponible, essai du modèle de repli');
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  const rawJson = response?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!rawJson) {
     throw new Error('Réponse Gemini vide');
   }
 
-  const parsed = JSON.parse(rawJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+  const parsed = sanitizeParsedSuggestion(
+    JSON.parse(rawJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim())
+  );
   const validated = aiSuggestionSchema.parse(parsed);
   return normalizeSuggestion(validated, text, options);
 }
