@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Ce contexte écoute les changements d'état Firebase Auth (`onIdTokenChanged`), protège les sessions démo contre l'écrasement asynchrone et fournit l'intégralité du contrat d'authentification."
 // Module : Structure & Routage / Intégration écrans : l'équipe UI
 
+import { disablePush, ensurePushRegistered } from '../lib/push.js';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   onIdTokenChanged,
@@ -408,6 +409,7 @@ export function AuthProvider({ children }) {
    * Déconnexion sécurisée
    */
   const logout = useCallback(async () => {
+    await disablePush(); // ce navigateur n'est plus lié à ce compte (le jeton d'authentification est encore valide ici)
     localStorage.removeItem('campussave_demo_session');
     localStorage.removeItem('campussave_token');
     if (auth) {
@@ -421,6 +423,11 @@ export function AuthProvider({ children }) {
     setMerchant(null);
     setError(null);
   }, []);
+
+  // Connexion (démo ou compte réel) : si le navigateur a déjà l'autorisation, on enregistre ses notifications push
+  useEffect(() => {
+    if (profile?.uid) ensurePushRegistered();
+  }, [profile?.uid]);
 
   const value = {
     user,

@@ -64,7 +64,6 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
   const walkingMin = Number.isFinite(distanceM) ? calculateWalkingMinutes(distanceM) : null;
 
   const imageUrl = offer.imageUrl || offer.photoUrl || getDistinctGriddleFoodImage(category, id || title);
-  const sticker = STICKERS[index] || null;
 
   return (
     <Link
@@ -83,11 +82,7 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
             e.currentTarget.src = SAFE_FALLBACK_IMG;
           }}
         />
-        <div className="absolute top-3 left-3 right-3 z-10 flex items-start justify-between gap-2">
-          <span className="cs-pill">{formatCategory(category)}</span>
-          {sticker && <span className={`cs-sticker ${sticker.cls} !text-lg rotate-6`}>{sticker.text}</span>}
-        </div>
-        <div className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-2">
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
           <CountdownChip pickupEndAt={pickupEndAt} />
           {isSurprise && <RarityBadge rarity={rarity} />}
         </div>
@@ -97,6 +92,7 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
       <div className="flex flex-col flex-1 px-2.5 pt-5 pb-2">
         <p className="flex items-center gap-x-3 gap-y-1 flex-wrap text-[0.9375rem] text-[#5E5850] uppercase font-medium tracking-wide">
           <span className="line-clamp-1">{merchantName}</span>
+          <span className="shrink-0 normal-case tracking-normal opacity-80">{formatCategory(category)}</span>
           {walkingMin !== null && (
             <span className="inline-flex items-center gap-1 text-[#111111] shrink-0">
               <MapPin className="w-4 h-4 text-[#DA0711]" />

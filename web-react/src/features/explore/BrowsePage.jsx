@@ -21,6 +21,7 @@ export default function BrowsePage() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [showDecay, setShowDecay] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -170,12 +171,12 @@ export default function BrowsePage() {
       {/* =========================================================================
           SECTION A : HERO GRIDDLE (titre monumental + plateau + stickers)
           ========================================================================= */}
-      <section className="cs-container pt-8 sm:pt-12 lg:pt-14">
+      <section className="cs-container pt-6 sm:pt-10 lg:pt-12">
         <h1 className="cs-hero text-center cs-fade-up">
           Cuisiné. <span className="text-[#DA0711]">Bradé.</span> Sauvé.
         </h1>
 
-        <div className="relative grid lg:grid-cols-12 items-center gap-8 lg:gap-4 mt-6 lg:mt-2">
+        <div className="relative grid lg:grid-cols-12 items-center gap-6 lg:gap-4 mt-4 lg:mt-0">
           <div className="lg:col-span-4 order-2 lg:order-1 cs-fade-up" style={{ animationDelay: '120ms' }}>
             <p className="cs-lead">
               Les invendus du jour des artisans de Montfleury, jusqu'à <strong className="font-semibold text-[#DA0711]">-70%</strong>, à cinq minutes à pied de l'ESSECT.
@@ -206,27 +207,94 @@ export default function BrowsePage() {
       </section>
 
       {/* =========================================================================
-          SECTION B : RUBAN ROUGE DÉFILANT
+          SECTION D : NOS PÉPITES ANTI-GASPI (catalogue)
           ========================================================================= */}
-      <div className="cs-ticker mt-6" aria-hidden="true">
-        <div className="cs-ticker-track">
-          {[0, 1].map((dup) => (
-            <div key={dup} className="cs-ticker-item">
-              {['Anti-gaspillage', 'Plats du jour', "Jusqu'à -70%", 'Prix étudiant', 'Smart Decay', 'Frais du soir'].map((w) => (
-                <React.Fragment key={w}>
-                  <span>{w}</span>
-                  <span className="cs-ticker-star">★</span>
-                </React.Fragment>
-              ))}
-            </div>
-          ))}
+      <section id="bestsellers" className="cs-container pt-10 sm:pt-12 pb-16 scroll-mt-24">
+        <div className="mb-6">
+          <p className="cs-eyebrow mb-2">
+            {filteredOffers.length} offre{filteredOffers.length > 1 ? 's' : ''} disponible{filteredOffers.length > 1 ? 's' : ''}
+          </p>
+          <h2 className="cs-title-lg">Nos pépites anti-gaspi</h2>
         </div>
-      </div>
+
+        <div className="space-y-4 mb-8">
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Un plat, une baguette farcie, un restaurant…"
+          />
+          <FilterPanel
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            maxPriceMillimes={maxPriceMillimes}
+            onChangeMaxPrice={setMaxPriceMillimes}
+            surpriseOnly={surpriseOnly}
+            onToggleSurpriseOnly={setSurpriseOnly}
+            sortBy={sortBy}
+            onChangeSortBy={setSortBy}
+            onResetFilters={handleResetFilters}
+            categoryCounts={categoryCounts}
+          />
+        </div>
+
+        {loading ? (
+          <div className="py-24 flex flex-col items-center justify-center gap-5">
+            <Spinner size="lg" />
+            <p className="cs-lead">Recherche des meilleurs plats en direct…</p>
+          </div>
+        ) : loadError ? (
+          <EmptyState
+            icon="📡"
+            title="Connexion impossible"
+            description={loadError}
+            action={
+              <button type="button" onClick={() => setReloadKey((k) => k + 1)} className="cs-btn cs-btn-red">
+                Réessayer
+              </button>
+            }
+          />
+        ) : filteredOffers.length === 0 ? (
+          <EmptyState
+            icon="🔍"
+            title="Rien ne correspond"
+            description="Élargis ton budget, change de catégorie ou réinitialise les filtres."
+            action={
+              <button type="button" onClick={handleResetFilters} className="cs-btn cs-btn-red">
+                Réinitialiser les filtres
+              </button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            {filteredOffers.map((offer, idx) => (
+              <div key={offer.id} className="cs-fade-up" style={{ animationDelay: `${Math.min(idx, 8) * 60}ms` }}>
+                {offer.isSurpriseBasket ? (
+                  <MysteryBoxCard offer={offer} index={idx} />
+                ) : (
+                  <OfferCard offer={offer} index={idx} />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* =========================================================================
-          SECTION C : MACHINE À REMONTER LE TEMPS (Smart Decay)
+          SECTION C : SIMULATEUR SMART DECAY (replié par défaut : le catalogue passe en premier)
           ========================================================================= */}
-      <section className="cs-container cs-section">
+      <section className="cs-container pb-12">
+        <button
+          type="button"
+          onClick={() => setShowDecay((v) => !v)}
+          aria-expanded={showDecay}
+          className="cs-btn cs-btn-cream w-full sm:w-auto"
+        >
+          <span aria-hidden="true">⏱</span>
+          Simulateur Smart Decay : le prix baisse, tu choisis quand
+          <span aria-hidden="true">{showDecay ? '−' : '+'}</span>
+        </button>
+        {showDecay && (
+          <div className="mt-10">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-end mb-10">
           <div className="lg:col-span-7">
             <p className="cs-eyebrow mb-3">Smart Decay · simulateur</p>
@@ -308,84 +376,7 @@ export default function BrowsePage() {
             <span>20h Clôture</span>
           </div>
         </div>
-      </section>
-
-      {/* =========================================================================
-          SECTION D : NOS PÉPITES ANTI-GASPI (catalogue)
-          ========================================================================= */}
-      <section id="bestsellers" className="cs-container pb-20 scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-          <div>
-            <p className="cs-eyebrow mb-3">
-              {filteredOffers.length} offre{filteredOffers.length > 1 ? 's' : ''} disponible{filteredOffers.length > 1 ? 's' : ''}
-            </p>
-            <h2 className="cs-title-lg">Nos pépites anti-gaspi</h2>
-          </div>
-          <button type="button" onClick={handleResetFilters} className="cs-btn cs-btn-cream self-start md:self-auto">
-            Tout le menu
-            <ArrowRight className="w-5 h-5" strokeWidth={2.5} />
-          </button>
-        </div>
-
-        <div className="space-y-6 mb-10">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Un plat, une baguette farcie, un restaurant…"
-          />
-          <FilterPanel
-            selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
-            maxPriceMillimes={maxPriceMillimes}
-            onChangeMaxPrice={setMaxPriceMillimes}
-            surpriseOnly={surpriseOnly}
-            onToggleSurpriseOnly={setSurpriseOnly}
-            sortBy={sortBy}
-            onChangeSortBy={setSortBy}
-            onResetFilters={handleResetFilters}
-            categoryCounts={categoryCounts}
-          />
-        </div>
-
-        {loading ? (
-          <div className="py-24 flex flex-col items-center justify-center gap-5">
-            <Spinner size="lg" />
-            <p className="cs-lead">Recherche des meilleurs plats en direct…</p>
-          </div>
-        ) : loadError ? (
-          <EmptyState
-            icon="📡"
-            title="Connexion impossible"
-            description={loadError}
-            action={
-              <button type="button" onClick={() => setReloadKey((k) => k + 1)} className="cs-btn cs-btn-red">
-                Réessayer
-              </button>
-            }
-          />
-        ) : filteredOffers.length === 0 ? (
-          <EmptyState
-            icon="🔍"
-            title="Rien ne correspond"
-            description="Élargis ton budget, change de catégorie ou réinitialise les filtres."
-            action={
-              <button type="button" onClick={handleResetFilters} className="cs-btn cs-btn-red">
-                Réinitialiser les filtres
-              </button>
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-            {filteredOffers.map((offer, idx) => (
-              <div key={offer.id} className="cs-fade-up" style={{ animationDelay: `${Math.min(idx, 8) * 60}ms` }}>
-                {offer.isSurpriseBasket ? (
-                  <MysteryBoxCard offer={offer} index={idx} />
-                ) : (
-                  <OfferCard offer={offer} index={idx} />
-                )}
-              </div>
-            ))}
-          </div>
+                </div>
         )}
       </section>
 

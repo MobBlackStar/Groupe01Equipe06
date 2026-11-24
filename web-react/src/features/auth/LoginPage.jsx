@@ -107,11 +107,8 @@ export function LoginPage() {
     <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden">
       <div className="cs-container cs-page">
         {/* Marque */}
-        <Link
-          to="/"
-          className="inline-block font-title text-[#DA0711] text-2xl sm:text-3xl tracking-tight leading-none mb-10 lg:mb-14"
-        >
-          CAMPUSSAVE
+        <Link to="/" className="inline-flex items-center gap-3 mb-10 lg:mb-14" aria-label="CampusSave — accueil">
+          <img src="/assets/brand/logo-full-512.png" alt="CampusSave" width="120" height="107" className="h-20 sm:h-24 w-auto" decoding="async" />
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">

@@ -27,7 +27,7 @@ const MIN_MS = 60 * 1000;
 const WELCOME_BONUS_POINTS = 30; // shared/loyalty.js : bonus de première commande finalisée
 const POINTS_PER_PORTION = 20;
 
-/** Les 20 offres du catalogue (rattachées à des commerces qui existent réellement dans merchants.json). */
+/** Les 25 offres du catalogue (rattachées à des commerces qui existent réellement dans merchants.json). */
 export const OFFER_TEMPLATES = [
     // Baguette & Baguette (4 offres : 2 Dutch, 1 Fixed, 1 Mystery Box RARE)
     {
@@ -345,13 +345,85 @@ export const OFFER_TEMPLATES = [
       isSurpriseBasket: false,
       imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
     },
+    // Un commerce approuvé sans offre n'aurait aucun prix « dès X DT » sur le radar : chaque commerce a au moins une offre active
+    {
+      id: 'off-21',
+      merchantId: 'merchant-chez-nous-ali-trad',
+      title: 'Café Gourmand & Mille-feuille du Jour',
+      category: OFFER_CATEGORIES.PATISSERIE,
+      mode: PRICING_MODES.FIXED,
+      originalPriceMillimes: 4500,
+      discountedPriceMillimes: 2200,
+      quantityAvailable: 4,
+      weightGrams: 250,
+      isSurprise: false,
+      isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'off-22',
+      merchantId: 'merchant-7days-montfleury',
+      title: 'Sandwich Thon Harissa & Œuf Dur',
+      category: OFFER_CATEGORIES.SANDWICH,
+      mode: PRICING_MODES.DUTCH_AUCTION,
+      originalPriceMillimes: 5500,
+      startPriceMillimes: 4500,
+      floorPriceMillimes: 2000,
+      quantityAvailable: 5,
+      weightGrams: 300,
+      isSurprise: false,
+      isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'off-23',
+      merchantId: 'merchant-maison-amandier',
+      title: 'Assiette d\'Amandes & Pâtisseries Fines',
+      category: OFFER_CATEGORIES.PATISSERIE,
+      mode: PRICING_MODES.FIXED,
+      originalPriceMillimes: 7000,
+      discountedPriceMillimes: 3500,
+      quantityAvailable: 3,
+      weightGrams: 320,
+      isSurprise: false,
+      isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'off-24',
+      merchantId: 'merchant-boulangerie-beb-falla',
+      title: 'Lot Pain Tradition & Viennoiseries',
+      category: OFFER_CATEGORIES.VIENNOISERIE,
+      mode: PRICING_MODES.FIXED,
+      originalPriceMillimes: 5000,
+      discountedPriceMillimes: 2000,
+      quantityAvailable: 6,
+      weightGrams: 500,
+      isSurprise: false,
+      isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      id: 'off-25',
+      merchantId: 'merchant-patisserie-mme-abid',
+      title: 'Plateau de Makroudh & Kaak Warka',
+      category: OFFER_CATEGORIES.PATISSERIE,
+      mode: PRICING_MODES.FIXED,
+      originalPriceMillimes: 6500,
+      discountedPriceMillimes: 3200,
+      quantityAvailable: 4,
+      weightGrams: 350,
+      isSurprise: false,
+      isSurpriseBasket: false,
+      imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
+    },
 ];
 
 /**
  * Fin du créneau de retrait de chaque offre, en minutes après « maintenant » : certaines se terminent dans 2 h à 5 h
  * (le prix dégressif se voit baisser), les autres couvrent jusqu'à 24 h.
  */
-const OFFER_END_MINUTES = [120, 180, 300, 1440, 240, 1440, 150, 1200, 300, 1440, 210, 1440, 270, 1440, 180, 960, 1440, 135, 300, 1440];
+const OFFER_END_MINUTES = [120, 180, 300, 1440, 240, 1440, 150, 1200, 300, 1440, 210, 1440, 270, 1440, 180, 960, 1440, 135, 300, 1440, 200, 270, 1440, 360, 1440];
 
 /** Les 8 étudiants et le nombre de commandes finalisées de chacun (Yassine : 3 commandes = 90 EcoPoints, à 10 points du palier 100). */
 const STUDENT_PLAN = [

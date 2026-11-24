@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'app/app.dart';
 import 'app/router.dart';
 import 'services/auth_service.dart';
+import 'services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,9 @@ void main() async {
   } catch (e) {
     debugPrint('⚠️ Initialisation Firebase ignorée / mode démo local : $e');
   }
+
+  FcmService.navigatorKey = AppRouter.rootNavigatorKey;
+  FcmService.initialize(); // écouteurs de notifications (sans bloquer le démarrage)
 
   runApp(
     MultiProvider(

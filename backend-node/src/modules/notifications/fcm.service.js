@@ -3,10 +3,49 @@
 // 🎯 À retenir pour la soutenance : "Toutes les notifications FCM sont expédiées après le commit réussi des transactions (zéro blocage métier) et les jetons invalides sont automatiquement purgés de Firestore."
 // Module : Notifications & Messagerie Événementielle
 
-import { messaging, db } from '../../config/firebase.js';
+import { messaging, db, isFirebaseConfigured } from '../../config/firebase.js';
 import { logger } from '../../utils/logger.js';
 import pkg from 'firebase-admin';
 const { firestore } = pkg;
+
+/** Canal Android « haute importance » (créé côté application) : sans lui, Android 8+ n'affiche pas la bannière flottante. */
+export const ANDROID_CHANNEL_ID = 'campussave_high_importance';
+
+/** Page ouverte au toucher de la notification (web) et route lue par l'application mobile. */
+const ROUTE_BY_TYPE = {
+  ORDER_PAID: '/merchant/orders',
+  TICKET_READY: '/app/orders',
+  ORDER_COMPLETED: '/app/orders',
+  PICKUP_REMINDER: '/app/orders',
+  REWARD_UNLOCKED: '/app/loyalty',
+  MERCHANT_STATUS: '/merchant/store',
+  NEW_OFFER: '/app/explore',
+  TEST: '/profile',
+};
+
+/**
+ * Message FCM complet : notification commune + options Android (priorité haute, canal, son), Web Push et iOS.
+ * Les valeurs de `data` sont forcées en chaînes (exigence FCM).
+ */
+export function buildFcmMessage({ title, body, data = {} }) {
+  const type = String(data.type || 'GENERIC');
+  const stringData = Object.fromEntries(Object.entries({ ...data, route: data.route || ROUTE_BY_TYPE[type] || '/' }).map(([k, v]) => [k, String(v)]));
+  const webLink = `${(process.env.WEB_APP_URL || '').replace(/\/$/, '')}${stringData.route}`;
+  return {
+    notification: { title, body },
+    data: stringData,
+    android: {
+      priority: 'high',
+      notification: { channelId: ANDROID_CHANNEL_ID, sound: 'default', defaultSound: true, defaultVibrateTimings: true, visibility: 'public' },
+    },
+    webpush: {
+      headers: { Urgency: 'high', TTL: '86400' },
+      notification: { icon: '/favicon.png', badge: '/favicon-32x32.png', tag: type, renotify: true },
+      ...(webLink.startsWith('http') ? { fcmOptions: { link: webLink } } : {}),
+    },
+    apns: { headers: { 'apns-priority': '10' }, payload: { aps: { sound: 'default' } } },
+  };
+}
 
 // Cache en mémoire pour le bridage anti-spam du topic new-offers (max 1 notification par commerçant par heure)
 const topicThrottleCache = new Map();
@@ -17,23 +56,26 @@ export class FcmService {
    * @param {string[]} tokens - Liste des jetons FCM
    * @param {object} payload - { title, body, data }
    * @param {string|null} userId - Identifiant de l'utilisateur pour purger les jetons morts
+   * @returns {Promise<{ tokensCount: number, sentCount: number, failedCount: number, errors: Array<{token: string, code: string}> }>}
    */
   async sendToTokens(tokens, { title, body, data = {} }, userId = null) {
-    if (!tokens || tokens.length === 0) return;
+    const result = { tokensCount: 0, sentCount: 0, failedCount: 0, errors: [] };
+    if (!tokens || tokens.length === 0) return result;
 
     try {
       // Filtrer les doublons éventuels
       const uniqueTokens = [...new Set(tokens.filter(Boolean))];
-      if (uniqueTokens.length === 0) return;
-
-      const stringData = Object.fromEntries(
-        Object.entries(data).map(([k, v]) => [k, String(v)])
-      );
+      result.tokensCount = uniqueTokens.length;
+      if (uniqueTokens.length === 0) return result;
 
       const response = await messaging.sendEachForMulticast({
         tokens: uniqueTokens,
-        notification: { title, body },
-        data: stringData,
+        ...buildFcmMessage({ title, body, data }),
+      });
+      result.sentCount = response.successCount;
+      result.failedCount = response.failureCount;
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) result.errors.push({ token: `${uniqueTokens[idx].slice(0, 12)}…`, code: resp.error?.code || 'unknown' });
       });
 
       logger.info(
@@ -70,7 +112,28 @@ export class FcmService {
       }
     } catch (error) {
       logger.warn({ err: error.message }, 'Échec d expédition FCM (résilience active)');
+      result.failedCount = result.tokensCount;
+      result.errors.push({ token: '*', code: error.code || error.message });
     }
+    return result;
+  }
+
+  /** Mode d'envoi réel : `firebase` (vraie messagerie) ou `memory` (simulation locale, aucun téléphone ne reçoit rien). */
+  get mode() {
+    return isFirebaseConfigured ? 'firebase' : 'memory';
+  }
+
+  /** Notification de test : même charge utile que les vraies notifications, pour vérifier la réception en quelques secondes. */
+  async notifyTest(tokens, userId = null) {
+    return this.sendToTokens(
+      tokens,
+      {
+        title: 'CampusSave : test de notification 🔔',
+        body: 'Si vous lisez ceci, les notifications push fonctionnent sur cet appareil.',
+        data: { type: 'TEST' },
+      },
+      userId
+    );
   }
 
   /**
@@ -78,7 +141,7 @@ export class FcmService {
    */
   async notifyMerchantStatus(tokens, status, reason = '', userId = null) {
     const isApproved = status === 'APPROVED';
-    await this.sendToTokens(
+    return this.sendToTokens(
       tokens,
       {
         title: isApproved ? 'Boutique Validée ! 🎉' : 'Mise à jour de votre statut commerçant',
@@ -95,7 +158,7 @@ export class FcmService {
    * 2. Notification Commerçant : Nouvelle commande payée prête pour le retrait étudiant.
    */
   async notifyOrderPaid(tokens, orderCode, userId = null) {
-    await this.sendToTokens(
+    return this.sendToTokens(
       tokens,
       {
         title: 'Nouvelle commande confirmée ! 🛎️',
@@ -110,7 +173,7 @@ export class FcmService {
    * 3. Notification Étudiant : Commande confirmée et Living Ticket prêt avec QR code rotatif.
    */
   async notifyTicketReady(tokens, orderCode, userId = null) {
-    await this.sendToTokens(
+    return this.sendToTokens(
       tokens,
       {
         title: 'Paiement confirmé ! 🎟️',
@@ -125,7 +188,7 @@ export class FcmService {
    * 4. Notification Étudiant : Rappel de retrait imminent avant expiration du créneau.
    */
   async notifyPickupReminder(tokens, orderCode, minutesLeft = 30, userId = null) {
-    await this.sendToTokens(
+    return this.sendToTokens(
       tokens,
       {
         title: 'Rappel de retrait CampusSave ⏳',
@@ -140,7 +203,7 @@ export class FcmService {
    * 5. Notification Étudiant : Commande retirée avec succès, EcoPoints crédités et Mystery Box révélée.
    */
   async notifyOrderCompleted(tokens, orderCode, pointsAwarded, userId = null) {
-    await this.sendToTokens(
+    return this.sendToTokens(
       tokens,
       {
         title: 'Sauvetage réussi ! 🌱',
@@ -155,7 +218,7 @@ export class FcmService {
    * 6. Notification Étudiant : Déblocage d'un palier ou d'un coupon de fidélité éco-citoyen.
    */
   async notifyRewardUnlocked(tokens, rewardDescription, userId = null) {
-    await this.sendToTokens(
+    return this.sendToTokens(
       tokens,
       {
         title: 'Nouveau coupon débloqué ! 🎁',
@@ -191,12 +254,7 @@ export class FcmService {
 
       await messaging.send({
         topic: 'new-offers',
-        notification: { title, body },
-        data: {
-          type: 'NEW_OFFER',
-          offerId: String(offer.id || ''),
-          merchantId: String(merchantId || ''),
-        },
+        ...buildFcmMessage({ title, body, data: { type: 'NEW_OFFER', offerId: offer.id || '', merchantId: merchantId || '' } }),
       });
 
       logger.info({ offerId: offer.id, merchantId }, 'Notification topic new-offers expédiée');

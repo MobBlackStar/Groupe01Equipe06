@@ -102,9 +102,9 @@ const writeUi = (key, value) => {
   }
 };
 const [focusMode, setFocusMode] = useState(() => readUi('focus', false));
-const [programOpen, setProgramOpen] = useState(() => readUi('program', true));
-const [cardsOpen, setCardsOpen] = useState(() => readUi('cards', true));
-const [introOpen, setIntroOpen] = useState(true);
+const [programOpen, setProgramOpen] = useState(() => readUi('program2', false));
+const [cardsOpen, setCardsOpen] = useState(() => readUi('cards2', false));
+const [introOpen, setIntroOpen] = useState(() => readUi('intro2', false));
 const [uiDim, setUiDim] = useState(false);
 const dimTimerRef = useRef(null);
 // Heure de la scène : null = « maintenant » ; sinon minutes depuis minuit (heure de Tunis). `clockPlaying` fait défiler le soleil.
@@ -438,11 +438,11 @@ clockRef.current = clock;
     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80';
 
   return (
-    <div className={`relative w-full ${embed ? 'h-[100dvh]' : 'h-[calc(100vh-82px)] min-h-[560px]'} bg-[#FAF3E6] overflow-hidden flex flex-col font-sans text-[#111111]`}>
+    <div className={`relative w-full ${embed ? 'h-[100dvh]' : 'h-[calc(100dvh-82px)] min-h-[520px]'} bg-[#FAF3E6] overflow-hidden flex flex-col font-sans text-[#111111]`}>
       {/* 1. BARRE DE COMMANDE SUPÉRIEURE */}
-      <div className="z-30 bg-[#FAF3E6] border-b-2 border-[#111111] px-4 sm:px-6 py-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+      <div className={`z-30 bg-[#FAF3E6] border-b-2 border-[#111111] px-4 sm:px-6 ${embed ? 'py-2' : 'pt-4 pb-3 sm:py-4'} flex flex-nowrap md:flex-wrap items-center md:items-end justify-between gap-x-3 md:gap-x-8 gap-y-4`}>
         {/* Titre & Statut */}
-        <div className={`min-w-0 ${embed ? 'hidden' : ''}`}>
+        <div className={`min-w-0 ${embed ? 'hidden' : 'hidden sm:block'}`}>
           <p className="cs-eyebrow mb-2 flex items-center gap-2">
             <Compass className="w-4 h-4" aria-hidden="true" />
             Campus ESSECT · {sortedMerchants.length} relais actifs à portée
@@ -454,8 +454,9 @@ clockRef.current = clock;
         </div>
 
         {/* Sélecteur de rayon d'exploration */}
-        <div className="flex flex-wrap items-center gap-2 max-w-full" role="group" aria-label="Rayon d'exploration">
-          <span className="cs-label shrink-0 mr-1">Rayon</span>
+        <div className="flex flex-nowrap md:flex-wrap items-center gap-2 min-w-0 flex-1 md:flex-none overflow-x-auto md:overflow-visible scrollbar-none" role="group" aria-label="Rayon d'exploration">
+          <h1 className="sr-only sm:hidden">Holo-Radar</h1>
+          <span className="cs-label shrink-0 mr-1 hidden sm:inline">Rayon</span>
           {RADIUS_OPTIONS.map((r) => (
             <button
               key={r}
@@ -465,7 +466,7 @@ clockRef.current = clock;
                 handleCloseDrawer();
               }}
               aria-pressed={radiusM === r}
-              className="cs-chip shrink-0 !px-4"
+              className="cs-chip shrink-0 !px-4 !min-h-[44px]"
             >
               {r >= 1000 ? `${r / 1000} km` : `${r} m`}
             </button>
@@ -473,14 +474,15 @@ clockRef.current = clock;
         </div>
 
         {/* Boutons d'action : Bascule 3D/2D et Recentrage ESSECT */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
+            aria-label={viewMode === '3D' ? 'Vue liste' : 'Radar 3D'}
             onClick={() => setViewMode(viewMode === '3D' ? '2D' : '3D')}
             className="cs-btn cs-btn-ink cs-btn-sm min-h-[2.75rem]"
           >
             <Layers className="w-4 h-4" aria-hidden="true" />
-            {viewMode === '3D' ? 'Vue liste' : 'Radar 3D'}
+            <span className="hidden sm:inline">{viewMode === '3D' ? 'Vue liste' : 'Radar 3D'}</span>
           </button>
 
           {viewMode === '3D' && (
@@ -584,11 +586,35 @@ clockRef.current = clock;
           />
         )}
 
-        {/* 3. TITRE ÉDITORIAL EN SURIMPRESSION (panneau encre) */}
-        {viewMode === '3D' && !walkState && introOpen && (
-          <div className="cs-ui-fade hidden md:block absolute top-5 left-5 z-20 pointer-events-none max-w-sm">
-            <div className="cs-card-ink p-6">
-              <p className="cs-eyebrow !text-[#FFD000] mb-3 flex items-center gap-2">
+        {/* 3. INTRODUCTION : pastille repliée par défaut, carte encre dépliable */}
+        {viewMode === '3D' && !walkState && !selectedMerchant && !introOpen && (
+          <button
+            type="button"
+            onClick={() => {
+              setIntroOpen(true);
+              writeUi('intro2', true);
+            }}
+            className="cs-ui-fade cs-btn cs-btn-ink cs-btn-sm hidden md:inline-flex absolute top-5 left-5 z-20"
+            aria-label="Afficher l'introduction"
+          >
+            <Compass className="w-4 h-4" aria-hidden="true" /> Autour de l'ESSECT
+          </button>
+        )}
+        {viewMode === '3D' && !walkState && !selectedMerchant && introOpen && (
+          <div className="cs-ui-fade hidden md:block absolute top-5 left-5 z-20 max-w-sm">
+            <div className="cs-card-ink p-6 relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setIntroOpen(false);
+                  writeUi('intro2', false);
+                }}
+                className="absolute top-3 right-3 w-9 h-9 rounded-full border-2 border-[#FAF3E6]/40 text-[#FAF3E6] hover:bg-[#FAF3E6]/10 flex items-center justify-center"
+                aria-label="Replier l'introduction"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <p className="cs-eyebrow !text-[#FFD000] mb-3 flex items-center gap-2 pr-10">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#DA0711] animate-pulse" aria-hidden="true" />
                 Direct Montfleury · {sortedMerchants.length || 5} arrêts
               </p>
@@ -608,7 +634,7 @@ clockRef.current = clock;
             type="button"
             onClick={() => {
               setProgramOpen(true);
-              writeUi('program', true);
+              writeUi('program2', true);
             }}
             className="cs-ui-fade cs-btn cs-btn-cream cs-btn-sm hidden lg:inline-flex absolute top-5 right-14 z-20"
           >
@@ -628,7 +654,7 @@ clockRef.current = clock;
                   type="button"
                   onClick={() => {
                     setProgramOpen(false);
-                    writeUi('program', false);
+                    writeUi('program2', false);
                   }}
                   aria-label="Réduire le programme du jour"
                   className="cs-icon-btn"
@@ -715,7 +741,7 @@ clockRef.current = clock;
               type="button"
               onClick={() => {
                 setCardsOpen(true);
-                writeUi('cards', true);
+                writeUi('cards2', true);
               }}
               className="cs-btn cs-btn-ink cs-btn-sm shrink-0"
               aria-label="Déplier les 3 commerces les plus proches"
@@ -742,7 +768,7 @@ clockRef.current = clock;
                 type="button"
                 onClick={() => {
                   setCardsOpen(false);
-                  writeUi('cards', false);
+                  writeUi('cards2', false);
                 }}
                 className="cs-btn cs-btn-ink cs-btn-sm pointer-events-auto"
                 aria-label="Replier les 3 commerces les plus proches"
@@ -756,7 +782,8 @@ clockRef.current = clock;
                 const cutoutUrl = getFramerFoodImage(merchant.name || merchant.type || '');
                 const photoUrl = MERCHANT_PHOTOS[merchant.id] || FALLBACK_PHOTO;
                 const offersCount = merchant.activeOfferCount || merchant.activeOffers?.length || 2;
-                const minPrice = merchant.activeOffers?.[0]?.currentPriceMillimes;
+                const prices = (merchant.activeOffers || []).map((o) => Number(o.currentPriceMillimes ?? o.currentPrice)).filter((n) => Number.isFinite(n) && n > 0);
+                const minPrice = prices.length ? Math.min(...prices) : undefined;
 
                 return (
                   <DepthCard
@@ -816,7 +843,7 @@ clockRef.current = clock;
 
         {/* 6. TIROIR LATÉRAL : DÉTAILS D'UN COMMERCE CIBLÉ AVEC DRONE SWOOP */}
         {selectedMerchant && !walkState && (
-          <div className="absolute top-0 right-0 z-40 w-full sm:w-[440px] h-full bg-[#FAF3E6] sm:border-l-2 border-[#111111] p-6 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+          <div className="absolute bottom-0 sm:top-0 right-0 z-40 w-full sm:w-[440px] h-[42dvh] sm:h-full bg-[#FAF3E6] rounded-t-3xl sm:rounded-none border-t-2 sm:border-t-0 sm:border-l-2 border-[#111111] shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.35)] sm:shadow-none p-4 sm:p-6 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
             {/* Bouton de fermeture */}
             <div className="flex items-center justify-between gap-3 mb-5">
               <span className="cs-eyebrow flex items-center gap-2">

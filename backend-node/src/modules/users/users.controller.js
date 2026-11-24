@@ -22,6 +22,11 @@ export const usersController = {
     res.status(204).send();
   }),
 
+  sendFcmTest: asyncHandler(async (req, res) => {
+    const data = await usersService.sendFcmTest(req.user.uid, req.user.role);
+    res.json(data);
+  }),
+
   removeFcmToken: asyncHandler(async (req, res) => {
     const token = req.body?.token || req.query?.token;
     await usersService.removeFcmToken(req.user.uid, token);

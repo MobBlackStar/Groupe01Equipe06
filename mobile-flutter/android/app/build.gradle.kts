@@ -48,3 +48,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// google-services.json est ignoré par Git (clé propre à chaque développeur) : sans lui, l'application compile quand même
+// (la configuration Firebase vient alors de lib/firebase_options.dart) mais les notifications push natives sont désactivées.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}

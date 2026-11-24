@@ -7,6 +7,7 @@ class Endpoints {
   static const String registerProfile = '/auth/register-profile';
   static const String me = '/users/me';
   static const String fcmToken = '/users/me/fcm-token';
+  static const String fcmTest = '/users/me/fcm-test';
 
   static const String merchants = '/merchants';
   static const String merchantsMe = '/merchants/me';

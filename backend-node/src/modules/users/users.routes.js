@@ -21,3 +21,5 @@ usersRouter.patch('/me', validate({ body: updateProfileSchema }), usersControlle
 // Enregistrement et révocation des tokens de notifications push Firebase
 usersRouter.post('/me/fcm-token', validate({ body: fcmTokenSchema }), usersController.addFcmToken);
 usersRouter.delete('/me/fcm-token', usersController.removeFcmToken);
+// Notification de test vers tous mes appareils (diagnostic en 5 secondes)
+usersRouter.post('/me/fcm-test', usersController.sendFcmTest);

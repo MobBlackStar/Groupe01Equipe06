@@ -531,14 +531,15 @@
       <div class="toc-subitem">5.7 Radar 3D WebGL MapLibre & Ratios Écologiques Officiels</div>
 
       <div class="toc-item"><span class="toc-title">Chapitre 6 : Réalisation, Interfaces & Expérience Utilisateur</span><span>Page 14</span></div>
-      <div class="toc-subitem">6.1 Design System Dark Obsidian & Electric Lime</div>
+      <div class="toc-subitem">6.1 Design System Griddle : Crème, Rouge Tomate & Moutarde</div>
       <div class="toc-subitem">6.2 Parcours Étudiant : Catalogue, Debounce 300 ms, Holo-Radar 3D & Living Ticket</div>
       <div class="toc-subitem">6.3 Espace Commerçant : Onboarding MapPicker, Publication IA & Scanner Caméra</div>
       <div class="toc-subitem">6.4 Console d'Administration & Supervision Universitaire</div>
       <div class="toc-subitem">6.5 Tableaux de Bord par Rôle, Gamification & Défi Inter-Filières</div>
+      <div class="toc-subitem">6.6 Finitions : Identité Visuelle, Notifications Push, Démo Auto-Réinitialisée & Radar Épuré</div>
 
       <div class="toc-item"><span class="toc-title">Chapitre 7 : Validation Expérimentale, Tests Automatisés & Bilan Qualité</span><span>Page 17</span></div>
-      <div class="toc-subitem">7.1 Synthèse de la Suite de Tests Automatisés (107/107 Tests Passés)</div>
+      <div class="toc-subitem">7.1 Synthèse de la Suite de Tests Automatisés (208 Tests Passés + 169 Contrôles de Bout en Bout)</div>
       <div class="toc-subitem">7.2 Détail des Suites de Tests Critiques (Concurrence, Cryptographie, Tarification)</div>
       <div class="toc-subitem">7.3 Audit de Sécurité, Absence de Secrets & Variables d'Environnement</div>
       <div class="toc-subitem">7.4 Limites Actuelles du Système & Perspectives d'Industrialisation</div>
@@ -841,15 +842,16 @@
   <div class="page page-break">
     <h1>Chapitre 6 : Réalisation, Interfaces & Expérience Utilisateur (Web & Mobile)</h1>
     
-    <h2>6.1 Design System Dark Obsidian & Electric Lime</h2>
+    <h2>6.1 Design System Griddle : Crème, Rouge Tomate & Moutarde</h2>
     <p>
-      La charte graphique a été minutieusement élaborée pour conjuguer modernité technologique et accessibilité :
+      La charte livrée en production est la même sur le Web React et sur l'application Flutter : un style « street-food éditorial » lisible en plein soleil,
+      avec des contours encre et des polices condensées. Tous les textes respectent un plancher de 13 px.
     </p>
     <ul>
-      <li><strong>Dark Obsidian (<code>#0D0F12</code>) :</strong> Fond sombre profond réduisant la consommation énergétique des écrans OLED des smartphones étudiants.</li>
-      <li><strong>Surface Card (<code>#161920</code>) :</strong> Relief subtil pour isoler les composants interactifs.</li>
-      <li><strong>Electric Lime (<code>#CCFF00</code>) :</strong> Couleur d'accentuation haute visibilité symbolisant l'énergie verte et l'action positive.</li>
-      <li><strong>Urgent Amber (<code>#FF5500</code>) :</strong> Alerte d'urgence pour les créneaux expirant dans moins de 20 minutes.</li>
+      <li><strong>Crème (<code>#FAF3E6</code>) et biscuit (<code>#EDE6D7</code>) :</strong> fonds chauds qui remplacent le noir ; les cartes sont détourées d'un trait encre.</li>
+      <li><strong>Rouge tomate (<code>#DA0711</code>) :</strong> couleur d'action (boutons, prix, onglet actif).</li>
+      <li><strong>Moutarde (<code>#FFD000</code>) et feuille (<code>#1F7A3A</code>) :</strong> accents pour les points, les alertes et l'impact écologique.</li>
+      <li><strong>Polices :</strong> League Gothic (titres), Oswald (texte), Bowlby One SC et Knewave (autocollants), Space Mono (codes et chiffres).</li>
     </ul>
 
     <h2>6.2 Parcours Étudiant : Catalogue, Holo-Radar 3D & Living Ticket</h2>
@@ -875,6 +877,35 @@
       <img src="../mockups/final-screens/04-final-dashboards-impact-loyalty.svg" alt="Tableaux de Bord et Impact">
       <figcaption>Figure 6.4 : Planche Vectorielle HD — Cockpits Analytiques (Dashboard Étudiant, Dashboard Commerçant, Dashboard Admin, Vitrine Publique d'Impact)</figcaption>
     </figure>
+
+    <h2>6.6 Finitions : Identité Visuelle, Notifications Push, Démo Auto-Réinitialisée & Radar Épuré</h2>
+    <p>
+      Les dernières itérations ont porté sur la cohérence de bout en bout (web, mobile, serveur) plutôt que sur de nouvelles fonctions :
+    </p>
+    <ul>
+      <li><strong>Identité visuelle :</strong> la mascotte (sac de courses diplômé et son chiot) devient l'icône de l'application Android, le favicon du site, le logo de la page de connexion et le bouton de téléchargement de l'APK.</li>
+      <li><strong>Notifications push de bout en bout :</strong> l'appareil (navigateur ou téléphone, comptes réels comme comptes de démonstration) s'enregistre auprès du serveur ; les messages portent une priorité haute et le canal Android <code>campussave_high_importance</code> pour s'afficher en bannière avec son. Une fiche « Notifications push » du profil permet d'activer et de tester l'envoi (<code>POST /users/me/fcm-test</code> renvoie un diagnostic).</li>
+      <li><strong>Démo qui ne se vide jamais :</strong> toutes les 6 h le serveur vérifie qu'il reste des offres actives et réinitialise la démo si besoin ou après 24 h. Toutes les données de démonstration (commandes, points, recettes, impact) sont calculées à partir des mêmes commandes et ne se contredisent plus.</li>
+      <li><strong>Catalogue épuré :</strong> le simulateur Smart Decay est replié sous le catalogue, les filtres secondaires se replient sur téléphone, et chaque carte n'affiche qu'une pastille (urgence ou rareté).</li>
+      <li><strong>Holo-Radar lisible :</strong> la carte 3D s'ouvre sans panneau superposé (introduction, programme du jour et fiches des commerces sont repliés), avec une barre compacte et des rayons défilants sur téléphone.</li>
+      <li><strong>Mode démo et compte réel :</strong> le mobile reprend le sélecteur du site ; en mode réel, un nouveau commerçant est dirigé vers le dépôt de son dossier.</li>
+    </ul>
+    <figure>
+      <img src="../mockups/final-screens/11-login-mascot.png" alt="Page de connexion avec la mascotte">
+      <figcaption>Figure 6.5 : Page de connexion avec le logo de la mascotte, démo 1 clic et compte réel</figcaption>
+    </figure>
+    <figure>
+      <img src="../mockups/final-screens/12-explore-declutter-desktop.png" alt="Catalogue épuré, ordinateur">
+      <figcaption>Figure 6.6 : Catalogue épuré (ordinateur) : recherche, catégories et filtres juste sous le titre</figcaption>
+    </figure>
+    <figure>
+      <img src="../mockups/final-screens/14-radar-collapsed-desktop.png" alt="Holo-Radar 3D, panneaux repliés">
+      <figcaption>Figure 6.7 : Holo-Radar 3D avec les panneaux repliés par défaut : la carte de Montfleury reste visible</figcaption>
+    </figure>
+    <figure>
+      <img src="../mockups/final-screens/15-radar-collapsed-mobile.png" alt="Holo-Radar 3D, téléphone" style="max-width: 300px;">
+      <figcaption>Figure 6.8 : Holo-Radar sur téléphone (390 px) : barre compacte, rayons défilants, bande « Les plus proches »</figcaption>
+    </figure>
   </div>
 
   <!-- ========================================================================
@@ -897,12 +928,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>API Backend REST Node.js</td><td>Node.js Test Runner (v22)</td><td>107 / 107</td><td>✔ 100 %</td></tr>
-        <tr><td>Domaine Partagé (/shared)</td><td>Node.js Test Runner (v22)</td><td>26 / 26</td><td>✔ 100 %</td></tr>
-        <tr><td>Application Mobile Flutter</td><td>flutter_test / Dart 3</td><td>4 / 4</td><td>✔ 100 %</td></tr>
+        <tr><td>API Backend REST Node.js</td><td>Node.js Test Runner (v22)</td><td>146 / 146</td><td>✔ 100 %</td></tr>
+        <tr><td>Contrôle de bout en bout de l'API (160+ vérifications)</td><td>qa:sweep sur base en mémoire isolée</td><td>169 / 169</td><td>✔ 100 %</td></tr>
+        <tr><td>Domaine Partagé (/shared)</td><td>Node.js Test Runner (v22)</td><td>41 / 41</td><td>✔ 100 %</td></tr>
+        <tr><td>Application Mobile Flutter</td><td>flutter_test / Dart 3</td><td>21 / 21 (2 ignorés : serveur requis)</td><td>✔ 100 %</td></tr>
         <tr><td>Analyse Statique Flutter</td><td>flutter analyze</td><td>0 avertissement</td><td>✔ 100 % Clean</td></tr>
         <tr><td>Compilation Web React</td><td>Vite 5 (Production Build)</td><td>0 erreur (2730 modules)</td><td>✔ 100 % Succès</td></tr>
-        <tr><td><strong>TOTAL CONSOLIDÉ</strong></td><td><strong>Suite Complète Multi-Runtime</strong></td><td><strong>137 / 137 TESTS</strong></td><td><strong>✔ 100 % SUCCÈS</strong></td></tr>
+        <tr><td><strong>TOTAL CONSOLIDÉ</strong></td><td><strong>Suite Complète Multi-Runtime</strong></td><td><strong>208 TESTS + 169 CONTRÔLES API</strong></td><td><strong>✔ 100 % SUCCÈS</strong></td></tr>
       </tbody>
     </table>
 

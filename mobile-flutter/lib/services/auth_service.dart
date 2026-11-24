@@ -6,10 +6,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/models/user_profile.dart';
+import 'fcm_service.dart';
 import '../core/api/api_client.dart';
 import '../core/api/endpoints.dart';
 
+/// Mode de connexion, comme `authMode` sur le site : démonstration 1-clic (jeton de test) ou compte réel Firebase.
+enum AuthMode { none, demo, real }
+
 class AuthService extends ChangeNotifier {
+  AuthMode get authMode => ApiClient.demoAuthToken != null ? AuthMode.demo : (_user != null ? AuthMode.real : AuthMode.none);
+
+  /// Enregistre l'appareil pour les notifications push (démo et compte réel), sans jamais bloquer ni faire échouer la connexion.
+  void _afterLogin() {
+    FcmService.registerForCurrentUser().catchError((_) => PushStatus.notRegistered);
+  }
+
   User? _user;
   UserProfile? _profile;
   String? _role;
@@ -43,6 +54,7 @@ class AuthService extends ChangeNotifier {
             final tokenResult = await firebaseUser.getIdTokenResult(true);
             _role = tokenResult.claims?['role'] as String?;
             await _loadRemoteProfile();
+            _afterLogin();
           } catch (e) {
             debugPrint('Avis d initialisation token : $e');
           }
@@ -94,6 +106,7 @@ class AuthService extends ChangeNotifier {
       final tokenResult = await _user?.getIdTokenResult(true);
       _role = tokenResult?.claims?['role'] as String?;
       await _loadRemoteProfile();
+      _afterLogin();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -135,6 +148,7 @@ class AuthService extends ChangeNotifier {
       final tokenResult = await _user?.getIdTokenResult(true);
       _role = tokenResult?.claims?['role'] as String? ?? role;
       await _loadRemoteProfile();
+      _afterLogin();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -152,6 +166,12 @@ class AuthService extends ChangeNotifier {
     final role = isStudent ? 'STUDENT' : 'MERCHANT';
     final token = 'test-token:$uid:$role:$demoEmail';
 
+    // Mode démo propre : on quitte d'abord tout compte Firebase (pas de mélange de jetons ni de profils)
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {}
+    _user = null;
+
     ApiClient.demoAuthToken = token;
     _role = role;
     _profile = UserProfile(
@@ -164,15 +184,9 @@ class AuthService extends ChangeNotifier {
       ecoPoints: isStudent ? 90 : 0,
     );
     // Remplace les valeurs d'amorçage ci-dessus par le vrai profil du serveur (nom, EcoPoints) quand l'API répond.
-    await _loadRemoteProfile();
-
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: demoEmail,
-        password: 'CampusSave2026!',
-      );
-    } catch (_) {
-      // Mode simulation hors-ligne garanti pour la soutenance
+      await _loadRemoteProfile();
+      _afterLogin();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -197,6 +211,7 @@ class AuthService extends ChangeNotifier {
 
   /// Déconnexion
   Future<void> signOut() async {
+    await FcmService.unregister(); // l'appareil n'est plus lié à ce compte (jeton encore valide à cet instant)
     ApiClient.demoAuthToken = null;
     try {
       await FirebaseAuth.instance.signOut();

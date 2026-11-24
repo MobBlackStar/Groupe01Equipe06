@@ -12,6 +12,7 @@ import { fcmService } from '../notifications/fcm.service.js';
 import { ORDER_STATUS, PAYMENT_STATUS, REWARD_STATUS } from '../../../../shared/constants.js';
 import { rewardKey } from '../../../../shared/loyalty.js';
 import { getTunisDayKey } from '../../utils/tunisTime.js';
+import { getMerchantTokens } from '../notifications/fcmTokens.js';
 import { logger } from '../../utils/logger.js';
 
 export const paymentsService = {
@@ -247,10 +248,7 @@ export const paymentsService = {
           studentTokens = studentUserDoc.data().fcmTokens || [];
         }
 
-        const merchantUserDoc = await db.collection('users').doc(result.order.merchantId).get();
-        if (merchantUserDoc.exists) {
-          merchantTokens = merchantUserDoc.data().fcmTokens || [];
-        }
+        merchantTokens = await getMerchantTokens(result.order.merchantId);
 
         if (studentTokens.length > 0) {
           await fcmService.notifyTicketReady(studentTokens, result.order.orderCode);

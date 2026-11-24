@@ -279,13 +279,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         const SizedBox(height: 18),
 
-        // Ruban du site
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: const GTicker(items: ['Cuisiné', 'Bradé', 'Sauvé', 'Prix qui baissent', 'Retrait à Montfleury']),
-        ),
-        const SizedBox(height: 22),
-
         GSectionTitle(offers.length == 1 ? '1 offre en ligne' : '${offers.length} offres en ligne'),
         const SizedBox(height: 14),
 

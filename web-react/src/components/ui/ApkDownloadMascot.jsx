@@ -88,70 +88,9 @@ export default function ApkDownloadMascot() {
               onClick={() => setIsOpen(true)}
               className="relative flex items-center gap-2 p-2 rounded-3xl bg-[#FAF3E6] border-2 border-[#111111] shadow-[4px_4px_0px_#111111] hover:shadow-[2px_2px_0px_#111111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer group-hover:border-[#DA0711] max-w-full"
             >
-              {/* Mascotte SVG Griddle : Burger Burger rétro tenant un smartphone */}
+              {/* Mascotte officielle CampusSave */}
               <div className="relative w-12 sm:w-14 h-12 sm:h-14 shrink-0 flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
-                  {/* Bun supérieur */}
-                  <path
-                    d="M 15 50 C 15 22, 85 22, 85 50 Z"
-                    fill="#E0A96D"
-                    stroke="#111111"
-                    strokeWidth="4"
-                  />
-                  {/* Graines de sésame */}
-                  <ellipse cx="38" cy="34" rx="2.5" ry="1.5" fill="#FAF3E6" transform="rotate(-15 38 34)" />
-                  <ellipse cx="50" cy="30" rx="2.5" ry="1.5" fill="#FAF3E6" />
-                  <ellipse cx="62" cy="35" rx="2.5" ry="1.5" fill="#FAF3E6" transform="rotate(20 62 35)" />
-                  <ellipse cx="44" cy="42" rx="2" ry="1.2" fill="#FAF3E6" transform="rotate(-10 44 42)" />
-                  <ellipse cx="58" cy="43" rx="2" ry="1.2" fill="#FAF3E6" transform="rotate(15 58 43)" />
-
-                  {/* Yeux expressifs du Diner */}
-                  <circle cx="40" cy="40" r="4.5" fill="#111111" />
-                  <circle cx="41.5" cy="38.5" r="1.5" fill="#FFFFFF" />
-                  <circle cx="60" cy="40" r="4.5" fill="#111111" />
-                  <circle cx="61.5" cy="38.5" r="1.5" fill="#FFFFFF" />
-
-                  {/* Joues roses */}
-                  <ellipse cx="33" cy="45" rx="3.5" ry="2" fill="#FF8A80" opacity="0.8" />
-                  <ellipse cx="67" cy="45" rx="3.5" ry="2" fill="#FF8A80" opacity="0.8" />
-
-                  {/* Sourire amical */}
-                  <path d="M 46 44 Q 50 48 54 44" stroke="#111111" strokeWidth="3" fill="none" strokeLinecap="round" />
-
-                  {/* Feuille de salade ondulée */}
-                  <path
-                    d="M 12 50 C 20 46, 25 54, 35 50 C 45 46, 50 54, 60 50 C 70 46, 75 54, 88 50 L 88 55 C 75 58, 70 52, 60 55 C 50 58, 45 52, 35 55 C 25 58, 20 52, 12 55 Z"
-                    fill="#4E9F3D"
-                    stroke="#111111"
-                    strokeWidth="3.5"
-                  />
-
-                  {/* Tomate / Ketchup rouge Griddle */}
-                  <rect x="18" y="54" width="64" height="6" rx="3" fill="#DA0711" stroke="#111111" strokeWidth="3" />
-
-                  {/* Steak grillé */}
-                  <rect x="16" y="59" width="68" height="9" rx="4.5" fill="#6A381F" stroke="#111111" strokeWidth="3.5" />
-
-                  {/* Fromage cheddar fondu en pointe */}
-                  <polygon points="40,65 48,74 54,65" fill="#FFD000" stroke="#111111" strokeWidth="2.5" />
-
-                  {/* Bun inférieur */}
-                  <path
-                    d="M 18 68 C 18 78, 82 78, 82 68 Z"
-                    fill="#E0A96D"
-                    stroke="#111111"
-                    strokeWidth="4"
-                  />
-
-                  {/* Smartphone tenu par la main droite */}
-                  <g transform="translate(62, 42) rotate(12)">
-                    <rect x="0" y="0" width="16" height="26" rx="3" fill="#111111" stroke="#FAF3E6" strokeWidth="1.5" />
-                    <rect x="2" y="2" width="12" height="18" rx="1.5" fill="#FFD000" />
-                    <circle cx="8" cy="22.5" r="1.5" fill="#FAF3E6" />
-                    {/* Écran avec étincelle */}
-                    <path d="M 5 6 L 11 14 M 11 6 L 5 14" stroke="#DA0711" strokeWidth="1.5" strokeLinecap="round" />
-                  </g>
-                </svg>
+                <img src="/assets/brand/mascot-sticker-256.png" alt="Mascotte CampusSave" width="56" height="56" className="w-full h-full object-contain drop-shadow-sm" decoding="async" />
 
                 {/* Sticker incliné APP ANDROID */}
                 <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-[#FFD000] text-[#111111] font-black text-[9px] uppercase tracking-wider border border-[#111111] shadow-[1px_1px_0px_#111111] rotate-[-8deg]">

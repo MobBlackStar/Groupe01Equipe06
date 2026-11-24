@@ -10,6 +10,8 @@ import { ROLES } from '../../../../shared/constants.js';
 import { env } from '../../config/env.js';
 import { demoTokensAllowed, getOrProvisionDemoUser, findDemoMerchant, DEMO_MERCHANT_UID } from '../../utils/demoAccounts.js';
 import { resolveMerchantId } from '../../utils/merchantResolver.js';
+import { fcmService } from '../notifications/fcm.service.js';
+import { getUserTokens, getMerchantTokens } from '../notifications/fcmTokens.js';
 
 export const usersService = {
   /**
@@ -134,16 +136,50 @@ export const usersService = {
     }
 
     const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    let userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new AppError('Profil utilisateur introuvable', 404, 'USER_NOT_FOUND');
+      // Comptes de démonstration : profil créé à la volée pour que le jeton ne soit jamais perdu
+      if (!(await getOrProvisionDemoUser(uid))) throw new AppError('Profil utilisateur introuvable', 404, 'USER_NOT_FOUND');
+      userDoc = await userRef.get();
     }
 
     await userRef.update({
       fcmTokens: admin.firestore.FieldValue.arrayUnion(token),
       updatedAt: new Date(),
     });
+  },
+
+  /**
+   * Envoie une vraie notification de test à tous les appareils enregistrés de l'utilisateur.
+   * Pour un commerçant, les appareils enregistrés sur sa boutique comptent aussi (même chemin que ORDER_PAID).
+   */
+  async sendFcmTest(uid, role = null) {
+    const owned = new Set(await getUserTokens(uid));
+    if (role === ROLES.MERCHANT) {
+      const storeId = await resolveMerchantId(uid);
+      if (storeId) (await getMerchantTokens(storeId)).forEach((t) => owned.add(t));
+    }
+    const tokens = [...owned];
+    const mode = fcmService.mode;
+    if (tokens.length === 0) {
+      return {
+        ok: false,
+        tokensCount: 0,
+        sentCount: 0,
+        failedCount: 0,
+        mode,
+        diagnostics: 'Aucun appareil enregistré : activez les notifications dans l\'application (ou autorisez-les dans le navigateur), puis réessayez.',
+      };
+    }
+    const r = await fcmService.notifyTest(tokens, uid);
+    const diagnostics =
+      mode === 'memory'
+        ? 'Serveur en mode mémoire (Firebase non configuré) : l\'envoi est simulé, aucun appareil ne recevra la notification.'
+        : r.failedCount > 0
+        ? `Échec sur ${r.failedCount} appareil(s) : ${[...new Set(r.errors.map((e) => e.code))].join(', ')}`
+        : 'Notification envoyée à Firebase Cloud Messaging.';
+    return { ok: r.sentCount > 0 && r.failedCount === 0, tokensCount: r.tokensCount, sentCount: r.sentCount, failedCount: r.failedCount, mode, diagnostics };
   },
 
   /**

@@ -526,6 +526,8 @@ class GTopBar extends StatelessWidget {
       decoration: const BoxDecoration(color: AppTheme.cream, border: Border(bottom: BorderSide(color: AppTheme.ink, width: 2))),
       child: Row(
         children: [
+          Image.asset('assets/brand/mascot-sticker.png', height: 38, filterQuality: FilterQuality.medium, errorBuilder: (_, __, ___) => const SizedBox(width: 38)),
+          const SizedBox(width: 8),
           Text('CAMPUSSAVE', style: AppTheme.display(34, AppTheme.red)),
           const SizedBox(width: 6),
           Padding(

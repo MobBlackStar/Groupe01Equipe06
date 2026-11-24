@@ -2,10 +2,10 @@
 // 🔄 Comparaison React / Flutter : En React, les pilules utilisent des classes Tailwind Griddle ; en Flutter, `filter_bottom_sheet.dart` présente des ChoiceChip arrondis.
 // 🎯 À retenir pour la soutenance : "Chaque pilule affiche le décompte réel d'offres disponibles dans la catégorie."
 
-import React from 'react';
+import React, { useState } from 'react';
 import { OFFER_CATEGORIES } from '@shared/constants.js';
 import { formatTND } from '@shared/money.js';
-import { Sparkles, RotateCcw } from 'lucide-react';
+import { Sparkles, RotateCcw, SlidersHorizontal } from 'lucide-react';
 
 const CATEGORY_DEFINITIONS = [
   { id: 'ALL', label: 'Tous' },
@@ -40,6 +40,8 @@ export default function FilterPanel({
   className = '',
 }) {
   const totalCount = Object.values(categoryCounts).reduce((a, b) => a + b, 0);
+  // Téléphone : budget, tri et paniers mystères sont repliés derrière un bouton (moins de blocs empilés) ; toujours visibles dès md
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -65,7 +67,17 @@ export default function FilterPanel({
       </div>
 
       {/* 2. Budget, tri, paniers mystères */}
-      <div className="grid gap-6 md:grid-cols-12 md:items-end">
+      <button
+        type="button"
+        onClick={() => setMoreOpen((o) => !o)}
+        aria-expanded={moreOpen}
+        className="cs-btn cs-btn-cream cs-btn-sm md:hidden !min-h-[44px]"
+      >
+        <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+        {moreOpen ? 'Masquer les filtres' : 'Budget, tri et paniers mystères'}
+      </button>
+
+      <div className={`grid gap-6 md:grid-cols-12 md:items-end ${moreOpen ? '' : 'hidden md:grid'}`}>
         <div className="md:col-span-5">
           <div className="flex items-baseline justify-between mb-3">
             <label htmlFor="budget-max" className="cs-field-label !mb-0">Budget max</label>

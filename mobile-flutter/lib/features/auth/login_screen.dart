@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../services/auth_service.dart';
 
 import '../../app/theme.dart';
+import '../../widgets/griddle.dart';
 class LoginScreen extends StatefulWidget {
   final AuthService authService;
 
@@ -142,12 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('CAMPUSSAVE', style: AppTheme.display(40, AppTheme.red)),
-                        const SizedBox(width: 6),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text('essect', style: const TextStyle(fontFamily: AppTheme.fontSticker, fontSize: 16, color: AppTheme.ink)),
-                        ),
+                        Image.asset('assets/brand/logo-full.png', height: 120, filterQuality: FilterQuality.medium, errorBuilder: (_, __, ___) => Text('CAMPUSSAVE', style: AppTheme.display(40, AppTheme.red))),
                       ],
                     ),
                   ),
@@ -192,13 +188,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'Connexion',
-                            style: TextStyle(
-                              color: AppTheme.ink,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: const [
+                              Expanded(child: Text('Connexion', style: TextStyle(color: AppTheme.ink, fontSize: 18, fontWeight: FontWeight.bold))),
+                              GPill('Compte réel', icon: Icons.verified_user_outlined, color: AppTheme.leaf),
+                            ],
                           ),
                           const SizedBox(height: 16),
 
@@ -364,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text('⚡', style: TextStyle(fontSize: 14)),
                             SizedBox(width: 6),
                             Text(
-                              'KIT DE DÉMONSTRATION ESSECT',
+                              'MODE DÉMO · 1 CLIC, SANS MOT DE PASSE',
                               style: TextStyle(
                                 color: AppTheme.muted,
                                 fontSize: 13,

@@ -134,7 +134,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                     spacing: 8,
                     children: [
                       GPill('${offer.remainingQuantity} restant${offer.remainingQuantity > 1 ? 's' : ''}', icon: Icons.shopping_bag_outlined, color: AppTheme.ink),
-                      if (offer.isSurpriseBasket) const RarityBadge(rarity: 'RARE', score: 0.65),
+                      if (offer.isSurpriseBasket) RarityBadge(rarity: (offer.rarity ?? 'COMMON').toUpperCase(), score: 0.65),
                     ],
                   ),
                 ),

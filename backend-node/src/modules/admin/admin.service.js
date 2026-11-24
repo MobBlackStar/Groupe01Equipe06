@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Toute modification de statut commerçant fait l'objet d'une transaction atomique Firestore incluant un enregistrement d'audit infalsifiable et une notification push post-commit."
 // Module : Administration & Modération
 
+import { getMerchantTokens } from '../notifications/fcmTokens.js';
 import { db, auth } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { FcmService } from '../notifications/fcm.service.js';
@@ -172,8 +173,9 @@ export const adminService = {
 
     // Notification FCM post-commit (hors de la transaction Firestore pour garantir la résilience)
     try {
-      if (fcmTokens.length > 0) {
-        await fcmService.notifyMerchantStatus(fcmTokens, newStatus, statusReason);
+      const tokens = fcmTokens.length > 0 ? fcmTokens : await getMerchantTokens(merchantId);
+      if (tokens.length > 0) {
+        await fcmService.notifyMerchantStatus(tokens, newStatus, statusReason);
       }
     } catch {
       // Échec silencieux de la notification tierce

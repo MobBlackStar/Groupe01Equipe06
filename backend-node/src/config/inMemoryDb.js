@@ -65,6 +65,12 @@ function applyTransform(currentVal, updateVal) {
     if (updateVal.constructor?.name === 'ServerTimestampTransform') {
       return new Date().toISOString();
     }
+    // ArrayRemoveTransform d'abord : sa forme (`elements`) ressemble à celle d'ArrayUnion, il ne faut pas la confondre
+    if (updateVal.constructor?.name === 'ArrayRemoveTransform') {
+      const arr = Array.isArray(currentVal) ? [...currentVal] : [];
+      const toRemove = updateVal.elements || [];
+      return arr.filter((x) => !toRemove.includes(x));
+    }
     // ArrayUnionTransform
     if (updateVal.constructor?.name === 'ArrayUnionTransform' || ('elements' in updateVal && Array.isArray(updateVal.elements))) {
       const arr = Array.isArray(currentVal) ? [...currentVal] : [];
@@ -74,7 +80,7 @@ function applyTransform(currentVal, updateVal) {
       return arr;
     }
     // ArrayRemoveTransform
-    if (updateVal.constructor?.name === 'ArrayRemoveTransform' || ('elements' in updateVal && Array.isArray(updateVal.elements))) {
+    if (updateVal.constructor?.name === 'ArrayRemoveTransform') {
       const arr = Array.isArray(currentVal) ? [...currentVal] : [];
       const toRemove = updateVal.elements || [];
       return arr.filter((x) => !toRemove.includes(x));

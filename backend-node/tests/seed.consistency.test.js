@@ -108,6 +108,12 @@ describe('Cohérence mathématique des données de démonstration', () => {
     assert.equal(sum(daily, (d) => d.co2SavedGrams), global.co2SavedGrams);
   });
 
+  test('chaque commerce approuvé a au moins une offre active (le radar affiche toujours « Dès X DT »)', () => {
+    for (const m of merchants.filter((x) => x.status === 'APPROVED')) {
+      assert.ok(offers.some((o) => o.merchantId === m.id), `${m.id} sans offre active`);
+    }
+  });
+
   test('offres : toutes actives, rattachées à un vrai commerce, certaines finissent dans 2 h à 5 h, d autres couvrent jusqu à 24 h', () => {
     const merchantIds = new Set(merchants.map((m) => m.id));
     for (const o of offers) {

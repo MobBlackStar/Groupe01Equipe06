@@ -228,6 +228,17 @@ class CampusApi {
     return Map<String, dynamic>.from((data['merchant'] as Map?) ?? const {});
   }
 
+  // --- Notifications push -----------------------------------------------------
+
+  /// `POST /users/me/fcm-token` : enregistre cet appareil (204). Valable pour les comptes réels et les comptes de démonstration.
+  Future<void> registerFcmToken(String token) => _call(() => _dio.post(Endpoints.fcmToken, data: {'token': token}));
+
+  /// `DELETE /users/me/fcm-token` : retire cet appareil (déconnexion).
+  Future<void> removeFcmToken(String token) => _call(() => _dio.delete(Endpoints.fcmToken, data: {'token': token}));
+
+  /// `POST /users/me/fcm-test` : envoie une vraie notification à tous mes appareils ; renvoie `{ok, tokensCount, sentCount, failedCount, mode, diagnostics}`.
+  Future<Map<String, dynamic>> sendFcmTest() => _call(() => _dio.post(Endpoints.fcmTest));
+
   // --- Tableaux de bord ---------------------------------------------------
 
   /// `GET /dashboards/student` : impact personnel, fidélité, historique d'économies et dernières commandes.

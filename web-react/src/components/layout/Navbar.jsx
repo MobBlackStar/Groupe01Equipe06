@@ -102,10 +102,11 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#FAF3E6] border-b-2 border-[#111111]">
-      <div className="cs-container h-20 flex items-center justify-between gap-6">
+      <div className="cs-container h-20 flex items-center justify-between gap-3 sm:gap-6">
         {/* Wordmark */}
-        <Link to="/" className="shrink-0 flex items-baseline gap-2 group" aria-label="CampusSave — accueil">
-          <span className="font-title text-[1.75rem] sm:text-[2rem] leading-none tracking-[-0.04em] text-[#DA0711] group-hover:-rotate-2 transition-transform">
+        <Link to="/" className="shrink-0 flex items-center gap-2 group" aria-label="CampusSave — accueil">
+          <img src="/assets/brand/mascot-sticker-256.png" alt="" width="40" height="40" className="h-8 sm:h-10 w-auto shrink-0 group-hover:-rotate-6 transition-transform" decoding="async" />
+          <span className="font-title text-[1.4rem] min-[400px]:text-[1.75rem] sm:text-[2rem] leading-none tracking-[-0.04em] text-[#DA0711] group-hover:-rotate-2 transition-transform">
             CampusSave
           </span>
           <span className="hidden sm:inline font-sticker text-sm text-[#111111] -rotate-6">ESSECT</span>

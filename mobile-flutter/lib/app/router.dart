@@ -3,6 +3,8 @@
 // 🎯 À retenir pour la soutenance : "Nous utilisons GoRouter avec redirection déclarative par rôle pour isoler les flux Étudiant et Commerçant."
 // Module : Navigation & Scaffolding Mobile
 
+import '../services/campus_api.dart';
+import '../features/merchant/merchant_onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
@@ -27,7 +29,11 @@ import '../widgets/griddle.dart';
 class AppRouter {
   static final AuthService authService = AuthService();
 
+  /// Navigateur racine : la bannière de notification et l'ouverture d'un écran au toucher en ont besoin.
+  static final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
   static final GoRouter router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/login',
     refreshListenable: authService,
     redirect: (BuildContext context, GoRouterState state) {
@@ -183,6 +189,23 @@ class MerchantShell extends StatefulWidget {
 
 class _MerchantShellState extends State<MerchantShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Compte réel sans boutique (nouvelle inscription) : on ouvre directement le dépôt de dossier
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (AppRouter.authService.authMode != AuthMode.real) return;
+      try {
+        final store = await CampusApi.shared.fetchMyMerchant();
+        if (store == null && mounted) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const MerchantOnboardingScreen()));
+        }
+      } catch (_) {
+        // hors ligne : l'onglet Boutique proposera de créer la boutique
+      }
+    });
+  }
 
   // Seul l'onglet affiché est construit (sauf le bilan) : le scanner n'allume la caméra que lorsqu'il est visible,
   // et chaque liste se recharge depuis le serveur à chaque ouverture.

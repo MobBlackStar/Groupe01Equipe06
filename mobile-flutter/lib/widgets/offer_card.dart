@@ -57,16 +57,17 @@ class OfferCard extends StatelessWidget {
                         right: 10,
                         child: CountdownChip(pickupEndAt: offer.pickupEndAt)),
                     if (offer.isSurpriseBasket)
-                      const Positioned(
+                      Positioned(
                           top: 10,
                           left: 10,
-                          child: RarityBadge(rarity: 'RARE', score: 0.65)),
+                          child: RarityBadge(rarity: (offer.rarity ?? 'COMMON').toUpperCase(), score: 0.65)),
+                    if (stock > 0 && stock <= 2)
                     Positioned(
                       bottom: 10,
                       left: 10,
                       child: _Sticker(
                         icon: Icons.shopping_bag_outlined,
-                        text: stock > 1 ? '$stock restants' : '$stock restant',
+                        text: stock > 1 ? 'Plus que $stock' : 'Dernière portion',
                         color: AppTheme.ink,
                         textColor: AppTheme.cream,
                       ),

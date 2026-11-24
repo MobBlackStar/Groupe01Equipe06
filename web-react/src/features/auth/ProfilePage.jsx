@@ -17,6 +17,7 @@ import {
 } from '../../components/ui/index.js';
 import { LogOut, Save, Bell, Mail, Phone, User } from 'lucide-react';
 import { AVATAR_PRESETS, resolveAvatarPreset } from '@shared/avatars.js';
+import { getPushStatus, enablePush, sendTestPush } from '../../lib/push.js';
 
 // Libellés français (présentation uniquement)
 const ROLE_LABELS = {
@@ -31,6 +32,77 @@ const TIER_LABELS = {
   [LOYALTY_TIERS.ARBRE]: 'Arbre',
   [LOYALTY_TIERS.FORET]: 'Forêt',
 };
+
+const PUSH_LABELS = {
+  active: ['Activées', 'cs-pill-leaf'],
+  granted: ['Autorisées, à enregistrer', 'cs-pill-mustard'],
+  default: ['Non activées', 'cs-pill-mustard'],
+  denied: ['Bloquées par le navigateur', 'cs-pill-red'],
+  unsupported: ['Non prises en charge', 'cs-pill-outline'],
+  unconfigured: ['Non configurées', 'cs-pill-outline'],
+};
+
+/** Carte « Notifications push » : état, activation et notification de test (vérification en quelques secondes). */
+function PushCard() {
+  const [status, setStatus] = useState(getPushStatus());
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+
+  async function handleEnable() {
+    setBusy(true);
+    setResult(null);
+    try {
+      await enablePush();
+      setResult({ ok: true, text: 'Notifications activées sur ce navigateur.' });
+    } catch (err) {
+      setResult({ ok: false, text: err?.message || 'Activation impossible.' });
+    } finally {
+      setStatus(getPushStatus());
+      setBusy(false);
+    }
+  }
+
+  async function handleTest() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const r = await sendTestPush();
+      setResult({ ok: r.ok, text: `${r.sentCount}/${r.tokensCount} appareil(s) · ${r.diagnostics}` });
+    } catch (err) {
+      setResult({ ok: false, text: err?.response?.data?.error?.message || 'Envoi du test impossible.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const [label, pill] = PUSH_LABELS[status] || PUSH_LABELS.default;
+  return (
+    <section className="cs-card p-6 sm:p-8" aria-label="Notifications push">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <h3 className="cs-h3">🔔 Notifications push</h3>
+        <span className={`cs-pill ${pill} shrink-0`}>{label}</span>
+      </div>
+      <p className="cs-body text-[#5E5850] mb-5">
+        Paiement confirmé, ticket prêt, retrait validé, rappel de retrait et nouveaux paniers surprise, même onglet fermé.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {status !== 'active' && (
+          <button type="button" onClick={handleEnable} disabled={busy || status === 'unsupported' || status === 'unconfigured'} className="cs-btn cs-btn-red cs-btn-sm">
+            Activer les notifications
+          </button>
+        )}
+        {status === 'active' && (
+          <button type="button" onClick={handleTest} disabled={busy} className="cs-btn cs-btn-mustard cs-btn-sm">
+            Tester une notification
+          </button>
+        )}
+      </div>
+      {result && (
+        <p role="status" className={`mt-4 text-base font-semibold ${result.ok ? 'text-[#1F7A3A]' : 'text-[#DA0711]'}`}>{result.text}</p>
+      )}
+    </section>
+  );
+}
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -419,6 +491,8 @@ export default function ProfilePage() {
                   ))}
                 </div>
               </div>
+
+              <PushCard />
 
               <div className="pt-2 flex justify-stretch sm:justify-end">
                 <Button

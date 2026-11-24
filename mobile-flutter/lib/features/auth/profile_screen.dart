@@ -9,6 +9,7 @@ import '../../app/theme.dart';
 import '../../core/domain/avatars.dart';
 import '../../services/auth_service.dart';
 import '../../services/campus_api.dart';
+import '../../services/fcm_service.dart';
 import '../../widgets/griddle.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -103,6 +104,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// Changer de mode = se déconnecter proprement (le jeton de démo ou la session Firebase est effacé), puis choisir l'autre mode.
+  Future<void> _switchMode(BuildContext context) async {
+    final nav = Navigator.of(context);
+    await context.read<AuthService>().signOut();
+    nav.popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
@@ -154,7 +162,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              _ModeCard(mode: auth.authMode, onSwitch: () => _switchMode(context)),
               if (isStudent) ...[const SizedBox(height: 14), _PointsCard(points: profile.ecoPoints)],
+              const SizedBox(height: 14),
+              const _PushCard(),
               const SizedBox(height: 24),
               Text('MES INFORMATIONS', style: AppTheme.h3(22)),
               const SizedBox(height: 12),
@@ -277,6 +289,141 @@ class _PointsCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text('Encore $remaining points pour un coupon -20 %', style: AppTheme.body(15, AppTheme.muted)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Mode actif (démo jury ou compte réel) avec le bouton pour passer à l'autre.
+class _ModeCard extends StatelessWidget {
+  final AuthMode mode;
+  final VoidCallback onSwitch;
+
+  const _ModeCard({required this.mode, required this.onSwitch});
+
+  @override
+  Widget build(BuildContext context) {
+    final demo = mode == AuthMode.demo;
+    return GCard(
+      color: demo ? AppTheme.mustard : const Color(0xFFDDEFD9),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(demo ? Icons.bolt : Icons.verified_user, color: demo ? AppTheme.ink : AppTheme.leaf),
+            const SizedBox(width: 8),
+            Expanded(child: Text(demo ? 'MODE DÉMO' : 'COMPTE RÉEL', style: AppTheme.h3(20))),
+          ]),
+          const SizedBox(height: 4),
+          Text(
+            demo ? 'Session de démonstration à un clic : les données sont celles du jeu de démo.' : 'Connecté avec votre compte Firebase : vos données sont les vôtres.',
+            style: AppTheme.body(15),
+          ),
+          const SizedBox(height: 12),
+          GButton(demo ? 'Passer en compte réel' : 'Passer en mode démo', icon: Icons.swap_horiz, variant: GVariant.cream, small: true, onPressed: onSwitch),
+        ],
+      ),
+    );
+  }
+}
+
+/// Notifications push : état, activation et envoi d'une notification de test (vérification en quelques secondes).
+class _PushCard extends StatefulWidget {
+  const _PushCard();
+
+  @override
+  State<_PushCard> createState() => _PushCardState();
+}
+
+class _PushCardState extends State<_PushCard> {
+  PushStatus? _status;
+  bool _busy = false;
+  String? _message;
+  bool _messageOk = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final st = await FcmService.status();
+    if (mounted) setState(() => _status = st);
+  }
+
+  Future<void> _enable() async {
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    final st = await FcmService.registerForCurrentUser();
+    if (!mounted) return;
+    setState(() {
+      _status = st;
+      _busy = false;
+      _messageOk = st == PushStatus.active;
+      _message = switch (st) {
+        PushStatus.active => 'Notifications activées sur cet appareil.',
+        PushStatus.denied => 'Autorisation refusée : activez les notifications de CampusSave dans les réglages du téléphone.',
+        PushStatus.unsupported => 'Les notifications push ne sont disponibles que dans l\'application Android.',
+        PushStatus.notRegistered => 'Appareil non enregistré : vérifiez la connexion puis réessayez.',
+      };
+    });
+  }
+
+  Future<void> _test() async {
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    try {
+      final r = await CampusApi.shared.sendFcmTest();
+      if (!mounted) return;
+      setState(() {
+        _messageOk = r['ok'] == true;
+        _message = '${r['sentCount'] ?? 0}/${r['tokensCount'] ?? 0} appareil(s) · ${r['diagnostics'] ?? ''}';
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messageOk = false;
+          _message = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final st = _status;
+    final (String label, Color color) = switch (st) {
+      PushStatus.active => ('Activées', AppTheme.leaf),
+      PushStatus.denied => ('Refusées', AppTheme.red),
+      PushStatus.unsupported => ('Indisponibles ici', AppTheme.muted),
+      _ => ('Non activées', AppTheme.orange),
+    };
+    return GCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.notifications_active_outlined, color: AppTheme.red),
+            const SizedBox(width: 8),
+            Expanded(child: Text('NOTIFICATIONS PUSH', style: AppTheme.h3(20))),
+            if (st != null) GPill(label, color: color),
+          ]),
+          const SizedBox(height: 6),
+          Text('Paiement confirmé, ticket prêt, retrait validé, rappel de retrait, nouveaux paniers surprise.', style: AppTheme.body(15, AppTheme.muted)),
+          const SizedBox(height: 12),
+          if (st != PushStatus.active) GButton('Activer les notifications', icon: Icons.notifications_none, loading: _busy, onPressed: _busy ? null : _enable),
+          if (st == PushStatus.active) GButton('Tester une notification', icon: Icons.send_outlined, variant: GVariant.mustard, loading: _busy, onPressed: _busy ? null : _test),
+          if (_message != null) ...[const SizedBox(height: 10), GNotice(_message!, icon: _messageOk ? Icons.check_circle_outline : Icons.error_outline, color: _messageOk ? AppTheme.leaf : AppTheme.red)],
         ],
       ),
     );
