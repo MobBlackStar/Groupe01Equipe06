@@ -8,7 +8,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 export const uploadsController = {
   uploadImage: asyncHandler(async (req, res) => {
-    const result = await uploadsService.uploadImage(req.file);
+    const result = await uploadsService.uploadImage(req.file, req);
     res.status(201).json(result);
   }),
 };

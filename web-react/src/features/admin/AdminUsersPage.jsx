@@ -282,8 +282,27 @@ export default function AdminUsersPage() {
     );
   };
 
-  const filiereLabel = (user) =>
-    user.filiereId ? FILIERE_LABELS[user.filiereId] || user.filiereId : <span className="text-[#5E5850]">—</span>;
+  const filiereLabel = (user) => {
+    if (user.role === ROLES.MERCHANT) {
+      const storeName = user.storeName || user.merchantName;
+      if (storeName) {
+        return (
+          <span className="cs-pill cs-pill-mustard !text-xs !py-0.5 !px-2 font-bold inline-flex items-center gap-1">
+            <span>🏪</span> {storeName}
+          </span>
+        );
+      }
+      return (
+        <span className="cs-pill cs-pill-outline !text-xs !py-0.5 !px-2 inline-flex items-center gap-1 text-[#5E5850]">
+          <span>🏪</span> Sans boutique
+        </span>
+      );
+    }
+    if (user.role === ROLES.ADMIN) {
+      return <span className="text-[#5E5850] font-normal">Administration</span>;
+    }
+    return user.filiereId ? FILIERE_LABELS[user.filiereId] || user.filiereId : <span className="text-[#5E5850]">—</span>;
+  };
 
   const renderAction = (user, block) => {
     if (user.role === ROLES.ADMIN) {
@@ -400,7 +419,7 @@ export default function AdminUsersPage() {
                       <dd className="mt-1">{renderRolePill(user)}</dd>
                     </div>
                     <div>
-                      <dt className="cs-label">Filière</dt>
+                      <dt className="cs-label">{user.role === ROLES.MERCHANT ? 'Établissement' : 'Filière'}</dt>
                       <dd className="font-semibold mt-1">{filiereLabel(user)}</dd>
                     </div>
                     <div className="col-span-2">
@@ -420,7 +439,7 @@ export default function AdminUsersPage() {
                   <tr>
                     <th>Utilisateur</th>
                     <th>Rôle</th>
-                    <th>Filière</th>
+                    <th>Filière / Établissement</th>
                     <th>Statut</th>
                     <th>Inscrit le</th>
                     <th className="!text-right">Actions</th>

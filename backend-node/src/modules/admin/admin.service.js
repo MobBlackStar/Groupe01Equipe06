@@ -208,7 +208,7 @@ export const adminService = {
   },
 
   /**
-   * Liste les utilisateurs avec filtrage facultatif par rôle.
+   * Liste les utilisateurs avec filtrage facultatif par rôle et rattachement commercial.
    */
   async listUsers(roleFilter) {
     let query = db.collection('users');
@@ -217,7 +217,32 @@ export const adminService = {
     }
     const snap = await query.get();
     const users = snap.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
-    return { users };
+
+    // Récupération des commerces pour enrichir le nom de l'établissement géré par chaque commerçant
+    let storeByOwner = new Map();
+    let storeById = new Map();
+    try {
+      const merchantsSnap = await db.collection('merchants').get();
+      merchantsSnap.forEach((d) => {
+        const data = d.data();
+        storeById.set(d.id, data);
+        if (data.ownerUid) storeByOwner.set(data.ownerUid, data);
+      });
+    } catch (_) {}
+
+    const enriched = users.map((u) => {
+      if (u.role === ROLES.MERCHANT) {
+        const store = storeByOwner.get(u.uid) || storeById.get(u.merchantId || u.uid) || null;
+        return {
+          ...u,
+          storeName: store?.name || u.storeName || (u.uid === 'm-baguette' || u.uid === 'M1' ? 'Munchies & Baguette Ali Trad' : 'En attente d agrément'),
+          storeStatus: store?.status || 'PENDING',
+        };
+      }
+      return u;
+    });
+
+    return { users: enriched };
   },
 
   /**

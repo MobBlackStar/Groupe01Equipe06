@@ -137,7 +137,11 @@ const EMPTY_STUDENT_DASHBOARD = {
 
 export default function StudentDashboard() {
   const { user, profile, isRealMode } = useAuth();
-  const isReal = isRealMode || localStorage.getItem('campussave_auth_mode') === 'REAL';
+  const isDemo =
+    user?.email === 'etudiant@essect.u-tunis.tn' ||
+    user?.uid === 'demo-student-yassine' ||
+    (!isRealMode && localStorage.getItem('campussave_auth_mode') !== 'REAL' && user?.uid?.startsWith('demo-'));
+  const isReal = !isDemo;
   const [data, setData] = useState(() => (isReal ? EMPTY_STUDENT_DASHBOARD : DEMO_STUDENT_DASHBOARD));
   const [loading, setLoading] = useState(false);
   const [metricMode, setMetricMode] = useState('money'); // 'money' ou 'co2'

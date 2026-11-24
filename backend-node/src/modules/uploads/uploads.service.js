@@ -4,8 +4,24 @@
 // Module : Médias & Téléversements
 
 import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
 import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_DIR = path.join(__dirname, '../../../public/uploads');
+
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn('Initialisation du dossier uploads local:', err.message);
+}
 
 let isCloudinaryConfigured = false;
 if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
@@ -20,11 +36,12 @@ if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SE
 
 export const uploadsService = {
   /**
-   * Téléverse une image en mémoire vers Cloudinary ou produit une URL de secours en mode local/test.
+   * Téléverse une image en mémoire vers Cloudinary ou la stocke fidèlement sur disque local.
    * @param {Express.Multer.File} file - Fichier extrait par Multer
+   * @param {import('express').Request} [req] - Requête HTTP entrante pour déduire l'URL hôte
    * @returns {Promise<{ url: string, publicId: string }>}
    */
-  async uploadImage(file) {
+  async uploadImage(file, req) {
     if (!file || !file.buffer) {
       throw new AppError('Fichier image manquant', 400, 'FILE_MISSING');
     }
@@ -62,12 +79,27 @@ export const uploadsService = {
       });
     }
 
-    // Mode simulation locale / test (quand aucune clé Cloudinary n'est fournie)
-    const mockPublicId = `campussave/dev_${Date.now()}`;
-    const mockUrl = `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80&sig=${Date.now()}`;
-    return {
-      url: mockUrl,
-      publicId: mockPublicId,
-    };
+    // Sauvegarde fidèle sur disque local pour servir la vraie photo choisie par le commerçant
+    const ext = file.mimetype === 'image/png' ? '.png' : file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+    const randomHex = crypto.randomBytes(8).toString('hex');
+    const filename = `offer_${Date.now()}_${randomHex}${ext}`;
+    const filePath = path.join(UPLOADS_DIR, filename);
+
+    try {
+      await fs.promises.writeFile(filePath, file.buffer);
+      const host = req?.get ? req.get('host') : (process.env.PUBLIC_API_URL || 'localhost:4000');
+      const protocol = req?.protocol || (host.includes('localhost') ? 'http' : 'https');
+      const baseUrl = `${protocol}://${host}`;
+      return {
+        url: `${baseUrl}/uploads/${filename}`,
+        publicId: `local/${filename}`,
+      };
+    } catch (diskErr) {
+      console.warn('Échec écriture disque upload, repli sur image catégorie :', diskErr.message);
+      return {
+        url: `https://images.unsplash.com/photo-1509722747041-616f39b57569?w=800&auto=format&fit=crop&q=80&sig=${Date.now()}`,
+        publicId: `fallback_${Date.now()}`,
+      };
+    }
   },
 };

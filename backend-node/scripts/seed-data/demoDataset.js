@@ -818,16 +818,23 @@ export function buildDemoDataset(nowMs = Date.now()) {
     updatedAt: now,
   });
 
-  const demoStore = rawMerchants.find((m) => m.id === 'merchant-baguette-baguette');
-  put('users/m-baguette', {
-    uid: 'm-baguette',
-    email: 'commercant@baguette.tn',
-    displayName: demoStore.name,
-    phone: demoStore.phone || '+21671390111',
-    role: ROLES.MERCHANT,
-    status: 'ACTIVE',
-    createdAt: new Date(nowMs - 20 * DAY_MS),
-    updatedAt: now,
+  // ---------------------------------------------------------------- 12 comptes commerçants Montfleury (symétrie 1:1)
+  rawMerchants.forEach((m) => {
+    const slug = m.id.replace('merchant-', '');
+    const uid = m.id === 'merchant-baguette-baguette' ? 'm-baguette' : `user-merch-${slug}`;
+    const email = m.id === 'merchant-baguette-baguette' ? 'commercant@baguette.tn' : `contact@${slug.replace(/-/g, '')}.tn`;
+    put(`users/${uid}`, {
+      uid,
+      email,
+      displayName: m.name,
+      phone: m.phone || '+21671390111',
+      role: ROLES.MERCHANT,
+      merchantId: m.id,
+      storeName: m.name,
+      status: 'ACTIVE',
+      createdAt: new Date(nowMs - 20 * DAY_MS),
+      updatedAt: now,
+    });
   });
 
   // ---------------------------------------------------------------- filières, impact global et série du campus

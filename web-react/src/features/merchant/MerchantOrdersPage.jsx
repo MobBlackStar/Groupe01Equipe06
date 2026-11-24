@@ -88,8 +88,12 @@ const MOCK_MERCHANT_ORDERS = [
 ];
 
 export default function MerchantOrdersPage() {
-  const { isRealMode } = useAuth();
-  const isReal = isRealMode || localStorage.getItem('campussave_auth_mode') === 'REAL';
+  const { user, isRealMode } = useAuth();
+  const isDemo =
+    user?.email === 'commercant@baguette.tn' ||
+    user?.uid === 'demo-merchant-baguette' ||
+    (!isRealMode && localStorage.getItem('campussave_auth_mode') !== 'REAL' && user?.uid?.startsWith('demo-'));
+  const isReal = !isDemo;
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('PAID'); // 'PAID', 'RESERVED', 'COMPLETED'

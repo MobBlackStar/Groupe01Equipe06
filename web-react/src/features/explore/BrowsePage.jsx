@@ -25,6 +25,7 @@ export default function BrowsePage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedMerchant, setSelectedMerchant] = useState('ALL');
   const [maxPriceMillimes, setMaxPriceMillimes] = useState(20000);
   const [surpriseOnly, setSurpriseOnly] = useState(false);
   const [sortBy, setSortBy] = useState('distance');
@@ -59,6 +60,7 @@ export default function BrowsePage() {
   const handleResetFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedCategory('ALL');
+    setSelectedMerchant('ALL');
     setMaxPriceMillimes(20000);
     setSurpriseOnly(false);
     setSortBy('distance');
@@ -78,6 +80,22 @@ export default function BrowsePage() {
     d.setHours(hours, minutes, 0, 0);
     return d.getTime();
   }, [scrubberHour]);
+
+  // Liste unique des commerces présents dans le catalogue
+  const merchantList = useMemo(() => {
+    const map = new Map();
+    offers.forEach((o) => {
+      const name = o.merchantName || o.merchantSnapshot?.name || o.merchant?.name;
+      const id = o.merchantId || o.merchantSnapshot?.id || o.merchant?.id || name;
+      if (name && id) {
+        if (!map.has(name)) {
+          map.set(name, { id, name, count: 0 });
+        }
+        map.get(name).count += 1;
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [offers]);
 
   // Décomptes de catégories
   const categoryCounts = useMemo(() => {
@@ -105,6 +123,14 @@ export default function BrowsePage() {
 
         if (selectedCategory !== 'ALL' && offer.category !== selectedCategory) {
           return false;
+        }
+
+        if (selectedMerchant !== 'ALL') {
+          const mName = (offer.merchantName || offer.merchantSnapshot?.name || offer.merchant?.name || '').toLowerCase();
+          const mId = offer.merchantId || offer.merchantSnapshot?.id || offer.merchant?.id;
+          if (mId !== selectedMerchant && mName !== selectedMerchant.toLowerCase()) {
+            return false;
+          }
         }
 
         if (surpriseOnly && !(offer.isSurpriseBasket || offer.surprise)) {
@@ -223,6 +249,51 @@ export default function BrowsePage() {
             onChange={setSearchQuery}
             placeholder="Un plat, une baguette farcie, un restaurant…"
           />
+
+          {/* Filtre rapide par restaurant / établissement partenaire */}
+          {merchantList.length > 0 && (
+            <div className="pt-1">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <span className="cs-eyebrow !text-xs !tracking-wider flex items-center gap-1.5 text-[#5E5850]">
+                  <span>🏪</span> Établissements partenaires de Montfleury
+                </span>
+                {selectedMerchant !== 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMerchant('ALL')}
+                    className="text-xs font-bold text-[#DA0711] hover:underline"
+                  >
+                    Voir tous les restaurants ({offers.length} offres)
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMerchant('ALL')}
+                  className={`cs-chip shrink-0 ${selectedMerchant === 'ALL' ? '!bg-[#111111] !text-[#FAF3E6]' : ''}`}
+                  aria-pressed={selectedMerchant === 'ALL'}
+                >
+                  Tous ({offers.length})
+                </button>
+                {merchantList.map((m) => {
+                  const isSel = selectedMerchant === m.id || selectedMerchant === m.name;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMerchant(isSel ? 'ALL' : m.name)}
+                      className={`cs-chip shrink-0 ${isSel ? '!bg-[#DA0711] !text-white !border-[#DA0711]' : ''}`}
+                      aria-pressed={isSel}
+                    >
+                      {m.name} ({m.count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <FilterPanel
             selectedCategory={selectedCategory}
             onSelectCategory={setSelectedCategory}

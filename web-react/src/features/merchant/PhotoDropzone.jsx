@@ -7,8 +7,9 @@ import React, { useState } from 'react';
 const PRESET_ILLUSTRATIONS = [
   { label: 'Baguette Farcie', emoji: '🥖', url: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=600&auto=format&fit=crop&q=80' },
   { label: 'Makloub Chawarma', emoji: '🌯', url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=600&auto=format&fit=crop&q=80' },
-  { label: 'Plat Ojja / Chaud', emoji: '🍳', url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80' },
+  { label: 'Plat Chaud / Ojja', emoji: '🍳', url: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?w=600&auto=format&fit=crop&q=80' },
   { label: 'Pizza Artisanale', emoji: '🍕', url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80' },
+  { label: 'Biscuits & Snacks', emoji: '🍪', url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600&auto=format&fit=crop&q=80' },
   { label: 'Pâtisserie Douceur', emoji: '🧁', url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop&q=80' },
   { label: 'Panier Mystère', emoji: '🎁', url: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&auto=format&fit=crop&q=80' },
 ];

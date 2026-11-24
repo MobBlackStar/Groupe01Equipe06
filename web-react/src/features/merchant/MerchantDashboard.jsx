@@ -186,7 +186,11 @@ function generateZeroDailySeries(numDays) {
 
 export default function MerchantDashboard() {
   const { user, merchant, isRealMode } = useAuth();
-  const isReal = isRealMode || localStorage.getItem('campussave_auth_mode') === 'REAL';
+  const isDemo =
+    user?.email === 'commercant@baguette.tn' ||
+    user?.uid === 'demo-merchant-baguette' ||
+    (!isRealMode && localStorage.getItem('campussave_auth_mode') !== 'REAL' && user?.uid?.startsWith('demo-'));
+  const isReal = !isDemo;
   const { orders: merchantOrders } = useMerchantOrders(merchant?.id || user?.uid || null);
   const [range, setRange] = useState('7d'); // '7d' ou '30d'
   const [metric, setMetric] = useState('revenue'); // 'revenue' ou 'orders'

@@ -38,6 +38,15 @@ const emptyFC = { type: 'FeatureCollection', features: [] };
  * @param {Array<{name:string, lat:number, lng:number}>} [props.presets] - raccourcis d'adresses
  * @param {boolean} [props.disabled]
  */
+const DEFAULT_PRESETS = [
+  { name: "Face ESSECT (Rue de l'ESSECT)", lat: 36.7865, lng: 10.1739 },
+  { name: 'Boulevard Ali Trad', lat: 36.7885, lng: 10.1762 },
+  { name: 'Rue Galilée', lat: 36.7872, lng: 10.1748 },
+  { name: 'Avenue Bab Jedid', lat: 36.7915, lng: 10.1710 },
+  { name: 'Rue des Silos (Beb El Falla)', lat: 36.7845, lng: 10.1780 },
+  { name: 'Avenue de Bellevue', lat: 36.7838, lng: 10.1772 },
+];
+
 export default function SpotEditor({ value, onChange, presets = [], disabled = false }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -51,6 +60,10 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
   const [pasteText, setPasteText] = useState('');
   const [pasteError, setPasteError] = useState('');
   const [mapFailed, setMapFailed] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState('');
+
+  const activePresets = presets.length > 0 ? presets : DEFAULT_PRESETS;
 
   const assessment = useMemo(() => (value ? assessSpot(value.lat, value.lng) : null), [value]);
   const [entry, setEntry] = useState(null);
@@ -190,6 +203,29 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
     if (map && !map.isMoving()) map.easeTo({ center: [value.lng, value.lat], duration: 700 });
   }, [value, computeEntry]);
 
+  function handleGeolocate() {
+    if (!navigator.geolocation) {
+      setGeoError("La géolocalisation n'est pas supportée par votre appareil.");
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoLoading(false);
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        setPasteText(`${lat}, ${lng}`);
+        emit({ lat, lng });
+      },
+      (err) => {
+        setGeoLoading(false);
+        setGeoError("Position GPS indisponible : activez la localisation de votre appareil ou choisissez une rue ci-dessous.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
   function handlePaste(text) {
     setPasteText(text);
     const parsed = parseCoordinates(text);
@@ -209,6 +245,28 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
 
   return (
     <div className="space-y-4" data-testid="spot-editor">
+      {/* Outils d'aide à la localisation rapide */}
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={handleGeolocate}
+          disabled={disabled || geoLoading}
+          className="cs-btn cs-btn-cream cs-btn-sm"
+        >
+          <Crosshair className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />
+          <span>{geoLoading ? 'Localisation GPS…' : '📍 Utiliser ma position GPS'}</span>
+        </button>
+        <a
+          href="https://www.google.com/maps/@36.7865,10.1739,17z"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cs-btn cs-btn-cream cs-btn-sm"
+        >
+          <span>🗺️ Ouvrir Google Maps</span>
+        </a>
+      </div>
+      {geoError && <p className="cs-error-text" role="alert">{geoError}</p>}
+
       {/* Saisie par coordonnées : Google Maps (clic droit -> copier les coordonnées) ou lien */}
       <div>
         <label htmlFor="spot-paste" className="cs-field-label flex items-center gap-2">
@@ -228,9 +286,36 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
           aria-invalid={Boolean(pasteError)}
         />
         <p id="spot-paste-help" className={pasteError ? 'cs-error-text mt-2' : 'cs-help-text mt-2'} role={pasteError ? 'alert' : undefined}>
-          {pasteError || 'Sur Google Maps : clic droit sur le lieu, puis cliquez sur les coordonnées pour les copier.'}
+          {pasteError || 'Sur Google Maps : clic droit sur votre commerce puis cliquez sur les coordonnées pour les copier ici.'}
         </p>
       </div>
+
+      {/* Raccourcis de rues de Montfleury */}
+      {activePresets.length > 0 && (
+        <div>
+          <span className="cs-field-label">Ou sélectionnez une rue de Montfleury en 1 clic :</span>
+          <div className="flex flex-wrap gap-2">
+            {activePresets.map((p) => {
+              const selected = value && Math.abs(value.lat - p.lat) < 1e-6 && Math.abs(value.lng - p.lng) < 1e-6;
+              return (
+                <button
+                  key={p.name}
+                  type="button"
+                  disabled={disabled}
+                  aria-pressed={Boolean(selected)}
+                  onClick={() => {
+                    setPasteText(`${p.lat}, ${p.lng}`);
+                    emit({ lat: p.lat, lng: p.lng });
+                  }}
+                  className={`cs-chip ${selected ? '!bg-[#DA0711] !text-white' : ''}`}
+                >
+                  {p.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Carte 3D : clic pour poser l'épingle, glisser pour la déplacer */}
       {mapFailed ? (
@@ -264,22 +349,6 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
           <p className="text-base text-[#5E5850]">Placez l'épingle sur la carte ou collez des coordonnées pour voir la distance de l'ESSECT.</p>
         )}
       </div>
-
-      {presets.length > 0 && (
-        <div>
-          <span className="cs-field-label">Ou choisissez une adresse de Montfleury</span>
-          <div className="flex flex-wrap gap-2">
-            {presets.map((p) => {
-              const selected = value && Math.abs(value.lat - p.lat) < 1e-6 && Math.abs(value.lng - p.lng) < 1e-6;
-              return (
-                <button key={p.name} type="button" disabled={disabled} aria-pressed={Boolean(selected)} onClick={() => emit({ lat: p.lat, lng: p.lng })} className="cs-chip">
-                  {p.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
