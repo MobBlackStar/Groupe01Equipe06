@@ -33,8 +33,9 @@ export function readCacheMiddleware(req, res, next) {
 
   const method = req.method.toUpperCase();
 
-  // Pour toute mutation réussie (POST, PATCH, DELETE, PUT), vider le cache immédiatement
+  // Pour toute mutation (POST, PATCH, DELETE, PUT), vider le cache immédiatement et à la fin de la réponse
   if (['POST', 'PATCH', 'DELETE', 'PUT'].includes(method)) {
+    clearReadCache();
     res.on('finish', () => {
       if (res.statusCode >= 200 && res.statusCode < 400) {
         clearReadCache();

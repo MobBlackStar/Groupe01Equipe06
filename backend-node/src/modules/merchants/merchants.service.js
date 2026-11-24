@@ -206,10 +206,21 @@ export const merchantsService = {
   async getMyOffers(merchantId, statusFilter) {
     // Un commerçant sans boutique n'a ni offres ni commandes : jamais le repli sur le premier commerce approuvé
     const actualMerchantId = await resolveMerchantId(merchantId);
-    if (!actualMerchantId) return { offers: [] };
+    const targetIds = Array.from(new Set([merchantId, actualMerchantId].filter(Boolean)));
+    if (targetIds.length === 0) return { offers: [] };
 
-    const snap = await db.collection('offers').where('merchantId', '==', actualMerchantId).get();
-    let offers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const seenIds = new Set();
+    let offers = [];
+    for (const tid of targetIds) {
+      const snap = await db.collection('offers').where('merchantId', '==', tid).get();
+      snap.docs.forEach((d) => {
+        if (!seenIds.has(d.id)) {
+          seenIds.add(d.id);
+          offers.push({ id: d.id, ...d.data() });
+        }
+      });
+    }
+
     if (statusFilter) {
       offers = offers.filter((o) => o.status === statusFilter);
     }
@@ -222,10 +233,21 @@ export const merchantsService = {
   async getMyOrders(merchantId, statusFilter, dateFilter) {
     // Un commerçant sans boutique n'a ni offres ni commandes : jamais le repli sur le premier commerce approuvé
     const actualMerchantId = await resolveMerchantId(merchantId);
-    if (!actualMerchantId) return { orders: [] };
+    const targetIds = Array.from(new Set([merchantId, actualMerchantId].filter(Boolean)));
+    if (targetIds.length === 0) return { orders: [] };
 
-    const snap = await db.collection('orders').where('merchantId', '==', actualMerchantId).get();
-    let orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const seenIds = new Set();
+    let orders = [];
+    for (const tid of targetIds) {
+      const snap = await db.collection('orders').where('merchantId', '==', tid).get();
+      snap.docs.forEach((d) => {
+        if (!seenIds.has(d.id)) {
+          seenIds.add(d.id);
+          orders.push({ id: d.id, ...d.data() });
+        }
+      });
+    }
+
     if (statusFilter) {
       orders = orders.filter((o) => o.status === statusFilter);
     }

@@ -114,7 +114,7 @@ export default function AdminMerchantsPage() {
   const loadAdminMerchants = useCallback(async () => {
     try {
       const res = await apiClient.get(ENDPOINTS.ADMIN_MERCHANTS);
-      if (res.data?.merchants && res.data.merchants.length > 0) {
+      if (Array.isArray(res.data?.merchants)) {
         setMerchants(res.data.merchants);
         setUsingDemo(false);
       }
@@ -234,20 +234,15 @@ export default function AdminMerchantsPage() {
         status: MERCHANT_STATUS.APPROVED,
         statusReason: 'Agréé par l administration ESSECT',
       });
+      setToast({
+        type: 'success',
+        message: `Le commerce "${merchant.name}" a été officiellement approuvé !`,
+      });
+      await loadAdminMerchants();
     } catch (err) {
-      console.warn('API approve fallback:', err.message);
+      console.warn('API approve error:', err.message);
+      setToast({ type: 'error', message: apiErrorMessage(err, "Impossible d'approuver ce commerce") });
     }
-
-    setMerchants((prev) =>
-      prev.map((m) =>
-        m.id === merchant.id ? { ...m, status: MERCHANT_STATUS.APPROVED, statusReason: 'Agréé' } : m
-      )
-    );
-
-    setToast({
-      type: 'success',
-      message: `Le commerce "${merchant.name}" a été officiellement approuvé !`,
-    });
   }
 
   async function handleConfirmReject() {
@@ -265,24 +260,17 @@ export default function AdminMerchantsPage() {
         statusReason: reason,
         reason,
       });
+      setToast({
+        type: 'warning',
+        message: `Le statut de ${merchant.name} est désormais : ${newStatus || 'REJETÉ'}`,
+      });
+      setRejectModalData(null);
+      await loadAdminMerchants();
     } catch (err) {
-      console.warn('API reject fallback:', err.message);
+      console.warn('API reject error:', err.message);
+      setToast({ type: 'error', message: apiErrorMessage(err, "Impossible de modifier le statut de ce commerce") });
+      setRejectModalData(null);
     }
-
-    setMerchants((prev) =>
-      prev.map((m) =>
-        m.id === merchant.id
-          ? { ...m, status: newStatus || MERCHANT_STATUS.REJECTED, statusReason: reason }
-          : m
-      )
-    );
-
-    setToast({
-      type: 'warning',
-      message: `Le statut de ${merchant.name} est désormais : ${newStatus || 'REJETÉ'}`,
-    });
-
-    setRejectModalData(null);
   }
 
   // Données d'affichage par ligne (partagées entre la table desktop et les cartes mobiles)

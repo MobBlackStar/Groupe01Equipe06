@@ -9,6 +9,14 @@ import { ROLES, FILIERES } from '../../../../shared/constants.js';
 export const registerProfileSchema = z.object({
   role: z.enum([ROLES.STUDENT, ROLES.MERCHANT]),
   displayName: z.string().min(2).max(60),
-  phone: z.string().regex(/^\+216[2-9]\d{7}$/, 'Numéro tunisien invalide (+216XXXXXXXX)').optional(),
-  filiereId: z.nativeEnum(FILIERES).optional(),
+  phone: z.union([
+    z.string().regex(/^\+216[2-9]\d{7}$/, 'Numéro tunisien invalide (+216XXXXXXXX)'),
+    z.literal(''),
+    z.null(),
+  ]).optional(),
+  filiereId: z.union([
+    z.nativeEnum(FILIERES),
+    z.literal(''),
+    z.null(),
+  ]).optional(),
 });

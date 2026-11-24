@@ -26,13 +26,13 @@ export const offersController = {
   updateOffer: asyncHandler(async (req, res) => {
     // Le propriétaire d'une offre est le COMMERCE (merchants/{id}), pas forcément l'uid de connexion (compte démo)
     const merchantId = (await resolveMerchantId(req.user.uid)) ?? req.user.uid;
-    const result = await offersService.updateOffer(req.params.id, merchantId, req.body);
+    const result = await offersService.updateOffer(req.params.id, merchantId, req.body, req.user);
     res.json(result);
   }),
 
   deleteOffer: asyncHandler(async (req, res) => {
     const merchantId = (await resolveMerchantId(req.user.uid)) ?? req.user.uid;
-    const result = await offersService.deleteOffer(req.params.id, merchantId);
+    const result = await offersService.deleteOffer(req.params.id, merchantId, req.user);
     res.json(result);
   }),
 };

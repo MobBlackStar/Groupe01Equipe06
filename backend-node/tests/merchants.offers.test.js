@@ -141,6 +141,38 @@ describe('Jour 3 — Commerces, Administration, Offres & Moteur IA', () => {
       assert.equal(valid.pricing.floorPriceMillimes, 2000);
     });
 
+    test('createOfferSchema accepte une URL absolue, un chemin relatif ou une chaîne vide pour photoUrl', () => {
+      const relative = createOfferSchema.parse({
+        title: 'Baguette Farcie',
+        category: OFFER_CATEGORIES.SANDWICH,
+        pricing: {
+          mode: PRICING_MODES.FIXED,
+          originalPriceMillimes: 5000,
+          discountedPriceMillimes: 3000,
+        },
+        quantity: 3,
+        pickupStartAt: '2026-11-24T18:00:00.000Z',
+        pickupEndAt: '2026-11-24T20:00:00.000Z',
+        photoUrl: '/assets/griddle/food/sandwich.png',
+      });
+      assert.equal(relative.photoUrl, '/assets/griddle/food/sandwich.png');
+
+      const empty = createOfferSchema.parse({
+        title: 'Croissant Chaud',
+        category: OFFER_CATEGORIES.VIENNOISERIE,
+        pricing: {
+          mode: PRICING_MODES.FIXED,
+          originalPriceMillimes: 2000,
+          discountedPriceMillimes: 1200,
+        },
+        quantity: 5,
+        pickupStartAt: '2026-11-24T18:00:00.000Z',
+        pickupEndAt: '2026-11-24T20:00:00.000Z',
+        photoUrl: '',
+      });
+      assert.equal(empty.photoUrl, '');
+    });
+
     test('createOffer rejette une fenêtre de retrait inversée (fin <= début)', async () => {
       const merchantData = { id: 'm-1', name: 'Test Merchant' };
       const invalidBody = {

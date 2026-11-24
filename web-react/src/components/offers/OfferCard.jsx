@@ -77,6 +77,7 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
           src={imageUrl}
           alt={title}
           loading="lazy"
+          decoding="async"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = SAFE_FALLBACK_IMG;

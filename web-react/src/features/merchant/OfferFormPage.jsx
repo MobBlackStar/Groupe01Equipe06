@@ -57,6 +57,29 @@ const hhmm = (v) => {
 const tunisDay = (ms = Date.now()) => new Intl.DateTimeFormat('en-CA', { timeZone: TUNIS_TZ }).format(ms); // AAAA-MM-JJ
 const tunisIso = (day, time) => new Date(`${day}T${time}:00+01:00`).toISOString();
 
+/** Calcule des horaires de retrait par défaut valides (now + 30 min à now + 3h, cadré dans la journée de Tunis) */
+function computeDefaultPickupHours() {
+  const nowMs = Date.now();
+  const startMs = nowMs + 30 * 60 * 1000;
+  const endMs = nowMs + 3 * 3600 * 1000;
+
+  let startStr = hhmm(startMs) || '18:30';
+  let endStr = hhmm(endMs) || '21:00';
+
+  const [sh, sm] = startStr.split(':').map(Number);
+  const [eh, em] = endStr.split(':').map(Number);
+
+  // Si on est en fin de soirée après 22h, cadrer proprement
+  if (sh >= 23 || eh < sh || (sh === eh && em <= sm)) {
+    startStr = '19:00';
+    endStr = '21:30';
+  } else if (eh >= 23 && em > 55) {
+    endStr = '23:55';
+  }
+
+  return { pickupStartAt: startStr, pickupEndAt: endStr };
+}
+
 /** Message lisible à partir d'une erreur Axios : on affiche la VRAIE raison du serveur, jamais un faux succès. */
 function apiErrorMessage(err, fallback) {
   const e = err?.response?.data?.error;
@@ -130,8 +153,7 @@ export default function OfferFormPage() {
     maxPerOrder: 3,
     weightGramsPerUnit: 400,
     photoUrl: '',
-    pickupStartAt: '18:30',
-    pickupEndAt: '20:00',
+    ...computeDefaultPickupHours(),
     isSurpriseBasket: false,
     surprise: {
       teaser: 'Assortiment surprise gourmand du jour',

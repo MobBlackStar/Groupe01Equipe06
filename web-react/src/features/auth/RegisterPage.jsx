@@ -11,6 +11,7 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { ROLES, FILIERES } from '@shared/constants.js';
 import { registerSchema } from './auth.schemas.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { DepthCard } from '../../components/common/DepthCard.jsx';
 import {
   Flame,
@@ -26,6 +27,7 @@ import {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
 
   const [formData, setFormData] = useState({
     role: ROLES.STUDENT,
@@ -77,51 +79,53 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+    // Nettoyer toute session de démonstration antérieure
+    localStorage.removeItem('campussave_demo_session');
+    localStorage.removeItem('campussave_token');
 
     try {
       let uid = `user_${Date.now()}`;
       if (auth) {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+        uid = userCredential.user.uid;
+      }
+
+      // Formatage rigoureux du profil pour l'API
+      const cleanPhone = formData.phone && formData.phone.trim() !== '+216' && formData.phone.trim() !== ''
+        ? formData.phone.trim()
+        : null;
+      const cleanFiliereId = formData.role === ROLES.STUDENT && formData.filiereId
+        ? formData.filiereId
+        : null;
+
+      // Appel endpoint backend pour initialiser le document utilisateur et les custom claims
+      await apiClient.post(ENDPOINTS.REGISTER_PROFILE, {
+        role: formData.role,
+        displayName: formData.displayName.trim(),
+        phone: cleanPhone,
+        filiereId: cleanFiliereId,
+      });
+
+      // Actualisation forcée du jeton Firebase Auth pour intégrer le claim de rôle
+      if (auth?.currentUser) {
         try {
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            formData.email,
-            formData.password
-          );
-          uid = userCredential.user.uid;
-        } catch (authErr) {
-          if (authErr.code === 'auth/email-already-in-use' || authErr.code === 'auth/weak-password') {
-            throw authErr;
-          }
-          console.warn('Firebase Auth inscription repli mode démo :', authErr.message);
+          await auth.currentUser.getIdToken(true);
+        } catch (claimErr) {
+          console.warn('Actualisation idToken post-inscription:', claimErr.message);
         }
       }
 
-      // Persistance de la session locale pour la démonstration
-      const demoSession = {
-        uid,
-        email: formData.email,
-        displayName: formData.displayName,
-        role: formData.role,
-        filiereId: formData.role === ROLES.STUDENT ? formData.filiereId : null,
-        phone: formData.phone,
-        ecoPoints: 0,
-        loyaltyTier: 'GRAINE',
-        nextRewardAt: 100,
-        totalMealsRescued: 0,
-        unlockedRewards: [],
-      };
-      localStorage.setItem('campussave_demo_session', JSON.stringify(demoSession));
-
-      // Appel endpoint backend
-      try {
-        await apiClient.post(ENDPOINTS.REGISTER_PROFILE, {
-          role: formData.role,
-          displayName: formData.displayName,
-          phone: formData.phone,
-          filiereId: formData.role === ROLES.STUDENT ? formData.filiereId : null,
-        });
-      } catch (apiErr) {
-        console.warn('Backend register-profile fallback:', apiErr.message);
+      // Rafraîchissement du profil dans le contexte React
+      if (refreshProfile) {
+        try {
+          await refreshProfile();
+        } catch (refErr) {
+          console.warn('Actualisation AuthContext post-inscription:', refErr.message);
+        }
       }
 
       setServerMsg({
@@ -145,6 +149,11 @@ export default function RegisterPage() {
       } else if (err.code === 'auth/weak-password') {
         errorMsg = 'Le mot de passe choisi doit comporter au moins 6 caractères.';
         setErrors((prev) => ({ ...prev, password: errorMsg }));
+      } else if (err.code === 'auth/invalid-email') {
+        errorMsg = 'Adresse email invalide.';
+        setErrors((prev) => ({ ...prev, email: errorMsg }));
+      } else if (err.response?.data?.error?.message) {
+        errorMsg = err.response.data.error.message;
       }
       setServerMsg({ type: 'error', text: errorMsg });
     } finally {

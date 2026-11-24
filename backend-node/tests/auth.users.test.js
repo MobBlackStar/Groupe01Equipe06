@@ -223,5 +223,22 @@ describe('Jour 2 — Authentification & Middlewares de Sécurité', () => {
         fcmTokenSchema.parse({ token: 'court' });
       });
     });
+
+    test('registerProfileSchema accepte un numéro tunisien valide, un champ vide "" ou null', () => {
+      const validEmpty = registerProfileSchema.parse({
+        role: ROLES.STUDENT,
+        displayName: 'Test Etudiant',
+        phone: '',
+        filiereId: FILIERES.EBUSINESS_3A,
+      });
+      assert.equal(validEmpty.displayName, 'Test Etudiant');
+
+      const validNull = registerProfileSchema.parse({
+        role: ROLES.MERCHANT,
+        displayName: 'Test Commercant',
+        phone: null,
+      });
+      assert.equal(validNull.role, ROLES.MERCHANT);
+    });
   });
 });

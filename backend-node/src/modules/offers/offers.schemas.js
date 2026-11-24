@@ -24,7 +24,11 @@ export const createOfferSchema = z.object({
   pickupEndAt: z.union([z.string(), z.number()]),
   isSurpriseBasket: z.boolean().optional().default(false),
   surpriseContents: z.union([z.array(z.string()), z.string()]).optional(),
-  photoUrl: z.string().url('URL d image invalide').optional().nullable(),
+  photoUrl: z.union([
+    z.string().url('URL d image invalide'),
+    z.string().startsWith('/'),
+    z.literal(''),
+  ]).optional().nullable(),
 });
 
 export const updateOfferSchema = z.object({
@@ -43,5 +47,9 @@ export const updateOfferSchema = z.object({
   quantity: z.number().int().min(1).max(50).optional(),
   pickupStartAt: z.union([z.string(), z.number()]).optional(),
   pickupEndAt: z.union([z.string(), z.number()]).optional(),
-  photoUrl: z.string().url().optional().nullable(),
+  photoUrl: z.union([
+    z.string().url('URL d image invalide'),
+    z.string().startsWith('/'),
+    z.literal(''),
+  ]).optional().nullable(),
 });

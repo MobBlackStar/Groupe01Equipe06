@@ -17,7 +17,8 @@ export const offersService = {
    * Publie une nouvelle offre anti-gaspillage alimentaire (Prix Fixe ou Enchère Dégressive Smart Decay).
    */
   async createOffer(merchantData, body) {
-    if (!merchantData || !merchantData.id) {
+    const merchantId = merchantData?.id || merchantData?.merchantId;
+    if (!merchantData || !merchantId) {
       throw new AppError('Profil commerçant requis', 401, 'UNAUTHORIZED');
     }
 
@@ -348,7 +349,7 @@ export const offersService = {
   /**
    * Mise à jour d'une offre avec vérification d'immutabilité financière si déjà commandée.
    */
-  async updateOffer(id, merchantId, updates) {
+  async updateOffer(id, merchantId, updates, currentUser = null) {
     const offerRef = db.collection('offers').doc(id);
     const snap = await offerRef.get();
     if (!snap.exists) {
@@ -356,7 +357,9 @@ export const offersService = {
     }
 
     const offer = snap.data();
-    if (offer.merchantId !== merchantId) {
+    const isOwner = offer.merchantId === merchantId || (currentUser && offer.merchantId === currentUser.uid);
+    const isAdmin = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'admin');
+    if (!isOwner && !isAdmin) {
       throw new AppError('Accès non autorisé à cette offre', 403, 'FORBIDDEN_RESOURCE');
     }
 
@@ -381,7 +384,7 @@ export const offersService = {
     if (sanitized.title || sanitized.category) {
       sanitized.searchKeywords = generateSearchKeywords({
         title: sanitized.title || offer.title,
-        merchantName: offer.merchantSnapshot.name,
+        merchantName: offer.merchantSnapshot?.name || '',
         category: sanitized.category || offer.category,
       });
     }
@@ -396,7 +399,7 @@ export const offersService = {
   /**
    * Suppression d'une offre (Hard delete si aucune commande, Soft delete sinon).
    */
-  async deleteOffer(id, merchantId) {
+  async deleteOffer(id, merchantId, currentUser = null) {
     const offerRef = db.collection('offers').doc(id);
     const snap = await offerRef.get();
     if (!snap.exists) {
@@ -404,7 +407,9 @@ export const offersService = {
     }
 
     const offer = snap.data();
-    if (offer.merchantId !== merchantId) {
+    const isOwner = offer.merchantId === merchantId || (currentUser && offer.merchantId === currentUser.uid);
+    const isAdmin = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'admin');
+    if (!isOwner && !isAdmin) {
       throw new AppError('Accès non autorisé à cette offre', 403, 'FORBIDDEN_RESOURCE');
     }
 
@@ -423,10 +428,13 @@ export const offersService = {
 
     // Décrémenter le compteur d'offres actives du commerçant si elle était active
     if (wasActive) {
-      await db.collection('merchants').doc(merchantId).update({
-        activeOfferCount: admin.firestore.FieldValue.increment(-1),
-        updatedAt: new Date(),
-      });
+      const targetDocId = offer.merchantId || merchantId;
+      try {
+        await db.collection('merchants').doc(targetDocId).update({
+          activeOfferCount: admin.firestore.FieldValue.increment(-1),
+          updatedAt: new Date(),
+        });
+      } catch {}
     }
 
     return { success: true, deleted: true };

@@ -15,23 +15,29 @@ export async function requireApprovedMerchant(req, _res, next) {
     }
 
     let merchantDoc = await db.collection('merchants').doc(req.user.uid).get();
-    let merchantData = merchantDoc.exists ? merchantDoc.data() : null;
+    let merchantData = merchantDoc.exists ? { id: merchantDoc.id, ...merchantDoc.data() } : null;
 
     if (!merchantData) {
       // 1. Recherche par ownerUid
       const snap = await db.collection('merchants').where('ownerUid', '==', req.user.uid).limit(1).get();
       if (!snap.empty) {
-        merchantData = snap.docs[0].data();
+        merchantData = { id: snap.docs[0].id, ...snap.docs[0].data() };
       } else {
         // 2. Repli réservé au compte démo (jamais pour un vrai commerçant sans boutique)
         if (req.user.uid === DEMO_MERCHANT_UID) {
-          merchantData = await findDemoMerchant();
+          const demoStore = await findDemoMerchant();
+          if (demoStore) {
+            merchantData = { id: demoStore.id || DEMO_MERCHANT_UID, ...demoStore };
+          }
         }
       }
     }
 
     if (!merchantData) {
       return next(new AppError('Profil commerçant inexistant', 404, 'MERCHANT_NOT_FOUND'));
+    }
+    if (!merchantData.id) {
+      merchantData.id = req.user.uid;
     }
     if (merchantData.status !== MERCHANT_STATUS.APPROVED) {
       return next(

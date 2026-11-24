@@ -39,7 +39,7 @@ export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
     >
       {/* Visuel mystère : photo floutée + énorme point d'interrogation */}
       <div className="cs-photo aspect-[4/3] !bg-[#111111]">
-        <img src={teaserImage} alt="" aria-hidden="true" className="blur-xl scale-125 opacity-60" loading="lazy" />
+        <img src={teaserImage} alt="" aria-hidden="true" className="blur-xl scale-125 opacity-60" loading="lazy" decoding="async" />
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center">
           <span className="font-display text-[8rem] leading-[0.8] text-[#FFD000] transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">?</span>
           <span className="mt-2 font-semibold uppercase tracking-wide text-[#FAF3E6] text-base">

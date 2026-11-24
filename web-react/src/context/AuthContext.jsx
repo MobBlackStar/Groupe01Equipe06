@@ -69,6 +69,8 @@ export function AuthProvider({ children }) {
         const currentDemo = localStorage.getItem('campussave_demo_session');
 
         if (firebaseUser) {
+          localStorage.removeItem('campussave_demo_session');
+          localStorage.removeItem('campussave_token');
           setUser(firebaseUser);
           try {
             const tokenResult = await firebaseUser.getIdTokenResult(true);
@@ -121,6 +123,11 @@ export function AuthProvider({ children }) {
    */
   const loginDemo = useCallback(async (typeOrRole) => {
     setError(null);
+    if (auth?.currentUser) {
+      try {
+        await fbSignOut(auth);
+      } catch {}
+    }
     const key = String(typeOrRole || 'student').toLowerCase();
     const normalizedKey = key.includes('merchant') ? 'merchant' : (key.includes('admin') ? 'admin' : 'student');
     const demo = demoAccounts[normalizedKey] || demoAccounts.student;
@@ -233,6 +240,8 @@ export function AuthProvider({ children }) {
    */
   const register = useCallback(async (email, password, additionalData = {}) => {
     setError(null);
+    localStorage.removeItem('campussave_demo_session');
+    localStorage.removeItem('campussave_token');
     if (!auth) {
       const simulated = {
         uid: `user_${Date.now()}`,
@@ -265,8 +274,10 @@ export function AuthProvider({ children }) {
       }
       return res.data;
     } catch (err) {
-      console.warn('API registerProfile fallback:', err.message);
-      return { ok: true };
+      if (!auth || !isFirebaseConfigured) {
+        return { ok: true };
+      }
+      throw err;
     }
   }, []);
 
