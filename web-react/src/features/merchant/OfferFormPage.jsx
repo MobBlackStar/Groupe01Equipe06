@@ -248,30 +248,75 @@ export default function OfferFormPage() {
     }
   }
 
-  function handleAiAutoFill(aiData) {
-    setFormData((prev) => ({
-      ...prev,
-      title: aiData.title || prev.title,
-      description: aiData.description || prev.description,
-      category: aiData.category || prev.category,
-      originalPriceMillimes: aiData.originalPriceMillimes || prev.originalPriceMillimes,
-      startPriceMillimes: aiData.startPriceMillimes || prev.startPriceMillimes,
-      floorPriceMillimes: aiData.floorPriceMillimes || prev.floorPriceMillimes,
-      fixedDiscountedMillimes: aiData.fixedDiscountedMillimes || prev.fixedDiscountedMillimes,
-      quantityTotal: aiData.quantityTotal || prev.quantityTotal,
-      weightGramsPerUnit: aiData.weightGramsPerUnit || prev.weightGramsPerUnit,
-      isSurpriseBasket: aiData.isSurpriseBasket ?? prev.isSurpriseBasket,
-      surprise: {
-        ...prev.surprise,
-        teaser: aiData.surprise?.teaser || prev.surprise.teaser,
-        itemCountHint: aiData.surprise?.itemCountHint || prev.surprise.itemCountHint,
-        privateContents: aiData.surpriseItems
-          ? aiData.surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
-          : prev.surprise.privateContents,
-      },
-    }));
+  function parseAiTime(value, fallback) {
+    if (typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim())) {
+      return value.trim();
+    }
+    const formatted = hhmm(value);
+    return formatted || fallback;
+  }
 
-    setToastMsg('✨ L intelligence artificielle a configuré l ensemble de votre ticket !');
+  function handleAiAutoFill(aiData) {
+    setFormData((prev) => {
+      const orig = Math.max(500, Math.round(Number(aiData.originalPriceMillimes) || prev.originalPriceMillimes || 7000));
+      const rawDisc = Number(aiData.discountedPriceMillimes ?? aiData.fixedDiscountedMillimes);
+      const disc = Number.isFinite(rawDisc) && rawDisc >= 100
+        ? Math.min(orig - 100, Math.round(rawDisc))
+        : Math.max(100, Math.round(orig * 0.6));
+
+      const rawFloor = Number(aiData.floorPriceMillimes);
+      const floorP = Number.isFinite(rawFloor) && rawFloor >= 100
+        ? Math.min(orig - 100, Math.round(rawFloor))
+        : disc;
+
+      const rawStart = Number(aiData.startPriceMillimes);
+      const startP = Number.isFinite(rawStart) && rawStart > floorP
+        ? Math.min(orig, Math.round(rawStart))
+        : Math.max(floorP + 100, Math.min(orig, Math.round((orig * 0.8) / 100) * 100));
+
+      const endFromClock =
+        aiData.closingHour != null
+          ? `${String(Math.min(23, Math.max(0, Number(aiData.closingHour)))).padStart(2, '0')}:${String(Math.min(59, Math.max(0, Number(aiData.closingMinute) || 0))).padStart(2, '0')}`
+          : null;
+      const nextEnd = parseAiTime(aiData.suggestedPickupEndAt, endFromClock || prev.pickupEndAt);
+      const [eh, em] = nextEnd.split(':').map(Number);
+      const defaultStartMins = Math.max(0, eh * 60 + em - 120);
+      const computedStart = `${String(Math.floor(defaultStartMins / 60)).padStart(2, '0')}:${String(defaultStartMins % 60).padStart(2, '0')}`;
+      const nextStart = parseAiTime(aiData.suggestedPickupStartAt, computedStart);
+
+      const nextPrivateContents =
+        aiData.surpriseContents ||
+        (Array.isArray(aiData.surpriseItems) && aiData.surpriseItems.length > 0
+          ? aiData.surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
+          : aiData.surprise?.teaser || prev.surprise.privateContents);
+
+      return {
+        ...prev,
+        title: aiData.title || prev.title,
+        description: aiData.description || prev.description,
+        category: OFFER_CATEGORIES[aiData.category] ? aiData.category : (aiData.category || prev.category),
+        pricingMode: PRICING_MODES[aiData.pricingMode] ? aiData.pricingMode : prev.pricingMode,
+        originalPriceMillimes: orig,
+        startPriceMillimes: startP,
+        floorPriceMillimes: floorP,
+        fixedDiscountedMillimes: disc,
+        quantityTotal: Math.min(50, Math.max(1, Math.round(Number(aiData.quantityTotal) || prev.quantityTotal))),
+        weightGramsPerUnit: Math.round(Number(aiData.weightGramsPerUnit) || prev.weightGramsPerUnit),
+        pickupStartAt: nextStart,
+        pickupEndAt: nextEnd,
+        isSurpriseBasket: typeof aiData.isSurpriseBasket === 'boolean' ? aiData.isSurpriseBasket : prev.isSurpriseBasket,
+        surprise: {
+          ...prev.surprise,
+          teaser: aiData.surprise?.teaser || prev.surprise.teaser,
+          itemCountHint: aiData.surprise?.itemCountHint || aiData.quantityTotal || prev.surprise.itemCountHint,
+          privateContents: nextPrivateContents,
+        },
+      };
+    });
+
+    setErrors({});
+    setErrorMsg(null);
+    setToastMsg('✨ L’assistant IA a rempli tous les champs, prix et horaires de votre offre !');
   }
 
   /** Contrôles côté client (le serveur re-valide tout) : on renvoie la liste des problèmes à corriger. */
@@ -524,6 +569,7 @@ export default function OfferFormPage() {
                 fixedPriceMillimes={formData.fixedDiscountedMillimes}
                 originalPriceMillimes={formData.originalPriceMillimes}
                 onPriceChange={(type, val) => {
+                  if (type === 'original') handleChange('originalPriceMillimes', val);
                   if (type === 'start') handleChange('startPriceMillimes', val);
                   if (type === 'floor') handleChange('floorPriceMillimes', val);
                   if (type === 'fixed') handleChange('fixedDiscountedMillimes', val);
