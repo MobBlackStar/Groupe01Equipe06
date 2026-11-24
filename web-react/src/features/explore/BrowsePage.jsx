@@ -165,7 +165,7 @@ export default function BrowsePage() {
         return 0;
       }
     });
-  }, [offers, searchQuery, selectedCategory, maxPriceMillimes, surpriseOnly, sortBy]);
+  }, [offers, searchQuery, selectedCategory, selectedMerchant, maxPriceMillimes, surpriseOnly, sortBy]);
 
   // Items du Time Scrubber Hero
   const scrubberShowcaseItems = useMemo(() => {

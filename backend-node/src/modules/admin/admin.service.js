@@ -7,7 +7,7 @@ import { getMerchantTokens } from '../notifications/fcmTokens.js';
 import { db, auth } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { FcmService } from '../notifications/fcm.service.js';
-import { USER_STATUS, MERCHANT_STATUS } from '../../../../shared/constants.js';
+import { USER_STATUS, MERCHANT_STATUS, ROLES } from '../../../../shared/constants.js';
 import { computeLocationFields } from '../merchants/merchants.service.js';
 
 const fcmService = new FcmService();
