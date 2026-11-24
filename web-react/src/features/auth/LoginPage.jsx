@@ -104,20 +104,28 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden">
-      <div className="cs-container cs-page">
-        {/* Marque */}
-        <Link to="/" className="inline-flex items-center gap-3 mb-10 lg:mb-14" aria-label="CampusSave — accueil">
-          <img src="/assets/brand/logo-full-512.png" alt="CampusSave" width="120" height="107" className="h-20 sm:h-24 w-auto" decoding="async" />
-        </Link>
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden flex flex-col justify-center">
+      {/* 💡 Concept : Centrage vertical complet pour garder le formulaire et le CTA au-dessus de la ligne de flottaison sur desktop */}
+      {/* 🎯 Pour la soutenance : "La page de connexion tient en un seul écran sur ordinateur (zero scroll) tout en préservant l'esthétique Polaroid Griddle." */}
+      <div className="cs-container py-5 sm:py-6 lg:py-4">
+        {/* Logo mobile/tablette uniquement en haut ; sur desktop il vit au-dessus du Polaroid pour supprimer le vide supérieur */}
+        <div className="lg:hidden mb-5">
+          <Link to="/" className="inline-flex items-center gap-3" aria-label="CampusSave — accueil">
+            <img src="/assets/brand/logo-full-512.png" alt="CampusSave" width="120" height="107" className="h-16 w-auto" decoding="async" />
+          </Link>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* =========================================================================
-              COLONNE GAUCHE : POLAROID INCLINÉ + STICKERS KNEWAVE
+              COLONNE GAUCHE : MARQUE + POLAROID INCLINÉ + STICKERS KNEWAVE
               ========================================================================= */}
-          <div className="order-2 lg:order-1 flex justify-center">
-            <div className="relative w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[540px] px-3 sm:px-6 py-6">
-              <figure className="cs-polaroid rotate-[-4deg] hover:rotate-[-1deg]">
+          <div className="order-2 lg:order-1 lg:col-span-5 flex flex-col items-center">
+            <Link to="/" className="hidden lg:inline-flex items-center gap-3 mb-4 self-start" aria-label="CampusSave — accueil">
+              <img src="/assets/brand/logo-full-512.png" alt="CampusSave" width="120" height="107" className="h-14 xl:h-16 w-auto" decoding="async" />
+            </Link>
+
+            <div className="relative w-full max-w-[300px] sm:max-w-[360px] lg:max-w-[380px] px-3 py-3">
+              <figure className="cs-polaroid lg:!p-3 lg:!pb-12 rotate-[-3deg] hover:rotate-0">
                 <span className="rs-tape-tl" />
                 <span className="rs-tape-tr" />
                 <div className="cs-photo rounded-[4px] aspect-square">
@@ -134,10 +142,10 @@ export function LoginPage() {
               </figure>
 
               {/* Stickers qui débordent du polaroid */}
-              <span className="cs-sticker cs-sticker-red absolute -top-1 right-0 z-20 text-[2rem] sm:text-[2.6rem] px-5 py-3">
+              <span className="cs-sticker cs-sticker-red absolute -top-1 right-0 z-20 text-[1.75rem] sm:text-[2.1rem] px-4 py-2">
                 -70%
               </span>
-              <span className="cs-sticker cs-sticker-mustard cs-sticker-tilt-r absolute bottom-24 left-0 sm:-left-3 z-20 text-[1.35rem] sm:text-[1.7rem] px-5 py-2.5">
+              <span className="cs-sticker cs-sticker-mustard cs-sticker-tilt-r absolute bottom-14 left-0 sm:-left-2 z-20 text-[1.15rem] sm:text-[1.4rem] px-4 py-2">
                 ANTI-GASPI
               </span>
             </div>
@@ -146,7 +154,7 @@ export function LoginPage() {
           {/* =========================================================================
               COLONNE DROITE : HEADLINE MONUMENTALE + FORMULAIRE + 1-CLICK DEMO BAR
               ========================================================================= */}
-          <div className="order-1 lg:order-2 w-full max-w-xl lg:max-w-none mx-auto lg:mx-0">
+          <div className="order-1 lg:order-2 lg:col-span-7 w-full max-w-xl lg:max-w-none mx-auto lg:mx-0">
             <header className="mb-10">
               <p className="cs-eyebrow mb-4 inline-flex items-center gap-2">
                 <Flame className="w-4 h-4" aria-hidden="true" />
