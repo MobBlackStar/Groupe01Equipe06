@@ -26,20 +26,23 @@ const STATUS_LABEL = {
 
 export default function MerchantStorePage() {
   const [store, setStore] = useState({
-    name: 'Baguette & Baguette Montfleury',
+    name: '',
     type: MERCHANT_TYPES.FAST_FOOD,
-    description: 'Sandwicherie rapide et baguettes farcies croustillantes appréciées des étudiants.',
-    phone: '+21671390111',
-    street: 'Avenue Habib Bourguiba',
+    description: '',
+    phone: '',
+    street: '',
     area: 'Montfleury',
     city: 'Tunis',
     lat: 36.7885,
     lng: 10.1762,
     openingHours: '08:00 - 21:00',
-    status: MERCHANT_STATUS.APPROVED, // Peut basculer en PENDING ou REJECTED
+    logoUrl: '',
+    status: MERCHANT_STATUS.PENDING,
     statusReason: '',
   });
 
+  // `noStore` : le compte n'a pas (encore) de boutique -> on ne montre aucune fiche inventée
+  const [noStore, setNoStore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -72,12 +75,17 @@ export default function MerchantStorePage() {
             lat: m.location?.lat || 36.7885,
             lng: m.location?.lng || 10.1762,
             openingHours: m.openingHours || '08:00 - 21:00',
+            logoUrl: m.logoUrl || '',
             status: m.status || MERCHANT_STATUS.PENDING,
             statusReason: m.statusReason || '',
           });
         }
       } catch (err) {
-        console.warn('Backend merchants/me fallback démo:', err.message);
+        if (err?.response?.status === 404) {
+          setNoStore(true);
+        } else {
+          setToast({ type: 'error', message: err?.response?.data?.error?.message || 'Impossible de charger votre boutique.' });
+        }
       }
     }
     loadStore();
@@ -92,17 +100,23 @@ export default function MerchantStorePage() {
     setLoading(true);
 
     try {
-      await apiClient.patch(ENDPOINTS.MERCHANTS_ME, {
-        name: store.name,
+      // Tous les champs de la fiche partent au serveur (adresse et position comprises) ; le statut d'agrément reste protégé côté API
+      const res = await apiClient.patch(ENDPOINTS.MERCHANTS_ME, {
+        name: store.name.trim(),
         type: store.type,
         description: store.description,
-        phone: store.phone,
-        openingHours: store.openingHours,
+        phone: store.phone.trim(),
+        openingHours: store.openingHours.trim(),
+        address: { street: store.street.trim(), area: store.area, city: store.city },
+        location: { lat: Number(store.lat), lng: Number(store.lng) },
+        ...(store.logoUrl.trim() ? { logoUrl: store.logoUrl.trim() } : {}),
       });
+      const m = res.data?.merchant;
+      if (m) setStore((prev) => ({ ...prev, lat: m.location?.lat ?? prev.lat, lng: m.location?.lng ?? prev.lng }));
       setToast({ type: 'success', message: 'Fiche commerçant mise à jour !' });
     } catch (err) {
-      console.warn('API PATCH fallback:', err.message);
-      setToast({ type: 'success', message: 'Modifications enregistrées localement.' });
+      // Jamais de faux succès : la vraie raison (ex. TOO_FAR, téléphone invalide) est affichée
+      setToast({ type: 'error', message: err?.response?.data?.error?.message || 'Enregistrement impossible : réessayez.' });
     } finally {
       setLoading(false);
     }
@@ -156,6 +170,13 @@ export default function MerchantStorePage() {
           <span>Mes offres</span>
         </Link>
       </header>
+
+      {noStore && (
+        <div className="cs-card p-6 mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4" role="status">
+          <p className="text-lg font-semibold">Vous n'avez pas encore de boutique : déposez votre dossier pour publier des offres.</p>
+          <Link to="/merchant/onboarding" className="cs-btn cs-btn-red cs-btn-sm shrink-0 self-start">Créer ma boutique</Link>
+        </div>
+      )}
 
       {/* BANDEAU D'AGRÉMENT TEMPS RÉEL */}
       <PendingApprovalBanner
@@ -232,6 +253,24 @@ export default function MerchantStorePage() {
               value={store.openingHours}
               onChange={(e) => handleChange('openingHours', e.target.value)}
               leftIcon={<span>🕒</span>}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Input
+              label="Adresse (rue)"
+              required
+              value={store.street}
+              onChange={(e) => handleChange('street', e.target.value)}
+              leftIcon={<span>📍</span>}
+            />
+
+            <Input
+              label="Logo (lien, facultatif)"
+              value={store.logoUrl}
+              onChange={(e) => handleChange('logoUrl', e.target.value)}
+              leftIcon={<span>🖼️</span>}
+              helperText="Adresse https d'une image"
             />
           </div>
 

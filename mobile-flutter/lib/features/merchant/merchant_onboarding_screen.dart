@@ -26,6 +26,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
   final _phoneController = TextEditingController(text: '+216');
   final _streetController = TextEditingController();
   final _coordsController = TextEditingController();
+  final _hoursController = TextEditingController(text: '08:00 - 21:00');
 
   String _selectedType = 'FAST_FOOD';
   bool _isLoading = false;
@@ -52,6 +53,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
     _phoneController.dispose();
     _streetController.dispose();
     _coordsController.dispose();
+    _hoursController.dispose();
     super.dispose();
   }
 
@@ -90,6 +92,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
         'name': _nameController.text.trim(),
         'type': _selectedType,
         'description': _descController.text.trim(),
+        'openingHours': _hoursController.text.trim(),
         'phone': _phoneController.text.trim(),
         'address': {'street': _streetController.text.trim(), 'area': 'Montfleury', 'city': 'Tunis'},
         'location': {'lat': c.lat, 'lng': c.lng},
@@ -147,6 +150,8 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 keyboardType: TextInputType.phone,
                 validator: (v) => RegExp(r'^\+216[2-9]\d{7}$').hasMatch((v ?? '').trim()) ? null : 'Format attendu : +216XXXXXXXX',
               ),
+              const SizedBox(height: 14),
+              AppTextField(label: 'Horaires de service', hint: '08:00 - 21:00', controller: _hoursController),
               const SizedBox(height: 14),
               AppTextField(
                 label: 'Adresse (rue)',

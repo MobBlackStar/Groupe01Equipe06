@@ -16,23 +16,12 @@ import { fileURLToPath } from 'node:url';
 const OSRM = process.env.ROUTING_URL || 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/features/radar/streetRoutes.data.json');
 
-// [lng, lat]
-const POINTS = {
-  essect: [10.1748, 36.7871],
-  // Jeu de données API / seed backend
-  etoile: [10.1739, 36.7865],
-  baguette: [10.1762, 36.7885],
-  masmoudi: [10.1725, 36.7892],
-  dome: [10.1771, 36.7848],
-  napoli: [10.171, 36.7915],
-  phare: [10.1722, 36.7831],
-  // Jeu de données hors-ligne (src/mocks/merchants.mock.js)
-  mockEtoile: [10.1748, 36.7891],
-  mockMasmoudi: [10.1775, 36.7876],
-  mockDome: [10.1735, 36.7865],
-  mockNapoli: [10.1788, 36.7852],
-  mockPhare: [10.1782, 36.7905],
-};
+// [lng, lat] : l'ESSECT + les 12 commerces de Montfleury lus dans le jeu de données officiel du seed (source unique)
+const MERCHANTS_JSON = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../backend-node/scripts/seed-data/merchants.json');
+const POINTS = { essect: [10.1748, 36.7871] };
+for (const m of JSON.parse(fs.readFileSync(MERCHANTS_JSON, 'utf8')).merchants) {
+  POINTS[m.id.replace(/^merchant-/, '')] = [m.location.lng, m.location.lat];
+}
 
 const key = (p) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
 const pairKey = (a, b) => [key(a), key(b)].sort().join('|');

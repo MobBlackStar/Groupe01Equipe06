@@ -32,6 +32,12 @@ class OrderModel {
   final int discountMillimes;
   final int totalMillimes;
   final DateTime? createdAt;
+  final bool isSurpriseBasket;
+  final String? rarity;
+  final int? ratingStars; // null = pas encore noté
+  final List<Map<String, dynamic>> revealItems; // contenu du panier surprise révélé au retrait : [{name, quantity}]
+  final String? revealNote;
+  final int? pointsAwarded;
 
   const OrderModel({
     required this.id,
@@ -48,6 +54,12 @@ class OrderModel {
     required this.discountMillimes,
     required this.totalMillimes,
     this.createdAt,
+    this.isSurpriseBasket = false,
+    this.rarity,
+    this.ratingStars,
+    this.revealItems = const [],
+    this.revealNote,
+    this.pointsAwarded,
   });
 
   bool get isReserved => status == 'RESERVED';
@@ -61,6 +73,17 @@ class OrderModel {
     final reward = pricing['reward'] is Map ? Map<String, dynamic>.from(pricing['reward'] as Map) : const <String, dynamic>{};
 
     int millimes(dynamic v) => (v as num?)?.toInt() ?? 0;
+    final rating = json['rating'] is Map ? Map<String, dynamic>.from(json['rating'] as Map) : const <String, dynamic>{};
+    final reveal = json['reveal'] is Map ? Map<String, dynamic>.from(json['reveal'] as Map) : const <String, dynamic>{};
+    final rewardsDoc = json['rewards'] is Map ? Map<String, dynamic>.from(json['rewards'] as Map) : const <String, dynamic>{};
+    // Le contenu révélé est une liste d'objets {name, quantity} (ou de textes pour les anciennes offres)
+    final revealItems = <Map<String, dynamic>>[
+      for (final it in (reveal['items'] as List? ?? const []))
+        if (it is Map)
+          {'name': (it['name'] ?? it['title'] ?? '').toString(), 'quantity': ((it['quantity'] ?? it['qty'] ?? 1) as num).toInt()}
+        else if (it != null)
+          {'name': it.toString(), 'quantity': 1},
+    ];
     final quantity = millimes(json['quantity']);
     final unit = millimes(pricing['lockedUnitPriceMillimes']);
     final subtotal = pricing['subtotalMillimes'] != null ? millimes(pricing['subtotalMillimes']) : unit * quantity;
@@ -82,6 +105,12 @@ class OrderModel {
       discountMillimes: discount,
       totalMillimes: total,
       createdAt: parseApiDate(json['createdAt']),
+      isSurpriseBasket: offer['isSurpriseBasket'] == true,
+      rarity: offer['rarity']?.toString(),
+      ratingStars: (rating['stars'] as num?)?.toInt(),
+      revealItems: revealItems,
+      revealNote: reveal['note']?.toString(),
+      pointsAwarded: (rewardsDoc['pointsAwarded'] as num?)?.toInt(),
     );
   }
 }

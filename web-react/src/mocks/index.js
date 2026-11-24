@@ -495,7 +495,7 @@ export const mockOrders = [
     merchantId: 'merchant-baguette-baguette',
     merchantSnapshot: {
       name: 'Munchies & Baguette Ali Trad',
-      location: { lat: 36.7869, lng: 10.1753 },
+      location: { lat: 36.78749, lng: 10.1752 },
     },
     offerId: 'off-01',
     offerSnapshot: {

@@ -11,6 +11,7 @@ class UserProfile {
   final String? phone;
   final String? filiereId;
   final String? avatarUrl;
+  final Map<String, bool> notificationPrefs;
   final int ecoPoints;
   final List<String> badges;
   final int totalMoneySavedMillimes;
@@ -28,6 +29,7 @@ class UserProfile {
     this.phone,
     this.filiereId,
     this.avatarUrl,
+    this.notificationPrefs = const {'push': true, 'email': true},
     this.ecoPoints = 0,
     this.badges = const [],
     this.totalMoneySavedMillimes = 0,
@@ -47,6 +49,10 @@ class UserProfile {
       phone: json['phone'] as String?,
       filiereId: json['filiereId'] as String?,
       avatarUrl: json['avatarUrl'] as String?,
+      notificationPrefs: {
+        'push': (json['notificationPrefs'] is Map ? (json['notificationPrefs'] as Map)['push'] : null) != false,
+        'email': (json['notificationPrefs'] is Map ? (json['notificationPrefs'] as Map)['email'] : null) != false,
+      },
       ecoPoints: (json['ecoPoints'] as num?)?.toInt() ?? 0,
       badges: (json['badges'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
       totalMoneySavedMillimes: (json['totalMoneySavedMillimes'] as num?)?.toInt() ?? 0,
@@ -67,6 +73,7 @@ class UserProfile {
       'phone': phone,
       'filiereId': filiereId,
       'avatarUrl': avatarUrl,
+      'notificationPrefs': notificationPrefs,
       'ecoPoints': ecoPoints,
       'badges': badges,
       'totalMoneySavedMillimes': totalMoneySavedMillimes,
@@ -91,6 +98,7 @@ class UserProfile {
       phone: phone ?? this.phone,
       filiereId: filiereId ?? this.filiereId,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      notificationPrefs: notificationPrefs,
       ecoPoints: ecoPoints ?? this.ecoPoints,
       badges: badges,
       totalMoneySavedMillimes: totalMoneySavedMillimes,

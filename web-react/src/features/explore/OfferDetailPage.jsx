@@ -20,29 +20,6 @@ import { formatTunisTime } from '../../lib/formatters.js';
 import { Store, Clock, Flame, Minus, Plus, MapPin, ArrowLeft, ArrowRight, Lock } from 'lucide-react';
 import { formatCategory } from '../../components/offers/OfferCard.jsx';
 
-const FALLBACK_OFFER = {
-  id: 'off-baguette-01',
-  merchantId: 'merchant-baguette-baguette',
-  merchantName: 'Baguette & Baguette Montfleury',
-  merchantAddress: '14 Rue Abou El Kacem Chebbi, Montfleury, Tunis',
-  merchantPhone: '+216 71 390 111',
-  title: 'Baguette Farcie Escalope Panée & Double Fromage',
-  description: 'Savoureuse baguette artisanale garnie d escalope panée croustillante marinée à la tunisienne, frites fraîches, fromage fondant et sauce au choix.',
-  category: 'SANDWICH',
-  pricingType: 'DUTCH',
-  originalPriceMillimes: 7800,
-  targetPriceMillimes: 3800,
-  startPriceMillimes: 7800,
-  floorPriceMillimes: 3800,
-  quantityAvailable: 4,
-  maxPerOrder: 3,
-  distanceFromEssectM: 180,
-  weightGramsPerUnit: 400,
-  pickupStartAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-  pickupEndAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-  isSurpriseBasket: false,
-};
-
 export default function OfferDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,6 +29,7 @@ export default function OfferDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [loadFailure, setLoadFailure] = useState('');
   const [now, setNow] = useState(Date.now());
   // Coupons fidélité réellement débloqués (GET /loyalty/me) ; le coupon choisi est envoyé à la réservation (rewardId)
   const [rewards, setRewards] = useState([]);
@@ -84,12 +62,12 @@ export default function OfferDetailPage() {
       try {
         const response = await apiClient.get(ENDPOINTS.OFFER_BY_ID(id));
         if (isMounted) {
-          setOffer(response.data?.offer || response.data || FALLBACK_OFFER);
+          setOffer(response.data?.offer || response.data || null);
         }
       } catch (err) {
-        console.warn('Offre non trouvée via API, activation du fallback :', err.message);
+        // Jamais d'offre inventée : un faux article ne pourrait pas être réservé
         if (isMounted) {
-          setOffer({ ...FALLBACK_OFFER, id: id || FALLBACK_OFFER.id });
+          setLoadFailure(err?.response?.status === 404 ? 'Cette offre n\'existe plus ou n\'est plus disponible.' : (err?.response?.data?.error?.message || 'Impossible de charger cette offre. Vérifiez la connexion.'));
         }
       } finally {
         if (isMounted) {
@@ -113,7 +91,23 @@ export default function OfferDetailPage() {
     );
   }
 
-  const currentOffer = offer || FALLBACK_OFFER;
+  if (!offer) {
+    return (
+      <div className="cs-container cs-page text-[#111111]">
+        <Link to="/app/explore" className="cs-link inline-flex items-center gap-2 text-lg mb-8">
+          <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
+          Toutes les offres
+        </Link>
+        <div className="cs-card p-8 sm:p-10" role="alert">
+          <h1 className="cs-title mb-3">Offre indisponible</h1>
+          <p className="cs-lead">{loadFailure || 'Cette offre est introuvable.'}</p>
+          <Link to="/app/explore" className="cs-btn cs-btn-red mt-6 inline-flex">Voir les offres du moment</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const currentOffer = offer;
   const unitPrice = computeUnitPrice(currentOffer, now);
   const totalPrice = unitPrice * quantity;
 

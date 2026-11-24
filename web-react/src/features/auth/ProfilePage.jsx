@@ -5,8 +5,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { apiClient } from '../../lib/api.js';
-import { ENDPOINTS } from '../../lib/endpoints.js';
 import { ROLES, FILIERES, LOYALTY_TIERS, LOYALTY_THRESHOLDS } from '@shared/constants.js';
 import { profileSchema } from './auth.schemas.js';
 import {
@@ -18,6 +16,7 @@ import {
   Toast,
 } from '../../components/ui/index.js';
 import { LogOut, Save, Bell, Mail, Phone, User } from 'lucide-react';
+import { AVATAR_PRESETS, resolveAvatarPreset } from '@shared/avatars.js';
 
 // Libellés français (présentation uniquement)
 const ROLE_LABELS = {
@@ -35,12 +34,13 @@ const TIER_LABELS = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, profile, role, logout } = useAuth();
+  const { user, profile, role, logout, updateProfile } = useAuth();
 
   const [formData, setFormData] = useState({
-    displayName: profile?.displayName || user?.displayName || 'Ritej Bejaoui',
-    phone: profile?.phone || '+21698123456',
+    displayName: profile?.displayName || user?.displayName || '',
+    phone: profile?.phone || '+216',
     filiereId: profile?.filiereId || FILIERES.EBUSINESS_3A,
+    avatarUrl: profile?.avatarUrl || '',
     notificationPrefs: {
       email: profile?.notificationPrefs?.email ?? true,
       push: profile?.notificationPrefs?.push ?? true,
@@ -58,6 +58,7 @@ export default function ProfilePage() {
         displayName: profile.displayName || '',
         phone: profile.phone || '+216',
         filiereId: profile.filiereId || FILIERES.EBUSINESS_3A,
+        avatarUrl: profile.avatarUrl || '',
         notificationPrefs: {
           email: profile.notificationPrefs?.email ?? true,
           push: profile.notificationPrefs?.push ?? true,
@@ -74,7 +75,7 @@ export default function ProfilePage() {
     { value: FILIERES.COMPTABILITE, label: '📑 Comptabilité & Fiscalité' },
   ];
 
-  const points = profile?.ecoPoints || 240;
+  const points = Number.isFinite(profile?.ecoPoints) ? profile.ecoPoints : 0;
   let currentTier = LOYALTY_TIERS.GRAINE;
   let nextThreshold = LOYALTY_THRESHOLDS.POUSSE;
   let tierIcon = '🌱';
@@ -136,16 +137,25 @@ export default function ProfilePage() {
     setLoading(true);
 
     try {
-      await apiClient.patch(ENDPOINTS.ME, formData);
+      // Le profil du serveur fait foi : le contexte d'authentification est mis à jour avec la réponse (barre de navigation comprise)
+      const payload = {
+        displayName: formData.displayName.trim(),
+        phone: formData.phone,
+        notificationPrefs: formData.notificationPrefs,
+        ...(formData.avatarUrl ? { avatarUrl: formData.avatarUrl } : {}),
+        ...(role === ROLES.STUDENT ? { filiereId: formData.filiereId } : {}),
+      };
+      await updateProfile(payload);
       setToast({
         type: 'success',
         message: 'Profil mis à jour avec succès !',
       });
     } catch (err) {
-      console.warn('API PATCH /users/me fallback:', err.message);
+      // Jamais de faux succès : on affiche la vraie raison renvoyée par le serveur
+      const apiMessage = err?.response?.data?.error?.message;
       setToast({
-        type: 'success',
-        message: 'Modifications enregistrées localement.',
+        type: 'error',
+        message: apiMessage || 'Enregistrement impossible : vérifiez la connexion et réessayez.',
       });
     } finally {
       setLoading(false);
@@ -167,7 +177,8 @@ export default function ProfilePage() {
 
   const displayRole = role || ROLES.STUDENT;
   const roleLabel = ROLE_LABELS[displayRole] || displayRole;
-  const displayEmail = user?.email || 'donyesbejaoui27@gmail.com';
+  const displayEmail = user?.email || profile?.email || '—';
+  const avatarPreset = resolveAvatarPreset(formData.avatarUrl);
   const filiereLabel = filiereOptions.find((opt) => opt.value === formData.filiereId)?.label;
   const pointsToGo = Math.max(0, nextThreshold - points);
 
@@ -221,10 +232,11 @@ export default function ProfilePage() {
             <Card variant="dark" className="p-7 sm:p-8 overflow-hidden">
               <div className="flex items-start justify-between gap-4 mb-8">
                 <div
-                  className="w-20 h-20 rounded-full bg-[#FAF3E6] flex items-center justify-center text-4xl shrink-0"
+                  className="w-20 h-20 rounded-full bg-[#FAF3E6] flex items-center justify-center text-4xl shrink-0 border-2 border-[#FAF3E6]"
+                  style={avatarPreset ? { background: avatarPreset.bg } : undefined}
                   aria-hidden="true"
                 >
-                  {displayRole === ROLES.MERCHANT ? '🏪' : displayRole === ROLES.ADMIN ? '🛡️' : '🎓'}
+                  {avatarPreset ? avatarPreset.emoji : displayRole === ROLES.MERCHANT ? '🏪' : displayRole === ROLES.ADMIN ? '🛡️' : '🎓'}
                 </div>
                 <Badge
                   variant={displayRole === ROLES.ADMIN ? 'ink' : displayRole === ROLES.MERCHANT ? 'yellow' : 'red'}
@@ -340,6 +352,31 @@ export default function ProfilePage() {
                   leftIcon={<Phone className="w-5 h-5" aria-hidden="true" />}
                 />
               </div>
+
+              <fieldset>
+                <legend className="cs-label mb-3">Avatar</legend>
+                <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Choisir un avatar">
+                  {Object.entries(AVATAR_PRESETS).map(([name, a]) => {
+                    const value = `preset:${name}`;
+                    const selected = formData.avatarUrl === value;
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        aria-label={a.label}
+                        title={a.label}
+                        onClick={() => handleChange('avatarUrl', value)}
+                        className={`w-14 h-14 rounded-full text-2xl flex items-center justify-center border-2 border-[#111111] transition-transform ${selected ? 'ring-4 ring-[#DA0711] scale-110' : 'hover:-translate-y-0.5'}`}
+                        style={{ background: a.bg }}
+                      >
+                        {a.emoji}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
 
               {displayRole === ROLES.STUDENT && (
                 <Select

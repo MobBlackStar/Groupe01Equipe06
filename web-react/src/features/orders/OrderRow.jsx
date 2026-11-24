@@ -87,7 +87,7 @@ const STATUS_PILLS = {
   NO_SHOW: { className: 'cs-pill-outline', label: 'Non récupéré' },
 };
 
-export default function OrderRow({ order, onRate }) {
+export default function OrderRow({ order, onRate, onCancel }) {
   if (!order) return null;
 
   const id = order.id || order._id;
@@ -173,13 +173,20 @@ export default function OrderRow({ order, onRate }) {
 
         <div className="w-full sm:w-auto">
           {status === 'RESERVED' && (
-            <Link to={`/app/checkout/${id}`} className="cs-btn cs-btn-mustard w-full sm:w-auto">
-              Finaliser le paiement →
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to={`/app/checkout/${id}`} className="cs-btn cs-btn-mustard w-full sm:w-auto">
+                Finaliser le paiement →
+              </Link>
+              {onCancel && (
+                <button type="button" onClick={() => onCancel(order)} className="cs-btn cs-btn-cream w-full sm:w-auto">
+                  Annuler
+                </button>
+              )}
+            </div>
           )}
 
           {status === 'PAID' && (
-            <Link to={`/app/tickets/${id}`} className="cs-btn cs-btn-red w-full sm:w-auto">
+            <Link to={`/app/orders/${id}/ticket`} className="cs-btn cs-btn-red w-full sm:w-auto">
               Voir mon ticket 🎟️
             </Link>
           )}

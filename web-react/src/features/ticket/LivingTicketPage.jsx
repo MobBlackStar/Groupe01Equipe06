@@ -2,27 +2,15 @@
 // 🔄 Comparaison React / Flutter : En React, `LivingTicketPage` charge les données du ticket via l'API et affiche `BoardingPass` ; en Flutter, c'est `TicketScreen`.
 // 🎯 À retenir pour la soutenance : "Le ticket vivant reste accessible hors-ligne dès qu'il a été généré une première fois pour pallier les pannes de réseau au sous-sol des commerces."
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import BoardingPass from './BoardingPass.jsx';
 import UnboxingReveal from '../surprise/UnboxingReveal.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
-import { Spinner } from '../../components/ui/index.js';
-
-// Données de secours si commande locale / offline
-const FALLBACK_TICKET = {
-  orderId: 'ord-demo-essectx',
-  orderCode: 'CS-8K4M9',
-  offerTitle: 'Baguette Farcie Escalope Panée & Double Fromage',
-  merchantName: 'Baguette & Baguette Montfleury',
-  merchantAddress: '14 Rue Abou El Kacem Chebbi, Montfleury, Tunis',
-  pickupStartAt: new Date(Date.now() - 15 * 60 * 1000),
-  pickupEndAt: new Date(Date.now() + 60 * 60 * 1000),
-  quantity: 2,
-  ticketKeyHex: 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90',
-  status: 'PAID',
-};
+import { Spinner, EmptyState } from '../../components/ui/index.js';
+import RatingDialog from '../orders/RatingDialog.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 /**
  * Assemble le ticket affiché à partir de la réponse /orders/:id/ticket (ticketKey, orderCode)
@@ -46,17 +34,27 @@ function buildTicket(id, crypto = {}, order = {}) {
   };
 }
 
+const POLL_MS = 4000;
+
 export default function LivingTicketPage() {
   const { id } = useParams();
+  const { refreshProfile } = useAuth();
   const [ticket, setTicket] = useState(null);
+  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [showUnboxing, setShowUnboxing] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const autoRevealDone = useRef(false);
+  const wasPaid = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
 
     async function fetchTicket() {
       setLoading(true);
+      setError('');
       try {
         // Deux sources distinctes : les paramètres cryptographiques (/ticket : ticketKey, orderCode) et la
         // commande elle-même (titre, quantité, créneau, commerce). Sans la clé réelle, le QR est inscannable.
@@ -65,26 +63,55 @@ export default function LivingTicketPage() {
           apiClient.get(ENDPOINTS.ORDER_BY_ID(id)).catch(() => null),
         ]);
         if (isMounted) {
-          setTicket(buildTicket(id, ticketRes.data?.ticket || ticketRes.data, orderRes?.data?.order || orderRes?.data));
+          const o = orderRes?.data?.order || orderRes?.data || null;
+          setOrder(o);
+          wasPaid.current = o?.status === 'PAID';
+          setTicket(buildTicket(id, ticketRes.data?.ticket || ticketRes.data, o));
         }
       } catch (err) {
-        console.warn('Ticket non trouvé via API, activation du fallback de démonstration :', err.message);
-        if (isMounted) {
-          setTicket({ ...FALLBACK_TICKET, orderId: id || FALLBACK_TICKET.orderId });
-        }
+        // Jamais de faux ticket : un QR inventé ne serait pas scannable. On explique et on propose de réessayer.
+        if (isMounted) setError(err?.response?.data?.error?.message || 'Ticket introuvable : la commande doit être payée pour générer le QR.');
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchTicket();
-
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, reloadKey]);
+
+  // Suivi du retrait en direct : dès que le commerçant valide, la commande passe à COMPLETED
+  useEffect(() => {
+    if (!ticket || order?.status !== 'PAID') return undefined;
+    const timer = setInterval(async () => {
+      try {
+        const res = await apiClient.get(ENDPOINTS.ORDER_BY_ID(id));
+        const fresh = res.data?.order || res.data;
+        if (fresh?.status && fresh.status !== 'PAID') {
+          setOrder(fresh);
+          setTicket((prev) => (prev ? { ...prev, status: fresh.status } : prev));
+          if (fresh.status === 'COMPLETED') refreshProfile?.();
+        }
+      } catch {
+        /* réseau instable : on réessaie au prochain tour */
+      }
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [ticket, order?.status, id, refreshProfile]);
+
+  const isSurprise = Boolean(order?.offerSnapshot?.isSurpriseBasket);
+  const isCompleted = order?.status === 'COMPLETED';
+  const hasReveal = Array.isArray(order?.reveal?.items) && order.reveal.items.length > 0;
+
+  // Le déballage s'ouvre tout seul à la validation du retrait (une seule fois, uniquement si le retrait vient d'être validé ici)
+  useEffect(() => {
+    if (isCompleted && isSurprise && hasReveal && wasPaid.current && !autoRevealDone.current) {
+      autoRevealDone.current = true;
+      setShowUnboxing(true);
+    }
+  }, [isCompleted, isSurprise, hasReveal]);
 
   if (loading) {
     return (
@@ -95,7 +122,23 @@ export default function LivingTicketPage() {
     );
   }
 
-  const currentTicket = ticket || FALLBACK_TICKET;
+  if (error || !ticket) {
+    return (
+      <div className="cs-container cs-page text-[#111111]">
+        <Link to="/app/orders" className="cs-link inline-flex items-center min-h-[44px] mb-6">← Mes tickets</Link>
+        <EmptyState
+          icon="🎟️"
+          title="Ticket indisponible"
+          description={error || 'Impossible de charger ce ticket.'}
+          action={<button type="button" onClick={() => setReloadKey((k) => k + 1)} className="cs-btn cs-btn-red">Réessayer</button>}
+        />
+      </div>
+    );
+  }
+
+  const ratingOrder = order
+    ? { ...order, id: order.orderId || order.id || id, merchantName: order.merchantSnapshot?.name, offerTitle: order.offerSnapshot?.title }
+    : null;
 
   return (
     <div className="cs-container cs-page text-[#111111]">
@@ -108,17 +151,35 @@ export default function LivingTicketPage() {
         <p className="cs-eyebrow mb-3">Montfleury · Campus ESSECT</p>
         <h1 className="cs-display">Mon ticket</h1>
         <p className="cs-lead mt-4 max-w-2xl">
-          Montrez ce ticket vivant au comptoir. Le QR code change toutes les 30 secondes : une capture d'écran ne passera pas.
+          {isCompleted
+            ? 'Retrait validé : bon appétit ! Vos EcoPoints sont déjà crédités.'
+            : 'Montrez ce ticket vivant au comptoir. Le QR code change toutes les 30 secondes : une capture d\'écran ne passera pas.'}
         </p>
       </header>
+
+      {isCompleted && (
+        <div className="cs-card p-6 mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4" role="status">
+          <p className="text-lg font-semibold">
+            ✅ Retrait validé{order?.rewards?.pointsAwarded ? ` · +${order.rewards.pointsAwarded} EcoPoints` : ''}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {isSurprise && hasReveal && (
+              <button type="button" onClick={() => setShowUnboxing(true)} className="cs-btn cs-btn-mustard cs-btn-sm">🎁 Voir mon panier</button>
+            )}
+            {!order?.rating && (
+              <button type="button" onClick={() => setShowRating(true)} className="cs-btn cs-btn-red cs-btn-sm">⭐ Noter la commande</button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-12 lg:gap-16 lg:grid-cols-[minmax(0,520px)_minmax(0,1fr)] items-start">
         {/* Le Billet Vivant */}
         <div className="lg:sticky lg:top-28">
-          <BoardingPass ticket={currentTicket} />
+          <BoardingPass ticket={ticket} />
         </div>
 
-        {/* Mode d'emploi + démo unboxing */}
+        {/* Mode d'emploi */}
         <aside className="space-y-10 lg:pt-4">
           <section>
             <h2 className="cs-title mb-8">Au comptoir</h2>
@@ -139,38 +200,36 @@ export default function LivingTicketPage() {
             </ol>
           </section>
 
-          <section className="cs-card p-6 sm:p-8">
-            <span className="cs-sticker cs-sticker-red mb-5">Surprise</span>
-            <h2 className="cs-h3 mt-2">Panier surprise ?</h2>
-            <p className="cs-body text-[#5E5850] mt-2 mb-6">
-              Revivez l’ouverture de la boîte mystère et découvrez les EcoPoints gagnés.
-            </p>
-            {/* Bouton Démo Unboxing Panier Surprise */}
-            <button
-              type="button"
-              onClick={() => setShowUnboxing(true)}
-              className="cs-btn cs-btn-mustard cs-btn-block"
-            >
-              <span aria-hidden="true">🎁</span>
-              <span>Revoir l’unboxing</span>
-            </button>
-          </section>
+          {isSurprise && (
+            <section className="cs-card p-6 sm:p-8">
+              <span className="cs-sticker cs-sticker-red mb-5">Surprise</span>
+              <h2 className="cs-h3 mt-2">Panier surprise</h2>
+              <p className="cs-body text-[#5E5850] mt-2">
+                {isCompleted && hasReveal
+                  ? 'Le contenu du panier a été révélé : revivez l’ouverture de la boîte.'
+                  : 'Le contenu reste secret jusqu’au retrait : il se révélera ici, automatiquement, dès que le commerçant aura validé votre ticket.'}
+              </p>
+              {isCompleted && hasReveal && (
+                <button type="button" onClick={() => setShowUnboxing(true)} className="cs-btn cs-btn-mustard cs-btn-block mt-6">
+                  <span aria-hidden="true">🎁</span>
+                  <span>Revoir l’unboxing</span>
+                </button>
+              )}
+            </section>
+          )}
         </aside>
       </div>
 
-      {/* Modale d'animation Unboxing */}
-      {showUnboxing && (
-        <UnboxingReveal
-          isOpen={showUnboxing}
-          items={[
-            { title: 'Croissant aux Amandes', quantity: 2, valueMillimes: 3600 },
-            { title: 'Pain au Chocolat Beurre', quantity: 2, valueMillimes: 3200 },
-          ]}
-          rarity="LEGENDARY"
-          merchantName={currentTicket.merchantName}
-          onClose={() => setShowUnboxing(false)}
-        />
-      )}
+      {/* Déballage du vrai contenu du panier (renvoyé par le serveur au scan) */}
+      {showUnboxing && <UnboxingReveal isOpen={showUnboxing} order={order} onClose={() => setShowUnboxing(false)} />}
+
+      {/* Notation 1 à 5 étoiles d'une commande terminée */}
+      <RatingDialog
+        isOpen={showRating}
+        onClose={() => setShowRating(false)}
+        order={showRating ? ratingOrder : null}
+        onSuccess={({ rating }) => setOrder((prev) => (prev ? { ...prev, rating } : prev))}
+      />
     </div>
   );
 }

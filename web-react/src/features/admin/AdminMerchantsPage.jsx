@@ -250,7 +250,7 @@ export default function AdminMerchantsPage() {
     const { merchant, reason, newStatus } = rejectModalData;
 
     if (!reason.trim()) {
-      alert('Veuillez renseigner un motif pour justifier le refus.');
+      setToast({ type: 'error', message: 'Veuillez renseigner un motif pour justifier cette décision.' });
       return;
     }
 
@@ -262,7 +262,7 @@ export default function AdminMerchantsPage() {
       });
       setToast({
         type: 'warning',
-        message: `Le statut de ${merchant.name} est désormais : ${newStatus || 'REJETÉ'}`,
+        message: `Le statut de ${merchant.name} est désormais : ${STATUS_UI[newStatus || MERCHANT_STATUS.REJECTED]?.label || newStatus}`,
       });
       setRejectModalData(null);
       await loadAdminMerchants();
@@ -301,8 +301,10 @@ export default function AdminMerchantsPage() {
 
   const renderActions = (row, block) => {
     const { merchant, isApproved } = row;
-    const canReject = merchant.status !== MERCHANT_STATUS.REJECTED;
-    if (isApproved && !canReject) return null;
+    const isSuspended = merchant.status === MERCHANT_STATUS.SUSPENDED;
+    // Rejeter : dossier en attente ; Suspendre : commerce déjà agréé ; Approuver / Réactiver : tout commerce non agréé
+    const canReject = merchant.status === MERCHANT_STATUS.PENDING;
+    const canSuspend = isApproved;
     return (
       <div className={block ? 'mt-5 grid gap-3' : 'inline-flex flex-wrap justify-end items-center gap-2'}>
         {!isApproved && (
@@ -311,7 +313,17 @@ export default function AdminMerchantsPage() {
             onClick={() => handleApprove(merchant)}
             className={`cs-btn cs-btn-ink ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}
           >
-            ✓ Approuver
+            {isSuspended ? '✓ Réactiver' : '✓ Approuver'}
+          </button>
+        )}
+
+        {canSuspend && (
+          <button
+            type="button"
+            onClick={() => setRejectModalData({ merchant, reason: '', newStatus: MERCHANT_STATUS.SUSPENDED })}
+            className={`cs-btn cs-btn-cream !text-[#DA0711] ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}
+          >
+            ⏸ Suspendre
           </button>
         )}
 
@@ -463,7 +475,7 @@ export default function AdminMerchantsPage() {
         <Modal
           isOpen={Boolean(rejectModalData)}
           onClose={() => setRejectModalData(null)}
-          title={`Refuser le dossier : ${rejectModalData?.merchant?.name || ''}`}
+          title={`${rejectModalData?.newStatus === MERCHANT_STATUS.SUSPENDED ? 'Suspendre' : 'Refuser le dossier de'} : ${rejectModalData?.merchant?.name || ''}`}
           description="Un motif explicatif est obligatoire pour notifier le commerçant."
           footer={
             <>
@@ -479,7 +491,7 @@ export default function AdminMerchantsPage() {
                 size="sm"
                 onClick={handleConfirmReject}
               >
-                Confirmer le rejet
+                {rejectModalData?.newStatus === MERCHANT_STATUS.SUSPENDED ? 'Confirmer la suspension' : 'Confirmer le rejet'}
               </Button>
             </>
           }

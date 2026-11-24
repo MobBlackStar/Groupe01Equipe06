@@ -189,6 +189,12 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  /// Applique un profil renvoyé par le serveur (après une modification) : barre du haut, profil et points se mettent à jour partout.
+  void applyProfile(UserProfile profile) {
+    _profile = profile;
+    notifyListeners();
+  }
+
   /// Déconnexion
   Future<void> signOut() async {
     ApiClient.demoAuthToken = null;

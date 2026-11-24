@@ -251,6 +251,8 @@ export const adminService = {
     await resetDemo();
     const { clearReadCache } = await import('../../middleware/readCache.js');
     clearReadCache();
-    return { ok: true, offersCount: 20, merchantsCount: 6 };
+    const { buildDemoDataset } = await import('../../../scripts/seed-data/demoDataset.js');
+    const { summary } = buildDemoDataset();
+    return { ok: true, offersCount: summary.offers, merchantsCount: summary.merchants };
   },
 };

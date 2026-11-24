@@ -9,6 +9,7 @@ import { logger } from './utils/logger.js';
 import { startReservationSweeper } from './jobs/reservationSweeper.js';
 import { startOfferExpirySweeper } from './jobs/offerExpirySweeper.js';
 import { startNoShowSweeper } from './jobs/noShowSweeper.js';
+import { startDemoAutoResetSweeper } from './jobs/demoAutoResetSweeper.js';
 
 const PORT = env.PORT || 4000;
 
@@ -18,5 +19,6 @@ app.listen(PORT, '0.0.0.0', () => {
     startReservationSweeper();
     startOfferExpirySweeper();
     startNoShowSweeper();
+    startDemoAutoResetSweeper(); // démo : jamais de catalogue vide (hors production, ou ALLOW_DEMO_TOKENS=true)
   }
 });

@@ -19,11 +19,11 @@
         "city": "Tunis"
       },
       "location": {
-        "lat": 36.7869,
-        "lng": 10.1753,
+        "lat": 36.78749,
+        "lng": 10.1752,
         "geohash": "snx1r8c7j"
       },
-      "distanceFromEssectM": 50,
+      "distanceFromEssectM": 56,
       "walkingMinutes": 1,
       "items": [
         {
@@ -81,11 +81,11 @@
         "city": "Tunis"
       },
       "location": {
-        "lat": 36.7876,
-        "lng": 10.1743,
+        "lat": 36.78758,
+        "lng": 10.17414,
         "geohash": "snx1r8bxq"
       },
-      "distanceFromEssectM": 71,
+      "distanceFromEssectM": 79,
       "walkingMinutes": 1,
       "items": [
         {
@@ -219,7 +219,7 @@
           "name": "Lot 4 Baklawa Noisettes & Amandes",
           "category": "PATISSERIE",
           "originalPriceMillimes": 8000,
-          "originalTND": 8.0,
+          "originalTND": 8,
           "weightGramsPerUnit": 200,
           "weightGrams": 200,
           "description": "Feuillets dorés au beurre clarifié, cœur croquant de noisettes et amandes tunisiennes arrosé de sirop floral."
@@ -261,7 +261,7 @@
           "name": "Trio Pains Tabouna Chauds aux Graines",
           "category": "BOISSON",
           "originalPriceMillimes": 3000,
-          "originalTND": 3.0,
+          "originalTND": 3,
           "weightGramsPerUnit": 450,
           "weightGrams": 450,
           "description": "Pains traditionnels cuits sur paroi en terre cuite, parsemés de nigelle et sésame doré."
@@ -291,7 +291,7 @@
         "city": "Tunis"
       },
       "location": {
-        "lat": 36.7920,
+        "lat": 36.792,
         "lng": 10.1724,
         "geohash": "snx1r3z2f"
       },
@@ -333,11 +333,11 @@
         "city": "Tunis"
       },
       "location": {
-        "lat": 36.7796,
-        "lng": 10.1760,
+        "lat": 36.77955,
+        "lng": 10.17594,
         "geohash": "snx1px9bt"
       },
-      "distanceFromEssectM": 841,
+      "distanceFromEssectM": 846,
       "walkingMinutes": 13,
       "items": [
         {
@@ -460,7 +460,7 @@
       },
       "location": {
         "lat": 36.7915,
-        "lng": 10.1710,
+        "lng": 10.171,
         "geohash": "snx1r3wq1"
       },
       "distanceFromEssectM": 595,
@@ -471,7 +471,7 @@
           "name": "Pizza Reine Feu de Bois Mozzarella & Champignons",
           "category": "PIZZA",
           "originalPriceMillimes": 9000,
-          "originalTND": 9.0,
+          "originalTND": 9,
           "weightGramsPerUnit": 480,
           "weightGrams": 480,
           "description": "Sauce tomate San Marzano, mozzarella fior di latte, jambon de dinde, champignons de Paris frais et origan."

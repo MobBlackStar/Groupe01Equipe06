@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Aucun faux succès : la publication appelle POST /offers et le formulaire reste ouvert avec la vraie raison si le serveur refuse."
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../app/theme.dart';
 import '../../core/models/offer_model.dart';
@@ -37,6 +38,7 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
   bool _isDutch = false;
   bool _isSurprise = false;
   bool _isSubmitting = false;
+  bool _photoUploading = false;
   String? _error;
   late TimeOfDay _pickupStart;
   late TimeOfDay _pickupEnd;
@@ -130,6 +132,27 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
   Future<void> _pickTime(bool start) async {
     final picked = await showTimePicker(context: context, initialTime: start ? _pickupStart : _pickupEnd);
     if (picked != null) setState(() => start ? _pickupStart = picked : _pickupEnd = picked);
+  }
+
+  /// Photo de l'offre : choisie dans la galerie, téléversée sur le serveur, puis enregistrée avec l'offre.
+  Future<void> _pickPhoto() async {
+    try {
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 85);
+      if (picked == null) return;
+      setState(() {
+        _photoUploading = true;
+        _error = null;
+      });
+      final bytes = await picked.readAsBytes();
+      final lower = picked.name.toLowerCase();
+      final type = lower.endsWith('.png') ? 'image/png' : (lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
+      final url = await CampusApi.shared.uploadImage(bytes, filename: picked.name, contentType: type);
+      if (mounted) setState(() => _photoController.text = url);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _photoUploading = false);
+    }
   }
 
   void _applyAutofill(Map<String, dynamic> s) {
@@ -292,6 +315,16 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
                 ],
               ),
               const SizedBox(height: 14),
+              if (_photoController.text.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: AspectRatio(aspectRatio: 16 / 9, child: GImage(url: _photoController.text.trim(), placeholder: const ColoredBox(color: AppTheme.sand))),
+                  ),
+                ),
+              GButton(_photoUploading ? 'Envoi de la photo…' : (_photoController.text.trim().isEmpty ? 'Ajouter une photo' : 'Changer la photo'), icon: Icons.photo_camera_outlined, variant: GVariant.cream, small: true, loading: _photoUploading, onPressed: _photoUploading ? null : _pickPhoto),
+              const SizedBox(height: 12),
               AppTextField(label: 'Photo (lien, facultatif)', hint: 'https://…', controller: _photoController, keyboardType: TextInputType.url, validator: (v) {
                 final t = (v ?? '').trim();
                 if (t.isEmpty) return null;

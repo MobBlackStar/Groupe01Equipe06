@@ -9,6 +9,7 @@ import '../../app/theme.dart';
 import '../../core/domain/money.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/griddle.dart';
+import '../../widgets/order_actions.dart';
 import '../impact/impact_screen.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
@@ -58,67 +59,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Future<void> _rate(Map<String, dynamic> order) async {
     final id = (order['id'] ?? order['orderId'] ?? '').toString();
     final title = ((order['offerSnapshot'] as Map?)?['title'] ?? 'cette commande').toString();
-    int stars = 5;
-    final commentController = TextEditingController();
-    String? error;
-    bool sending = false;
-
-    final done = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => AlertDialog(
-          title: Text('Noter $title', style: AppTheme.h3(22)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 1; i <= 5; i++)
-                    IconButton(
-                      tooltip: '$i étoile${i > 1 ? 's' : ''}',
-                      iconSize: 34,
-                      icon: Icon(i <= stars ? Icons.star : Icons.star_border, color: AppTheme.orange),
-                      onPressed: () => setModal(() => stars = i),
-                    ),
-                ],
-              ),
-              TextField(controller: commentController, maxLength: 280, maxLines: 2, decoration: const InputDecoration(hintText: 'Un commentaire (facultatif)')),
-              if (error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(error!, style: AppTheme.body(14, AppTheme.red))),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: sending ? null : () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-            TextButton(
-              onPressed: sending
-                  ? null
-                  : () async {
-                      setModal(() {
-                        sending = true;
-                        error = null;
-                      });
-                      try {
-                        await CampusApi.shared.rateOrder(id, stars, comment: commentController.text);
-                        if (ctx.mounted) Navigator.pop(ctx, true);
-                      } catch (e) {
-                        setModal(() {
-                          sending = false;
-                          error = e.toString();
-                        });
-                      }
-                    },
-              child: Text(sending ? 'Envoi…' : 'Envoyer'),
-            ),
-          ],
-        ),
-      ),
-    );
-    commentController.dispose();
-    if (done == true) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Merci pour votre avis !')));
-      _load();
-    }
+    final saved = await showRateOrderDialog(context, orderId: id, title: title);
+    if (saved) _load();
   }
 
   @override

@@ -29,9 +29,10 @@ export default function UnboxingReveal({
   const shouldReduceMotion = useReducedMotion();
   const [step, setStep] = useState(1);
 
-  const revealData = order?.reveal || DEFAULT_REVEAL;
-  const rarity = revealData.rarity || order?.surprise?.rarity || SURPRISE_RARITY.RARE;
-  const pointsAwarded = order?.rewards?.pointsAwarded || revealData.pointsAwarded || 45;
+  // Contenu réel de la commande (révélé par le serveur au scan) ; le jeu d'exemple ne sert que sans commande
+  const revealData = order ? order.reveal || { items: [], note: '' } : DEFAULT_REVEAL;
+  const rarity = revealData.rarity || order?.offerSnapshot?.rarity || order?.surprise?.rarity || SURPRISE_RARITY.RARE;
+  const pointsAwarded = order?.rewards?.pointsAwarded ?? revealData.pointsAwarded ?? 0;
 
   let rarityLabel = 'COMMUN';
 
@@ -68,7 +69,9 @@ export default function UnboxingReveal({
 
   if (!isOpen) return null;
 
-  const items = Array.isArray(revealData.items) ? revealData.items : [];
+  const items = (Array.isArray(revealData.items) ? revealData.items : []).map((it) =>
+    typeof it === 'string' ? { name: it, qty: 1 } : { ...it, qty: it.qty ?? it.quantity ?? 1 },
+  );
   const pointsLabel = Number.isFinite(Number(pointsAwarded)) ? Number(pointsAwarded) : 45;
 
   return (

@@ -20,6 +20,8 @@ export const createMerchantSchema = z.object({
     lat: z.number().min(-90).max(90),
     lng: z.number().min(-180).max(180),
   }),
+  openingHours: z.string().trim().max(80, 'Horaires trop longs (80 caractères maximum)').optional().nullable(),
+  logoUrl: z.string().url('URL de logo invalide').optional().nullable(),
   coverImageUrl: z.string().url('URL d image invalide').optional().nullable(),
 });
 
@@ -37,5 +39,7 @@ export const updateMerchantSchema = z.object({
     lat: z.number().min(-90).max(90),
     lng: z.number().min(-180).max(180),
   }).optional(),
+  openingHours: z.string().trim().max(80).optional().nullable(),
+  logoUrl: z.string().url().optional().nullable(),
   coverImageUrl: z.string().url().optional().nullable(),
 });

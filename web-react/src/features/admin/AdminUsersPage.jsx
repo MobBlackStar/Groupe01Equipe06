@@ -91,6 +91,8 @@ export default function AdminUsersPage() {
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [suspendModalUser, setSuspendModalUser] = useState(null);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [statusBusy, setStatusBusy] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -147,13 +149,22 @@ export default function AdminUsersPage() {
 
     const nextStatus = isCurrentlyActive ? USER_STATUS.SUSPENDED : USER_STATUS.ACTIVE;
 
+    if (nextStatus === USER_STATUS.SUSPENDED && !suspendReason.trim()) {
+      setToast({ type: 'error', message: 'Un motif est obligatoire pour suspendre un compte.' });
+      return;
+    }
+
+    setStatusBusy(true);
     try {
       await apiClient.patch(ENDPOINTS.ADMIN_USER_STATUS(targetUser.uid), {
         status: nextStatus,
-        statusReason: nextStatus === USER_STATUS.SUSPENDED ? 'Suspension administrative temporaire' : 'Compte réactivé par l administration',
+        reason: nextStatus === USER_STATUS.SUSPENDED ? suspendReason.trim() : 'Compte réactivé par l administration',
       });
     } catch (err) {
-      console.warn('API toggle status fallback:', err.message);
+      // Jamais de faux succès : si le serveur refuse, la liste n'est pas modifiée et la vraie raison est affichée
+      setToast({ type: 'error', message: err?.response?.data?.error?.message || 'Action impossible : le serveur a refusé la modification.' });
+      setStatusBusy(false);
+      return;
     }
 
     setUsers((prev) =>
@@ -167,6 +178,8 @@ export default function AdminUsersPage() {
       message: `Le compte de ${targetUser.displayName} est désormais ${nextStatus === USER_STATUS.ACTIVE ? 'ACTIF' : 'SUSPENDU'}.`,
     });
 
+    setStatusBusy(false);
+    setSuspendReason('');
     setSuspendModalUser(null);
   }
 
@@ -319,7 +332,7 @@ export default function AdminUsersPage() {
         {/* Modal de Confirmation Suspension / Réactivation */}
         <Modal
           isOpen={Boolean(suspendModalUser)}
-          onClose={() => setSuspendModalUser(null)}
+          onClose={() => { setSuspendModalUser(null); setSuspendReason(''); }}
           title={`Confirmer la ${isUserActive(suspendModalUser) ? 'suspension' : 'réactivation'} du compte`}
           description="Cette action modifiera immédiatement les droits d'accès de l'utilisateur."
           footer={
@@ -327,13 +340,14 @@ export default function AdminUsersPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setSuspendModalUser(null)}
+                onClick={() => { setSuspendModalUser(null); setSuspendReason(''); }}
               >
                 Annuler
               </Button>
               <Button
                 variant={isUserActive(suspendModalUser) ? 'danger' : 'primary'}
                 size="sm"
+                isLoading={statusBusy}
                 onClick={() => toggleUserStatus(suspendModalUser)}
               >
                 Confirmer
@@ -349,6 +363,19 @@ export default function AdminUsersPage() {
               <strong className="font-semibold text-[#DA0711]">{suspendModalUser.displayName}</strong> (
               {suspendModalUser.email}) ?
             </p>
+          )}
+          {suspendModalUser && isUserActive(suspendModalUser) && (
+            <div className="pb-2">
+              <label htmlFor="suspend-reason" className="cs-field-label">Motif de la suspension (obligatoire)</label>
+              <textarea
+                id="suspend-reason"
+                rows={3}
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                placeholder="ex : Comportement abusif signalé, no-shows répétés…"
+                className="cs-input"
+              />
+            </div>
           )}
         </Modal>
       </div>

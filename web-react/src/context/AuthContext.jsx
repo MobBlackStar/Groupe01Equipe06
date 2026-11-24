@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
             name: parsed.displayName,
             status: 'APPROVED',
             type: 'FAST_FOOD',
-            location: { lat: 36.7869, lng: 10.1753 },
+            location: { lat: 36.78749, lng: 10.1752 },
           });
         }
         setLoading(false);
@@ -149,7 +149,7 @@ export function AuthProvider({ children }) {
         name: demo.displayName,
         status: 'APPROVED',
         type: 'FAST_FOOD',
-        location: { lat: 36.7869, lng: 10.1753 },
+        location: { lat: 36.78749, lng: 10.1752 },
       };
     } else if (demo.role === ROLES.ADMIN) {
       token = 'test-token:admin-uid:ADMIN:admin@campussave.tn';
@@ -346,6 +346,11 @@ export function AuthProvider({ children }) {
             if (!prev || prev.role !== ROLES.STUDENT) return prev;
             const merged = {
               ...prev,
+              displayName: u.displayName || prev.displayName,
+              phone: u.phone ?? prev.phone,
+              filiereId: u.filiereId ?? prev.filiereId,
+              avatarUrl: u.avatarUrl ?? prev.avatarUrl,
+              notificationPrefs: u.notificationPrefs || prev.notificationPrefs,
               ecoPoints: Number.isFinite(u.ecoPoints) ? u.ecoPoints : prev.ecoPoints,
               loyaltyTier: u.loyaltyTier || prev.loyaltyTier,
               nextRewardAt: Number.isFinite(u.nextRewardAt) ? u.nextRewardAt : prev.nextRewardAt,
@@ -382,19 +387,22 @@ export function AuthProvider({ children }) {
   /**
    * Mise à jour du profil utilisateur
    */
+  // Jamais de faux succès : si le serveur refuse, l'erreur remonte à l'appelant (le formulaire l'affiche).
   const updateProfile = useCallback(async (updates) => {
-    try {
-      const res = await apiClient.patch(ENDPOINTS.USERS_ME, updates);
-      if (res.data?.user) {
-        setProfile(res.data.user);
-      }
-      return res.data;
-    } catch (err) {
-      console.warn('API updateProfile fallback:', err.message);
-      setProfile((prev) => ({ ...prev, ...updates }));
-      return { user: { ...profile, ...updates } };
+    const res = await apiClient.patch(ENDPOINTS.USERS_ME, updates);
+    const saved = res.data?.user;
+    if (saved) {
+      setProfile((prev) => {
+        const merged = { ...(prev || {}), ...saved };
+        // Session démo : le profil local sert de cache, on le garde à jour pour qu'il survive au rechargement
+        if (localStorage.getItem('campussave_demo_session')) {
+          try { localStorage.setItem('campussave_demo_session', JSON.stringify(merged)); } catch { /* quota */ }
+        }
+        return merged;
+      });
     }
-  }, [profile]);
+    return res.data;
+  }, []);
 
   /**
    * Déconnexion sécurisée

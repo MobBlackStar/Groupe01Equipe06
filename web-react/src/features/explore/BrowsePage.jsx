@@ -17,110 +17,11 @@ import { formatTND } from '@shared/money.js';
 import { OFFER_CATEGORIES } from '@shared/constants.js';
 import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
 
-// Jeu d'offres de démonstration Montfleury
-const DEFAULT_MONTFLEURY_OFFERS = [
-  {
-    id: 'off-baguette-01',
-    merchantId: 'merchant-baguette-baguette',
-    merchantName: 'Baguette & Baguette Montfleury',
-    title: 'Baguette Farcie Escalope & Mozzarella',
-    description: 'Baguette artisanale croustillante, escalope panée marinée, frites et double fromage fondant.',
-    category: OFFER_CATEGORIES.SANDWICH,
-    pricingType: 'DUTCH',
-    originalPriceMillimes: 7800,
-    targetPriceMillimes: 3800,
-    quantityTotal: 6,
-    quantityAvailable: 4,
-    distanceFromEssectM: 180,
-    pickupStartAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-    isSurpriseBasket: false,
-    weightGramsPerUnit: 400,
-  },
-  {
-    id: 'off-etoile-02',
-    merchantId: 'merchant-etoile-savoir',
-    merchantName: "Cafétéria L'Étoile du Savoir",
-    title: 'Panier Surprise Viennoiseries du Matin',
-    description: 'Assortiment surprise de 4 croissants au beurre et pains au chocolat cuits sur place.',
-    category: OFFER_CATEGORIES.MIXTE,
-    pricingType: 'FIXED',
-    originalPriceMillimes: 6000,
-    discountedPriceMillimes: 2500,
-    targetPriceMillimes: 2500,
-    quantityTotal: 8,
-    quantityAvailable: 5,
-    distanceFromEssectM: 120,
-    pickupStartAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
-    isSurpriseBasket: true,
-    surprise: {
-      rarity: 'LEGENDARY',
-      teaser: '4 viennoiseries dorées pur beurre à déguster entre deux cours',
-      itemCountHint: 4,
-    },
-    weightGramsPerUnit: 320,
-  },
-  {
-    id: 'off-dome-03',
-    merchantId: 'merchant-le-dome',
-    merchantName: 'Restaurant Le Dôme Montfleury',
-    title: 'Riz Sauté & Plat Chaud du Jour',
-    description: 'Plat mijoté avec riz sauté wok, légumes frais de saison, sauce douce et épices orientales.',
-    category: OFFER_CATEGORIES.PLAT_CHAUD,
-    pricingType: 'DUTCH',
-    originalPriceMillimes: 8500,
-    targetPriceMillimes: 4500,
-    quantityTotal: 5,
-    quantityAvailable: 3,
-    distanceFromEssectM: 350,
-    pickupStartAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
-    isSurpriseBasket: false,
-    weightGramsPerUnit: 450,
-  },
-  {
-    id: 'off-masmoudi-04',
-    merchantId: 'merchant-masmoudi',
-    merchantName: 'Pâtisserie Masmoudi',
-    title: 'Coffret Découverte Pâtisserie Fine',
-    description: 'Sélection d assortiment de baklavas aux amandes et cornes de gazelle du jour.',
-    category: OFFER_CATEGORIES.PATISSERIE,
-    pricingType: 'FIXED',
-    originalPriceMillimes: 9500,
-    discountedPriceMillimes: 4200,
-    targetPriceMillimes: 4200,
-    quantityTotal: 7,
-    quantityAvailable: 6,
-    distanceFromEssectM: 280,
-    pickupStartAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    isSurpriseBasket: false,
-    weightGramsPerUnit: 250,
-  },
-  {
-    id: 'off-station-05',
-    merchantId: 'merchant-station-gourmande',
-    merchantName: 'La Station Gourmande',
-    title: 'Double Smash Burger Cheddar Chaud',
-    description: 'Steaks hachés smashés, double cheddar coulant, sauce maison secrète et pain brioché.',
-    category: OFFER_CATEGORIES.SANDWICH,
-    pricingType: 'DUTCH',
-    originalPriceMillimes: 9200,
-    targetPriceMillimes: 4900,
-    quantityTotal: 6,
-    quantityAvailable: 2,
-    distanceFromEssectM: 210,
-    pickupStartAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    pickupEndAt: new Date(Date.now() + 35 * 60 * 1000).toISOString(),
-    isSurpriseBasket: false,
-    weightGramsPerUnit: 420,
-  },
-];
-
 export default function BrowsePage() {
-  const [offers, setOffers] = useState(DEFAULT_MONTFLEURY_OFFERS);
-  const [loading, setLoading] = useState(false);
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [maxPriceMillimes, setMaxPriceMillimes] = useState(20000);
@@ -135,15 +36,15 @@ export default function BrowsePage() {
     let isMounted = true;
     async function fetchOffers() {
       setLoading(true);
+      setLoadError('');
       try {
         const res = await apiClient.get(ENDPOINTS.OFFERS);
         if (isMounted && res.data && Array.isArray(res.data.offers)) {
-          if (res.data.offers.length > 0) {
-            setOffers(res.data.offers);
-          }
+          // Le catalogue du serveur fait foi, même vide : jamais d'offres inventées qu'on ne pourrait pas réserver
+          setOffers(res.data.offers);
         }
       } catch (err) {
-        console.warn('API Offres indisponible, fallback offres Montfleury actives :', err.message);
+        if (isMounted) setLoadError(err?.response?.data?.error?.message || 'Impossible de charger les offres. Vérifiez la connexion.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -152,7 +53,7 @@ export default function BrowsePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const handleResetFilters = useCallback(() => {
     setSearchQuery('');
@@ -451,6 +352,17 @@ export default function BrowsePage() {
             <Spinner size="lg" />
             <p className="cs-lead">Recherche des meilleurs plats en direct…</p>
           </div>
+        ) : loadError ? (
+          <EmptyState
+            icon="📡"
+            title="Connexion impossible"
+            description={loadError}
+            action={
+              <button type="button" onClick={() => setReloadKey((k) => k + 1)} className="cs-btn cs-btn-red">
+                Réessayer
+              </button>
+            }
+          />
         ) : filteredOffers.length === 0 ? (
           <EmptyState
             icon="🔍"

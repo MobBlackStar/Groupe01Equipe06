@@ -82,10 +82,13 @@ export const usersService = {
     }
 
     const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    let userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new AppError('Profil utilisateur introuvable', 404, 'USER_NOT_FOUND');
+      // Comptes de démonstration (étudiant, commerçant, admin) : profil créé à la volée, comme pour GET /users/me
+      const provisioned = await getOrProvisionDemoUser(uid);
+      if (!provisioned) throw new AppError('Profil utilisateur introuvable', 404, 'USER_NOT_FOUND');
+      userDoc = await userRef.get();
     }
 
     // Filtrage strict : protection contre l'altération de champs privilégiés
@@ -107,6 +110,11 @@ export const usersService = {
 
     for (const field of protectedFields) {
       delete sanitizedUpdates[field];
+    }
+
+    // Préférences partielles : on fusionne avec l'existant (sinon désactiver « push » effaçait « email »)
+    if (sanitizedUpdates.notificationPrefs) {
+      sanitizedUpdates.notificationPrefs = { ...(userDoc.data()?.notificationPrefs || {}), ...sanitizedUpdates.notificationPrefs };
     }
 
     sanitizedUpdates.updatedAt = new Date();

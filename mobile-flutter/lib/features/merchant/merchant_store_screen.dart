@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/griddle.dart';
 import 'merchant_onboarding_screen.dart';
+import 'merchant_store_edit_screen.dart';
 
 class MerchantStoreScreen extends StatefulWidget {
   const MerchantStoreScreen({super.key});
@@ -51,6 +52,11 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
   Future<void> _openOnboarding() async {
     final created = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const MerchantOnboardingScreen()));
     if (created == true) _load();
+  }
+
+  Future<void> _openEdit() async {
+    final saved = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => MerchantStoreEditScreen(store: _store!)));
+    if (saved == true) _load();
   }
 
   static const _typeLabels = {
@@ -142,6 +148,8 @@ class _MerchantStoreScreenState extends State<MerchantStoreScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 14),
+        GButton('Modifier ma boutique', icon: Icons.edit_outlined, variant: GVariant.cream, onPressed: _openEdit),
         const SizedBox(height: 18),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,

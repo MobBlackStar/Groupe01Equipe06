@@ -10,6 +10,7 @@ import '../core/api/endpoints.dart';
 import '../core/models/loyalty_model.dart';
 import '../core/models/offer_model.dart';
 import '../core/models/order_model.dart';
+import '../core/models/user_profile.dart';
 
 /// Erreur API lisible : message serveur (`error.message`) et code (`error.code`, ex. OFFER_SOLD_OUT).
 class ApiException implements Exception {
@@ -171,6 +172,17 @@ class CampusApi {
   /// `PATCH /offers/:id` : mise à jour partielle (le serveur refuse de changer le prix une fois une réservation faite).
   Future<void> updateOffer(String id, Map<String, dynamic> body) => _call(() => _dio.patch(Endpoints.offerById(id), data: body));
 
+  /// `POST /uploads/image` (multipart, 5 Mo max, JPEG/PNG/WEBP) : renvoie l'adresse publique de la photo.
+  Future<String> uploadImage(List<int> bytes, {required String filename, String contentType = 'image/jpeg'}) async {
+    final form = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename, contentType: DioMediaType.parse(contentType)),
+    });
+    final data = await _call(() => _dio.post(Endpoints.uploadImage, data: form));
+    final url = data['url']?.toString();
+    if (url == null || url.isEmpty) throw const ApiException('Le serveur n\'a pas renvoyé d\'adresse pour la photo.');
+    return url;
+  }
+
   /// `DELETE /offers/:id` : suppression définitive, ou archivage si des commandes existent.
   Future<void> deleteOffer(String id) => _call(() => _dio.delete(Endpoints.offerById(id)));
 
@@ -200,6 +212,20 @@ class CampusApi {
     final data = await _call(() => _dio.get(Endpoints.merchantOrders));
     final list = data['orders'] as List? ?? const [];
     return list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+  }
+
+  // --- Profil et boutique ---------------------------------------------------
+
+  /// `PATCH /users/me` : met à jour le profil (nom, téléphone, filière, avatar, préférences) et renvoie le profil du serveur.
+  Future<UserProfile> updateProfile(Map<String, dynamic> body) async {
+    final data = await _call(() => _dio.patch(Endpoints.me, data: body));
+    return UserProfile.fromJson(Map<String, dynamic>.from(data['user'] as Map));
+  }
+
+  /// `PATCH /merchants/me` : modifie la fiche du commerce (statut d'agrément protégé côté serveur).
+  Future<Map<String, dynamic>> updateMyMerchant(Map<String, dynamic> body) async {
+    final data = await _call(() => _dio.patch(Endpoints.merchantsMe, data: body));
+    return Map<String, dynamic>.from((data['merchant'] as Map?) ?? const {});
   }
 
   // --- Tableaux de bord ---------------------------------------------------

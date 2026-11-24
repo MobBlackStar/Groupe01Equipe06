@@ -211,6 +211,36 @@ export default function OfferFormPage() {
   const originalPrice = Number(formData.originalPriceMillimes) || 7500;
   const rarityResult = computeRarity(originalPrice, referencePrice, 4.8);
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  // Photo de l'offre : téléversement réel (POST /uploads/image, 5 Mo max, JPEG/PNG/WEBP) ; l'URL renvoyée est enregistrée avec l'offre
+  async function handlePhotoPick(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setUploadError('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setUploadError('Format non supporté : utilisez JPEG, PNG ou WEBP.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image trop lourde (5 Mo maximum).');
+      return;
+    }
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await apiClient.post(ENDPOINTS.UPLOAD_IMAGE, body, { headers: { 'Content-Type': 'multipart/form-data' } });
+      if (res.data?.url) handleChange('photoUrl', res.data.url);
+    } catch (err) {
+      setUploadError(err?.response?.data?.error?.message || 'Téléversement impossible : réessayez.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
   function handleChange(field, value) {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -443,6 +473,18 @@ export default function OfferFormPage() {
             <StepHeading n="02" title="Détails & prix" />
 
             <div className="space-y-6">
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="cs-btn cs-btn-cream cs-btn-sm cursor-pointer">
+                  <span aria-hidden="true">📷</span>
+                  <span>{uploading ? 'Envoi en cours…' : formData.photoUrl ? 'Changer la photo' : 'Ajouter une photo'}</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handlePhotoPick} disabled={uploading} />
+                </label>
+                {formData.photoUrl && (
+                  <button type="button" onClick={() => handleChange('photoUrl', '')} className="cs-link text-base">Retirer la photo</button>
+                )}
+                {uploadError && <p role="alert" className="text-base text-[#DA0711]">{uploadError}</p>}
+              </div>
+
               <div>
                 <label htmlFor="offer-title" className="cs-field-label">
                   Intitulé du plat ou panier <span className="text-[#DA0711]">*</span>

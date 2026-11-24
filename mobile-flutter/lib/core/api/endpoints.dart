@@ -17,6 +17,7 @@ class Endpoints {
   static const String offers = '/offers';
   static String offerById(String id) => '/offers/$id';
   static const String aiOfferAutofill = '/ai/offer-autofill';
+  static const String uploadImage = '/uploads/image';
   static const String radar = '/radar';
 
   static const String orders = '/orders';

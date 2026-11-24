@@ -10,65 +10,25 @@ import RatingDialog from './RatingDialog.jsx';
 import { EmptyState, Spinner, Tabs } from '../../components/ui/index.js';
 import { apiClient } from '../../lib/api.js';
 
-// Commandes de démonstration réalistes pour la soutenance
-const DEMO_ORDERS = [
-  {
-    id: 'ord-demo-01',
-    orderCode: 'CS-8K4M9',
-    offerTitle: 'Baguette Farcie Escalope Panée & Double Fromage',
-    merchantName: 'Baguette & Baguette Montfleury',
-    quantity: 2,
-    lockedUnitPriceMillimes: 3800,
-    status: 'PAID',
-    category: 'SANDWICH',
-    pickupStartAt: new Date(Date.now() + 30 * 60 * 1000),
-    pickupEndAt: new Date(Date.now() + 90 * 60 * 1000),
-    createdAt: new Date(),
-  },
-  {
-    id: 'ord-demo-02',
-    orderCode: 'CS-3T7X1',
-    offerTitle: 'Panier Surprise Viennoiseries du Matin',
-    merchantName: "Cafétéria L'Étoile du Savoir",
-    quantity: 1,
-    lockedUnitPriceMillimes: 2500,
-    status: 'RESERVED',
-    category: 'VIENNOISERIE',
-    reservationExpiresAt: new Date(Date.now() + 8 * 60 * 1000),
-    pickupStartAt: new Date(Date.now() + 60 * 60 * 1000),
-    pickupEndAt: new Date(Date.now() + 120 * 60 * 1000),
-    createdAt: new Date(),
-  },
-  {
-    id: 'ord-demo-03',
-    orderCode: 'CS-9M2K4',
-    offerTitle: 'Ojja Royale aux Merguez & Œuf',
-    merchantName: 'Restaurant Le Dôme Montfleury',
-    quantity: 1,
-    lockedUnitPriceMillimes: 4500,
-    status: 'COMPLETED',
-    category: 'PLAT_CHAUD',
-    createdAt: new Date(Date.now() - 86400000),
-  },
-  {
-    id: 'ord-demo-04',
-    orderCode: 'CS-1Z9P8',
-    offerTitle: 'Pizza Calzone Tunisienne Soufflée',
-    merchantName: 'Pizzeria Bella Napoli Montfleury',
-    quantity: 1,
-    lockedUnitPriceMillimes: 4500,
-    status: 'EXPIRED',
-    category: 'PIZZA',
-    createdAt: new Date(Date.now() - 172800000),
-  },
-];
-
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [activeTab, setActiveTab] = useState('ACTIVE');
   const [unboxingOrder, setUnboxingOrder] = useState(null);
   const [ratingOrder, setRatingOrder] = useState(null);
+
+  const handleCancel = async (order) => {
+    const id = order.id || order._id;
+    if (!window.confirm('Annuler cette réservation ? Le stock sera libéré et votre coupon éventuel restitué.')) return;
+    try {
+      await apiClient.post(`/orders/${id}/cancel`);
+      setOrders((prev) => prev.map((o) => ((o.id || o._id) === id ? { ...o, status: 'CANCELLED' } : o)));
+    } catch (err) {
+      setLoadError(err?.response?.data?.error?.message || 'Annulation impossible : réessayez.');
+    }
+  };
 
   const handleRatingSuccess = ({ orderId, rating }) => {
     setOrders((prev) =>
@@ -81,21 +41,14 @@ export default function MyOrdersPage() {
 
     async function fetchOrders() {
       setLoading(true);
+      setLoadError('');
       try {
         const response = await apiClient.get('/orders/my-orders');
         const data = response.data?.orders || response.data || [];
-        if (isMounted) {
-          if (Array.isArray(data) && data.length > 0) {
-            setOrders(data);
-          } else {
-            setOrders(DEMO_ORDERS);
-          }
-        }
+        if (isMounted) setOrders(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.warn('API commandes offline, utilisation des commandes démo :', err.message);
-        if (isMounted) {
-          setOrders(DEMO_ORDERS);
-        }
+        // Jamais de commandes inventées : l'erreur est affichée avec un bouton pour réessayer
+        if (isMounted) setLoadError(err?.response?.data?.error?.message || 'Impossible de charger vos commandes.');
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -108,7 +61,7 @@ export default function MyOrdersPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   // Filtrage selon onglet
   const filteredOrders = orders.filter((order) => {
@@ -153,15 +106,6 @@ export default function MyOrdersPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setUnboxingOrder({ id: 'demo-unboxing', reveal: null })}
-            className="cs-btn cs-btn-mustard"
-          >
-            <span aria-hidden="true">🎁</span>
-            <span>Déballer un panier</span>
-          </button>
-
           <Link to="/app/explore" className="cs-btn cs-btn-red">
             + Sauver un repas
           </Link>
@@ -177,6 +121,17 @@ export default function MyOrdersPage() {
           <Spinner size="lg" />
           <p className="cs-body text-[#5E5850]">Chargement de vos commandes...</p>
         </div>
+      ) : loadError ? (
+        <EmptyState
+          icon="📡"
+          title="Connexion impossible"
+          description={loadError}
+          action={
+            <button type="button" onClick={() => setReloadKey((k) => k + 1)} className="cs-btn cs-btn-red">
+              Réessayer
+            </button>
+          }
+        />
       ) : filteredOrders.length === 0 ? (
         <EmptyState
           icon="🛍️"
@@ -192,7 +147,7 @@ export default function MyOrdersPage() {
         <div className="grid gap-6">
           {filteredOrders.map((order, i) => (
             <div key={order.id} className="cs-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
-              <OrderRow order={order} onRate={(o) => setRatingOrder(o)} />
+              <OrderRow order={order} onRate={(o) => setRatingOrder(o)} onCancel={handleCancel} />
             </div>
           ))}
         </div>

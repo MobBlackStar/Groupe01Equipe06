@@ -42,7 +42,7 @@ export const merchantsService = {
       throw new AppError('Utilisateur non authentifié', 401, 'UNAUTHORIZED');
     }
 
-    const { name, type, description, phone, address, location, coverImageUrl } = body;
+    const { name, type, description, phone, address, location, coverImageUrl, openingHours, logoUrl } = body;
 
     // Calcul de la distance géodésique depuis l'ESSECT Montfleury
     const distanceM = distanceFromEssect(location.lat, location.lng);
@@ -95,6 +95,8 @@ export const merchantsService = {
       totalOffersPublished: 0,
       totalMealsSaved: 0,
       coverImageUrl: coverImageUrl || null,
+      logoUrl: logoUrl || null,
+      openingHours: openingHours || null,
       createdAt: now,
       updatedAt: now,
     };
@@ -128,7 +130,9 @@ export const merchantsService = {
    * Met à jour les informations du commerce sans modifier son statut de modération.
    */
   async updateMe(uid, updates) {
-    const merchantRef = db.collection('merchants').doc(uid);
+    // La boutique n'a pas toujours l'identifiant du compte (ownerUid, compte de démonstration) : on la résout comme GET /merchants/me
+    const merchantId = (await resolveMerchantId(uid)) || uid;
+    const merchantRef = db.collection('merchants').doc(merchantId);
     const snap = await merchantRef.get();
     if (!snap.exists) {
       throw new AppError('Commerce introuvable', 404, 'MERCHANT_NOT_FOUND');

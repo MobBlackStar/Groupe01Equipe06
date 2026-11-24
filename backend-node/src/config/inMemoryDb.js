@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Ce module offre un mode de démonstration déconnecté pré-peuplé avec les 6 commerces de Montfleury, 20 offres et 8 étudiants pour garantir zéro plantage devant le jury."
 
 import { demoTokensAllowed } from '../utils/demoTokenPolicy.js';
+import { buildDemoDataset } from '../../scripts/seed-data/demoDataset.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -411,199 +412,13 @@ export class InMemoryFirestore {
   /**
    * Pré-remplit le magasin avec le jeu de données officiel pour la démo
    */
-  seedDefaultData() {
-    const now = new Date();
-    const nowMs = now.getTime();
-
-    // 1. COMMERCES
-    let rawMerchants = [];
-    try {
-      const merchantsPath = join(__dirname, '../../scripts/seed-data/merchants.json');
-      const parsed = JSON.parse(readFileSync(merchantsPath, 'utf8'));
-      rawMerchants = parsed.merchants || [];
-    } catch {
-      rawMerchants = [
-        { id: 'm-baguette', name: 'Baguette & Baguette Montfleury', type: 'FAST_FOOD', address: { street: 'Avenue Habib Bourguiba' }, location: { lat: 36.7885, lng: 10.1762 }, distanceFromEssectM: 210, walkingMinutes: 3 },
-        { id: 'm-chaker', name: 'Chez Chaker Montfleury', type: 'FAST_FOOD', address: { street: 'Rue Abou el Kacem Chebbi' }, location: { lat: 36.7879, lng: 10.1755 }, distanceFromEssectM: 180, walkingMinutes: 2 },
-        { id: 'm-patisserie', name: 'Pâtisserie Masmoudi Bab Jedid', type: 'PATISSERIE', address: { street: 'Place Bab Jedid' }, location: { lat: 36.7901, lng: 10.1728 }, distanceFromEssectM: 450, walkingMinutes: 6 },
-        { id: 'm-doyen', name: 'Restaurant Universitaire Le Doyen', type: 'RESTAURANT', address: { street: 'Boulevard du 9 Avril' }, location: { lat: 36.7865, lng: 10.1772 }, distanceFromEssectM: 290, walkingMinutes: 4 },
-        { id: 'm-vert', name: 'Cafétéria Le Campus Vert', type: 'CAFETERIA', address: { street: 'Rue des Entrepreneurs' }, location: { lat: 36.7874, lng: 10.1741 }, distanceFromEssectM: 95, walkingMinutes: 1 },
-        { id: 'm-le-phare', name: 'Fast-Food Le Phare (En Attente)', type: 'FAST_FOOD', address: { street: 'Rue de la Kasbah' }, location: { lat: 36.7925, lng: 10.169 }, distanceFromEssectM: 850, walkingMinutes: 11 },
-      ];
+  seedDefaultData(nowMs = Date.now()) {
+    // Même générateur que `scripts/seed.js` : le mode mémoire et Firestore contiennent exactement les mêmes chiffres.
+    const { entries } = buildDemoDataset(nowMs);
+    for (const { path, data } of entries) {
+      this._store.set(path, data);
     }
 
-    for (let i = 0; i < rawMerchants.length; i++) {
-      const m = rawMerchants[i];
-      const status = m.id === 'merchant-nice-view-bellevue' ? MERCHANT_STATUS.PENDING : (m.status || (i === 5 ? MERCHANT_STATUS.PENDING : MERCHANT_STATUS.APPROVED));
-      this._store.set(`merchants/${m.id}`, {
-        id: m.id,
-        name: m.name,
-        tradeName: m.name,
-        type: m.type || 'FAST_FOOD',
-        phone: m.phone || '+21671390111',
-        address: m.address || { street: 'Rue Montfleury' },
-        location: m.location || { lat: 36.7885, lng: 10.1762 },
-        distanceFromEssectM: m.distanceFromEssectM || 250,
-        walkingMinutes: m.walkingMinutes || 3,
-        status,
-        ratingAvg: status === MERCHANT_STATUS.APPROVED ? 4.8 : 0,
-        ratingCount: status === MERCHANT_STATUS.APPROVED ? 42 : 0,
-        ratingSum: status === MERCHANT_STATUS.APPROVED ? 201 : 0,
-        stats: {
-          offersPublished: 14 + i * 2,
-          ordersPaid: 28 + i * 5,
-          ordersCompleted: 26 + i * 5,
-          noShows: i % 2 === 0 ? 1 : 0,
-          revenueMillimes: (26 + i * 5) * 3500,
-          foodSavedGrams: (26 + i * 5) * 400,
-          co2SavedGrams: Math.round((26 + i * 5) * 400 * 2.5),
-          mealsRescued: 26 + i * 5,
-        },
-        createdAt: new Date(nowMs - 20 * 24 * 3600 * 1000).toISOString(),
-        updatedAt: now.toISOString(),
-      });
-    }
-
-    // 2. OFFRES (20 offres réalistes)
-    const offersConfig = [
-      { id: 'off-1', merchantId: 'm-chaker', title: 'Makloub Escalope Panée & Double Fromage', category: 'SANDWICH', pricingType: 'DUTCH_AUCTION', originalPriceMillimes: 7500, targetPriceMillimes: 3800, quantityAvailable: 4, pickupStartAt: new Date(nowMs - 3600000).toISOString(), pickupEndAt: new Date(nowMs + 7200000).toISOString(), isSurpriseBasket: false },
-      { id: 'off-2', merchantId: 'm-baguette', title: 'Baguette Farcie Poulet & Mozzarella', category: 'SANDWICH', pricingType: 'FIXED', originalPriceMillimes: 6500, targetPriceMillimes: 3200, quantityAvailable: 3, pickupStartAt: new Date(nowMs - 1800000).toISOString(), pickupEndAt: new Date(nowMs + 5400000).toISOString(), isSurpriseBasket: false },
-      { id: 'off-3', merchantId: 'm-patisserie', title: 'Lot 4 Pâtisseries Orientales & Baklawa', category: 'PATISSERIE', pricingType: 'FIXED', originalPriceMillimes: 8000, targetPriceMillimes: 3900, quantityAvailable: 5, pickupStartAt: new Date(nowMs - 7200000).toISOString(), pickupEndAt: new Date(nowMs + 3600000).toISOString(), isSurpriseBasket: false },
-      { id: 'off-4-mystery-rare', merchantId: 'm-chaker', title: 'Panier Surprise Chaud — Spécialités Chaker', category: 'MIXTE', pricingType: 'FIXED', originalPriceMillimes: 12000, targetPriceMillimes: 4500, quantityAvailable: 2, pickupStartAt: new Date(nowMs - 1800000).toISOString(), pickupEndAt: new Date(nowMs + 7200000).toISOString(), isSurpriseBasket: true, rarity: 'RARE' },
-      { id: 'off-5', merchantId: 'm-doyen', title: 'Plat Chaud Ojja Merguez Tunisienne', category: 'PLAT_CHAUD', pricingType: 'DUTCH_AUCTION', originalPriceMillimes: 8500, targetPriceMillimes: 4200, quantityAvailable: 3, pickupStartAt: new Date(nowMs - 3600000).toISOString(), pickupEndAt: new Date(nowMs + 3600000).toISOString(), isSurpriseBasket: false },
-      { id: 'off-6', merchantId: 'm-vert', title: 'Salade Fraîche César & Blanc de Poulet', category: 'SALADE', pricingType: 'FIXED', originalPriceMillimes: 5500, targetPriceMillimes: 2800, quantityAvailable: 4, pickupStartAt: new Date(nowMs - 1800000).toISOString(), pickupEndAt: new Date(nowMs + 5400000).toISOString(), isSurpriseBasket: false },
-      { id: 'off-7-mystery-common', merchantId: 'm-vert', title: 'Panier Surprise Sandwich & Boisson Fraîche', category: 'MIXTE', pricingType: 'FIXED', originalPriceMillimes: 7000, targetPriceMillimes: 2900, quantityAvailable: 3, pickupStartAt: new Date(nowMs - 1800000).toISOString(), pickupEndAt: new Date(nowMs + 5400000).toISOString(), isSurpriseBasket: true, rarity: 'COMMON' },
-      { id: 'off-8-mystery-legendary', merchantId: 'm-patisserie', title: 'Mystery Box Royale Pâtisserie & Gâteau', category: 'PATISSERIE', pricingType: 'FIXED', originalPriceMillimes: 16000, targetPriceMillimes: 5900, quantityAvailable: 1, pickupStartAt: new Date(nowMs - 1800000).toISOString(), pickupEndAt: new Date(nowMs + 7200000).toISOString(), isSurpriseBasket: true, rarity: 'LEGENDARY' },
-    ];
-
-    // Les offres de démonstration référencent d'anciens identifiants (m-chaker, m-vert…) : on les rattache aux
-    // vrais commerces du jeu de données pour que commandes, scan, radar et noms de commerces restent cohérents.
-    const LEGACY_MERCHANT_IDS = {
-      'm-chaker': 'merchant-baguette-baguette',
-      'm-baguette': 'merchant-baguette-baguette',
-      'm-patisserie': 'merchant-patisserie-masmoudi',
-      'm-doyen': 'merchant-le-dome',
-      'm-vert': 'merchant-etoile-savoir',
-    };
-
-    for (let i = 1; i <= 20; i++) {
-      const cfg = offersConfig[(i - 1) % offersConfig.length];
-      const offerId = `off-${i}`;
-      const merchantId = LEGACY_MERCHANT_IDS[cfg.merchantId] || cfg.merchantId;
-      const merchant = this._store.get(`merchants/${merchantId}`);
-      this._store.set(`offers/${offerId}`, {
-        ...cfg,
-        id: offerId,
-        merchantId,
-        merchantSnapshot: merchant
-          ? {
-              id: merchant.id,
-              name: merchant.name,
-              phone: merchant.phone,
-              address: merchant.address,
-              location: merchant.location,
-              distanceFromEssectM: merchant.distanceFromEssectM,
-              walkingMinutes: merchant.walkingMinutes,
-            }
-          : { id: merchantId, name: '', location: null },
-        status: 'ACTIVE',
-        description: `Panier anti-gaspillage de qualité préparé avec soin par ${merchant?.name || 'un commerce partenaire'}.`,
-        createdAt: new Date(nowMs - 3600000 * i).toISOString(),
-        updatedAt: now.toISOString(),
-      });
-
-      if (cfg.isSurpriseBasket) {
-        this._store.set(`offers/${offerId}/private/contents`, {
-          summary: cfg.rarity === 'LEGENDARY' ? 'Festin Royal : Gâteau d anniversaire amandes & assortiment de 6 pâtisseries fines' : '2 Makloubs complets avec canettes et frites chaudes',
-          rarity: cfg.rarity,
-          bonusEcoPoints: cfg.rarity === 'LEGENDARY' ? 30 : (cfg.rarity === 'RARE' ? 10 : 0),
-        });
-      }
-    }
-
-    // 3. ÉTUDIANTS (avec Yassine à 90 EcoPoints)
-    this._store.set('users/student-demo-uid', {
-      uid: 'student-demo-uid',
-      email: 'etudiant@essect.u-tunis.tn',
-      displayName: 'Yassine Trabelsi',
-      role: 'STUDENT',
-      filiereId: 'EBUSINESS_3A',
-      phone: '+21698123456',
-      ecoPoints: 90,
-      loyaltyTier: 'GRAINE',
-      nextRewardAt: 100,
-      totalMealsRescued: 4,
-      status: 'ACTIVE',
-      unlockedRewards: [
-        {
-          id: 'rew-welcome-20',
-          type: 'PERCENT_OFF',
-          discountPercent: 20,
-          maxDiscountMillimes: 2000,
-          description: 'Coupon Bienvenue Étudiant -20%',
-          status: 'AVAILABLE',
-          unlockedAt: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
-        },
-      ],
-      stats: {
-        ordersCompleted: 4,
-        totalSpentMillimes: 14500,
-        totalSavedMillimes: 18000,
-        foodSavedGrams: 1600,
-        co2SavedGrams: 4000,
-        noShows: 0,
-      },
-    });
-
-    // 4. ADMIN
-    this._store.set('users/admin-uid', {
-      uid: 'admin-uid',
-      email: 'admin@campussave.tn',
-      displayName: 'Administrateur ESSECT',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-    });
-
-    // 5. CLASSEMENT DES FILIÈRES
-    const filieres = [
-      { filiereId: 'EBUSINESS_3A', label: '3ème E-Business (Promotion Pilote)', studentsCount: 38, ordersCompleted: 45, mealsRescued: 52, foodSavedGrams: 20800, co2SavedGrams: 52000, ecoPointsTotal: 1240 },
-      { filiereId: 'FINANCE', label: 'Licence & Master Finance', studentsCount: 65, ordersCompleted: 34, mealsRescued: 39, foodSavedGrams: 15600, co2SavedGrams: 39000, ecoPointsTotal: 920 },
-      { filiereId: 'MARKETING', label: 'Licence & Master Marketing', studentsCount: 52, ordersCompleted: 28, mealsRescued: 31, foodSavedGrams: 12400, co2SavedGrams: 31000, ecoPointsTotal: 760 },
-      { filiereId: 'GESTION', label: 'Sciences de Gestion', studentsCount: 70, ordersCompleted: 22, mealsRescued: 25, foodSavedGrams: 10000, co2SavedGrams: 25000, ecoPointsTotal: 580 },
-      { filiereId: 'COMPTABILITE', label: 'Comptabilité & CCA', studentsCount: 45, ordersCompleted: 18, mealsRescued: 20, foodSavedGrams: 8000, co2SavedGrams: 20000, ecoPointsTotal: 490 },
-    ];
-    for (const f of filieres) {
-      this._store.set(`filieres/${f.filiereId}`, f);
-    }
-
-    // 6. IMPACT GLOBAL CAMPUS
-    this._store.set('campus_impact/global', {
-      ordersCompleted: 248,
-      mealsRescued: 285,
-      foodSavedGrams: 114000,
-      co2SavedGrams: 285000,
-      moneySavedMillimes: 890000,
-      studentsParticipating: 8,
-      merchantsParticipating: 5,
-      updatedAt: now.toISOString(),
-    });
-
-    // 14 jours de séries historiques
-    for (let d = 13; d >= 0; d--) {
-      const dayDate = new Date(nowMs - d * 24 * 3600 * 1000);
-      const isoDate = dayDate.toISOString().split('T')[0];
-      const dayOrders = 10 + (d % 5) * 2;
-      const dayMeals = dayOrders + 2;
-      const dayFoodGrams = dayMeals * 400;
-      this._store.set(`campus_impact/global/daily/${isoDate}`, {
-        date: isoDate,
-        ordersCompleted: dayOrders,
-        mealsRescued: dayMeals,
-        foodSavedGrams: dayFoodGrams,
-        co2SavedGrams: Math.round(dayFoodGrams * 2.5),
-        moneySavedMillimes: dayOrders * 3500,
-      });
-    }
   }
 }
 
@@ -620,7 +435,7 @@ export function createInMemoryAuth(db) {
       if (typeof token === 'string' && (token.startsWith('test-token:') || token.startsWith('mock-token:'))) {
         const parts = token.split(':');
         return {
-          uid: parts[1] || 'student-demo-uid',
+          uid: parts[1] || 'student-yassine',
           role: parts[2] || 'STUDENT',
           email: parts[3] || 'etudiant@essect.u-tunis.tn',
         };
@@ -629,7 +444,7 @@ export function createInMemoryAuth(db) {
       // Si token demo simplifié
       if (token === 'demo-student' || token?.includes('student')) {
         return {
-          uid: 'student-demo-uid',
+          uid: 'student-yassine',
           role: 'STUDENT',
           email: 'etudiant@essect.u-tunis.tn',
           name: 'Yassine Trabelsi',
@@ -637,7 +452,7 @@ export function createInMemoryAuth(db) {
       }
       if (token === 'demo-merchant' || token?.includes('merchant')) {
         return {
-          uid: 'm-chaker',
+          uid: 'm-baguette',
           role: 'MERCHANT',
           email: 'chaker@montfleury.tn',
           name: 'Chez Chaker',

@@ -5,6 +5,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { buildDemoDataset } from '../scripts/seed-data/demoDataset.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
@@ -52,58 +53,37 @@ describe('Jour 8 — Intégrité des Données de Démonstration (Seed & Reset)',
     assert.equal(pendingCount, 1, 'Le commerce Bellevue doit être PENDING pour la démo de validation admin');
   });
 
-  test('4. Vérification du fichier seed.js pour les 20 offres et 3 paniers surprises', () => {
-    const seedSourcePath = join(__dirname, '../scripts/seed.js');
-    const seedContent = readFileSync(seedSourcePath, 'utf8');
+  const { entries } = buildDemoDataset(Date.now());
+  const docs = (prefix) => entries.filter((e) => e.path.startsWith(prefix) && e.path.split('/').length === prefix.split('/').length).map((e) => e.data);
+  const doc = (path) => entries.find((e) => e.path === path)?.data;
 
-    // Vérifier les mentions d'offres
-    assert.ok(seedContent.includes('const offersList = ['), 'seed.js doit définir les 20 offres');
-    assert.ok(seedContent.includes('RARITY_TIERS.COMMON') || seedContent.includes("'COMMON'"), 'seed.js doit contenir un panier surprise COMMON');
-    assert.ok(seedContent.includes('RARITY_TIERS.RARE') || seedContent.includes("'RARE'"), 'seed.js doit contenir un panier surprise RARE');
-    assert.ok(seedContent.includes('RARITY_TIERS.LEGENDARY') || seedContent.includes("'LEGENDARY'"), 'seed.js doit contenir un panier surprise LEGENDARY');
-    assert.ok(seedContent.includes('PRICING_MODES.DUTCH_AUCTION') || seedContent.includes("'DUTCH_AUCTION'"), 'seed.js doit inclure des offres en enchère hollandaise');
-    assert.ok(seedContent.includes('PRICING_MODES.FIXED') || seedContent.includes("'FIXED'"), 'seed.js doit inclure des offres à prix fixe');
+  test('4. Le jeu de données contient 20 offres dont 3 paniers surprises COMMON, RARE et LEGENDARY, en prix fixe et dégressif', () => {
+    const offers = docs('offers/');
+    assert.equal(offers.length, 20);
+    const surprises = offers.filter((o) => o.isSurpriseBasket);
+    assert.equal(surprises.length, 3);
+    assert.deepEqual(surprises.map((o) => o.rarity).sort(), [RARITY_TIERS.COMMON, RARITY_TIERS.LEGENDARY, RARITY_TIERS.RARE].sort());
+    assert.ok(offers.some((o) => o.pricing.mode === PRICING_MODES.DUTCH_AUCTION));
+    assert.ok(offers.some((o) => o.pricing.mode === PRICING_MODES.FIXED));
+    for (const o of surprises) assert.ok(doc(`offers/${o.id}/private/contents`)?.items?.length > 0, `contenu scellé manquant pour ${o.id}`);
   });
 
-  test('5. Les 8 étudiants couvrent l ensemble des 5 filières ESSECT', () => {
-    const seedSourcePath = join(__dirname, '../scripts/seed.js');
-    const seedContent = readFileSync(seedSourcePath, 'utf8');
-
-    // Les 5 filières doivent être présentes
-    for (const filiereKey of Object.keys(FILIERES)) {
-      const filiereValue = FILIERES[filiereKey];
-      assert.ok(
-        seedContent.includes(filiereValue) || seedContent.includes(`FILIERES.${filiereKey}`),
-        `La filière ${filiereKey} (${filiereValue}) doit être couverte par les étudiants du seed`
-      );
+  test('5. Les 8 étudiants couvrent les 5 filières et Yassine a 90 EcoPoints, des commandes et un coupon disponible', () => {
+    const students = docs('users/').filter((u) => u.role === ROLES.STUDENT);
+    assert.equal(students.length, 8);
+    for (const filiere of Object.values(FILIERES)) {
+      assert.ok(students.some((s) => s.filiereId === filiere), `filière ${filiere} non couverte`);
     }
-
-    // Le compte de démo Yassine doit avoir 90 EcoPoints
-    assert.ok(
-      seedContent.includes('ecoPoints: 90') || seedContent.includes('ecoPoints:90'),
-      'Le compte étudiant de démo doit avoir 90 EcoPoints pour débloquer le palier à 100 points'
-    );
+    const yassine = doc('users/student-yassine');
+    assert.equal(yassine.ecoPoints, 90);
+    assert.ok(yassine.stats.ordersCompleted > 0 && yassine.stats.totalSavedMillimes > 0);
+    assert.equal(yassine.unlockedRewards.filter((r) => r.status === 'AVAILABLE').length, 1);
   });
 
-  test('6. Compte administrateur et historique de 14 jours', () => {
-    const seedSourcePath = join(__dirname, '../scripts/seed.js');
-    const seedContent = readFileSync(seedSourcePath, 'utf8');
-
-    assert.ok(
-      seedContent.includes('admin@campussave.tn'),
-      'L adresse admin officielle admin@campussave.tn doit être présente'
-    );
-    assert.ok(
-      seedContent.includes('for (let d = 13; d >= 0; d--)') || seedContent.includes('14'),
-      'Les séries de 14 jours d historique doivent être configurées'
-    );
-    assert.ok(
-      seedContent.includes("db.collection('campus_impact').doc('global')"),
-      'Le document campus_impact/global doit être initialisé'
-    );
-    assert.ok(
-      seedContent.includes("db.collection('filieres')"),
-      'La collection filieres doit être initialisée'
-    );
+  test('6. Compte administrateur, 14 jours d historique, impact global et filières initialisés', () => {
+    assert.equal(doc('users/admin-uid')?.email, 'admin@campussave.tn');
+    assert.equal(docs('campus_impact/global/daily/').length, 14);
+    assert.ok(doc('campus_impact/global'));
+    assert.equal(docs('filieres/').length, 5);
   });
 });

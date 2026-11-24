@@ -218,47 +218,36 @@ export const dashboardsService = {
       }
     }
 
-    // Récupération des 5 meilleures ventes de l'établissement (tri en mémoire)
+    // 5 meilleures ventes : agrégées sur les VRAIES commandes payées ou retirées (tri en mémoire, requête sur un seul champ)
     let topOffers = [];
     try {
-      const topOffersSnap = await db
-        .collection('offers')
-        .where('merchantId', '==', actualMerchantId)
-        .limit(50)
-        .get();
-
-      const allOffers = [];
-      topOffersSnap.forEach((doc) => {
-        const off = doc.data();
-        const unitPrice =
-          off.discountedPriceMillimes ||
-          off.pricing?.discountedPriceMillimes ||
-          off.startPriceMillimes ||
-          off.floorPriceMillimes ||
-          off.pricing?.startPriceMillimes ||
-          off.originalPriceMillimes ||
-          0;
-        const sold = off.quantitySold || off.rescuedCount || 0;
-        if (sold <= 0) return; // une offre jamais vendue n'est pas un « top »
-        allOffers.push({
-          id: doc.id,
-          title: off.title,
-          category: off.category,
-          quantitySold: sold,
-          rescuedCount: sold,
-          isSurpriseBasket: off.isSurpriseBasket || false,
-          discountedPriceMillimes: unitPrice,
-          revenueMillimes: unitPrice * sold,
-          decayType: off.isSurpriseBasket
+      const ordersSnap = await db.collection('orders').where('merchantId', '==', actualMerchantId).get();
+      const byOffer = new Map();
+      ordersSnap.forEach((doc) => {
+        const order = doc.data();
+        if (order.status !== ORDER_STATUS.COMPLETED && order.status !== ORDER_STATUS.PAID) return;
+        const title = order.offerSnapshot?.title || 'Offre';
+        const row = byOffer.get(title) || {
+          id: order.offerId,
+          title,
+          category: order.offerSnapshot?.category,
+          quantitySold: 0,
+          revenueMillimes: 0,
+          isSurpriseBasket: !!order.offerSnapshot?.isSurpriseBasket,
+          decayType: order.offerSnapshot?.isSurpriseBasket
             ? 'Panier Surprise'
-            : off.pricingType === 'DUTCH' || off.pricing?.mode === 'DUTCH_AUCTION'
+            : order.pricing?.mode === 'DUTCH_AUCTION'
             ? 'Smart Decay'
             : 'Prix Fixe',
-        });
+        };
+        row.quantitySold += order.quantity || 1;
+        row.revenueMillimes += order.pricing?.totalMillimes || 0;
+        byOffer.set(title, row);
       });
-
-      allOffers.sort((a, b) => b.quantitySold - a.quantitySold);
-      topOffers = allOffers.slice(0, 5);
+      topOffers = [...byOffer.values()]
+        .map((row) => ({ ...row, rescuedCount: row.quantitySold, discountedPriceMillimes: Math.round(row.revenueMillimes / Math.max(row.quantitySold, 1)) }))
+        .sort((x, y) => y.quantitySold - x.quantitySold)
+        .slice(0, 5);
     } catch (_) {}
 
     const kpis = {

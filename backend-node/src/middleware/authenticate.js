@@ -48,7 +48,7 @@ export async function authenticate(req, _res, next) {
           role = 'MERCHANT';
           email = 'commercant@baguette.tn';
         } else {
-          uid = 'student-demo-uid';
+          uid = 'student-yassine';
           role = 'STUDENT';
           email = 'etudiant@essect.u-tunis.tn';
         }
@@ -60,7 +60,7 @@ export async function authenticate(req, _res, next) {
         role: role === 'NONE' ? null : role,
         email_verified: true,
       };
-      // Le profil de l'étudiant démo est créé à la volée (les seeds ne contiennent que `student-demo-uid`)
+      // Le profil de l'étudiant démo est créé à la volée (le seed contient aussi `student-yassine`)
       if (uid === DEMO_STUDENT_UID) await ensureDemoStudent();
 
       return next();

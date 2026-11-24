@@ -78,6 +78,17 @@ function RootRedirect() {
   return <Navigate to="/app/explore" replace />;
 }
 
+/** Le profil existe pour les trois rôles : il s'affiche dans la mise en page de l'espace du rôle connecté. */
+function ProfileRoute() {
+  const { role } = useAuth();
+  const Layout = role === ROLES.ADMIN ? AdminLayout : role === ROLES.MERCHANT ? MerchantLayout : StudentLayout;
+  return (
+    <Layout>
+      <ProfilePage />
+    </Layout>
+  );
+}
+
 export function AppRouter() {
   return (
     <Suspense fallback={<RouteFallback />}>
@@ -88,7 +99,9 @@ export function AppRouter() {
         {/* Routes Publiques */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/profile" element={<StudentLayout><ProfilePage /></StudentLayout>} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<ProfileRoute />} />
+        </Route>
         <Route path="/payment/return" element={<PaymentReturnPage />} />
         <Route path="/impact" element={<StudentLayout><ImpactDashboardPage /></StudentLayout>} />
 

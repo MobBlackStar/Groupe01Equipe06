@@ -204,8 +204,8 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                             padding: const EdgeInsets.symmetric(vertical: 2),
                             child: Row(
                               children: [
-                                Expanded(child: Text('• ${item['name']}', style: AppTheme.body(15, AppTheme.muted))),
-                                Text('x${item['qty']}', style: AppTheme.mono(14, AppTheme.red).copyWith(fontWeight: FontWeight.w700)),
+                                Expanded(child: Text('• ${item is Map ? item['name'] : item}', style: AppTheme.body(15, AppTheme.muted))),
+                                Text('x${item is Map ? (item['quantity'] ?? item['qty'] ?? 1) : 1}', style: AppTheme.mono(14, AppTheme.red).copyWith(fontWeight: FontWeight.w700)),
                               ],
                             ),
                           );

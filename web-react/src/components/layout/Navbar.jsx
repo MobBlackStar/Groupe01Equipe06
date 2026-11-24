@@ -17,6 +17,7 @@ import {
   Check,
   Zap,
   Lock,
+  UserRound,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLES } from '@shared/constants.js';
@@ -258,6 +259,17 @@ export default function Navbar() {
                     </>
                   )}
 
+                  <div className="my-2 border-t-2 border-[#111111]/15" />
+                  <Link
+                    to="/profile"
+                    role="menuitem"
+                    onClick={() => setDemoMenuOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-left font-semibold uppercase text-base hover:bg-[#EDE6D7] transition-colors"
+                  >
+                    <UserRound className="w-[18px] h-[18px]" />
+                    Mon profil
+                  </Link>
+
                   {user && (
                     <>
                       <div className="my-2 border-t-2 border-[#111111]/15" />
@@ -313,6 +325,9 @@ export default function Navbar() {
             ))}
             <Link to="/impact" className="font-display uppercase text-[2.75rem] leading-[1.05] py-1 hover:text-[#DA0711]">
               Impact campus
+            </Link>
+            <Link to="/profile" className="font-display uppercase text-[2.75rem] leading-[1.05] py-1 hover:text-[#DA0711]">
+              Mon profil
             </Link>
 
             <div className="mt-6 pt-6 border-t-2 border-[#111111] flex flex-col gap-3">

@@ -12,6 +12,28 @@ import { computeUnitPrice, computeUrgencyColor, computeMinutesLeft } from '../..
 import { generateSearchKeywords } from './keywords.js';
 import { getTunisDayKey } from '../../utils/tunisTime.js';
 
+/**
+ * Contenu d'un panier surprise -> liste d'objets `{ name, quantity }`.
+ * Accepte un tableau ou un texte libre : « 2x Croissants + 1x Pain au chocolat » (séparateurs + , retour à la ligne).
+ * Les clients web et mobile affichent ainsi chaque article séparément (et non un seul bloc de texte).
+ */
+export function normalizeSurpriseItems(input) {
+  const raw = Array.isArray(input) ? input : String(input ?? '').split(/[+,\n]/);
+  return raw
+    .map((entry) => {
+      if (entry && typeof entry === 'object') {
+        const name = String(entry.name ?? entry.title ?? '').trim();
+        const quantity = Number(entry.quantity ?? entry.qty ?? 1);
+        return name ? { ...entry, name, quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1 } : null;
+      }
+      const text = String(entry ?? '').trim();
+      if (!text) return null;
+      const m = text.match(/^(\d+)\s*[x×]\s*(.+)$/i);
+      return m ? { name: m[2].trim(), quantity: Number(m[1]) } : { name: text, quantity: 1 };
+    })
+    .filter(Boolean);
+}
+
 export const offersService = {
   /**
    * Publie une nouvelle offre anti-gaspillage alimentaire (Prix Fixe ou Enchère Dégressive Smart Decay).
@@ -150,9 +172,7 @@ export const offersService = {
     // Si panier surprise, stockage du contenu dans la sous-collection protégée private/contents
     if (isSurpriseBasket && surpriseContents) {
       const privateContentsRef = offerRef.collection('private').doc('contents');
-      const items = Array.isArray(surpriseContents)
-        ? surpriseContents
-        : [surpriseContents];
+      const items = normalizeSurpriseItems(surpriseContents);
       batch.set(privateContentsRef, {
         items,
         createdAt: now,
