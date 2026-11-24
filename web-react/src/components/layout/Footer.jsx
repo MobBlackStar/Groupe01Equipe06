@@ -44,7 +44,7 @@ export default function Footer() {
               ))}
               <li>
                 <a
-                  href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave/releases/latest/download/CampusSave.apk'}
+                  href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk'}
                   download="CampusSave.apk"
                   target="_blank"
                   rel="noopener noreferrer"

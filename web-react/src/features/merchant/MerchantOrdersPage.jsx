@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
@@ -87,6 +88,8 @@ const MOCK_MERCHANT_ORDERS = [
 ];
 
 export default function MerchantOrdersPage() {
+  const { isRealMode } = useAuth();
+  const isReal = isRealMode || localStorage.getItem('campussave_auth_mode') === 'REAL';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('PAID'); // 'PAID', 'RESERVED', 'COMPLETED'
@@ -100,16 +103,18 @@ export default function MerchantOrdersPage() {
         const response = await apiClient.get(ENDPOINTS.MERCHANT_ORDERS);
         const data = response.data?.orders || response.data || [];
         if (isMounted) {
-          if (Array.isArray(data) && data.length > 0) {
-            setOrders(data);
+          if (Array.isArray(data)) {
+            // En mode réel ou si l'API a répondu avec une liste (même vide), on respecte les données réelles
+            setOrders(data.length > 0 || isReal ? data : MOCK_MERCHANT_ORDERS);
           } else {
-            setOrders(MOCK_MERCHANT_ORDERS);
+            setOrders([]);
           }
         }
       } catch (err) {
         console.warn('API commandes commerçant offline, utilisation des mocks :', err.message);
         if (isMounted) {
-          setOrders(MOCK_MERCHANT_ORDERS);
+          // Un compte réel ou une boutique réelle ne doit jamais afficher de fausses commandes démo en cas d'erreur
+          setOrders(isReal ? [] : MOCK_MERCHANT_ORDERS);
         }
       } finally {
         if (isMounted) {
@@ -123,7 +128,7 @@ export default function MerchantOrdersPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReal]);
 
   // Onglet par défaut : le premier qui contient des commandes (une seule fois, au premier chargement)
   const [autoTabDone, setAutoTabDone] = useState(false);

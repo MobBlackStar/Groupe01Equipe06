@@ -32,6 +32,11 @@ export const adminController = {
     res.json(result);
   }),
 
+  updateMerchant: asyncHandler(async (req, res) => {
+    const result = await adminService.updateMerchantData(req.params.id, req.body, req.user.uid);
+    res.json(result);
+  }),
+
   deleteSpot: asyncHandler(async (req, res) => {
     const result = await adminService.deleteSpot(req.params.id, { hard: req.query.hard === 'true' }, req.user.uid);
     res.json(result);

@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { isEmbedded } from '../../lib/embed.js';
 
-const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave/releases/latest/download/CampusSave.apk';
+const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk';
 const STORAGE_KEY = 'cs.mascot_dismissed';
 
 export default function ApkDownloadMascot() {

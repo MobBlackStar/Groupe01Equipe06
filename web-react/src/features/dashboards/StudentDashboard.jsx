@@ -122,9 +122,23 @@ function kgOrDash(grams) {
   return n === null ? '—' : `${(n / 1000).toFixed(1).replace('.', ',')} kg`;
 }
 
+// Données vierges pour étudiant réel (sans historique)
+const EMPTY_STUDENT_DASHBOARD = {
+  stats: {
+    ordersCompleted: 0,
+    totalSavedMillimes: 0,
+    foodSavedGrams: 0,
+    co2SavedGrams: 0,
+    ecoPoints: 0,
+  },
+  savingsHistory: [],
+  recentOrders: [],
+};
+
 export default function StudentDashboard() {
-  const { user, profile } = useAuth();
-  const [data, setData] = useState(DEMO_STUDENT_DASHBOARD);
+  const { user, profile, isRealMode } = useAuth();
+  const isReal = isRealMode || localStorage.getItem('campussave_auth_mode') === 'REAL';
+  const [data, setData] = useState(() => (isReal ? EMPTY_STUDENT_DASHBOARD : DEMO_STUDENT_DASHBOARD));
   const [loading, setLoading] = useState(false);
   const [metricMode, setMetricMode] = useState('money'); // 'money' ou 'co2'
   const [ratingOrder, setRatingOrder] = useState(null);
@@ -139,7 +153,10 @@ export default function StudentDashboard() {
           setData(res.data);
         }
       } catch (err) {
-        console.warn('API Dashboard étudiant indisponible, fallback démo actif :', err.message);
+        console.warn('API Dashboard étudiant indisponible, fallback actif :', err.message);
+        if (isMounted && isReal) {
+          setData(EMPTY_STUDENT_DASHBOARD);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -149,7 +166,7 @@ export default function StudentDashboard() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReal]);
 
   const handleRatingSuccess = ({ orderId, rating }) => {
     setData((prev) => ({
@@ -160,7 +177,7 @@ export default function StudentDashboard() {
     }));
   };
 
-  const stats = data.stats || DEMO_STUDENT_DASHBOARD.stats;
+  const stats = data.stats || (isReal ? EMPTY_STUDENT_DASHBOARD.stats : DEMO_STUDENT_DASHBOARD.stats);
 
   // Les EcoPoints vivent dans profile.ecoPoints (l'API dashboard les expose sous loyalty.ecoPoints,
   // pas dans stats) : on lit la bonne source au lieu d'afficher "undefined EcoPoints".
@@ -171,13 +188,13 @@ export default function StudentDashboard() {
     0;
   const loyaltyTier = getLoyaltyTier(ecoPoints);
 
-  const studentName = user?.displayName || profile?.fullName || 'Ritej Bejaoui';
-  const filiere = user?.filiere || profile?.filiere || '3A E-Business';
+  const studentName = user?.displayName || profile?.fullName || (isReal ? 'Étudiant' : 'Ritej Bejaoui');
+  const filiere = user?.filiere || profile?.filiere || (isReal ? 'ESSECT' : '3A E-Business');
 
   const mealsSaved = finiteOrNull(stats.ordersCompleted);
   const co2Grams = finiteOrNull(stats.co2SavedGrams);
 
-  const chartSeries = (data.savingsHistory || DEMO_STUDENT_DASHBOARD.savingsHistory).map((item) => ({
+  const chartSeries = (data.savingsHistory || (isReal ? [] : DEMO_STUDENT_DASHBOARD.savingsHistory)).map((item) => ({
     label: item.label,
     value: metricMode === 'money' ? Math.round(Number(item.value || 0) / 1000) : Number(item.co2 || 0),
   }));

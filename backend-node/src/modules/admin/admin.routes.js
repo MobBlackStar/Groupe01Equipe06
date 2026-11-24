@@ -8,7 +8,7 @@ import { adminController } from './admin.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { requireRole } from '../../middleware/requireRole.js';
 import { validate } from '../../middleware/validate.js';
-import { updateMerchantStatusSchema, updateUserStatusSchema, updateUserDataSchema, createSpotSchema, updateSpotLocationSchema, deleteSpotQuerySchema } from './admin.schemas.js';
+import { updateMerchantStatusSchema, updateUserStatusSchema, updateUserDataSchema, updateMerchantDataSchema, createSpotSchema, updateSpotLocationSchema, deleteSpotQuerySchema } from './admin.schemas.js';
 import { ROLES } from '../../../../shared/constants.js';
 
 export const adminRouter = Router();
@@ -26,6 +26,7 @@ adminRouter.patch(
 
 // Spots de démonstration : ajout, déplacement, archivage / suppression (rayon de 3 km vérifié côté serveur)
 adminRouter.post('/merchants', validate({ body: createSpotSchema }), adminController.createSpot);
+adminRouter.patch('/merchants/:id', validate({ body: updateMerchantDataSchema }), adminController.updateMerchant);
 adminRouter.patch('/merchants/:id/location', validate({ body: updateSpotLocationSchema }), adminController.updateSpotLocation);
 adminRouter.delete('/merchants/:id', validate({ query: deleteSpotQuerySchema }), adminController.deleteSpot);
 

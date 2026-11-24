@@ -13,10 +13,10 @@ import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js'
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useMerchantOrders } from '../../hooks/useMerchantOrders.js';
 
-// Affichage sûr : jamais de NaN / 0,000 DT à l'écran
+// Affichage sûr : jamais de NaN à l'écran
 function money(millimes) {
   const n = Number(millimes);
-  return millimes != null && Number.isFinite(n) && n > 0 ? formatTND(n) : '—';
+  return millimes != null && Number.isFinite(n) && n >= 0 ? formatTND(n) : '—';
 }
 
 function num(value, fallback = '—') {
@@ -143,13 +143,55 @@ const DEMO_MERCHANT_30D = {
   ],
 };
 
+// Données vierges pour nouveau commerce réel (sans historique)
+const EMPTY_MERCHANT_DATA = {
+  kpis: {
+    revenueMillimes: 0,
+    ordersPaid: 0,
+    ordersCompleted: 0,
+    mealsRescued: 0,
+    noShowsPercent: 0,
+    ratingAvg: 0,
+    reviewsCount: 0,
+  },
+  stats: {
+    revenueMillimes: 0,
+    ordersPaid: 0,
+    ordersCompleted: 0,
+    mealsRescued: 0,
+    noShowsPercent: 0,
+  },
+  dailySeries: [],
+  topOffers: [],
+};
+
+function generateZeroDailySeries(numDays) {
+  const series = [];
+  const now = new Date();
+  for (let i = numDays - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const iso = d.toISOString().split('T')[0];
+    series.push({
+      date: iso,
+      label: iso.slice(5),
+      value: 0,
+      orders: 0,
+      revenueMillimes: 0,
+      ordersCompleted: 0,
+      color: '#DA0711',
+    });
+  }
+  return series;
+}
+
 export default function MerchantDashboard() {
-  const { user, merchant } = useAuth();
+  const { user, merchant, isRealMode } = useAuth();
+  const isReal = isRealMode || localStorage.getItem('campussave_auth_mode') === 'REAL';
   const { orders: merchantOrders } = useMerchantOrders(merchant?.id || user?.uid || null);
   const [range, setRange] = useState('7d'); // '7d' ou '30d'
   const [metric, setMetric] = useState('revenue'); // 'revenue' ou 'orders'
   const [loading, setLoading] = useState(false);
-  const [dashboardData, setDashboardData] = useState(DEMO_MERCHANT_7D);
+  const [dashboardData, setDashboardData] = useState(() => (isReal ? EMPTY_MERCHANT_DATA : DEMO_MERCHANT_7D));
 
   useEffect(() => {
     let isMounted = true;
@@ -161,9 +203,9 @@ export default function MerchantDashboard() {
           setDashboardData(res.data);
         }
       } catch (err) {
-        console.warn('API Dashboard commerçant indisponible, données démo actives :', err.message);
+        console.warn('API Dashboard commerçant indisponible, données actives :', err.message);
         if (isMounted) {
-          setDashboardData(range === '7d' ? DEMO_MERCHANT_7D : DEMO_MERCHANT_30D);
+          setDashboardData(isReal ? EMPTY_MERCHANT_DATA : (range === '7d' ? DEMO_MERCHANT_7D : DEMO_MERCHANT_30D));
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -174,45 +216,45 @@ export default function MerchantDashboard() {
     return () => {
       isMounted = false;
     };
-  }, [range]);
+  }, [range, isReal]);
 
-  // Robust KPI resolution to prevent 0,000 DT fallback bug
+  // Robust KPI resolution to prevent 0,000 DT fallback bug and honor zero values
   const baseKpis = range === '7d' ? DEMO_MERCHANT_7D.kpis : DEMO_MERCHANT_30D.kpis;
   const kpis = {
     revenueMillimes:
-      dashboardData.kpis?.revenueMillimes ||
-      dashboardData.stats?.revenueMillimes ||
-      baseKpis.revenueMillimes,
+      dashboardData.kpis?.revenueMillimes ??
+      dashboardData.stats?.revenueMillimes ??
+      (isReal ? 0 : baseKpis.revenueMillimes),
     ordersPaid:
-      dashboardData.kpis?.ordersPaid ||
-      dashboardData.stats?.ordersPaid ||
-      baseKpis.ordersPaid,
+      dashboardData.kpis?.ordersPaid ??
+      dashboardData.stats?.ordersPaid ??
+      (isReal ? 0 : baseKpis.ordersPaid),
     ordersCompleted:
-      dashboardData.kpis?.ordersCompleted ||
-      dashboardData.stats?.ordersCompleted ||
-      baseKpis.ordersCompleted,
+      dashboardData.kpis?.ordersCompleted ??
+      dashboardData.stats?.ordersCompleted ??
+      (isReal ? 0 : baseKpis.ordersCompleted),
     mealsRescued:
-      dashboardData.kpis?.mealsRescued ||
-      dashboardData.stats?.mealsRescued ||
-      baseKpis.mealsRescued,
+      dashboardData.kpis?.mealsRescued ??
+      dashboardData.stats?.mealsRescued ??
+      (isReal ? 0 : baseKpis.mealsRescued),
     noShowsPercent:
       dashboardData.kpis?.noShowsPercent ??
       dashboardData.noShowRate ??
-      baseKpis.noShowsPercent,
+      (isReal ? 0 : baseKpis.noShowsPercent),
     ratingAvg:
-      dashboardData.kpis?.ratingAvg ||
-      dashboardData.rating?.avg ||
-      baseKpis.ratingAvg,
+      dashboardData.kpis?.ratingAvg ??
+      dashboardData.rating?.avg ??
+      (isReal ? 0 : baseKpis.ratingAvg),
     reviewsCount:
-      dashboardData.kpis?.reviewsCount ||
-      dashboardData.rating?.count ||
-      baseKpis.reviewsCount,
+      dashboardData.kpis?.reviewsCount ??
+      dashboardData.rating?.count ??
+      (isReal ? 0 : baseKpis.reviewsCount),
   };
 
   const currentSeries =
     dashboardData.dailySeries && dashboardData.dailySeries.length > 0
       ? dashboardData.dailySeries
-      : (range === '7d' ? DEMO_MERCHANT_7D.dailySeries : DEMO_MERCHANT_30D.dailySeries);
+      : (isReal ? generateZeroDailySeries(range === '30d' ? 30 : 7) : (range === '7d' ? DEMO_MERCHANT_7D.dailySeries : DEMO_MERCHANT_30D.dailySeries));
 
   const chartData = currentSeries.map((item) => ({
     label: dayLabel(item),
@@ -226,7 +268,7 @@ export default function MerchantDashboard() {
   const topOffers =
     dashboardData.topOffers && dashboardData.topOffers.length > 0
       ? dashboardData.topOffers
-      : (range === '7d' ? DEMO_MERCHANT_7D.topOffers : DEMO_MERCHANT_30D.topOffers);
+      : (isReal ? [] : (range === '7d' ? DEMO_MERCHANT_7D.topOffers : DEMO_MERCHANT_30D.topOffers));
 
   const storeName = merchant?.name || user?.displayName || 'Mon commerce';
 
@@ -367,28 +409,36 @@ export default function MerchantDashboard() {
           <p className="cs-eyebrow mb-2">Palmarès</p>
           <h2 className="cs-title mb-6">Top ventes</h2>
 
-          <ol className="flex-1 divide-y-2 divide-[#111111]/10">
-            {topOffers.map((item, idx) => {
-              const rescued = Math.max(item.rescuedCount || item.quantitySold || 2, 2);
-              const price = item.discountedPriceMillimes || item.priceMillimes || 4200;
-              const itemRevenue = (item.revenueMillimes && item.revenueMillimes > 0)
-                ? item.revenueMillimes
-                : (price * rescued);
+          {topOffers.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-10 text-center text-[#5E5850]">
+              <span className="text-3xl mb-3" aria-hidden="true">🥖</span>
+              <p className="cs-body font-bold text-[#111111]">Aucune vente pour le moment</p>
+              <p className="text-sm mt-1 max-w-xs">Vos meilleures ventes s'afficheront ici dès la validation de vos premiers retraits.</p>
+            </div>
+          ) : (
+            <ol className="flex-1 divide-y-2 divide-[#111111]/10">
+              {topOffers.map((item, idx) => {
+                const rescued = Math.max(item.rescuedCount || item.quantitySold || 2, 2);
+                const price = item.discountedPriceMillimes || item.priceMillimes || 4200;
+                const itemRevenue = (item.revenueMillimes && item.revenueMillimes > 0)
+                  ? item.revenueMillimes
+                  : (price * rescued);
 
-              return (
-                <li key={item.id || idx} className="flex items-start gap-4 py-4 first:pt-0">
-                  <span className="cs-dot-badge shrink-0">#{idx + 1}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="cs-h3 !text-lg line-clamp-2 break-words">{item.title || 'Offre anti-gaspi'}</p>
-                    <p className="text-[15px] text-[#5E5850] mt-1">
-                      {rescued} repas sauvés · {item.decayType || 'Smart Decay'}
-                    </p>
-                    <p className="cs-figure text-[30px] text-[#DA0711] mt-2">{money(itemRevenue)}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+                return (
+                  <li key={item.id || idx} className="flex items-start gap-4 py-4 first:pt-0">
+                    <span className="cs-dot-badge shrink-0">#{idx + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="cs-h3 !text-lg line-clamp-2 break-words">{item.title || 'Offre anti-gaspi'}</p>
+                      <p className="text-[15px] text-[#5E5850] mt-1">
+                        {rescued} repas sauvés · {item.decayType || 'Smart Decay'}
+                      </p>
+                      <p className="cs-figure text-[30px] text-[#DA0711] mt-2">{money(itemRevenue)}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
 
           <Link to="/merchant/offers" className="cs-btn cs-btn-cream cs-btn-block mt-6">
             <span>Gérer mes offres</span>

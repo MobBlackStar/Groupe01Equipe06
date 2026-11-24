@@ -110,6 +110,9 @@ export default function AdminMerchantsPage() {
   const [spotBusy, setSpotBusy] = useState(false);
   const [spotError, setSpotError] = useState('');
   const [removeModal, setRemoveModal] = useState(null); // { merchant, hard }
+  const [editModal, setEditModal] = useState(null); // { merchant, name, type, phone, street }
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const loadAdminMerchants = useCallback(async () => {
     try {
@@ -134,6 +137,42 @@ export default function AdminMerchantsPage() {
     if (e?.message) return e.message;
     if (err?.response) return `${fallback} (erreur ${err.response.status})`;
     return "Serveur injoignable : rien n'a été modifié.";
+  }
+
+  function openEditSpot(merchant) {
+    setEditError('');
+    setEditModal({
+      merchant,
+      name: merchant.name || '',
+      type: merchant.type || MERCHANT_TYPES.FAST_FOOD,
+      phone: merchant.phone || '+216',
+      street: merchant.address?.street || merchant.street || '',
+    });
+  }
+
+  async function handleSaveEdit() {
+    if (!editModal) return;
+    if (editModal.name.trim().length < 2) {
+      setEditError('Le nom doit comporter au moins 2 caractères.');
+      return;
+    }
+    setEditBusy(true);
+    setEditError('');
+    try {
+      await apiClient.patch(ENDPOINTS.ADMIN_MERCHANT(editModal.merchant.id), {
+        name: editModal.name.trim(),
+        type: editModal.type,
+        phone: editModal.phone.trim() || undefined,
+        address: { street: editModal.street.trim() || 'Montfleury' },
+      });
+      setToast({ type: 'success', message: `Commerce « ${editModal.name.trim()} » mis à jour.` });
+      setEditModal(null);
+      await loadAdminMerchants();
+    } catch (err) {
+      setEditError(apiErrorMessage(err, "Impossible de modifier ce commerce"));
+    } finally {
+      setEditBusy(false);
+    }
   }
 
   function openCreateSpot() {
@@ -345,6 +384,9 @@ export default function AdminMerchantsPage() {
 
         {!usingDemo && (
           <>
+            <button type="button" onClick={() => openEditSpot(merchant)} className={`cs-btn cs-btn-cream ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}>
+              Modifier
+            </button>
             <button type="button" onClick={() => openMoveSpot(merchant)} className={`cs-btn cs-btn-cream ${block ? 'cs-btn-block' : 'cs-btn-sm'}`}>
               Déplacer
             </button>
@@ -579,6 +621,73 @@ export default function AdminMerchantsPage() {
           }
         >
           {removeModal && <p className="cs-body py-2">{removeModal.merchant.name}</p>}
+        </Modal>
+
+        {/* Modal Modification d'un commerce */}
+        <Modal
+          isOpen={Boolean(editModal)}
+          onClose={() => setEditModal(null)}
+          title={`Modifier : ${editModal?.merchant?.name || ''}`}
+          description="Mise à jour des informations administratives de l'établissement."
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={() => setEditModal(null)}>Annuler</Button>
+              <Button variant="primary" size="sm" isLoading={editBusy} onClick={handleSaveEdit} disabled={!editModal || editModal.name.trim().length < 2}>
+                Enregistrer les modifications
+              </Button>
+            </>
+          }
+        >
+          {editModal && (
+            <div className="py-2 space-y-4">
+              <div>
+                <label htmlFor="edit-name" className="cs-field-label">Nom de l'établissement</label>
+                <input
+                  id="edit-name"
+                  className="cs-input"
+                  value={editModal.name}
+                  onChange={(e) => setEditModal((m) => ({ ...m, name: e.target.value }))}
+                  placeholder="ex : Café 7Days Montfleury"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="edit-type" className="cs-field-label">Type d'établissement</label>
+                  <select
+                    id="edit-type"
+                    className="cs-input"
+                    value={editModal.type}
+                    onChange={(e) => setEditModal((m) => ({ ...m, type: e.target.value }))}
+                  >
+                    {Object.entries(MERCHANT_TYPES).map(([k, v]) => (
+                      <option key={k} value={v}>{TYPE_LABELS[v] || v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="edit-phone" className="cs-field-label">Téléphone</label>
+                  <input
+                    id="edit-phone"
+                    className="cs-input"
+                    value={editModal.phone}
+                    onChange={(e) => setEditModal((m) => ({ ...m, phone: e.target.value }))}
+                    placeholder="+21671390111"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="edit-street" className="cs-field-label">Adresse / Rue (Montfleury)</label>
+                <input
+                  id="edit-street"
+                  className="cs-input"
+                  value={editModal.street}
+                  onChange={(e) => setEditModal((m) => ({ ...m, street: e.target.value }))}
+                  placeholder="ex : Rue Galilée"
+                />
+              </div>
+              {editError && <p className="cs-error-text" role="alert">{editError}</p>}
+            </div>
+          )}
         </Modal>
       </div>
 

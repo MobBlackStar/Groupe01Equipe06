@@ -11,7 +11,7 @@ process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 = '';
 
 const { isFirebaseConfigured, db } = await import('../src/config/firebase.js');
 const { adminService } = await import('../src/modules/admin/admin.service.js');
-const { createSpotSchema, updateSpotLocationSchema, deleteSpotQuerySchema } = await import('../src/modules/admin/admin.schemas.js');
+const { createSpotSchema, updateSpotLocationSchema, deleteSpotQuerySchema, updateMerchantDataSchema } = await import('../src/modules/admin/admin.schemas.js');
 const { BUSINESS_RULES, MERCHANT_STATUS } = await import('../../shared/constants.js');
 
 const IN_RADIUS = { lat: 36.7885, lng: 10.1762 }; // Baguette & Baguette Montfleury (~210 m)
@@ -71,6 +71,24 @@ describe('Spots administrateur — ajout, déplacement, archivage (rayon 3 km)',
       () => adminService.updateSpotLocation('spot-inconnu', IN_RADIUS, 'admin-uid'),
       (err) => err.statusCode === 404 && err.code === 'MERCHANT_NOT_FOUND'
     );
+  });
+
+  test('modifie les informations du commerce (nom, type, téléphone, adresse)', async () => {
+    const { merchant } = await adminService.createSpot('admin-uid', createSpotSchema.parse(validBody(IN_RADIUS)));
+    const updated = await adminService.updateMerchantData(
+      merchant.id,
+      updateMerchantDataSchema.parse({
+        name: 'Nouveau Nom Spot',
+        phone: '+21698765432',
+        type: 'FAST_FOOD',
+        address: { street: 'Rue de la Paix Montfleury' },
+      }),
+      'admin-uid'
+    );
+    assert.equal(updated.merchant.name, 'Nouveau Nom Spot');
+    assert.equal(updated.merchant.phone, '+21698765432');
+    assert.equal(updated.merchant.type, 'FAST_FOOD');
+    assert.equal(updated.merchant.address.street, 'Rue de la Paix Montfleury');
   });
 
   test('archive par défaut (suspendu, données conservées)', async () => {

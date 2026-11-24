@@ -299,7 +299,7 @@ export function LoginPage() {
             <div className="mt-4 pt-4 border-t border-dashed border-[#111111]/20 flex flex-wrap items-center justify-between gap-2 text-sm">
               <span className="text-[#5E5850]">Vous préférez tester sur mobile ?</span>
               <a
-                href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave/releases/latest/download/CampusSave.apk'}
+                href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk'}
                 download="CampusSave.apk"
                 target="_blank"
                 rel="noopener noreferrer"

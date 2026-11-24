@@ -73,6 +73,29 @@ export const adminService = {
   },
 
   /**
+   * Modifie les informations d'un commerce (nom, téléphone, type, adresse).
+   */
+  async updateMerchantData(merchantId, data, adminUid) {
+    const ref = db.collection('merchants').doc(merchantId);
+    const snap = await ref.get();
+    if (!snap.exists) throw new AppError('Commerce introuvable', 404, 'MERCHANT_NOT_FOUND');
+
+    const updates = { updatedAt: new Date() };
+    if (data.name) updates.name = data.name.trim();
+    if (data.type) updates.type = data.type;
+    if (data.phone) updates.phone = data.phone.trim();
+    if (data.address) {
+      const existingAddress = snap.data().address || {};
+      updates.address = { ...existingAddress, ...data.address };
+    }
+
+    await ref.update(updates);
+    await auditSpot(adminUid, 'SPOT_MODIFIED', merchantId, { updates });
+    const updated = (await ref.get()).data();
+    return { merchant: { id: merchantId, ...updated } };
+  },
+
+  /**
    * Retire un spot. Par défaut : ARCHIVAGE (suspendu, invisible du radar, données conservées).
    * `hard` : suppression définitive, réservée aux spots de démonstration sans offre active.
    */

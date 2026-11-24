@@ -19,6 +19,7 @@ export function useMyOrders(studentId) {
   const isMountedRef = useRef(true);
 
   const fetchOrders = useCallback(async () => {
+    const isReal = localStorage.getItem('campussave_auth_mode') === 'REAL';
     if (!studentId) {
       if (isMountedRef.current) {
         setOrders([]);
@@ -31,13 +32,17 @@ export function useMyOrders(studentId) {
       const res = await apiClient.get('/orders/my-orders');
       const list = res.data?.orders || res.data || [];
       if (isMountedRef.current) {
-        setOrders(Array.isArray(list) && list.length > 0 ? list : mockOrders);
+        if (Array.isArray(list)) {
+          setOrders(list.length > 0 || isReal ? list : mockOrders);
+        } else {
+          setOrders([]);
+        }
         setError(null);
       }
     } catch (err) {
       if (isMountedRef.current) {
         console.warn('API useMyOrders indisponible, repli sur mockOrders :', err.message);
-        setOrders(mockOrders);
+        setOrders(isReal ? [] : mockOrders);
         setError(err);
       }
     } finally {
