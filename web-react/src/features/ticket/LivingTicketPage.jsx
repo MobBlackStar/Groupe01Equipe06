@@ -25,6 +25,7 @@ function buildTicket(id, crypto = {}, order = {}) {
     // Clé HMAC réelle du serveur (hex). Le nom historique `ticketKeyHex` reste accepté.
     ticketKeyHex: crypto.ticketKey || crypto.ticketKeyHex,
     offerTitle: offer.title,
+    items: Array.isArray(order?.items) ? order.items : null,
     merchantName: merchant.name,
     merchantAddress: merchant.address?.street,
     pickupStartAt: offer.pickupStartAt,

@@ -23,7 +23,7 @@ import {
 const DEMO_ROLES = [
   { type: 'student', label: 'Étudiant', hint: 'Yassine', Icon: GraduationCap, iconClass: 'bg-[#DA0711] text-white' },
   { type: 'merchant', label: 'Commerçant', hint: 'Baguette', Icon: Store, iconClass: 'bg-[#FFD000] text-[#111111]' },
-  { type: 'admin', label: 'Admin', hint: 'ESSECT', Icon: ShieldCheck, iconClass: 'bg-[#111111] text-[#FAF3E6]' },
+  { type: 'admin', label: 'Admin', hint: 'Admin', Icon: ShieldCheck, iconClass: 'bg-[#111111] text-[#FAF3E6]' },
 ];
 
 export function LoginPage() {
@@ -104,20 +104,17 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden">
-      <div className="cs-container cs-page">
-        {/* Marque */}
-        <Link to="/" className="inline-flex items-center gap-3 mb-10 lg:mb-14" aria-label="CampusSave — accueil">
-          <img src="/assets/brand/logo-full-512.png" alt="CampusSave" width="120" height="107" className="h-20 sm:h-24 w-auto" decoding="async" />
-        </Link>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+    <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden flex flex-col justify-center">
+      {/* 💡 Concept : Polaroïd centré à gauche, formulaire principal pleine largeur empilé à droite et barre démo sur une ligne pour tenir dans 100vh sans aucun scroll */}
+      {/* 🎯 Pour la soutenance : "La hiérarchie met en valeur la connexion réelle Firebase tout en gardant un accès démo 1-clic compact sous la main." */}
+      <div className="cs-container py-5 sm:py-6 lg:py-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
           {/* =========================================================================
-              COLONNE GAUCHE : POLAROID INCLINÉ + STICKERS KNEWAVE
+              COLONNE GAUCHE : POLAROID CENTRÉ + STICKERS KNEWAVE (sans logo orphelin)
               ========================================================================= */}
-          <div className="order-2 lg:order-1 flex justify-center">
-            <div className="relative w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[540px] px-3 sm:px-6 py-6">
-              <figure className="cs-polaroid rotate-[-4deg] hover:rotate-[-1deg]">
+          <div className="order-2 lg:order-1 lg:col-span-5 flex items-center justify-center">
+            <div className="relative w-full max-w-[290px] sm:max-w-[340px] lg:max-w-[385px] px-3 py-2">
+              <figure className="cs-polaroid lg:!p-3 lg:!pb-12 rotate-[-3deg] hover:rotate-0">
                 <span className="rs-tape-tl" />
                 <span className="rs-tape-tr" />
                 <div className="cs-photo rounded-[4px] aspect-square">
@@ -134,31 +131,30 @@ export function LoginPage() {
               </figure>
 
               {/* Stickers qui débordent du polaroid */}
-              <span className="cs-sticker cs-sticker-red absolute -top-1 right-0 z-20 text-[2rem] sm:text-[2.6rem] px-5 py-3">
+              <span className="cs-sticker cs-sticker-red absolute -top-1 right-0 z-20 text-[1.75rem] sm:text-[2.2rem] px-4 py-2">
                 -70%
               </span>
-              <span className="cs-sticker cs-sticker-mustard cs-sticker-tilt-r absolute bottom-24 left-0 sm:-left-3 z-20 text-[1.35rem] sm:text-[1.7rem] px-5 py-2.5">
+              <span className="cs-sticker cs-sticker-mustard cs-sticker-tilt-r absolute bottom-14 left-0 sm:-left-2 z-20 text-[1.15rem] sm:text-[1.45rem] px-4 py-2">
                 ANTI-GASPI
               </span>
             </div>
           </div>
 
           {/* =========================================================================
-              COLONNE DROITE : HEADLINE MONUMENTALE + FORMULAIRE + 1-CLICK DEMO BAR
+              COLONNE DROITE : HEADLINE ÉDITORIALE + CONNEXION EMPILÉE + BARRE DÉMO 1-LIGNE
               ========================================================================= */}
-          <div className="order-1 lg:order-2 w-full max-w-xl lg:max-w-none mx-auto lg:mx-0">
-            <header className="mb-10">
-              <p className="cs-eyebrow mb-4 inline-flex items-center gap-2">
+          <div className="order-1 lg:order-2 lg:col-span-7 w-full max-w-xl lg:max-w-none mx-auto lg:mx-0">
+            <header className="mb-4">
+              <p className="cs-eyebrow mb-1.5 inline-flex items-center gap-2">
                 <Flame className="w-4 h-4" aria-hidden="true" />
-                Plateforme officielle ESSECT Montfleury
+                CampusSave · ESSECT Montfleury
               </p>
-              <h1 className="cs-hero text-[clamp(4rem,8vw,8.5rem)]">
+              <h1 className="cs-hero !text-[clamp(3rem,5.4vw,5.25rem)] !leading-[0.86]">
                 {'FAIT POUR '}
-                <br />
-                ÊTRE <span className="text-[#DA0711]">PARTAGÉ.</span>
+                <span className="text-[#DA0711]">ÊTRE PARTAGÉ.</span>
               </h1>
-              <p className="cs-lead mt-6 max-w-lg">
-                Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.
+              <p className="mt-2 text-sm sm:text-base text-[#5E5850] leading-snug max-w-xl">
+                Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury.
               </p>
             </header>
 
@@ -166,68 +162,25 @@ export function LoginPage() {
             {serverError && (
               <div
                 role="alert"
-                className="mb-6 flex items-start gap-3 rounded-2xl border-2 border-[#DA0711] bg-white px-5 py-4 text-base font-semibold text-[#DA0711]"
+                className="mb-3 flex items-start gap-2.5 rounded-2xl border-2 border-[#DA0711] bg-white px-4 py-2.5 text-sm font-semibold text-[#DA0711]"
               >
-                <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 <span>{serverError}</span>
               </div>
             )}
 
-            {/* OPTION A : 1-CLICK DEMO BAR (JURY SOUTENANCE) */}
-            <section className="mb-8 p-5 rounded-2xl border-2 border-[#111111] bg-white shadow-[3px_3px_0_#111111]" aria-label="Accès rapide démo jury">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                <h2 className="cs-h3 inline-flex items-center gap-2 text-[#DA0711]">
-                  <Zap className="w-5 h-5 fill-[#DA0711]" aria-hidden="true" />
-                  Option A · Démo 1-Clic Jury
+            {/* CŒUR PRINCIPAL : CONNEXION COMPTE RÉEL FIREBASE (champs empilés pleine largeur) */}
+            <section aria-label="Connexion compte réel" className="p-4 sm:p-5 rounded-2xl border-2 border-[#111111] bg-white shadow-[4px_4px_0_#111111]">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 className="cs-h3 !text-lg inline-flex items-center gap-2">
+                  <span>🔐 Connexion</span>
                 </h2>
-                <span className="cs-label bg-[#FFD000]/25 px-2 py-0.5 rounded border border-[#FFD000]">Sans mot de passe</span>
-              </div>
-              <p className="text-xs text-[#5E5850] mb-3">
-                Accès instantané aux personas pré-configurés pour tester le flux de soutenance :
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {DEMO_ROLES.map(({ type, label, hint, Icon, iconClass }) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => handleDemoLogin(type)}
-                    disabled={isSubmitting}
-                    className="flex items-center gap-3 min-h-[64px] px-3.5 py-2.5 rounded-xl border-2 border-[#111111] bg-[#FAF3E6] text-left cursor-pointer transition-all duration-200 hover:bg-[#FFD000]/20 hover:-translate-y-0.5 hover:shadow-[0_4px_0_#111111] active:translate-y-0 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
-                      <Icon className="w-5 h-5" aria-hidden="true" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block font-semibold uppercase text-base leading-tight">{label}</span>
-                      <span className="block cs-mono text-[12px] text-[#5E5850] leading-tight mt-0.5">{hint}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* SÉPARATEUR VISUEL OU */}
-            <div className="my-8 flex items-center gap-4" aria-hidden="true">
-              <div className="h-[2px] flex-1 bg-[#111111]" />
-              <span className="font-bold text-xs uppercase px-3 py-1 bg-[#FAF3E6] border-2 border-[#111111] rounded-full text-[#111111] tracking-wider">
-                OU COMPTE RÉEL
-              </span>
-              <div className="h-[2px] flex-1 bg-[#111111]" />
-            </div>
-
-            {/* OPTION B : FORMULAIRE COMPTE RÉEL FIREBASE */}
-            <section aria-label="Connexion compte réel">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                <h2 className="cs-h3 inline-flex items-center gap-2">
-                  <span>🔐 Option B · Compte Réel Firebase</span>
-                </h2>
-                <span className="cs-label">Email &amp; Mot de passe</span>
+                <span className="cs-label !text-[13px]">Compte réel Firebase</span>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+              <form onSubmit={handleSubmit} className="space-y-3" noValidate>
                 <div>
-                  <label htmlFor="login-email" className="cs-field-label">
+                  <label htmlFor="login-email" className="cs-field-label !text-[13px] !mb-1">
                     Adresse email
                   </label>
                   <input
@@ -241,13 +194,13 @@ export function LoginPage() {
                     }}
                     placeholder="etudiant@essect.u-tunis.tn"
                     aria-invalid={errors.email ? 'true' : undefined}
-                    className="cs-input"
+                    className="cs-input !min-h-[2.75rem] !py-1.5 !px-4 !text-[15px]"
                   />
-                  {errors.email && <p className="cs-error-text">{errors.email}</p>}
+                  {errors.email && <p className="cs-error-text !text-[13px] !mt-1">{errors.email}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="login-password" className="cs-field-label">
+                  <label htmlFor="login-password" className="cs-field-label !text-[13px] !mb-1">
                     Mot de passe
                   </label>
                   <div className="relative">
@@ -262,51 +215,74 @@ export function LoginPage() {
                       }}
                       placeholder="••••••••"
                       aria-invalid={errors.password ? 'true' : undefined}
-                      className="cs-input pr-16"
+                      className="cs-input !min-h-[2.75rem] !py-1.5 !pl-4 !pr-12 !text-[15px]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-[#111111] hover:bg-[#EDE6D7] transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {errors.password && <p className="cs-error-text">{errors.password}</p>}
+                  {errors.password && <p className="cs-error-text !text-[13px] !mt-1">{errors.password}</p>}
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
+                  className="cs-btn cs-btn-red cs-btn-block !min-h-[3.25rem] !px-5 !text-lg"
                 >
-                  <span>{isSubmitting ? 'Connexion en cours...' : 'Se connecter au compte réel'}</span>
-                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
+                  <span>{isSubmitting ? 'Connexion en cours...' : 'Se connecter'}</span>
+                  <ArrowRight className="w-5 h-5 shrink-0" aria-hidden="true" />
                 </button>
               </form>
             </section>
 
-            {/* Lien d'inscription */}
-            <p className="mt-10 text-base text-[#5E5850]">
-              Pas encore inscrit sur CampusSave ?{' '}
-              <Link to="/register" className="cs-link text-[#DA0711]">
-                Créer un compte étudiant ou commerçant →
-              </Link>
-            </p>
+            {/* FINE BARRE COMPACTE DÉMO JURY SUR 1 LIGNE */}
+            <section
+              className="mt-3.5 px-3.5 py-2 rounded-2xl border-2 border-[#111111] bg-[#EDE6D7] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2"
+              aria-label="Accès rapide démo jury"
+            >
+              <span className="inline-flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-wide text-[#DA0711] whitespace-nowrap">
+                <Zap className="w-4 h-4 fill-[#DA0711]" aria-hidden="true" />
+                Démo Jury :
+              </span>
 
-            {/* Téléchargement APK Android */}
-            <div className="mt-4 pt-4 border-t border-dashed border-[#111111]/20 flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="text-[#5E5850]">Vous préférez tester sur mobile ?</span>
-              <a
-                href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk'}
-                download="CampusSave.apk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#DA0711] hover:underline flex items-center gap-1.5"
+              <div className="flex flex-wrap items-center gap-2">
+                {DEMO_ROLES.map(({ type, hint, Icon, iconClass }) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleDemoLogin(type)}
+                    disabled={isSubmitting}
+                    className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1 rounded-full border-2 border-[#111111] bg-[#FAF3E6] text-[13px] font-semibold uppercase tracking-wide cursor-pointer transition-all hover:bg-[#FFD000] active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    <span className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center ${iconClass}`}>
+                      <Icon className="w-3 h-3" aria-hidden="true" />
+                    </span>
+                    <span>{hint}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Liens bas de formulaire regroupés à gauche pour éviter la mascotte bas-droite */}
+            <div className="mt-3 pt-2 border-t border-dashed border-[#111111]/20 flex flex-wrap items-center justify-start gap-x-6 gap-y-1.5 text-[14px]">
+              <p className="text-[#5E5850]">
+                Pas encore inscrit ?{' '}
+                <Link to="/register" className="cs-link text-[#DA0711]">
+                  Créer un compte →
+                </Link>
+              </p>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('campussave:open-apk-modal'))}
+                className="font-bold text-[#DA0711] hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
-                <span>📱 Télécharger l'APK Android →</span>
-              </a>
+                <span>📱 APK Android →</span>
+              </button>
             </div>
           </div>
         </div>

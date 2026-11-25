@@ -4,10 +4,11 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../app/theme.dart';
 import '../../core/crypto/ticket_crypto.dart';
+import '../../core/models/order_model.dart';
 import '../../core/time/server_clock.dart';
+import 'halftone_mascot_qr.dart';
 
 /// Découpe thermique avec encoches de perforation latérales et crantage zig-zag en bas
 class ThermalReceiptClipper extends CustomClipper<Path> {
@@ -86,6 +87,7 @@ class BoardingPass extends StatefulWidget {
   final String offerTitle;
   final String merchantName;
   final int quantity;
+  final List<OrderLine> items;
   /// Clé HMAC réelle renvoyée par `GET /orders/:id/ticket` (jamais de valeur par défaut : un QR factice ne validerait pas).
   final String ticketKeyHex;
 
@@ -96,6 +98,7 @@ class BoardingPass extends StatefulWidget {
     required this.offerTitle,
     required this.merchantName,
     this.quantity = 1,
+    this.items = const [],
     required this.ticketKeyHex,
   });
 
@@ -257,7 +260,12 @@ class _BoardingPassState extends State<BoardingPass> {
                   const SizedBox(height: 6),
                   _buildReceiptRow('CAMPUS', 'ESSECT TUNIS (MONTFLEURY)'),
                   const SizedBox(height: 6),
-                  _buildReceiptRow('ARTICLE', '${widget.quantity}x ${widget.offerTitle}'),
+                  _buildReceiptRow(
+                    widget.items.length > 1 ? 'ARTICLES' : 'ARTICLE',
+                    widget.items.length > 1
+                        ? widget.items.map((l) => '${l.quantity}x ${l.title}').join(' • ')
+                        : '${widget.quantity}x ${widget.offerTitle}',
+                  ),
                   const SizedBox(height: 6),
                   _buildReceiptRow('STATUT', 'PAYÉ & RÉSERVÉ'),
                   const SizedBox(height: 10),
@@ -299,10 +307,10 @@ class _BoardingPassState extends State<BoardingPass> {
                 children: [
                   // Boîtier QR Code blanc pur pour contraste de lecture optimal
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppTheme.ink,
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppTheme.ink, width: 2),
                       boxShadow: const [
                         BoxShadow(
@@ -312,11 +320,9 @@ class _BoardingPassState extends State<BoardingPass> {
                         ),
                       ],
                     ),
-                    child: QrImageView(
+                    child: HalftoneMascotQr(
                       data: ticketData['qrPayload'] as String,
-                      version: QrVersions.auto,
-                      size: 165.0,
-                      backgroundColor: AppTheme.ink,
+                      size: 196.0,
                     ),
                   ),
                   const SizedBox(height: 12),

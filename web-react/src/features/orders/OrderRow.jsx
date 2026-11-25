@@ -5,6 +5,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatTND } from '@shared/money.js';
+import { normalizeOrderItems } from '@shared/orders.js';
 import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
 import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
 
@@ -93,11 +94,17 @@ export default function OrderRow({ order, onRate, onCancel }) {
   const id = order.id || order._id;
   const status = order.status || 'RESERVED';
   const snapshot = order.offerSnapshot || {};
+  const lines = normalizeOrderItems(order);
   const orderCode = order.orderCode || 'CS-XXXXX';
   const title = order.offerTitle || order.title || snapshot.title || 'Repas Anti-Gaspi';
   const merchantName = order.merchantName || order.merchantSnapshot?.name || 'Commerce Montfleury';
   const quantityRaw = Number(order.quantity);
-  const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+  const quantity =
+    lines.length > 0
+      ? lines.reduce((sum, line) => sum + line.quantity, 0)
+      : Number.isFinite(quantityRaw) && quantityRaw > 0
+      ? quantityRaw
+      : 1;
 
   const unitPrice = order.lockedUnitPriceMillimes ?? order.pricing?.lockedUnitPriceMillimes;
   const total =
@@ -154,6 +161,20 @@ export default function OrderRow({ order, onRate, onCancel }) {
         </div>
 
         <h3 className="cs-h3 line-clamp-3 sm:line-clamp-2 break-words">{title}</h3>
+
+        {lines.length > 1 && (
+          <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Articles du sac">
+            {lines.map((line, idx) => (
+              <li
+                key={`${line.offerId}-${idx}`}
+                className="inline-flex items-center gap-1 rounded-full bg-[#EDE6D7] border border-[#111111]/25 px-2.5 py-0.5 text-xs font-semibold text-[#111111]"
+              >
+                <span className="text-[#DA0711] font-bold">{line.quantity}×</span>
+                <span>{line.title}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <p className="text-base sm:text-lg font-medium text-[#5E5850] mt-1.5 line-clamp-2">{merchantName}</p>
 

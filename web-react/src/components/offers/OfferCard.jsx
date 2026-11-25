@@ -4,14 +4,13 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ArrowUpRight } from 'lucide-react';
+import { MapPin, ArrowUpRight, ShoppingBag } from 'lucide-react';
 import PriceTicker from './PriceTicker.jsx';
 import CountdownChip from './CountdownChip.jsx';
 import RarityBadge from './RarityBadge.jsx';
 import { calculateWalkingMinutes } from '@shared/geo.js';
-import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
-
-const SAFE_FALLBACK_IMG = '/assets/griddle/food/takeaway-counter.webp';
+import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
+import { useBag } from '../../context/BagContext.jsx';
 
 const STICKERS = [
   { text: '#1', cls: 'cs-sticker-red' },
@@ -43,6 +42,7 @@ export function formatCategory(category) {
 }
 
 export default function OfferCard({ offer, className = '', index = 0 }) {
+  const { addToBag } = useBag();
   if (!offer) return null;
 
   // Données normalisées
@@ -63,7 +63,15 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
   const distanceM = offer.distanceFromEssectM ?? offer.merchantSnapshot?.distanceFromEssectM ?? offer.merchant?.distanceFromEssectM;
   const walkingMin = Number.isFinite(distanceM) ? calculateWalkingMinutes(distanceM) : null;
 
-  const imageUrl = offer.imageUrl || offer.photoUrl || getDistinctGriddleFoodImage(category, id || title);
+  const imageUrl =
+    offer.imageUrl ||
+    offer.photoUrl ||
+    resolveOfferImage({
+      category,
+      title,
+      description: offer.description,
+      isSurpriseBasket: isSurprise,
+    });
 
   return (
     <Link
@@ -79,7 +87,7 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
           decoding="async"
           onError={(e) => {
             e.currentTarget.onerror = null;
-            e.currentTarget.src = SAFE_FALLBACK_IMG;
+            e.currentTarget.src = SAFE_FOOD_FALLBACK_IMG;
           }}
         />
         <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
@@ -109,14 +117,31 @@ export default function OfferCard({ offer, className = '', index = 0 }) {
           </p>
         )}
 
-        <div className="mt-auto pt-5 flex items-end justify-between gap-3">
+        <div className="mt-auto pt-5 flex items-end justify-between gap-2">
           <PriceTicker offer={offer} size="md" />
-          <span
-            aria-hidden="true"
-            className="shrink-0 w-12 h-12 rounded-full bg-[#DA0711] text-white border-2 border-[#111111] flex items-center justify-center transition-transform duration-300 group-hover:rotate-45"
-          >
-            <ArrowUpRight className="w-6 h-6" strokeWidth={2.5} />
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            {available > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToBag(offer, 1);
+                }}
+                aria-label={`Ajouter ${title} au sac`}
+                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-full bg-[#FFD000] hover:bg-[#111111] hover:text-[#FFD000] text-[#111111] border-2 border-[#111111] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <ShoppingBag className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Ajouter</span>
+              </button>
+            )}
+            <span
+              aria-hidden="true"
+              className="shrink-0 w-11 h-11 rounded-full bg-[#DA0711] text-white border-2 border-[#111111] flex items-center justify-center transition-transform duration-300 group-hover:rotate-45"
+            >
+              <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
+            </span>
+          </div>
         </div>
       </div>
     </Link>

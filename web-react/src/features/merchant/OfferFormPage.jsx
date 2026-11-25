@@ -12,29 +12,9 @@ import { formatTND } from '@shared/money.js';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import AiAutoFillBox from './AiAutoFillBox.jsx';
+import PhotoDropzone from './PhotoDropzone.jsx';
 import SmartDecayToggle from './SmartDecayToggle.jsx';
-import { getDistinctGriddleFoodImage, GRIDDLE_FOOD_POOLS } from '../../lib/griddleAssets.js';
-
-// Catégorie d'offre → famille de photos Griddle (l'aperçu suit la catégorie choisie)
-const CATEGORY_POOL = {
-  SANDWICH: 'fast-food',
-  SNACK: 'fast-food',
-  PLAT_CHAUD: 'restaurant',
-  SALADE: 'restaurant',
-  PIZZA: 'pizza',
-  PATISSERIE: 'patisserie',
-  VIENNOISERIE: 'cafeteria',
-  BOISSON: 'cafeteria',
-  MIXTE: 'patisserie',
-};
-
-function categoryImage(category, title) {
-  if (category === 'SANDWICH') {
-    const wrap = (GRIDDLE_FOOD_POOLS['fast-food'] || []).find((it) => /makloub/i.test(it.name));
-    if (wrap) return wrap.src;
-  }
-  return getDistinctGriddleFoodImage(CATEGORY_POOL[category] || 'fast-food', title || category || 0);
-}
+import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
 import { Sparkles, Clock, ArrowRight, Gift, Leaf, AlertTriangle } from 'lucide-react';
 
 // Affichage sûr : jamais de NaN / 0,000 DT à l'écran
@@ -131,7 +111,9 @@ const CATEGORY_ITEMS = [
   { id: OFFER_CATEGORIES.PIZZA, label: 'Pizza Calzone', icon: '🍕' },
   { id: OFFER_CATEGORIES.PATISSERIE, label: 'Pâtisserie Fine', icon: '🧁' },
   { id: OFFER_CATEGORIES.VIENNOISERIE, label: 'Croissant / Viennoiserie', icon: '🥐' },
-  { id: OFFER_CATEGORIES.SNACK, label: 'Frites / Snack', icon: '🍟' },
+  { id: OFFER_CATEGORIES.SALADE, label: 'Salade / Bowl', icon: '🥗' },
+  { id: OFFER_CATEGORIES.BOISSON, label: 'Boisson / Café', icon: '🥤' },
+  { id: OFFER_CATEGORIES.SNACK, label: 'Snack / Produit frais', icon: '🍟' },
   { id: OFFER_CATEGORIES.MIXTE, label: 'Panier Surprise', icon: '🎁' },
 ];
 
@@ -152,7 +134,10 @@ export default function OfferFormPage() {
     quantityTotal: 4,
     maxPerOrder: 3,
     weightGramsPerUnit: 400,
-    photoUrl: '',
+    photoUrl: resolveOfferImage({
+      category: OFFER_CATEGORIES.SANDWICH,
+      title: 'Baguette Farcie Escalope & Fromage',
+    }),
     ...computeDefaultPickupHours(),
     isSurpriseBasket: false,
     surprise: {
@@ -162,6 +147,8 @@ export default function OfferFormPage() {
     },
   });
 
+  const [hasCustomPhoto, setHasCustomPhoto] = useState(false);
+  const [lastRawNote, setLastRawNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
@@ -181,6 +168,7 @@ export default function OfferFormPage() {
       .then((res) => {
         if (!alive) return;
         const o = res.data?.offer || res.data;
+        if (o?.photoUrl) setHasCustomPhoto(true);
         setFormData((prev) => {
           const next = offerToForm(o, prev);
           setInitialForm(next);
@@ -215,25 +203,18 @@ export default function OfferFormPage() {
   const [uploadError, setUploadError] = useState('');
 
   // Photo de l'offre : téléversement réel (POST /uploads/image, 5 Mo max, JPEG/PNG/WEBP) ; l'URL renvoyée est enregistrée avec l'offre
-  async function handlePhotoPick(event) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+  async function uploadOfferFile(file) {
     if (!file) return;
     setUploadError('');
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setUploadError('Format non supporté : utilisez JPEG, PNG ou WEBP.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('Image trop lourde (5 Mo maximum).');
-      return;
-    }
     setUploading(true);
     try {
       const body = new FormData();
       body.append('file', file);
       const res = await apiClient.post(ENDPOINTS.UPLOAD_IMAGE, body, { headers: { 'Content-Type': 'multipart/form-data' } });
-      if (res.data?.url) handleChange('photoUrl', res.data.url);
+      if (res.data?.url) {
+        setHasCustomPhoto(true);
+        handleChange('photoUrl', res.data.url);
+      }
     } catch (err) {
       setUploadError(err?.response?.data?.error?.message || 'Téléversement impossible : réessayez.');
     } finally {
@@ -248,30 +229,91 @@ export default function OfferFormPage() {
     }
   }
 
-  function handleAiAutoFill(aiData) {
-    setFormData((prev) => ({
-      ...prev,
-      title: aiData.title || prev.title,
-      description: aiData.description || prev.description,
-      category: aiData.category || prev.category,
-      originalPriceMillimes: aiData.originalPriceMillimes || prev.originalPriceMillimes,
-      startPriceMillimes: aiData.startPriceMillimes || prev.startPriceMillimes,
-      floorPriceMillimes: aiData.floorPriceMillimes || prev.floorPriceMillimes,
-      fixedDiscountedMillimes: aiData.fixedDiscountedMillimes || prev.fixedDiscountedMillimes,
-      quantityTotal: aiData.quantityTotal || prev.quantityTotal,
-      weightGramsPerUnit: aiData.weightGramsPerUnit || prev.weightGramsPerUnit,
-      isSurpriseBasket: aiData.isSurpriseBasket ?? prev.isSurpriseBasket,
-      surprise: {
-        ...prev.surprise,
-        teaser: aiData.surprise?.teaser || prev.surprise.teaser,
-        itemCountHint: aiData.surprise?.itemCountHint || prev.surprise.itemCountHint,
-        privateContents: aiData.surpriseItems
-          ? aiData.surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
-          : prev.surprise.privateContents,
-      },
-    }));
+  function parseAiTime(value, fallback) {
+    if (typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim())) {
+      return value.trim();
+    }
+    const formatted = hhmm(value);
+    return formatted || fallback;
+  }
 
-    setToastMsg('✨ L intelligence artificielle a configuré l ensemble de votre ticket !');
+  function handleAiAutoFill(aiData, rawNote = '') {
+    setLastRawNote(rawNote);
+    setFormData((prev) => {
+      const orig = Math.max(500, Math.round(Number(aiData.originalPriceMillimes) || prev.originalPriceMillimes || 7000));
+      const rawDisc = Number(aiData.discountedPriceMillimes ?? aiData.fixedDiscountedMillimes);
+      const disc = Number.isFinite(rawDisc) && rawDisc >= 100
+        ? Math.min(orig - 100, Math.round(rawDisc))
+        : Math.max(100, Math.round(orig * 0.6));
+
+      const rawFloor = Number(aiData.floorPriceMillimes);
+      const floorP = Number.isFinite(rawFloor) && rawFloor >= 100
+        ? Math.min(orig - 100, Math.round(rawFloor))
+        : disc;
+
+      const rawStart = Number(aiData.startPriceMillimes);
+      const startP = Number.isFinite(rawStart) && rawStart > floorP
+        ? Math.min(orig, Math.round(rawStart))
+        : Math.max(floorP + 100, Math.min(orig, Math.round((orig * 0.8) / 100) * 100));
+
+      const endFromClock =
+        aiData.closingHour != null
+          ? `${String(Math.min(23, Math.max(0, Number(aiData.closingHour)))).padStart(2, '0')}:${String(Math.min(59, Math.max(0, Number(aiData.closingMinute) || 0))).padStart(2, '0')}`
+          : null;
+      const nextEnd = parseAiTime(aiData.suggestedPickupEndAt, endFromClock || prev.pickupEndAt);
+      const [eh, em] = nextEnd.split(':').map(Number);
+      const defaultStartMins = Math.max(0, eh * 60 + em - 120);
+      const computedStart = `${String(Math.floor(defaultStartMins / 60)).padStart(2, '0')}:${String(defaultStartMins % 60).padStart(2, '0')}`;
+      const nextStart = parseAiTime(aiData.suggestedPickupStartAt, computedStart);
+
+      const nextTitle = aiData.title || prev.title;
+      const nextDescription = aiData.description || prev.description;
+      const nextCategory = OFFER_CATEGORIES[aiData.category] ? aiData.category : (aiData.category || prev.category);
+      const nextIsSurprise = typeof aiData.isSurpriseBasket === 'boolean' ? aiData.isSurpriseBasket : false;
+
+      const nextPrivateContents =
+        aiData.surpriseContents ||
+        (Array.isArray(aiData.surpriseItems) && aiData.surpriseItems.length > 0
+          ? aiData.surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
+          : aiData.surprise?.teaser || prev.surprise.privateContents);
+
+      const autoPhoto = resolveOfferImage({
+        category: nextCategory,
+        title: nextTitle,
+        rawNote,
+        surpriseContents: nextPrivateContents,
+        description: nextDescription,
+        isSurpriseBasket: nextIsSurprise,
+      });
+
+      return {
+        ...prev,
+        title: nextTitle,
+        description: nextDescription,
+        category: nextCategory,
+        pricingMode: PRICING_MODES[aiData.pricingMode] ? aiData.pricingMode : prev.pricingMode,
+        originalPriceMillimes: orig,
+        startPriceMillimes: startP,
+        floorPriceMillimes: floorP,
+        fixedDiscountedMillimes: disc,
+        quantityTotal: Math.min(50, Math.max(1, Math.round(Number(aiData.quantityTotal) || prev.quantityTotal))),
+        weightGramsPerUnit: Math.round(Number(aiData.weightGramsPerUnit) || prev.weightGramsPerUnit),
+        pickupStartAt: nextStart,
+        pickupEndAt: nextEnd,
+        photoUrl: hasCustomPhoto ? prev.photoUrl : autoPhoto,
+        isSurpriseBasket: nextIsSurprise,
+        surprise: {
+          ...prev.surprise,
+          teaser: aiData.surprise?.teaser || prev.surprise.teaser,
+          itemCountHint: aiData.surprise?.itemCountHint || aiData.quantityTotal || prev.surprise.itemCountHint,
+          privateContents: nextPrivateContents,
+        },
+      };
+    });
+
+    setErrors({});
+    setErrorMsg(null);
+    setToastMsg('✨ L’assistant IA a rempli tous les champs, prix et horaires de votre offre !');
   }
 
   /** Contrôles côté client (le serveur re-valide tout) : on renvoie la liste des problèmes à corriger. */
@@ -386,8 +428,14 @@ export default function OfferFormPage() {
     }
   }
 
-  // Image d'illustration en direct déterministe
-  const previewImage = categoryImage(formData.category, formData.title);
+  // Image d'illustration en direct déterministe (mots-clés du plat + repli catégorie)
+  const previewImage = resolveOfferImage({
+    category: formData.category,
+    title: formData.title,
+    rawNote: lastRawNote,
+    description: formData.description,
+    isSurpriseBasket: formData.isSurpriseBasket,
+  });
 
   const isDutch = formData.pricingMode === PRICING_MODES.DUTCH_AUCTION;
   const previewPhoto = formData.photoUrl || previewImage;
@@ -400,9 +448,9 @@ export default function OfferFormPage() {
   const co2Kg = Number.isFinite(impact?.co2SavedGrams) ? (impact.co2SavedGrams / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : null;
 
   return (
-    <div className="cs-container cs-page">
-      {/* En-tête */}
-      <header className="mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+    <div className="cs-container pt-10 sm:pt-12 lg:pt-14 pb-16 sm:pb-24">
+      {/* En-tête avec marge haute généreuse sous la Navbar sticky */}
+      <header className="mb-10 lg:mb-12 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="min-w-0">
           <p className="cs-eyebrow mb-3">Espace commerçant</p>
           <h1 className="cs-display">
@@ -455,7 +503,19 @@ export default function OfferFormPage() {
                     key={cat.id}
                     type="button"
                     aria-pressed={isSelected}
-                    onClick={() => handleChange('category', cat.id)}
+                    onClick={() => {
+                      setLastRawNote('');
+                      setFormData((prev) => ({
+                        ...prev,
+                        category: cat.id,
+                        photoUrl: hasCustomPhoto
+                          ? prev.photoUrl
+                          : resolveOfferImage({
+                              category: cat.id,
+                              isSurpriseBasket: cat.id === OFFER_CATEGORIES.MIXTE,
+                            }),
+                      }));
+                    }}
                     className={`min-h-[64px] rounded-2xl border-2 border-[#111111] px-4 py-3 text-left flex items-center gap-3 transition-colors cursor-pointer ${
                       isSelected ? 'bg-[#DA0711] text-[#FAF3E6]' : 'bg-white text-[#111111] hover:bg-[#FAF3E6]'
                     }`}
@@ -473,17 +533,29 @@ export default function OfferFormPage() {
             <StepHeading n="02" title="Détails & prix" />
 
             <div className="space-y-6">
-              <div className="flex flex-wrap items-center gap-4">
-                <label className="cs-btn cs-btn-cream cs-btn-sm cursor-pointer">
-                  <span aria-hidden="true">📷</span>
-                  <span>{uploading ? 'Envoi en cours…' : formData.photoUrl ? 'Changer la photo' : 'Ajouter une photo'}</span>
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handlePhotoPick} disabled={uploading} />
-                </label>
-                {formData.photoUrl && (
-                  <button type="button" onClick={() => handleChange('photoUrl', '')} className="cs-link text-base">Retirer la photo</button>
-                )}
-                {uploadError && <p role="alert" className="text-base text-[#DA0711]">{uploadError}</p>}
-              </div>
+              <PhotoDropzone
+                photoUrl={formData.photoUrl}
+                uploading={uploading}
+                uploadError={uploadError}
+                onFileUpload={uploadOfferFile}
+                onPhotoChange={(url) => {
+                  setHasCustomPhoto(Boolean(url));
+                  handleChange('photoUrl', url);
+                }}
+                onClearPhoto={() => {
+                  setHasCustomPhoto(false);
+                  handleChange(
+                    'photoUrl',
+                    resolveOfferImage({
+                      category: formData.category,
+                      title: formData.title,
+                      rawNote: lastRawNote,
+                      description: formData.description,
+                      isSurpriseBasket: formData.isSurpriseBasket,
+                    })
+                  );
+                }}
+              />
 
               <div>
                 <label htmlFor="offer-title" className="cs-field-label">
@@ -493,7 +565,23 @@ export default function OfferFormPage() {
                   id="offer-title"
                   type="text"
                   value={formData.title}
-                  onChange={(e) => handleChange('title', e.target.value)}
+                  onChange={(e) => {
+                    const nextTitle = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      title: nextTitle,
+                      photoUrl: hasCustomPhoto
+                        ? prev.photoUrl
+                        : resolveOfferImage({
+                            category: prev.category,
+                            title: nextTitle,
+                            rawNote: lastRawNote,
+                            description: prev.description,
+                            isSurpriseBasket: prev.isSurpriseBasket,
+                          }),
+                    }));
+                    if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+                  }}
                   placeholder="ex : Baguette Farcie Escalope & Fromage"
                   aria-invalid={errors.title ? 'true' : undefined}
                   className="cs-input"
@@ -524,6 +612,7 @@ export default function OfferFormPage() {
                 fixedPriceMillimes={formData.fixedDiscountedMillimes}
                 originalPriceMillimes={formData.originalPriceMillimes}
                 onPriceChange={(type, val) => {
+                  if (type === 'original') handleChange('originalPriceMillimes', val);
                   if (type === 'start') handleChange('startPriceMillimes', val);
                   if (type === 'floor') handleChange('floorPriceMillimes', val);
                   if (type === 'fixed') handleChange('fixedDiscountedMillimes', val);
@@ -643,7 +732,7 @@ export default function OfferFormPage() {
         {/* =========================================================================
             COLONNE DROITE : APERÇU EN DIRECT
             ========================================================================= */}
-        <aside className="lg:col-span-5 lg:sticky lg:top-24" aria-label="Aperçu de l'offre">
+        <aside className="lg:col-span-5 lg:sticky lg:top-28" aria-label="Aperçu de l'offre">
           <p className="cs-eyebrow mb-4">Aperçu en direct</p>
 
           <div className="cs-card p-3">
@@ -653,7 +742,7 @@ export default function OfferFormPage() {
                 alt={formData.title || 'Aperçu du plat'}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = previewImage;
+                  e.currentTarget.src = SAFE_FOOD_FALLBACK_IMG;
                 }}
               />
               <div className="absolute top-3 left-3 right-3 z-10 flex items-start justify-between gap-2">

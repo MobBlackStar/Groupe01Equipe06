@@ -28,6 +28,7 @@ const OfferDetailPage = lazy(() => import('../features/explore/OfferDetailPage.j
 const CheckoutPage = lazy(() => import('../features/checkout/CheckoutPage.jsx'));
 const PaymentReturnPage = lazy(() => import('../features/checkout/PaymentReturnPage.jsx'));
 const LivingTicketPage = lazy(() => import('../features/ticket/LivingTicketPage.jsx'));
+const BagPage = lazy(() => import('../features/orders/BagPage.jsx'));
 const MyOrdersPage = lazy(() => import('../features/orders/MyOrdersPage.jsx'));
 const MerchantOrdersPage = lazy(() => import('../features/merchant/MerchantOrdersPage.jsx'));
 const LoyaltyCardPage = lazy(() => import('../features/loyalty/LoyaltyCardPage.jsx'));
@@ -116,6 +117,7 @@ export function AppRouter() {
               <Route path="/app/offers/:id" element={<OfferDetailPage />} />
               <Route path="/app/checkout" element={<CheckoutPage />} />
               <Route path="/app/checkout/:orderId" element={<CheckoutPage />} />
+              <Route path="/app/bag" element={<BagPage />} />
               <Route path="/app/orders" element={<MyOrdersPage />} />
               <Route path="/app/orders/:id/ticket" element={<LivingTicketPage />} />
               <Route path="/app/loyalty" element={<LoyaltyCardPage />} />

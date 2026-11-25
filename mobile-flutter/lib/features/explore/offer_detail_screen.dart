@@ -3,12 +3,15 @@
 // 🎯 À retenir pour la soutenance : "Le bouton de réservation déclenche un verrouillage atomique de 10 minutes du stock au prix exact de la seconde, protégeant l'étudiant contre les conflits de concurrence."
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../app/theme.dart';
 import '../../core/config/env.dart';
 import '../../core/models/loyalty_model.dart';
 import '../../core/models/offer_model.dart';
+import '../../services/bag_service.dart';
 import '../../services/campus_api.dart';
 import '../checkout/checkout_screen.dart';
+import '../orders/bag_sheet.dart';
 import '../../core/domain/money.dart';
 import '../../widgets/griddle.dart';
 import '../../widgets/live_price_text.dart';
@@ -256,7 +259,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [
                 Column(
@@ -264,10 +267,25 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('TOTAL ESTIMÉ', style: AppTheme.label()),
-                    Text(Money.formatTND(totalMillimes), style: AppTheme.figure(40, AppTheme.red)),
+                    Text(Money.formatTND(totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
                   ],
                 ),
-                const SizedBox(width: 18),
+                const SizedBox(width: 12),
+                Builder(
+                  builder: (ctx) {
+                    final inBagQty = ctx.watch<BagService>().quantityOf(offer.id);
+                    return GButton(
+                      inBagQty > 0 ? 'Sac ($inBagQty)' : 'Ajouter',
+                      icon: Icons.shopping_bag_outlined,
+                      variant: GVariant.mustard,
+                      small: true,
+                      onPressed: offer.remainingQuantity > 0
+                          ? () => addOfferToBagWithPrompt(ctx, offer, quantity: _quantity)
+                          : null,
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: GButton(
                     _isReserving ? 'Blocage…' : 'Réserver',

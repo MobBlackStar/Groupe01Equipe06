@@ -12,6 +12,8 @@ export const aiSuggestionSchema = z.object({
   category: z.nativeEnum(OFFER_CATEGORIES),
   originalPriceMillimes: z.number().int().min(500).max(100000),
   discountedPriceMillimes: z.number().int().min(100),
+  startPriceMillimes: z.number().int().min(200).optional(),
+  floorPriceMillimes: z.number().int().min(100).optional(),
   pricingMode: z.nativeEnum(PRICING_MODES).default(PRICING_MODES.FIXED),
   quantityTotal: z.number().int().min(1).max(100),
   weightGramsPerUnit: z.number().int().min(50).max(5000),
@@ -23,6 +25,12 @@ export const aiSuggestionSchema = z.object({
       itemCountHint: z.number().int().min(1).max(10),
     })
     .optional(),
+  surpriseContents: z.string().max(300).optional(),
+  surpriseItems: z
+    .array(z.object({ name: z.string(), quantity: z.number().int().min(1) }))
+    .optional(),
   suggestedPickupStartAt: z.string().optional(),
   suggestedPickupEndAt: z.string().optional(),
+  closingHour: z.number().int().min(0).max(23).optional(),
+  closingMinute: z.number().int().min(0).max(59).optional(),
 });

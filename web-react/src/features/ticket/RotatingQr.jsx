@@ -4,7 +4,7 @@
 // Module : Interface Living Ticket React
 
 import React, { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import HalftoneMascotQr from './HalftoneMascotQr.jsx';
 import { generateClientTicketData, getWindowIndex } from '../../lib/ticketCrypto.js';
 
 export function RotatingQr({ ticketKey, orderId, orderCode }) {
@@ -71,13 +71,9 @@ export function RotatingQr({ ticketKey, orderId, orderCode }) {
       {/* Cadre central du QR Code */}
       <div className="relative p-3 sm:p-4 bg-white rounded-2xl border-2 border-[#111111] flex items-center justify-center">
         {ticketData?.qrPayload ? (
-          <QRCodeSVG
+          <HalftoneMascotQr
             value={ticketData.qrPayload}
             size={300}
-            level="H"
-            includeMargin={false}
-            fgColor="#111111"
-            bgColor="#FFFFFF"
             className="block w-[260px] h-[260px] sm:w-[300px] sm:h-[300px] transition-opacity duration-300"
           />
         ) : (

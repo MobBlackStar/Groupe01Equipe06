@@ -6,6 +6,7 @@
 import { resolveMerchantId } from '../../utils/merchantResolver.js';
 import { db } from '../../config/firebase.js';
 import { calculateEquivalences } from '../../../../shared/impact.js';
+import { normalizeOrderItems } from '../../../../shared/orders.js';
 import { ROLES, MERCHANT_STATUS, ORDER_STATUS } from '../../../../shared/constants.js';
 import { AppError } from '../../utils/AppError.js';
 
@@ -226,23 +227,26 @@ export const dashboardsService = {
       ordersSnap.forEach((doc) => {
         const order = doc.data();
         if (order.status !== ORDER_STATUS.COMPLETED && order.status !== ORDER_STATUS.PAID) return;
-        const title = order.offerSnapshot?.title || 'Offre';
-        const row = byOffer.get(title) || {
-          id: order.offerId,
-          title,
-          category: order.offerSnapshot?.category,
-          quantitySold: 0,
-          revenueMillimes: 0,
-          isSurpriseBasket: !!order.offerSnapshot?.isSurpriseBasket,
-          decayType: order.offerSnapshot?.isSurpriseBasket
-            ? 'Panier Surprise'
-            : order.pricing?.mode === 'DUTCH_AUCTION'
-            ? 'Smart Decay'
-            : 'Prix Fixe',
-        };
-        row.quantitySold += order.quantity || 1;
-        row.revenueMillimes += order.pricing?.totalMillimes || 0;
-        byOffer.set(title, row);
+        const lines = normalizeOrderItems(order);
+        for (const line of lines) {
+          const title = line.title || 'Offre';
+          const row = byOffer.get(title) || {
+            id: line.offerId,
+            title,
+            category: line.category,
+            quantitySold: 0,
+            revenueMillimes: 0,
+            isSurpriseBasket: !!line.isSurpriseBasket,
+            decayType: line.isSurpriseBasket
+              ? 'Panier Surprise'
+              : line.pricingMode === 'DUTCH_AUCTION'
+              ? 'Smart Decay'
+              : 'Prix Fixe',
+          };
+          row.quantitySold += line.quantity || 1;
+          row.revenueMillimes += line.lineSubtotalMillimes || 0;
+          byOffer.set(title, row);
+        }
       });
       topOffers = [...byOffer.values()]
         .map((row) => ({ ...row, rescuedCount: row.quantitySold, discountedPriceMillimes: Math.round(row.revenueMillimes / Math.max(row.quantitySold, 1)) }))

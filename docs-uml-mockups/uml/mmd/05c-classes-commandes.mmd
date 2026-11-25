@@ -21,6 +21,17 @@ classDiagram
         +cancel() void
         +expire() void
     }
+    class OrderLine {
+        <<datatype>>
+        +offerId : String
+        +title : String
+        +quantity : Integer
+        +originalUnitPriceMillimes : Integer
+        +unitPriceMillimes : Integer
+        +lineSubtotalMillimes : Integer
+        +isSurpriseBasket : Boolean
+        +rarity : String [0..1]
+    }
     class Payment {
         <<datatype>>
         +provider : PaymentProvider
@@ -131,8 +142,9 @@ classDiagram
     }
 
     Student "1" -- "0..*" Order : passe
-    Offer "1" -- "0..*" Order : concerne
+    Offer "1" -- "0..*" OrderLine : référence
     Store "1" -- "0..*" Order : traite
+    Order "1" *-- "1..*" OrderLine : items
     Order "1" *-- "1" Payment : payment
     Order "1" *-- "0..1" LivingTicket : ticket
     Order "1" *-- "1" Pickup : pickup

@@ -18,8 +18,10 @@ import {
   Zap,
   Lock,
   UserRound,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useBag } from '../../context/BagContext.jsx';
 import { ROLES } from '@shared/constants.js';
 
 const STUDENT_LINKS = [
@@ -52,6 +54,7 @@ const DEMO_ROLES = [
 
 export default function Navbar() {
   const { user, profile, role, authMode, switchToRealMode, switchToDemoMode, logout, loginDemo } = useAuth();
+  const { totals, openBag } = useBag();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [demoMenuOpen, setDemoMenuOpen] = useState(false);
   const location = useLocation();
@@ -146,14 +149,29 @@ export default function Navbar() {
           )}
 
           {role === ROLES.STUDENT && (
-            <Link
-              to="/app/loyalty"
-              className="hidden md:inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-[#FFD000] border-2 border-[#111111] font-semibold uppercase text-[0.95rem] hover:-translate-y-0.5 transition-transform whitespace-nowrap"
-              title="Mes EcoPoints"
-            >
-              <span className="font-display text-[1.45rem] leading-none tabular-nums">{ecoPoints}</span>
-              <span>pts</span>
-            </Link>
+            <>
+              <button
+                type="button"
+                onClick={openBag}
+                aria-label={`Ouvrir mon sac (${totals.totalCount} article${totals.totalCount > 1 ? 's' : ''})`}
+                className="inline-flex items-center gap-1.5 h-10 px-3 sm:px-3.5 rounded-full bg-white border-2 border-[#111111] font-semibold uppercase text-[0.9rem] hover:bg-[#FFD000] transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <ShoppingBag className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />
+                <span className="hidden min-[380px]:inline">SAC</span>
+                <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[#DA0711] text-white font-mono text-xs font-bold tabular-nums">
+                  {totals.totalCount}
+                </span>
+              </button>
+
+              <Link
+                to="/app/loyalty"
+                className="hidden md:inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-[#FFD000] border-2 border-[#111111] font-semibold uppercase text-[0.95rem] hover:-translate-y-0.5 transition-transform whitespace-nowrap"
+                title="Mes EcoPoints"
+              >
+                <span className="font-display text-[1.45rem] leading-none tabular-nums">{ecoPoints}</span>
+                <span>pts</span>
+              </Link>
+            </>
           )}
 
           <Link

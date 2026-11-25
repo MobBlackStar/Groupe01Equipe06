@@ -2,7 +2,7 @@
 // 🔄 Comparaison React / Flutter : En React, la courbe SVG est redessinée en temps réel via des coordonnées SVG calculées par `@shared/pricing.js` ; en Flutter, nous dessinons la même trajectoire via un `CustomPainter`.
 // 🎯 À retenir pour la soutenance : "Ce module de prévisualisation matérialise la formule déterministe de décroissance linéaire par pas de 100 millimes, permettant au commerçant de visualiser immédiatement son prix de départ, son palier médian et son prix plancher."
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PRICING_MODES } from '@shared/constants.js';
 import { computeUnitPrice } from '@shared/pricing.js';
 import { formatTND } from '@shared/money.js';
@@ -19,6 +19,19 @@ export default function SmartDecayToggle({
   className = '',
 }) {
   const isDutch = pricingMode === PRICING_MODES.DUTCH_AUCTION;
+
+  // Saisie fluide en dinars pour le prix fixe sans casser les décimales en cours de frappe (ex: "3.")
+  const [fixedDtText, setFixedDtText] = useState(() =>
+    fixedPriceMillimes ? String(fixedPriceMillimes / 1000) : ''
+  );
+
+  useEffect(() => {
+    const numericLocal = Number(fixedDtText.replace(',', '.'));
+    const nextMillimes = Number(fixedPriceMillimes) || 0;
+    if (!Number.isFinite(numericLocal) || Math.round(numericLocal * 1000) !== nextMillimes) {
+      setFixedDtText(nextMillimes > 0 ? String(nextMillimes / 1000) : '');
+    }
+  }, [fixedPriceMillimes]);
 
   // Simulation d'une fenêtre de 90 minutes pour la courbe visuelle
   const now = Date.now();
@@ -80,14 +93,34 @@ export default function SmartDecayToggle({
         </div>
       </div>
 
+      {/* PRIX INITIAL AVANT REMISE (obligatoire quel que soit le mode) */}
+      <Input
+        label="Prix initial avant remise (millimes)"
+        type="number"
+        min="500"
+        step="100"
+        required
+        placeholder="ex : 7500"
+        value={originalPriceMillimes}
+        onChange={(e) => onPriceChange('original', Number(e.target.value))}
+        helperText={`Valeur catalogue d'origine : ${safe(originalPriceMillimes)}`}
+      />
+
       {/* CAS 1 : PRIX FIXE */}
       {!isDutch ? (
         <Input
           label="Prix réduit étudiant (en DT)"
           required
-          placeholder="ex : 4.5"
-          value={fixedPriceMillimes ? fixedPriceMillimes / 1000 : ''}
-          onChange={(e) => onPriceChange('fixed', Number(e.target.value) * 1000)}
+          placeholder="ex : 4.2"
+          value={fixedDtText}
+          onChange={(e) => {
+            const raw = e.target.value;
+            setFixedDtText(raw);
+            const parsed = Number(raw.replace(',', '.'));
+            if (Number.isFinite(parsed) && parsed >= 0) {
+              onPriceChange('fixed', Math.round(parsed * 1000));
+            }
+          }}
           helperText={`Prix affiché aux étudiants : ${safe(fixedPriceMillimes)}`}
         />
       ) : (
@@ -96,6 +129,9 @@ export default function SmartDecayToggle({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Input
               label="Prix de départ (millimes)"
+              type="number"
+              min="200"
+              step="100"
               required
               placeholder="ex : 5500"
               value={startPriceMillimes}
@@ -105,6 +141,9 @@ export default function SmartDecayToggle({
 
             <Input
               label="Prix plancher (millimes)"
+              type="number"
+              min="100"
+              step="100"
               required
               placeholder="ex : 3000"
               value={floorPriceMillimes}

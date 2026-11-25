@@ -9,6 +9,7 @@ import { ShoppingBag, MapPin, Ticket, Award, BarChart3 } from 'lucide-react';
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
+import BagDrawer from '../bag/BagDrawer.jsx';
 import { isEmbedded } from '../../lib/embed.js';
 
 const isExplore = (p) => p === '/app' || p === '/app/explore' || p.startsWith('/app/offers') || p.startsWith('/app/checkout');
@@ -41,6 +42,7 @@ export default function StudentLayout({ children }) {
       <main className="flex-1">{children}</main>
       <Footer />
       <MobileTabBar items={NAV_ITEMS} />
+      <BagDrawer />
     </div>
   );
 }

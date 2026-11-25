@@ -8,6 +8,18 @@ import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 import { AppError } from '../../utils/AppError.js';
 
+function isPlaceholderCredential(value) {
+  if (!value || typeof value !== 'string') return true;
+  const trimmed = value.trim();
+  return (
+    !trimmed ||
+    trimmed === 'konnect_dev_mock_key' ||
+    trimmed === 'konnect_dev_mock_wallet' ||
+    trimmed.startsWith('your-') ||
+    trimmed.startsWith('<')
+  );
+}
+
 /**
  * Indique si la passerelle Konnect doit fonctionner en mode simulé (Sandbox local / soutenance)
  * même lorsque NODE_ENV === 'production' (ex. Render sans clé Konnect réelle).
@@ -16,14 +28,7 @@ export function isSimulatedKonnectMode(paymentRef = '', config = env) {
   const apiKey = (config?.KONNECT_API_KEY ?? env.KONNECT_API_KEY ?? '').trim();
   const walletId = (config?.KONNECT_RECEIVER_WALLET_ID ?? env.KONNECT_RECEIVER_WALLET_ID ?? '').trim();
 
-  if (
-    !apiKey ||
-    !walletId ||
-    apiKey === 'konnect_dev_mock_key' ||
-    apiKey.startsWith('<') ||
-    walletId === 'konnect_dev_mock_wallet' ||
-    walletId.startsWith('<')
-  ) {
+  if (isPlaceholderCredential(apiKey) || isPlaceholderCredential(walletId)) {
     return true;
   }
 
@@ -41,8 +46,8 @@ export class KonnectClient {
   constructor(config = env) {
     this.config = config;
     this.apiBase = config.KONNECT_API_BASE || env.KONNECT_API_BASE;
-    this.apiKey = config.KONNECT_API_KEY;
-    this.walletId = config.KONNECT_RECEIVER_WALLET_ID;
+    this.apiKey = isPlaceholderCredential(config.KONNECT_API_KEY) ? '' : config.KONNECT_API_KEY.trim();
+    this.walletId = isPlaceholderCredential(config.KONNECT_RECEIVER_WALLET_ID) ? '' : config.KONNECT_RECEIVER_WALLET_ID.trim();
     this.webAppUrl = config.WEB_APP_URL || env.WEB_APP_URL;
   }
 

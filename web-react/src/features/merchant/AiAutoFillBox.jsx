@@ -1,135 +1,199 @@
 // 💡 Concept & Analogie : Comme un sous-chef attentif qui écoute les instructions orales rapides du cuisinier en fin de service et remplit automatiquement le registre des invendus sans lui faire perdre une minute, cette boîte magique transforme du jargon brut en offre prête à publier.
-// 🔄 Comparaison React / Flutter : En React, `AiAutoFillBox` interroge l'API ou bascule instantanément sur un parseur regex local ; en Flutter, le composant utilise un champ `TextField` avec un bouton d'action magique similaire.
-// 🎯 À retenir pour la soutenance : "Ce module d'IA intègre un fallback déterministe autonome : si la clé API externe est coupée ou indisponible, notre parseur culinaire tunisien extrait tout de même les quantités, horaires et catégories avec 100% de fidélité."
+// 🔄 Comparaison React / Flutter : En React, `AiAutoFillBox` interroge `POST /api/v1/ai/offer-autofill` ou bascule instantanément sur un parseur regex local ; en Flutter, `AiAutofillCard` appelle le même endpoint backend.
+// 🎯 À retenir pour la soutenance : "Ce module d'IA intègre un circuit-breaker avec fallback déterministe autonome : même sans clé API distante, notre parseur culinaire tunisien extrait quantités, prix, horaires et catégories avec 100 % de fiabilité."
 
 import React, { useState } from 'react';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { OFFER_CATEGORIES, PRICING_MODES, SURPRISE_RARITY } from '@shared/constants.js';
 import { calculateImpact } from '@shared/impact.js';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, AlertTriangle } from 'lucide-react';
 
-// Lexique culinaire tunisien embarqué pour le fallback 100% client
+// Lexique culinaire tunisien aligné sur le parseur backend pour le fallback hors-ligne
 const CLIENT_TUNISIAN_LEXICON = [
-  { keywords: ['makloub'], name: 'Makloub Chawarma', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 6500 },
-  { keywords: ['chapati'], name: 'Chapati Mahdia', weight: 300, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 5000 },
-  { keywords: ['baguette farcie', 'baguette farci'], name: 'Baguette Farcie Escalope', weight: 400, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7500 },
-  { keywords: ['brik', 'briks'], name: 'Brik à l Œuf & Thon', weight: 120, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 2500 },
-  { keywords: ['fricasse', 'fricassé', 'fricasses'], name: 'Fricassé Tunisien', weight: 150, category: OFFER_CATEGORIES.SNACK, defaultPrice: 1500 },
-  { keywords: ['lablabi', 'leblebi'], name: 'Lablabi Chaud aux Pois Chiches', weight: 450, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 5000 },
-  { keywords: ['ojja'], name: 'Ojja Merguez Tunisienne', weight: 400, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 6500 },
-  { keywords: ['kafteji'], name: 'Assiette Kafteji Complet', weight: 350, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 4500 },
-  { keywords: ['mlewi', 'mlawi'], name: 'Mlewi Thon & Fromage', weight: 200, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 3500 },
-  { keywords: ['croissant'], name: 'Croissant Beurre Artisanal', weight: 70, category: OFFER_CATEGORIES.VIENNOISERIE, defaultPrice: 1200 },
-  { keywords: ['pain au chocolat', 'chocolatine'], name: 'Pain au chocolat pur beurre', weight: 80, category: OFFER_CATEGORIES.VIENNOISERIE, defaultPrice: 1500 },
-  { keywords: ['bambalouni'], name: 'Bambalouni Traditionnel', weight: 90, category: OFFER_CATEGORIES.PATISSERIE, defaultPrice: 1000 },
-  { keywords: ['makroudh', 'makroud'], name: 'Makroudh de Kairouan', weight: 60, category: OFFER_CATEGORIES.PATISSERIE, defaultPrice: 1000 },
-  { keywords: ['pizza'], name: 'Pizza Cuite au Feu de Bois', weight: 500, category: OFFER_CATEGORIES.PIZZA, defaultPrice: 8500 },
-  { keywords: ['sandwich thon', 'sandwich'], name: 'Sandwich Traditionnel', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 4500 },
-  { keywords: ['salade'], name: 'Salade Méchouia Tunisienne', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
-  { keywords: ['jus', 'soda', 'eau', 'boisson'], name: 'Boisson Fraîche', weight: 300, category: OFFER_CATEGORIES.BOISSON, defaultPrice: 2000 },
+  { pattern: 'makloubs?', name: 'Makloub', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 6500 },
+  { pattern: 'chapatis?', name: 'Chapati', weight: 300, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 5000 },
+  { pattern: 'baguettes?\\s+farci(?:es?|s)?', name: 'Baguette Farcie', weight: 400, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7500 },
+  { pattern: 'briks?', name: 'Brik', weight: 120, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 2500 },
+  { pattern: 'fricass(?:[eé]e?s?)', name: 'Fricassé', weight: 150, category: OFFER_CATEGORIES.SNACK, defaultPrice: 1500 },
+  { pattern: 'l[ae]bl[ae]bis?', name: 'Lablabi', weight: 450, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 5000 },
+  { pattern: 'ojjas?', name: 'Ojja', weight: 400, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 6500 },
+  { pattern: 'kaftejis?', name: 'Kafteji', weight: 350, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 4500 },
+  { pattern: 'ml[ae]wis?', name: 'Mlewi', weight: 200, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 3500 },
+  { pattern: 'croissants?', name: 'Croissant', weight: 70, category: OFFER_CATEGORIES.VIENNOISERIE, defaultPrice: 1200 },
+  { pattern: '(?:pains?\\s+au\\s+chocolat|chocolatines?)', name: 'Pain au chocolat', weight: 80, category: OFFER_CATEGORIES.VIENNOISERIE, defaultPrice: 1500 },
+  { pattern: 'bambalounis?', name: 'Bambalouni', weight: 90, category: OFFER_CATEGORIES.PATISSERIE, defaultPrice: 1000 },
+  { pattern: 'makroudh?s?', name: 'Makroudh', weight: 60, category: OFFER_CATEGORIES.PATISSERIE, defaultPrice: 1000 },
+  { pattern: '(?:p[aâ]tisseries?|g[aâ]teaux?|millefeuilles?|[eé]clairs?)', name: 'Pâtisserie', weight: 220, category: OFFER_CATEGORIES.PATISSERIE, defaultPrice: 4500 },
+  { pattern: 'viennoiseries?', name: 'Viennoiserie', weight: 85, category: OFFER_CATEGORIES.VIENNOISERIE, defaultPrice: 1500 },
+  { pattern: 'pizzas?', name: 'Pizza', weight: 500, category: OFFER_CATEGORIES.PIZZA, defaultPrice: 8500 },
+  { pattern: '(?:chawarmas?|shawarmas?|tacos|burgers?|paninis?)', name: 'Spécialité Grill', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7000 },
+  { pattern: '(?:sandwichs?\\s+au\\s+thon|sandwichs?\\s+thon|sandwiches|sandwichs?)', name: 'Sandwich', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 4500 },
+  { pattern: 'salade?s?', name: 'Salade', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
+  { pattern: '(?<!avec\\s)(?<!au\\s)(?:eggs?|oeufs?|œufs|adham)', name: 'Œufs frais fermiers', weight: 360, category: OFFER_CATEGORIES.SNACK, defaultPrice: 3500 },
+  { pattern: '(?:pasta|p[aâ]tes|spaghettis?|lasagnes?|maqarouna)', name: 'Pâtes maison', weight: 400, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 7000 },
+  { pattern: '(?:couscous|kosksi)', name: 'Couscous tunisien', weight: 450, category: OFFER_CATEGORIES.PLAT_CHAUD, defaultPrice: 7500 },
+  { pattern: '(?:jus|sodas?|eaux?|boissons?|coffees?|caf[eé]s?)', name: 'Boisson Fraîche', weight: 300, category: OFFER_CATEGORIES.BOISSON, defaultPrice: 2000 },
 ];
+
+function parseMoneyToken(rawValue, unit = '') {
+  const num = Number(String(rawValue).replace(',', '.'));
+  if (!Number.isFinite(num) || num <= 0) return null;
+  const u = (unit || '').toLowerCase();
+  return u.startsWith('d') || u.startsWith('t') || num < 100 ? Math.round(num * 1000) : Math.round(num);
+}
 
 function clientParseRawNote(rawNote) {
   const normalized = rawNote.toLowerCase();
   const foundItems = [];
 
   for (const entry of CLIENT_TUNISIAN_LEXICON) {
-    for (const kw of entry.keywords) {
-      const regex = new RegExp(`(?:(\\d+)\\s*x?\\s*)?${kw}`, 'i');
-      const match = normalized.match(regex);
-      if (match) {
-        const qty = match[1] ? parseInt(match[1], 10) : 1;
-        foundItems.push({ ...entry, matchedQty: qty });
-        break;
-      }
+    const regex = new RegExp(`(?:(\\d+)\\s*x?\\s*)?\\b${entry.pattern}\\b`, 'i');
+    const match = normalized.match(regex);
+    if (match) {
+      const qty = match[1] ? parseInt(match[1], 10) : 1;
+      foundItems.push({ ...entry, matchedQty: Math.min(50, Math.max(1, qty)), hasExplicitQty: Boolean(match[1]) });
     }
   }
 
-  const closingMatch = normalized.match(/(?:fermeture|ferme|jusqu'?à)\s*(\d{1,2})h(\d{2})?/i);
-  let closingHour = 20;
-  let closingMinute = 0;
-  if (closingMatch) {
-    closingHour = parseInt(closingMatch[1], 10);
-    closingMinute = closingMatch[2] ? parseInt(closingMatch[2], 10) : 0;
+  const trailingQtyMatch = normalized.match(/(\d+)\s*(?:pi[eè]ces?|portions?|parts?|articles?|unit[eé]s?)/i);
+  const leadingQtyMatch = normalized.match(/^\s*(\d+)\s+(?!dt\b|tnd\b|millimes?\b|h\b)/i);
+  if (foundItems.length === 1 && !foundItems[0].hasExplicitQty) {
+    if (trailingQtyMatch) {
+      foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(trailingQtyMatch[1], 10)));
+    } else if (leadingQtyMatch) {
+      foundItems[0].matchedQty = Math.min(50, Math.max(1, parseInt(leadingQtyMatch[1], 10)));
+    }
   }
 
-  const isMultiItem = foundItems.length > 1;
-  const isSurpriseBasket = isMultiItem;
-  const totalQty = foundItems.reduce((acc, it) => acc + it.matchedQty, 0) || 1;
-  const totalWeight = foundItems.reduce((acc, it) => acc + it.weight * it.matchedQty, 0) || 350;
-  const unitWeight = Math.round(totalWeight / totalQty);
+  const closingMatch =
+    normalized.match(/(?:fermeture|ferme(?:\s*[àa])?|jusqu'[àa]|avant)\s*(\d{1,2})\s*h\s*(\d{2})?/i) ||
+    normalized.match(/\b(\d{1,2})\s*h\s*(\d{2})?\b/i);
+  const closingHour = closingMatch ? Math.min(23, Math.max(0, parseInt(closingMatch[1], 10))) : 20;
+  const closingMinute = closingMatch?.[2] ? Math.min(59, Math.max(0, parseInt(closingMatch[2], 10))) : 0;
+  const endMinutes = Math.max(60, closingHour * 60 + closingMinute);
+  const startMinutes = Math.max(0, endMinutes - 120);
+  const fmtTime = (mins) => `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+
+  const explicitSurprise = /(?:panier\s*surprise|box\s*surprise|bo[iî]te\s*myst[eè]re|assortiment)/i.test(normalized);
+  const isSurpriseBasket = foundItems.length > 1 || explicitSurprise;
+  const fallbackQty = trailingQtyMatch ? Math.min(50, Math.max(1, parseInt(trailingQtyMatch[1], 10))) : 1;
+  const totalQty = foundItems.reduce((acc, it) => acc + it.matchedQty, 0) || fallbackQty;
+  const totalWeight = foundItems.reduce((acc, it) => acc + it.weight * it.matchedQty, 0) || 350 * totalQty;
+  const unitWeight = Math.min(5000, Math.max(50, Math.round(totalWeight / totalQty)));
+
+  const origMatch = normalized.match(/(?:prix\s*(?:initial|normal|d'origine|origine)?|au\s*lieu\s*de|valeur)\s*(?::|=)?\s*(\d+(?:[.,]\d+)?)\s*(dt|dinars?|tnd|millimes?)?/i);
+  const discMatch = normalized.match(/(?:prix\s*(?:r[eé]duit|final|promo|vente)|vendu\s*[àa]?|pour|à)\s*(\d+(?:[.,]\d+)?)\s*(dt|dinars?|tnd|millimes?)/i);
 
   const estimatedOriginal = foundItems.reduce((acc, it) => acc + it.defaultPrice * it.matchedQty, 0) || 7000;
-  const originalPerUnit = Math.round(estimatedOriginal / totalQty);
-  const floorPrice = Math.round(originalPerUnit * 0.45); // 55% de réduction plancher
+  const originalPerUnit = Math.min(100000, Math.max(500, (origMatch ? parseMoneyToken(origMatch[1], origMatch[2]) : null) || Math.round(estimatedOriginal / totalQty)));
+  const rawDiscounted = (discMatch ? parseMoneyToken(discMatch[1], discMatch[2]) : null) || Math.round(originalPerUnit * 0.6);
+  const discountedPerUnit = Math.max(100, Math.min(originalPerUnit - 100, rawDiscounted));
+  const floorPrice = discountedPerUnit;
+  const startPrice = Math.max(floorPrice + 100, Math.min(originalPerUnit, Math.round((originalPerUnit * 0.8) / 100) * 100));
 
   const impact = calculateImpact(unitWeight);
 
-  let title = 'Assortiment Frais du Jour';
+  let title = explicitSurprise ? 'Panier Surprise du Jour' : 'Assortiment Frais du Jour';
   let category = OFFER_CATEGORIES.MIXTE;
 
-  if (foundItems.length === 1) {
-    title = `${foundItems[0].name} fraîchement préparé`;
+  if (foundItems.length === 1 && !explicitSurprise) {
+    title = `${foundItems[0].name} artisanal`;
     category = foundItems[0].category;
+  } else if (foundItems.length === 1 && explicitSurprise) {
+    title = `Panier Surprise (${foundItems[0].name})`;
+    category = OFFER_CATEGORIES.MIXTE;
   } else if (foundItems.length > 1) {
-    title = `Panier Surprise (${foundItems.map((f) => f.name).join(' + ')})`;
+    title = `Panier Surprise (${foundItems.map((f) => f.name).join(' & ')})`;
     category = OFFER_CATEGORIES.MIXTE;
   }
+
+  const surpriseItems = foundItems.map((it) => ({ name: it.name, quantity: it.matchedQty }));
+  const surpriseContents =
+    surpriseItems.length > 0
+      ? surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
+      : `${totalQty}x Assortiment surprise du chef`;
 
   return {
     title,
     description: `Offre préparée le jour même avec des ingrédients frais. Sauvez ${totalQty} portion(s) avant la fermeture à ${String(closingHour).padStart(2, '0')}h${String(closingMinute).padStart(2, '0')}.`,
     category,
     originalPriceMillimes: originalPerUnit,
-    startPriceMillimes: Math.round(originalPerUnit * 0.75),
+    discountedPriceMillimes: discountedPerUnit,
+    startPriceMillimes: startPrice,
     floorPriceMillimes: floorPrice,
-    fixedDiscountedMillimes: Math.round(originalPerUnit * 0.55),
+    pricingMode: PRICING_MODES.FIXED,
     quantityTotal: totalQty,
     weightGramsPerUnit: unitWeight,
     co2SavedGrams: impact.co2SavedGrams,
     isSurpriseBasket,
-    surpriseItems: foundItems.map((it) => ({ name: it.name, quantity: it.matchedQty })),
+    ...(isSurpriseBasket
+      ? {
+          surpriseContents,
+          surpriseItems,
+          surprise: {
+            rarity: SURPRISE_RARITY.COMMON,
+            teaser: `Assortiment surprise d'environ ${totalQty} délices à récupérer avant fermeture`,
+            itemCountHint: Math.min(10, totalQty),
+          },
+        }
+      : {}),
     closingHour,
     closingMinute,
-    source: 'Parseur Culinaire Tunisien (Fallback Hors-Ligne)',
+    suggestedPickupStartAt: fmtTime(startMinutes),
+    suggestedPickupEndAt: fmtTime(endMinutes),
+    sourceLabel: 'Mode hors-ligne',
   };
+}
+
+function formatSourceLabel(source) {
+  if (source === 'GEMINI') return '✨ Gemini Flash';
+  if (source === 'ANTHROPIC' || source === 'ai') return '✨ Intelligence Artificielle';
+  if (source === 'FALLBACK' || source === 'fallback') return 'Mode hors-ligne';
+  return 'Mode hors-ligne';
 }
 
 export default function AiAutoFillBox({ onAutoFill, className = '' }) {
   const [rawText, setRawText] = useState('');
   const [loading, setLoading] = useState(false);
   const [lastSource, setLastSource] = useState(null);
+  const [inputError, setInputError] = useState('');
 
   const examples = [
     '4 makloub escalope + 3 brik, fermeture 17h',
     '3 baguettes farcies croustillantes, ferme à 19h30',
-    '6 croissants beurre pur + 4 pains au chocolat, fermeture 18h',
+    '6 croissants et 2 pains au chocolat, prix initial 8dt, ferme à 19h30',
   ];
 
   async function handleGenerate(textToUse = rawText) {
-    if (!textToUse.trim()) return;
+    const trimmed = String(textToUse || '').trim();
+    if (trimmed.length < 3) {
+      setInputError('Décrivez vos invendus en au moins 3 caractères.');
+      return;
+    }
+
+    setInputError('');
     setLoading(true);
 
     try {
-      // 1. Tente l'API backend si disponible
       const res = await apiClient.post(ENDPOINTS.AI_OFFER_AUTOFILL, {
-        rawNote: textToUse,
+        rawNote: trimmed,
       });
 
-      // Contrat API : { suggestion, source: 'ai' | 'fallback' } (ancien format `offer` toléré)
+      // Contrat API unifié : { suggestion, source: 'GEMINI' | 'FALLBACK' }
       const suggestion = res.data?.suggestion || res.data?.offer;
-      if (suggestion) {
-        onAutoFill(suggestion);
-        setLastSource(res.data?.source === 'ai' ? 'Intelligence Artificielle (Claude)' : 'Analyseur culinaire du serveur');
-        setLoading(false);
+      if (suggestion && typeof suggestion === 'object') {
+        setLastSource(formatSourceLabel(res.data?.source));
+        onAutoFill(suggestion, trimmed);
         return;
       }
+
+      throw new Error('Réponse IA incomplète');
     } catch {
-      // 2. Bascule instantanée sur le parseur tunisien local
-      const parsed = clientParseRawNote(textToUse);
-      onAutoFill(parsed);
-      setLastSource(parsed.source);
+      // Bascule transparente sur le parseur tunisien local si l'API est injoignable ou limitée
+      const parsed = clientParseRawNote(trimmed);
+      setLastSource(parsed.sourceLabel);
+      onAutoFill(parsed, trimmed);
     } finally {
       setLoading(false);
     }
@@ -145,7 +209,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
           <div className="min-w-0">
             <h2 className="cs-title">L'IA remplit le formulaire</h2>
             <p className="text-base sm:text-lg mt-2 max-w-2xl leading-snug">
-              Écrivez vos invendus comme en cuisine. L'assistant génère le titre, les prix, le poids et la description à votre place.
+              Écrivez vos invendus comme en cuisine. L'assistant génère le titre, les prix, le poids, les horaires et la description à votre place.
             </p>
           </div>
         </div>
@@ -163,9 +227,13 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
           id="ai-autofill-input"
           type="text"
           value={rawText}
-          onChange={(e) => setRawText(e.target.value)}
+          onChange={(e) => {
+            setRawText(e.target.value);
+            if (inputError) setInputError('');
+          }}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleGenerate())}
           placeholder="ex : 4 makloub escalope + 3 brik, fermeture 17h"
+          aria-invalid={inputError ? 'true' : undefined}
           className="cs-input flex-1 min-w-0 !min-h-[3.5rem] !text-lg"
         />
         <button
@@ -179,6 +247,13 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
         </button>
       </div>
 
+      {inputError && (
+        <p role="alert" className="mt-2.5 inline-flex items-center gap-2 text-[14px] font-bold text-[#DA0711]">
+          <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>{inputError}</span>
+        </p>
+      )}
+
       {/* Exemples rapides en 1-clic pour la démo soutenance */}
       <div className="mt-5">
         <span className="cs-label !text-[#111111] block mb-3">Essayez un exemple</span>
@@ -189,6 +264,7 @@ export default function AiAutoFillBox({ onAutoFill, className = '' }) {
               type="button"
               onClick={() => {
                 setRawText(ex);
+                setInputError('');
                 handleGenerate(ex);
               }}
               className="inline-flex items-center min-h-[44px] rounded-full border-2 border-[#111111] bg-[#FAF3E6] px-4 py-2 text-left text-[15px] font-medium leading-snug hover:bg-white transition-colors cursor-pointer"

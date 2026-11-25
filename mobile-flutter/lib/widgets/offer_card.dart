@@ -14,12 +14,14 @@ class OfferCard extends StatelessWidget {
   final OfferModel offer;
   final int? distanceFromEssectM;
   final VoidCallback? onTap;
+  final VoidCallback? onAddToBag;
 
   const OfferCard({
     super.key,
     required this.offer,
     this.distanceFromEssectM,
     this.onTap,
+    this.onAddToBag,
   });
 
   @override
@@ -130,14 +132,39 @@ class OfferCard extends StatelessWidget {
                             onCream: true,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        if (onAddToBag != null && offer.remainingQuantity > 0) ...[
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: onAddToBag,
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 11),
+                              decoration: AppTheme.pill(color: AppTheme.mustard),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.shopping_bag_outlined,
+                                      size: 15, color: AppTheme.ink),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'SAC',
+                                    style: AppTheme.h3(14, AppTheme.ink)
+                                        .copyWith(letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
+                              horizontal: 18, vertical: 12),
                           decoration: AppTheme.pill(color: AppTheme.red),
                           child: Text(
                             'RÉSERVER',
-                            style: AppTheme.h3(16, AppTheme.cream)
+                            style: AppTheme.h3(15, AppTheme.cream)
                                 .copyWith(letterSpacing: 0.8),
                           ),
                         ),

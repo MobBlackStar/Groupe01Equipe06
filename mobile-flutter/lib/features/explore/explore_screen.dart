@@ -3,15 +3,18 @@
 // 🎯 À retenir pour la soutenance : "L'écran d'exploration mobile offre une fluidité native avec filtrage multi-critères par commerce, catégorie, budget et tri en temps réel."
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../app/theme.dart';
 import '../../core/config/env.dart';
 import '../../core/domain/money.dart';
 import '../../core/domain/pricing.dart';
 import '../../core/models/offer_model.dart';
 import '../../core/time/server_clock.dart';
+import '../../services/bag_service.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/offer_card.dart';
 import '../../widgets/griddle.dart';
+import '../orders/bag_sheet.dart';
 import 'filter_bottom_sheet.dart';
 import 'offer_detail_screen.dart';
 
@@ -70,6 +73,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Future<void> _loadOffers() async {
     if (Env.useMocks) {
+      context.read<BagService>().syncCatalog(const []);
       setState(() {
         _allOffers = const [];
         _isLoading = false;
@@ -80,6 +84,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final offers = await CampusApi.shared.fetchOffers();
       if (!mounted) return;
+      context.read<BagService>().syncCatalog(offers);
       setState(() {
         _allOffers = offers;
         _isLoading = false;
@@ -458,6 +463,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               return OfferCard(
                 offer: offer,
                 distanceFromEssectM: dist,
+                onAddToBag: () => addOfferToBagWithPrompt(context, offer),
                 onTap: () {
                   Navigator.push(
                     context,

@@ -4,6 +4,7 @@
 // Module : Interface Web React & Téléchargement Mobile
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { isEmbedded } from '../../lib/embed.js';
 
@@ -11,6 +12,8 @@ const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave-releases/rel
 const STORAGE_KEY = 'cs.mascot_dismissed';
 
 export default function ApkDownloadMascot() {
+  const { pathname } = useLocation();
+  const isAuthPage = pathname === '/login' || pathname === '/register';
   const [isOpen, setIsOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const apkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL || DEFAULT_APK_URL;
@@ -22,6 +25,9 @@ export default function ApkDownloadMascot() {
     } catch {
       // Ignorer si localStorage restreint
     }
+    const handleOpenModal = () => setIsOpen(true);
+    window.addEventListener('campussave:open-apk-modal', handleOpenModal);
+    return () => window.removeEventListener('campussave:open-apk-modal', handleOpenModal);
   }, []);
 
   // Ne jamais afficher dans la WebView mobile (?embed=1)
@@ -51,11 +57,13 @@ export default function ApkDownloadMascot() {
   return (
     <>
       {/* =========================================================================
-          BOUTON FLOTTANT / MASCOTTE (BAS-DROITE, AU-DESSUS DE LA NAVIGATION MOBILE)
+          BOUTON FLOTTANT / MASCOTTE (AU-DESSUS DE LA NAVIGATION BASSE < LG, MASQUÉ SUR AUTH < 2XL)
           ========================================================================= */}
       <aside
         aria-label="Téléchargement de l'application Android"
-        className="fixed bottom-20 sm:bottom-4 right-4 z-40 select-none max-w-[calc(100vw-2rem)] w-auto animate-bounce-subtle"
+        className={`fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-5 right-4 lg:right-5 z-40 select-none max-w-[calc(100vw-2rem)] w-auto ${
+          isAuthPage ? 'hidden 2xl:block' : ''
+        }`}
       >
         {isDismissed ? (
           /* Version miniature discrète après fermeture */

@@ -149,6 +149,10 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
 
   void _showSuccessSheet(Map<String, dynamic> data) {
     final order = data['order'] as Map<String, dynamic>? ?? {};
+    final orderItems = (order['items'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
     final pointsAwarded = data['pointsAwarded'] ?? 0;
     final isSurprise = data['isSurprise'] == true;
     final reveal = data['reveal'] as Map<String, dynamic>?;
@@ -193,6 +197,22 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                       _buildReceiptRow('Étudiant', order['studentSnapshot']?['displayName'] ?? 'Étudiant ESSECT'),
                       const Divider(color: AppTheme.ink, height: 22),
                       _buildReceiptRow('Portions', '${order['quantity'] ?? 1}', valueColor: AppTheme.red),
+                      if (orderItems.isNotEmpty) ...[
+                        const Divider(color: AppTheme.ink, height: 22),
+                        Align(alignment: Alignment.centerLeft, child: Text('ARTICLES DU SAC', style: AppTheme.label())),
+                        const SizedBox(height: 6),
+                        ...orderItems.map((line) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              children: [
+                                Expanded(child: Text('• ${line['title'] ?? 'Article'}', style: AppTheme.body(14, AppTheme.muted))),
+                                Text('x${line['quantity'] ?? 1}', style: AppTheme.mono(13, AppTheme.red).copyWith(fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
                       const Divider(color: AppTheme.ink, height: 22),
                       _buildReceiptRow('Points attribués', '+$pointsAwarded', valueColor: AppTheme.leaf),
                       if (isSurprise && reveal != null) ...[

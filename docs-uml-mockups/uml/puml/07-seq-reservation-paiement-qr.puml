@@ -33,28 +33,28 @@ end
 APP --> S : liste avec prix qui baissent en direct
 deactivate APP
 
-== Réservation atomique (M5) ==
-S -> APP : choisir la quantité (et éventuellement une récompense),\nappuyer sur « Réserver »
+== Réservation atomique mono-commerce (M5) ==
+S -> APP : remplir son sac mono-commerce (1..N articles) et coupon,\nappuyer sur « Réserver & Payer »
 activate APP
-APP -> API : POST /orders {offerId, quantity, rewardId?}
+APP -> API : POST /orders {items: [{offerId, quantity}], rewardId?}
 activate API
 API -> API : authenticate · requireRole(STUDENT) · validate
 group Transaction Firestore (lectures avant écritures, rejouée en cas de conflit)
-  API -> FS : lire offers/{offerId} et users/{uid}
+  API -> FS : lire offers/{offerId} du sac et users/{uid}
   activate FS
-  FS --> API : offre, profil
-  API -> API : vérifier : ACTIVE, avant pickupEnd,\nqty ≤ maxPerOrder et ≤ quantityAvailable
-  API -> API : prix verrouillé = computeUnitPrice(offre, heure serveur)\ntotal = max(0, sous-total − remise)
-  API -> FS : offre : quantityAvailable −= qty (SOLD_OUT si 0), hasOrders = true
+  FS --> API : offres, profil
+  API -> API : vérifier : un seul commerce (sinon 422 MIXED_MERCHANTS),\nACTIVE, avant pickupEnd, qty ≤ maxPerOrder et ≤ quantityAvailable
+  API -> API : prix verrouillés par ligne = computeUnitPrice(offre, heure serveur)\ntotal = max(0, somme(sous-totaux) − remise)
+  API -> FS : pour chaque offre : quantityAvailable −= qty (SOLD_OUT si 0), hasOrders = true
   API -> FS : récompense : status LOCKED
-  API -> FS : créer orders/{id} : RESERVED,\nreservationExpiresAt = maintenant + 10 min
-  FS --> API : commit
+  API -> FS : créer orders/{id} : RESERVED, items[],\nreservationExpiresAt = maintenant + 10 min
+  FS-->>API : commit
   deactivate FS
 end
-alt stock insuffisant ou données invalides
-  API --> APP : 409 OFFER_SOLD_OUT / 422 erreurs de validation
+alt stock insuffisant, commerces multiples ou données invalides
+  API --> APP : 409 OFFER_SOLD_OUT / 422 MIXED_MERCHANTS
 else réservation créée
-  API --> APP : 201 commande RESERVED, prix verrouillé, échéance
+  API --> APP : 201 commande RESERVED, items[], prix verrouillés, échéance
 end
 deactivate API
 APP --> S : récapitulatif + compte à rebours de 10 min
