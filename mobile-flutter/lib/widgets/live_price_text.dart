@@ -91,9 +91,10 @@ class _LivePriceTextState extends State<LivePriceText> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 4,
           children: [
             Text(
               formattedPrice,
@@ -106,8 +107,7 @@ class _LivePriceTextState extends State<LivePriceText> {
                     letterSpacing: 0.2,
                   ),
             ),
-            if (widget.originalPriceMillimes > currentPrice) ...[
-              const SizedBox(width: 8),
+            if (widget.originalPriceMillimes > currentPrice)
               Text(
                 formattedOriginal,
                 style: TextStyle(
@@ -117,9 +117,7 @@ class _LivePriceTextState extends State<LivePriceText> {
                   decorationColor: widget.onCream ? AppTheme.muted : AppTheme.muted,
                 ),
               ),
-            ],
-            if (discountPercent > 0) ...[
-              const SizedBox(width: 6),
+            if (discountPercent > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -131,12 +129,11 @@ class _LivePriceTextState extends State<LivePriceText> {
                   '-$discountPercent%',
                   style: const TextStyle(
                     color: AppTheme.ink,
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-            ],
           ],
         ),
         if (isDutch)
@@ -153,12 +150,15 @@ class _LivePriceTextState extends State<LivePriceText> {
                   ),
                 ),
                 const SizedBox(width: 5),
-                Text(
-                  'Smart Decay en direct',
-                  style: TextStyle(
-                    color: widget.onCream ? AppTheme.ink.withValues(alpha: 0.75) : AppTheme.red,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    'Smart Decay en direct',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: widget.onCream ? AppTheme.ink.withValues(alpha: 0.75) : AppTheme.red,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],

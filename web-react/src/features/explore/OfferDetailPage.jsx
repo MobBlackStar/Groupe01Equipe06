@@ -110,6 +110,8 @@ export default function OfferDetailPage() {
   }
 
   const currentOffer = offer;
+  const pickupStartRaw = currentOffer.pickupStartAt ?? currentOffer.pickupWindow?.startAt ?? currentOffer.pickupStart ?? null;
+  const pickupEndRaw = currentOffer.pickupEndAt ?? currentOffer.pickupWindow?.endAt ?? currentOffer.pickupEnd ?? null;
   const unitPrice = computeUnitPrice(currentOffer, now);
   const totalPrice = unitPrice * quantity;
 
@@ -204,14 +206,14 @@ export default function OfferDetailPage() {
   const savings = (originalUnit - unitPrice) * quantity + rewardDiscount;
 
   return (
-    <div className="cs-container cs-page">
+    <div className="cs-container cs-page pt-8 sm:pt-10">
       {/* Navigation retour & urgence */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 lg:mb-10">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 lg:mb-10 pt-2">
         <Link to="/app/explore" className="cs-link inline-flex items-center gap-2 text-lg">
           <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
           Toutes les offres
         </Link>
-        <CountdownChip pickupEndAt={currentOffer.pickupEndAt} />
+        <CountdownChip pickupEndAt={pickupEndRaw} />
       </div>
 
       {/* Alerte concurrence 409 */}
@@ -290,7 +292,7 @@ export default function OfferDetailPage() {
               <Clock className="w-5 h-5 text-[#DA0711]" /> Retrait
             </span>
             <span className="font-display text-[2.75rem] leading-none tabular-nums">
-              {formatTunisTime(currentOffer.pickupStartAt)} – {formatTunisTime(currentOffer.pickupEndAt)}
+              {formatTunisTime(pickupStartRaw)} – {formatTunisTime(pickupEndRaw)}
             </span>
           </div>
 

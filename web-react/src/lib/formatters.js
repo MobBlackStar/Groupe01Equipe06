@@ -9,11 +9,24 @@ const TUNIS_TIMEZONE = 'Africa/Tunis';
  * Safely parses any input into a Date instance
  */
 function toDate(input) {
-  if (!input) return null;
+  if (input == null || input === '') return null;
   if (input instanceof Date) return isNaN(input.getTime()) ? null : input;
   if (typeof input === 'number') {
     const d = new Date(input);
     return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof input === 'object') {
+    if (typeof input.toDate === 'function') {
+      const d = input.toDate();
+      return d instanceof Date && !isNaN(d.getTime()) ? d : null;
+    }
+    const secs = input._seconds ?? input.seconds;
+    if (Number.isFinite(secs)) {
+      const nanos = input._nanoseconds ?? input.nanoseconds ?? 0;
+      const d = new Date(secs * 1000 + Math.round(nanos / 1e6));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
   }
   if (typeof input === 'string') {
     // If it's a pure time string like "18:00" or "18:30:00", construct a today date in Tunis

@@ -38,6 +38,10 @@ const envSchema = z.object({
   MAIL_USER: z.string().optional().default(''),
   MAIL_PASS: z.string().optional().default(''),
   MAIL_FROM_NAME: z.string().default('CampusSave ESSECT'),
+  MAIL_FROM_EMAIL: z.string().optional().default(''),
+  MAIL_WEBHOOK_URL: z.string().optional().default(''),
+  MAIL_WEBHOOK_SECRET: z.string().optional().default(''),
+  BREVO_API_KEY: z.string().optional().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

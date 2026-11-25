@@ -112,10 +112,69 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
 
     assert.equal(liveResult.sent, true);
     assert.equal(liveResult.simulated, false);
+    assert.equal(liveResult.provider, 'smtp');
     assert.equal(liveResult.toEmail, 'examiner@essect.u-tunis.tn');
     assert.equal(sentPayloads.length, 1);
     assert.equal(sentPayloads[0].to, 'examiner@essect.u-tunis.tn');
     assert.ok(sentPayloads[0].subject.includes('#CS-991AB'));
     assert.ok(sentPayloads[0].html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
+  });
+
+  test('Tier 1 HTTPS MAIL_WEBHOOK_URL (port 443) envoie le JSON complet avec redirect: follow', async () => {
+    const calls = [];
+    const res = await sendOrderReceiptEmail({
+      order: sampleOrder,
+      student: { displayName: 'Yassine', email: 'yassine@essect.u-tunis.tn' },
+      merchant: { name: 'Munchies & Baguette Ali Trad' },
+      config: {
+        NODE_ENV: 'production',
+        MAIL_WEBHOOK_URL: 'https://script.google.com/macros/s/demo-bridge/exec',
+        MAIL_WEBHOOK_SECRET: 'bridge-secret-123',
+        MAIL_FROM_NAME: 'CampusSave ESSECT',
+        WEB_APP_URL: 'https://campussave-rouge.vercel.app',
+      },
+      fetchImpl: async (url, init) => {
+        calls.push({ url, init, body: JSON.parse(init.body) });
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      },
+    });
+
+    assert.equal(res.sent, true);
+    assert.equal(res.provider, 'webhook');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://script.google.com/macros/s/demo-bridge/exec');
+    assert.equal(calls[0].init.redirect, 'follow');
+    assert.equal(calls[0].body.secret, 'bridge-secret-123');
+    assert.equal(calls[0].body.to, 'yassine@essect.u-tunis.tn');
+    assert.ok(calls[0].body.html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
+  });
+
+  test('Tier 2 HTTPS BREVO_API_KEY (port 443) envoie vers api.brevo.com/v3/smtp/email', async () => {
+    const calls = [];
+    const res = await sendOrderReceiptEmail({
+      order: sampleOrder,
+      student: { displayName: 'Ritej', email: 'ritej@essect.u-tunis.tn' },
+      merchant: { name: 'Pâtisserie Mme Essid' },
+      config: {
+        NODE_ENV: 'production',
+        BREVO_API_KEY: 'xkeysib-test-123',
+        MAIL_FROM_EMAIL: 'noreply@campussave.tn',
+        MAIL_FROM_NAME: 'CampusSave ESSECT',
+        WEB_APP_URL: 'https://campussave-rouge.vercel.app',
+      },
+      fetchImpl: async (url, init) => {
+        calls.push({ url, init, body: JSON.parse(init.body) });
+        return new Response(JSON.stringify({ messageId: 'brevo-msg-9' }), { status: 201 });
+      },
+    });
+
+    assert.equal(res.sent, true);
+    assert.equal(res.provider, 'brevo');
+    assert.equal(res.messageId, 'brevo-msg-9');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://api.brevo.com/v3/smtp/email');
+    assert.equal(calls[0].init.headers['api-key'], 'xkeysib-test-123');
+    assert.equal(calls[0].body.sender.email, 'noreply@campussave.tn');
+    assert.equal(calls[0].body.to[0].email, 'ritej@essect.u-tunis.tn');
   });
 });

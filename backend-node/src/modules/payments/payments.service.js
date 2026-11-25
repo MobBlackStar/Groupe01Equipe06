@@ -248,47 +248,49 @@ export const paymentsService = {
       return { order: updatedOrder, confirmed: true };
     });
 
-    // 5. NOTIFICATIONS FCM & REÇU E-MAIL POST-COMMIT (Hors transaction, strictement non bloquants)
-    try {
-      if (result.confirmed && !result.alreadyConfirmed) {
-        const [studentUserDoc, merchantDoc, resolvedMerchantTokens] = await Promise.all([
-          db.collection('users').doc(result.order.studentId).get(),
-          db.collection('merchants').doc(result.order.merchantId).get(),
-          getMerchantTokens(result.order.merchantId),
-        ]);
+    // 5. NOTIFICATIONS FCM & REÇU E-MAIL POST-COMMIT (Hors transaction, strictement fire-and-forget)
+    if (result.confirmed && !result.alreadyConfirmed) {
+      void (async () => {
+        try {
+          const [studentUserDoc, merchantDoc, resolvedMerchantTokens] = await Promise.all([
+            db.collection('users').doc(result.order.studentId).get(),
+            db.collection('merchants').doc(result.order.merchantId).get(),
+            getMerchantTokens(result.order.merchantId),
+          ]);
 
-        const studentData = studentUserDoc.exists ? studentUserDoc.data() : null;
-        const merchantData = merchantDoc.exists ? merchantDoc.data() : null;
-        if (studentData) {
-          studentTokens = studentData.fcmTokens || [];
-        }
-        merchantTokens = resolvedMerchantTokens || [];
-
-        const sideEffects = [];
-        if (studentTokens.length > 0) {
-          sideEffects.push(fcmService.notifyTicketReady(studentTokens, result.order.orderCode));
-        }
-        if (merchantTokens.length > 0) {
-          sideEffects.push(fcmService.notifyOrderPaid(merchantTokens, result.order.orderCode));
-        }
-        sideEffects.push(
-          sendOrderReceiptEmail({
-            order: result.order,
-            student: studentData,
-            merchant: merchantData,
-            overrideEmail,
-          })
-        );
-
-        const settled = await Promise.allSettled(sideEffects);
-        for (const item of settled) {
-          if (item.status === 'rejected') {
-            logger.warn({ err: item.reason?.message || String(item.reason) }, 'Effet de bord post-paiement échoué (non bloquant)');
+          const studentData = studentUserDoc.exists ? studentUserDoc.data() : null;
+          const merchantData = merchantDoc.exists ? merchantDoc.data() : null;
+          if (studentData) {
+            studentTokens = studentData.fcmTokens || [];
           }
+          merchantTokens = resolvedMerchantTokens || [];
+
+          const sideEffects = [];
+          if (studentTokens.length > 0) {
+            sideEffects.push(fcmService.notifyTicketReady(studentTokens, result.order.orderCode));
+          }
+          if (merchantTokens.length > 0) {
+            sideEffects.push(fcmService.notifyOrderPaid(merchantTokens, result.order.orderCode));
+          }
+          sideEffects.push(
+            sendOrderReceiptEmail({
+              order: result.order,
+              student: studentData,
+              merchant: merchantData,
+              overrideEmail,
+            })
+          );
+
+          const settled = await Promise.allSettled(sideEffects);
+          for (const item of settled) {
+            if (item.status === 'rejected') {
+              logger.warn({ err: item.reason?.message || String(item.reason) }, 'Effet de bord post-paiement échoué (non bloquant)');
+            }
+          }
+        } catch (sideEffectErr) {
+          logger.warn({ err: sideEffectErr?.message }, 'Expédition de notification / e-mail post-paiement échouée (non bloquante)');
         }
-      }
-    } catch (sideEffectErr) {
-      logger.warn({ err: sideEffectErr.message }, 'Expédition de notification / e-mail post-paiement échouée (non bloquante)');
+      })();
     }
 
     return result;

@@ -529,32 +529,41 @@ class GTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(color: AppTheme.cream, border: Border(bottom: BorderSide(color: AppTheme.ink, width: 2))),
       child: Row(
         children: [
-          Image.asset('assets/brand/mascot-sticker.png', height: 38, filterQuality: FilterQuality.medium, errorBuilder: (_, __, ___) => const SizedBox(width: 38)),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              'CAMPUSSAVE',
-              style: AppTheme.display(32, AppTheme.red),
-              overflow: TextOverflow.ellipsis,
+          Image.asset('assets/brand/mascot-sticker.png', height: 32, filterQuality: FilterQuality.medium, errorBuilder: (_, __, ___) => const SizedBox(width: 32)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('CAMPUSSAVE', style: AppTheme.display(26, AppTheme.red)),
+                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text('essect', style: const TextStyle(fontFamily: AppTheme.fontSticker, fontSize: 12, color: AppTheme.ink)),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 4),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text('essect', style: const TextStyle(fontFamily: AppTheme.fontSticker, fontSize: 14, color: AppTheme.ink)),
-          ),
-          const Spacer(),
+          const SizedBox(width: 6),
           if (onBag != null) ...[
             InkWell(
               onTap: onBag,
               borderRadius: BorderRadius.circular(999),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: AppTheme.pill(color: bagCount > 0 ? AppTheme.red : AppTheme.cream),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -563,16 +572,31 @@ class GTopBar extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '$bagCount',
-                      style: AppTheme.label(bagCount > 0 ? AppTheme.cream : AppTheme.ink).copyWith(fontWeight: FontWeight.w800),
+                      style: AppTheme.label(bagCount > 0 ? AppTheme.cream : AppTheme.ink).copyWith(fontSize: 12, fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
           ],
-          if (points != null) GPill('$points PTS', color: AppTheme.mustard),
-          if (onProfile != null) ...[const SizedBox(width: 6), GIconButton(icon: Icons.person_outline, onPressed: onProfile, tooltip: 'Mon profil')],
+          if (points != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: AppTheme.pill(color: AppTheme.mustard),
+              child: Text(
+                '$points PTS',
+                style: AppTheme.label(AppTheme.ink).copyWith(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
+            ),
+          if (onProfile != null) ...[
+            const SizedBox(width: 5),
+            SizedBox(
+              width: 38,
+              height: 38,
+              child: GIconButton(icon: Icons.person_outline, onPressed: onProfile, tooltip: 'Mon profil'),
+            ),
+          ],
         ],
       ),
     );

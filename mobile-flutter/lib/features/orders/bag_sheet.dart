@@ -67,6 +67,7 @@ Future<void> addOfferToBagWithPrompt(
   }
 
   if (!context.mounted) return;
+  final rootCtx = Navigator.of(context, rootNavigator: true).context;
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
@@ -74,9 +75,11 @@ Future<void> addOfferToBagWithPrompt(
         backgroundColor: AppTheme.ink,
         content: Text('${offer.title} ajouté au sac (${bag.totalCount})', style: AppTheme.body(14, AppTheme.cream)),
         action: SnackBarAction(
-          label: 'VOIR LE SAC',
+          label: 'Ouvrir le sac',
           textColor: AppTheme.mustard,
-          onPressed: () => showBagSheet(context),
+          onPressed: () {
+            if (rootCtx.mounted) showBagSheet(rootCtx);
+          },
         ),
       ),
     );
@@ -339,30 +342,67 @@ class _BagSheetState extends State<BagSheet> {
                   color: AppTheme.cream,
                   border: Border(top: BorderSide(color: AppTheme.ink, width: 2)),
                 ),
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text('TOTAL ESTIMÉ', style: AppTheme.label()),
-                        Text(Money.formatTND(totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
+                        Flexible(
+                          child: Text('TOTAL DU SAC', overflow: TextOverflow.ellipsis, style: AppTheme.label()),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(Money.formatTND(totalMillimes), style: AppTheme.figure(32, AppTheme.red)),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: GButton(
-                        _isReserving ? 'Blocage…' : 'Réserver & Payer',
-                        icon: Icons.bolt,
-                        loading: _isReserving,
-                        onPressed: _isReserving ? null : () => _checkout(bag),
-                      ),
+                    const SizedBox(height: 10),
+                    GButton(
+                      _isReserving ? 'Blocage…' : 'Réserver & payer le sac (${Money.formatTND(totalMillimes)})',
+                      icon: Icons.bolt,
+                      loading: _isReserving,
+                      onPressed: _isReserving ? null : () => _checkout(bag),
                     ),
                   ],
                 ),
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BagStepButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  const _BagStepButton({required this.icon, required this.tooltip, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onPressed == null;
+    return Tooltip(
+      message: tooltip,
+      child: Opacity(
+        opacity: disabled ? 0.35 : 1,
+        child: Material(
+          color: AppTheme.cream,
+          shape: const CircleBorder(side: BorderSide(color: AppTheme.ink, width: 2)),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onPressed,
+            child: SizedBox(width: 34, height: 34, child: Icon(icon, size: 18, color: AppTheme.ink)),
+          ),
         ),
       ),
     );
@@ -387,43 +427,69 @@ class _BagItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final offer = item.offer;
+    final subtotalMillimes = unitPriceMillimes * item.quantity;
     return GCard(
       padding: const EdgeInsets.all(12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              width: 54,
-              height: 54,
-              child: offer.photoUrl != null && offer.photoUrl!.isNotEmpty
-                  ? GImage(url: offer.photoUrl!, placeholder: Container(color: AppTheme.sand), cacheWidth: 200)
-                  : Container(color: AppTheme.sand, child: const Icon(Icons.restaurant, color: AppTheme.muted)),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  width: 54,
+                  height: 54,
+                  child: offer.photoUrl != null && offer.photoUrl!.isNotEmpty
+                      ? GImage(url: offer.photoUrl!, placeholder: Container(color: AppTheme.sand), cacheWidth: 200)
+                      : Container(color: AppTheme.sand, child: const Icon(Icons.restaurant, color: AppTheme.muted)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(offer.title, style: AppTheme.body(15).copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${Money.formatTND(unitPriceMillimes)} / unité',
+                      style: AppTheme.mono(13, AppTheme.muted),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: AppTheme.red, size: 20),
+                tooltip: 'Retirer',
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: EdgeInsets.zero,
+                onPressed: onRemove,
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(offer.title, style: AppTheme.body(15).copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text('${Money.formatTND(unitPriceMillimes)} × ${item.quantity}', style: AppTheme.mono(13, AppTheme.muted)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          GIconButton(icon: Icons.remove, tooltip: 'Moins', onPressed: onDecrement),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text('${item.quantity}', style: AppTheme.h3(18)),
-          ),
-          GIconButton(icon: Icons.add, tooltip: 'Plus', onPressed: onIncrement),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppTheme.red, size: 20),
-            tooltip: 'Retirer',
-            onPressed: onRemove,
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _BagStepButton(icon: Icons.remove, tooltip: 'Moins', onPressed: onDecrement),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text('${item.quantity}', style: AppTheme.h3(18)),
+              ),
+              _BagStepButton(icon: Icons.add, tooltip: 'Plus', onPressed: onIncrement),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    Money.formatTND(subtotalMillimes),
+                    style: AppTheme.figure(26, AppTheme.red),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

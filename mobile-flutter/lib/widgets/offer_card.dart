@@ -117,55 +117,71 @@ class OfferCard extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 14),
+                    // Ligne 1 : Prix en direct, prix barré, pastille -XX% (pleine largeur, zéro collision)
+                    LivePriceText(
+                      pricingType: offer.pricingType,
+                      originalPriceMillimes: offer.originalPriceMillimes,
+                      targetPriceMillimes: offer.targetPriceMillimes,
+                      startPriceMillimes: offer.startPriceMillimes,
+                      pickupStartAt: offer.pickupStartAt,
+                      pickupEndAt: offer.pickupEndAt,
+                      stepMillimes: offer.stepMillimes,
+                      onCream: true,
+                    ),
+                    const SizedBox(height: 12),
+                    // Ligne 2 : Actions pleine largeur côte à côte (+ SAC | RÉSERVER)
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Expanded(
-                          child: LivePriceText(
-                            pricingType: offer.pricingType,
-                            originalPriceMillimes: offer.originalPriceMillimes,
-                            targetPriceMillimes: offer.targetPriceMillimes,
-                            startPriceMillimes: offer.startPriceMillimes,
-                            pickupStartAt: offer.pickupStartAt,
-                            pickupEndAt: offer.pickupEndAt,
-                            stepMillimes: offer.stepMillimes,
-                            onCream: true,
-                          ),
-                        ),
                         if (onAddToBag != null && offer.remainingQuantity > 0) ...[
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: onAddToBag,
-                            borderRadius: BorderRadius.circular(999),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 11),
-                              decoration: AppTheme.pill(color: AppTheme.mustard),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.shopping_bag_outlined,
-                                      size: 15, color: AppTheme.ink),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'SAC',
-                                    style: AppTheme.h3(14, AppTheme.ink)
-                                        .copyWith(letterSpacing: 0.5),
+                          Expanded(
+                            flex: 2,
+                            child: Material(
+                              color: AppTheme.mustard,
+                              shape: const StadiumBorder(
+                                  side: BorderSide(color: AppTheme.ink, width: 2)),
+                              child: InkWell(
+                                customBorder: const StadiumBorder(),
+                                onTap: onAddToBag,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 11),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.shopping_bag_outlined,
+                                          size: 16, color: AppTheme.ink),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          '+ SAC',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTheme.h3(15, AppTheme.ink)
+                                              .copyWith(letterSpacing: 0.6),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                         ],
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 12),
-                          decoration: AppTheme.pill(color: AppTheme.red),
-                          child: Text(
-                            'RÉSERVER',
-                            style: AppTheme.h3(15, AppTheme.cream)
-                                .copyWith(letterSpacing: 0.8),
+                        Expanded(
+                          flex: 3,
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 11),
+                            decoration: AppTheme.pill(color: AppTheme.red),
+                            child: Text(
+                              offer.remainingQuantity > 0 ? 'RÉSERVER' : 'VOIR L\'OFFRE',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.h3(15, AppTheme.cream)
+                                  .copyWith(letterSpacing: 0.8),
+                            ),
                           ),
                         ),
                       ],

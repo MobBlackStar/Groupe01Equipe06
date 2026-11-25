@@ -108,40 +108,48 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         padding: EdgeInsets.zero,
         children: [
           // Photo pleine largeur, boutons et autocollants par-dessus
-          AspectRatio(
-            aspectRatio: 4 / 3.4,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (offer.photoUrl != null && offer.photoUrl!.isNotEmpty)
-                  GImage(url: offer.photoUrl!, placeholder: const _DetailPhotoPlaceholder(), cacheWidth: 1200)
-                else
-                  const _DetailPhotoPlaceholder(),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.paddingOf(context).top + 220,
+            ),
+            child: AspectRatio(
+              aspectRatio: 4 / 3.4,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (offer.photoUrl != null && offer.photoUrl!.isNotEmpty)
+                    GImage(url: offer.photoUrl!, placeholder: const _DetailPhotoPlaceholder(), cacheWidth: 1200)
+                  else
+                    const _DetailPhotoPlaceholder(),
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context)),
+                          const Spacer(),
+                          CountdownChip(pickupEndAt: offer.pickupEndAt),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 14,
+                    bottom: 14,
+                    right: 14,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
-                        GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context)),
-                        const Spacer(),
-                        CountdownChip(pickupEndAt: offer.pickupEndAt),
+                        GPill('${offer.remainingQuantity} restant${offer.remainingQuantity > 1 ? 's' : ''}', icon: Icons.shopping_bag_outlined, color: AppTheme.ink),
+                        if (offer.isSurpriseBasket) RarityBadge(rarity: (offer.rarity ?? 'COMMON').toUpperCase(), score: 0.65),
                       ],
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 14,
-                  bottom: 14,
-                  child: Wrap(
-                    spacing: 8,
-                    children: [
-                      GPill('${offer.remainingQuantity} restant${offer.remainingQuantity > 1 ? 's' : ''}', icon: Icons.shopping_bag_outlined, color: AppTheme.ink),
-                      if (offer.isSurpriseBasket) RarityBadge(rarity: (offer.rarity ?? 'COMMON').toUpperCase(), score: 0.65),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -259,40 +267,60 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('TOTAL ESTIMÉ', style: AppTheme.label()),
-                    Text(Money.formatTND(totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
+                    Flexible(
+                      child: Text('TOTAL ESTIMÉ', overflow: TextOverflow.ellipsis, style: AppTheme.label()),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(Money.formatTND(totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(width: 12),
-                Builder(
-                  builder: (ctx) {
-                    final inBagQty = ctx.watch<BagService>().quantityOf(offer.id);
-                    return GButton(
-                      inBagQty > 0 ? 'Sac ($inBagQty)' : 'Ajouter',
-                      icon: Icons.shopping_bag_outlined,
-                      variant: GVariant.mustard,
-                      small: true,
-                      onPressed: offer.remainingQuantity > 0
-                          ? () => addOfferToBagWithPrompt(ctx, offer, quantity: _quantity)
-                          : null,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GButton(
-                    _isReserving ? 'Blocage…' : 'Réserver',
-                    icon: Icons.bolt,
-                    loading: _isReserving,
-                    onPressed: _isReserving ? null : _reserve,
-                  ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Builder(
+                        builder: (ctx) {
+                          final inBagQty = ctx.watch<BagService>().quantityOf(offer.id);
+                          return GButton(
+                            inBagQty > 0 ? '+ Au sac ($inBagQty)' : '+ Au sac ($_quantity)',
+                            icon: Icons.shopping_bag_outlined,
+                            variant: GVariant.mustard,
+                            small: true,
+                            expand: true,
+                            onPressed: offer.remainingQuantity > 0
+                                ? () => addOfferToBagWithPrompt(ctx, offer, quantity: _quantity)
+                                : null,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: GButton(
+                        _isReserving ? 'Blocage…' : 'Réserver & payer',
+                        icon: Icons.bolt,
+                        small: true,
+                        expand: true,
+                        loading: _isReserving,
+                        onPressed: (_isReserving || offer.remainingQuantity <= 0) ? null : _reserve,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

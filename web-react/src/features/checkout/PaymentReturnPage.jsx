@@ -2,13 +2,16 @@
 // 🔄 Comparaison React / Flutter : En React, la page lit les paramètres d'URL (`useSearchParams`) ; en Flutter, la WebView intercepte l'URL de redirection `campussave://payment-return`.
 // 🎯 À retenir pour la soutenance : "Le système vérifie immédiatement la preuve de paiement côté serveur via l'endpoint de réconciliation idempotente `/payments/konnect/verify`."
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Spinner } from '../../components/ui/index.js';
 import { ArrowRight, RotateCcw, Ticket, MailCheck } from 'lucide-react';
+
+// Déduplique les appels stricts en cours (y compris React 18 StrictMode double-mount) sans jamais bloquer l'état
+const inFlightVerifications = new Map();
 
 export default function PaymentReturnPage() {
   const [searchParams] = useSearchParams();
@@ -23,9 +26,45 @@ export default function PaymentReturnPage() {
 
   const [state, setState] = useState('VERIFYING'); // 'VERIFYING', 'SUCCESS', 'FAILED'
   const [errorMessage, setErrorMessage] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const lastCompletedKeyRef = useRef('');
+
+  const runVerification = useCallback(async (forceFresh = false) => {
+    const key = `${orderId}|${paymentRef || ''}|${receiptEmail}|${failedParam}`;
+    if (failedParam || (paymentRef && paymentRef.endsWith('-fail'))) {
+      setState('FAILED');
+      setErrorMessage('Paiement refusé par la banque (simulation Sandbox). Aucun montant n’a été débité.');
+      return { ok: false };
+    }
+
+    if (!forceFresh && lastCompletedKeyRef.current === key) {
+      return { ok: true };
+    }
+
+    let requestPromise = !forceFresh ? inFlightVerifications.get(key) : null;
+    if (!requestPromise) {
+      requestPromise = apiClient
+        .post(
+          ENDPOINTS.VERIFY_PAYMENT,
+          {
+            orderId,
+            ...(paymentRef ? { paymentRef } : {}),
+            ...(receiptEmail ? { receiptEmail } : {}),
+          },
+          { timeout: 15000 }
+        )
+        .finally(() => {
+          inFlightVerifications.delete(key);
+        });
+      inFlightVerifications.set(key, requestPromise);
+    }
+
+    return requestPromise;
+  }, [orderId, paymentRef, receiptEmail, failedParam]);
 
   useEffect(() => {
     let isMounted = true;
+    const key = `${orderId}|${paymentRef || ''}|${receiptEmail}|${failedParam}`;
 
     async function verify() {
       if (failedParam || (paymentRef && paymentRef.endsWith('-fail'))) {
@@ -38,16 +77,10 @@ export default function PaymentReturnPage() {
 
       setState('VERIFYING');
       try {
-        // `paymentRef` et `receiptEmail` ne sont envoyés que s'ils sont présents.
-        const res = await apiClient.post(ENDPOINTS.VERIFY_PAYMENT, {
-          orderId,
-          ...(paymentRef ? { paymentRef } : {}),
-          ...(receiptEmail ? { receiptEmail } : {}),
-        });
-
+        const res = await runVerification(retryCount > 0);
         if (!isMounted) return;
+        lastCompletedKeyRef.current = key;
         if (res?.data?.confirmed === false) {
-          // La passerelle n'a pas (encore) confirmé : ne jamais afficher « prêt pour le retrait »
           setState('FAILED');
           setErrorMessage(`Le paiement n'est pas confirmé par la passerelle (statut : ${res.data.status || 'en attente'}).`);
         } else {
@@ -56,26 +89,23 @@ export default function PaymentReturnPage() {
       } catch (err) {
         if (!isMounted) return;
         if (err.response) {
-          // Réponse HTTP d'erreur du serveur : l'échec est réel, on ne le maquille pas en succès
           setState('FAILED');
           setErrorMessage(err.response.data?.error?.message || "Le paiement n'a pas pu être vérifié.");
         } else if (!paymentRef || paymentRef.includes('fail')) {
-          // Serveur injoignable (démo hors-ligne) sans référence valide
           setState('FAILED');
           setErrorMessage('Le paiement a été interrompu ou refusé par la banque.');
         } else {
-          console.warn('API injoignable, bascule démo réussie :', err.message);
-          setState('SUCCESS');
+          setState('FAILED');
+          setErrorMessage('Délai réseau dépassé lors de la vérification. Appuyez sur Réessayer.');
         }
       }
     }
 
-    const timer = setTimeout(verify, 900);
+    verify();
     return () => {
       isMounted = false;
-      clearTimeout(timer);
     };
-  }, [orderId, paymentRef, receiptEmail, failedParam]);
+  }, [orderId, paymentRef, receiptEmail, failedParam, retryCount, runVerification]);
 
   // Libellé et couleur du statut affiché sur le reçu
   const receiptStatus = {
@@ -166,6 +196,14 @@ export default function PaymentReturnPage() {
                 </header>
 
                 <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setRetryCount((c) => c + 1)}
+                    className="cs-btn cs-btn-red cs-btn-lg whitespace-normal text-center"
+                  >
+                    <RotateCcw className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>Vérifier à nouveau</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/app/checkout/${orderId}`)}

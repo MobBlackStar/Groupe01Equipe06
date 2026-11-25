@@ -1,6 +1,6 @@
 // 💡 Concept & Analogie : Comme l'imprimante thermique qui remet instantanément un ticket papier propre au client dès l'acceptation de la carte, ce service expédie par e-mail le reçu Griddle CampusSave après confirmation Konnect.
-// 🔄 Comparaison React / Flutter : Le backend reste seul responsable de l'envoi SMTP (Gmail App Password) afin de ne jamais exposer les identifiants de messagerie côté navigateur React ou application Flutter.
-// 🎯 À retenir pour la soutenance : "À chaque confirmation de paiement atomique, un e-mail HTML responsive aux couleurs du Design System Griddle est envoyé en mode non bloquant avec lien direct vers le Living Ticket QR."
+// 🔄 Comparaison React / Flutter : Le backend reste seul responsable de l'envoi d'e-mails (cascade HTTPS Port 443 pour Render + SMTP local avec timeouts stricts) sans exposer aucun secret côté React ou Flutter.
+// 🎯 À retenir pour la soutenance : "Render bloquant les ports SMTP sortants, notre service utilise prioritairement HTTPS Port 443 (Google Apps Script / API Brevo) en asynchrone non bloquant avec repli SMTP local sécurisé."
 // Module : Notifications & Reçus Électroniques
 
 import nodemailer from 'nodemailer';
@@ -10,6 +10,8 @@ import { formatTND } from '../../../../shared/money.js';
 import { normalizeOrderItems } from '../../../../shared/orders.js';
 
 const DEFAULT_PUBLIC_ORIGIN = 'https://campussave-rouge.vercel.app';
+const HTTPS_TIMEOUT_MS = 8000;
+const SMTP_TIMEOUT_MS = 5000;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -244,20 +246,40 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
 
 export const emailService = {
   /**
-   * Expédie le reçu thermique HTML CampusSave par SMTP Gmail après paiement confirmé.
-   * Non bloquant : ne lève jamais d'erreur critique si SMTP est absent ou indisponible.
+   * Expédie le reçu thermique HTML CampusSave via cascade Port-443 (Apps Script / Brevo)
+   * puis repli SMTP local avec timeouts stricts. Ne jette jamais en production si un relai échoue.
    */
-  async sendOrderReceiptEmail({ order, student, merchant, overrideEmail, config = env, transportFactory } = {}) {
+  async sendOrderReceiptEmail({
+    order,
+    student,
+    merchant,
+    overrideEmail,
+    config = env,
+    transportFactory,
+    fetchImpl = globalThis.fetch,
+  } = {}) {
     const { toEmail, studentName } = resolveReceiptRecipient({ order, student, overrideEmail });
     const orderId = order?.orderId || order?.id || '';
     const orderCode = order?.orderCode || orderId;
-    const mailUser = (config?.MAIL_USER ?? env.MAIL_USER ?? '').trim();
-    const mailPass = (config?.MAIL_PASS ?? env.MAIL_PASS ?? '').trim();
     const nodeEnv = config?.NODE_ENV ?? env.NODE_ENV;
 
-    if (nodeEnv === 'test' || !mailUser || !mailPass || !toEmail) {
-      logger.info({ orderId, toEmail: toEmail || null }, 'Receipt email skipped or simulated (SMTP not configured)');
-      return { sent: false, simulated: true, toEmail };
+    const webhookUrl = (config?.MAIL_WEBHOOK_URL ?? env.MAIL_WEBHOOK_URL ?? '').trim();
+    const webhookSecret = (config?.MAIL_WEBHOOK_SECRET ?? env.MAIL_WEBHOOK_SECRET ?? '').trim();
+    const brevoApiKey = (config?.BREVO_API_KEY ?? env.BREVO_API_KEY ?? '').trim();
+    const mailUser = (config?.MAIL_USER ?? env.MAIL_USER ?? '').trim();
+    const mailPass = (config?.MAIL_PASS ?? env.MAIL_PASS ?? '').trim();
+    const fromName = (config?.MAIL_FROM_NAME ?? env.MAIL_FROM_NAME ?? 'CampusSave ESSECT').trim() || 'CampusSave ESSECT';
+    const fromEmail = (config?.MAIL_FROM_EMAIL ?? env.MAIL_FROM_EMAIL ?? mailUser).trim();
+
+    if (!toEmail) {
+      logger.info({ orderId }, 'Receipt email skipped (no recipient email)');
+      return { sent: false, simulated: true, provider: 'none', toEmail: '' };
+    }
+
+    const hasExplicitInjector = Boolean(transportFactory) || webhookUrl || brevoApiKey;
+    if (nodeEnv === 'test' && !hasExplicitInjector) {
+      logger.info({ orderId, toEmail }, 'Receipt email simulated in test environment');
+      return { sent: false, simulated: true, provider: 'test', toEmail };
     }
 
     const publicOrigin = resolvePublicOrigin(config?.WEB_APP_URL ?? env.WEB_APP_URL);
@@ -268,36 +290,108 @@ export const emailService = {
       overrideEmail,
       publicOrigin,
     });
-
-    const transporter = transportFactory
-      ? transportFactory()
-      : nodemailer.createTransport({
-          host: config?.MAIL_HOST || env.MAIL_HOST || 'smtp.gmail.com',
-          port: Number(config?.MAIL_PORT ?? env.MAIL_PORT) || 587,
-          secure: false,
-          auth: {
-            user: mailUser,
-            pass: mailPass,
-          },
-          tls: {
-            rejectUnauthorized: false,
-          },
-        });
-
-    const fromName = config?.MAIL_FROM_NAME || env.MAIL_FROM_NAME || 'CampusSave ESSECT';
     const merchantName = merchant?.name || order?.merchantSnapshot?.name || 'Commerce ESSECT';
     const totalFormatted = formatTND(order?.pricing?.totalMillimes || 0);
+    const subject = `[CampusSave] Reçu #${orderCode} • ${merchantName} (${totalFormatted})`;
+    const text = `Bonjour ${studentName},\nVotre paiement pour la commande #${orderCode} chez ${merchantName} (${totalFormatted}) est confirmé.\nConsultez votre Living Ticket QR : ${publicOrigin}/app/orders/${orderId}/ticket`;
 
-    const info = await transporter.sendMail({
-      from: `"${fromName}" <${mailUser}>`,
-      to: toEmail,
-      subject: `[CampusSave] Reçu #${orderCode} • ${merchantName} (${totalFormatted})`,
-      text: `Bonjour ${studentName},\nVotre paiement pour la commande #${orderCode} chez ${merchantName} (${totalFormatted}) est confirmé.\nConsultez votre Living Ticket QR : ${publicOrigin}/app/orders/${orderId}/ticket`,
-      html,
-    });
+    // Tier 1: Google Apps Script HTTPS Gmail Bridge (Port 443)
+    if (webhookUrl) {
+      try {
+        const res = await fetchImpl(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          redirect: 'follow',
+          signal: AbortSignal.timeout(HTTPS_TIMEOUT_MS),
+          body: JSON.stringify({
+            secret: webhookSecret,
+            to: toEmail,
+            toName: studentName,
+            subject,
+            html,
+            fromName,
+          }),
+        });
+        if (!res.ok) {
+          const bodyPreview = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status} ${bodyPreview.slice(0, 120)}`);
+        }
+        logger.info({ orderId, toEmail, provider: 'webhook' }, 'Receipt email delivered via HTTPS webhook');
+        return { sent: true, simulated: false, provider: 'webhook', toEmail };
+      } catch (err) {
+        logger.warn({ orderId, toEmail, err: err?.message }, 'Tier 1 HTTPS mail webhook failed');
+      }
+    }
 
-    logger.info({ orderId, toEmail, messageId: info?.messageId }, 'Receipt email sent cleanly');
-    return { sent: true, simulated: false, toEmail, messageId: info?.messageId };
+    // Tier 2: Brevo Transactional REST API (Port 443)
+    if (brevoApiKey) {
+      try {
+        const senderEmail = fromEmail || 'no-reply@campussave.tn';
+        const res = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': brevoApiKey,
+          },
+          signal: AbortSignal.timeout(HTTPS_TIMEOUT_MS),
+          body: JSON.stringify({
+            sender: { name: fromName, email: senderEmail },
+            to: [{ email: toEmail, name: studentName }],
+            subject,
+            htmlContent: html,
+          }),
+        });
+        if (!res.ok) {
+          const bodyPreview = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status} ${bodyPreview.slice(0, 120)}`);
+        }
+        const json = await res.json().catch(() => ({}));
+        logger.info({ orderId, toEmail, provider: 'brevo', messageId: json?.messageId }, 'Receipt email delivered via Brevo HTTPS');
+        return { sent: true, simulated: false, provider: 'brevo', toEmail, messageId: json?.messageId };
+      } catch (err) {
+        logger.warn({ orderId, toEmail, err: err?.message }, 'Tier 2 Brevo HTTPS mail failed');
+      }
+    }
+
+    // Tier 3: Local Dev SMTP Fallback (only when neither Tier 1 nor Tier 2 succeeded, with strict 5s timeouts)
+    if (!webhookUrl && !brevoApiKey && ((mailUser && mailPass) || transportFactory)) {
+      try {
+        const transporter = transportFactory
+          ? transportFactory()
+          : nodemailer.createTransport({
+              host: config?.MAIL_HOST || env.MAIL_HOST || 'smtp.gmail.com',
+              port: Number(config?.MAIL_PORT ?? env.MAIL_PORT) || 587,
+              secure: false,
+              connectionTimeout: SMTP_TIMEOUT_MS,
+              greetingTimeout: SMTP_TIMEOUT_MS,
+              socketTimeout: SMTP_TIMEOUT_MS,
+              auth: {
+                user: mailUser,
+                pass: mailPass,
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+            });
+
+        const info = await transporter.sendMail({
+          from: `"${fromName}" <${fromEmail || mailUser}>`,
+          to: toEmail,
+          subject,
+          text,
+          html,
+        });
+
+        logger.info({ orderId, toEmail, provider: 'smtp', messageId: info?.messageId }, 'Receipt email sent via SMTP');
+        return { sent: true, simulated: false, provider: 'smtp', toEmail, messageId: info?.messageId };
+      } catch (err) {
+        logger.warn({ orderId, toEmail, err: err?.message }, 'Tier 3 SMTP mail failed');
+        return { sent: false, simulated: false, provider: 'smtp', toEmail, error: err?.message };
+      }
+    }
+
+    logger.info({ orderId, toEmail }, 'Receipt email skipped or simulated (no active mail provider)');
+    return { sent: false, simulated: true, provider: 'none', toEmail };
   },
 };
 
