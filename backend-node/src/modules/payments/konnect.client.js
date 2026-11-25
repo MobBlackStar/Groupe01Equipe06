@@ -8,11 +8,17 @@ import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 import { AppError } from '../../utils/AppError.js';
 
+function isConfiguredCredential(value) {
+  if (!value || typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return Boolean(trimmed && !trimmed.startsWith('your-') && !trimmed.startsWith('<'));
+}
+
 export class KonnectClient {
   constructor() {
     this.apiBase = env.KONNECT_API_BASE;
-    this.apiKey = env.KONNECT_API_KEY;
-    this.walletId = env.KONNECT_RECEIVER_WALLET_ID;
+    this.apiKey = isConfiguredCredential(env.KONNECT_API_KEY) ? env.KONNECT_API_KEY.trim() : '';
+    this.walletId = isConfiguredCredential(env.KONNECT_RECEIVER_WALLET_ID) ? env.KONNECT_RECEIVER_WALLET_ID.trim() : '';
   }
 
   /**
