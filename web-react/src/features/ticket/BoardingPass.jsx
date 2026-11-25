@@ -4,7 +4,7 @@
 // Module : Living Ticket & Sécurité (M7, I6)
 
 import React, { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import HalftoneMascotQr from './HalftoneMascotQr.jsx';
 import { generateClientTicketData } from '../../lib/ticketCrypto.js';
 import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
 
@@ -161,14 +161,10 @@ export default function BoardingPass({
         {/* QR CODE ROTATIF CRYPTOGRAPHIQUE 30 SECONDES */}
         <div className="flex flex-col items-center">
           <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850] mb-4">Scannez au comptoir</p>
-          <div className="bg-white p-3 sm:p-4 rounded-2xl border-2 border-[#111111]">
-            <QRCodeSVG
+          <div className="bg-white p-2 sm:p-3 rounded-2xl border-2 border-[#111111]">
+            <HalftoneMascotQr
               value={qrData.qrPayload}
               size={300}
-              level="H"
-              includeMargin={false}
-              fgColor="#111111"
-              bgColor="#FFFFFF"
               className="block w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]"
             />
           </div>
