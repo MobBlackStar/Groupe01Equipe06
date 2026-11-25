@@ -5,7 +5,9 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
 import '../core/models/user_profile.dart';
+import 'campus_api.dart';
 import 'fcm_service.dart';
 import '../core/api/api_client.dart';
 import '../core/api/endpoints.dart';
@@ -127,22 +129,59 @@ class AuthService extends ChangeNotifier {
     ApiClient.demoAuthToken = null;
 
     try {
+      final cleanEmail = email.trim().toLowerCase();
+      final compactPhone = phone?.replaceAll(RegExp(r'[\s\-().]'), '').trim();
+      final cleanPhone =
+          (compactPhone != null && compactPhone.isNotEmpty && compactPhone != '+216' && compactPhone != '+')
+              ? compactPhone
+              : null;
+
+      // Pré-vérification unicité email & téléphone avant création Firebase Auth
+      try {
+        final availRes = await ApiClient.dio.post(
+          Endpoints.checkAvailability,
+          data: {
+            'email': cleanEmail,
+            if (cleanPhone != null) 'phone': cleanPhone,
+          },
+        );
+        final avail = availRes.data is Map ? availRes.data as Map : const {};
+        if (avail['emailTaken'] == true) {
+          throw const ApiException('Cette adresse email est déjà associée à un compte existant.', code: 'EMAIL_ALREADY_IN_USE', statusCode: 409);
+        }
+        if (avail['phoneTaken'] == true) {
+          throw const ApiException('Ce numéro de téléphone est déjà utilisé par un autre compte.', code: 'PHONE_ALREADY_IN_USE', statusCode: 409);
+        }
+      } on ApiException {
+        rethrow;
+      } catch (_) {}
+
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
+        email: cleanEmail,
         password: password,
       );
       _user = credential.user;
 
       // Enregistrer le profil auprès de l'API CampusSave pour injecter le rôle et créer le document utilisateur Firestore
-      await ApiClient.dio.post(
-        Endpoints.registerProfile,
-        data: {
-          'role': role,
-          'displayName': displayName,
-          if (phone != null && phone.isNotEmpty) 'phone': phone,
-          if (filiereId != null) 'filiereId': filiereId,
-        },
-      );
+      try {
+        await ApiClient.dio.post(
+          Endpoints.registerProfile,
+          data: {
+            'role': role,
+            'displayName': displayName,
+            if (cleanPhone != null) 'phone': cleanPhone,
+            if (filiereId != null) 'filiereId': filiereId,
+          },
+        );
+      } catch (e) {
+        if (e is DioException && e.response?.statusCode == 409) {
+          try {
+            await credential.user?.delete();
+            _user = null;
+          } catch (_) {}
+        }
+        rethrow;
+      }
 
       // Rafraîchir les custom claims pour récupérer le rôle
       final tokenResult = await _user?.getIdTokenResult(true);

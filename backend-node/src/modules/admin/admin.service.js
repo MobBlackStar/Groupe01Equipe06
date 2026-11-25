@@ -9,6 +9,7 @@ import { AppError } from '../../utils/AppError.js';
 import { FcmService } from '../notifications/fcm.service.js';
 import { USER_STATUS, MERCHANT_STATUS, ROLES } from '../../../../shared/constants.js';
 import { computeLocationFields } from '../merchants/merchants.service.js';
+import { clearReadCache } from '../../middleware/readCache.js';
 
 const fcmService = new FcmService();
 
@@ -368,28 +369,58 @@ export const adminService = {
       throw new AppError('Le compte administrateur principal est protégé contre toute suppression', 403, 'FORBIDDEN');
     }
 
-    // 2. Suppression de Firebase Auth si présent
-    try {
-      await auth.deleteUser(uid);
-    } catch {
-      // Tolérance si l'utilisateur n'existe pas dans Auth ou en test
+    // 2. Suppression définitive de Firebase Auth (tolérant uniquement auth/user-not-found)
+    if (typeof auth?.deleteUser === 'function') {
+      try {
+        await auth.deleteUser(uid);
+      } catch (err) {
+        const code = err?.code || '';
+        const msg = String(err?.message || '');
+        const notFound = code === 'auth/user-not-found' || /user-not-found|introuvable/i.test(msg);
+        if (!notFound && process.env.NODE_ENV !== 'test') {
+          throw err;
+        }
+      }
     }
 
-    // 3. Suppression du document Firestore
-    await userRef.delete();
+    const now = new Date();
 
-    // 4. Journal d'audit administratif infalsifiable
+    // 3. Suppression en cascade de la boutique rattachée et désactivation de ses offres actives
+    const ownedMerchantIds = new Set();
+    const directStoreSnap = await db.collection('merchants').doc(uid).get();
+    if (directStoreSnap.exists) ownedMerchantIds.add(directStoreSnap.id);
+    if (prevUser.merchantId) ownedMerchantIds.add(prevUser.merchantId);
+
+    const byOwnerSnap = await db.collection('merchants').where('ownerUid', '==', uid).get();
+    byOwnerSnap.forEach((d) => ownedMerchantIds.add(d.id));
+
+    for (const merchantId of ownedMerchantIds) {
+      const offersSnap = await db.collection('offers').where('merchantId', '==', merchantId).get();
+      for (const offerDoc of offersSnap.docs) {
+        if ((offerDoc.data()?.status || '') !== 'DELETED') {
+          await offerDoc.ref.update({ status: 'DELETED', updatedAt: now });
+        }
+      }
+      await db.collection('merchants').doc(merchantId).delete();
+    }
+
+    // 4. Suppression définitive du document utilisateur Firestore & purge du cache
+    await userRef.delete();
+    clearReadCache();
+
+    // 5. Journal d'audit administratif infalsifiable
     await db.collection('admin_audit').add({
-      action: 'DELETE_USER',
+      action: 'USER_DELETED',
       targetId: uid,
       targetType: 'USER',
       performedBy: adminUid,
       deletedEmail: prevUser.email || null,
       deletedRole: prevUser.role || null,
-      performedAt: new Date(),
+      deletedMerchants: Array.from(ownedMerchantIds),
+      performedAt: now,
     });
 
-    return { ok: true, deletedUid: uid };
+    return { ok: true, deletedUid: uid, deletedMerchants: Array.from(ownedMerchantIds) };
   },
 
   /**

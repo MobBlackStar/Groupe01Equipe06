@@ -7,6 +7,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 import { OFFER_CATEGORIES, PRICING_MODES, SURPRISE_RARITY } from '../../../../shared/constants.js';
+import { DISH_PHOTO_TAGS, resolveDishPhoto, resolveDishPhotoTag } from '../../../../shared/dishPhotos.js';
 import { AI_SYSTEM_PROMPT } from './ai.prompt.js';
 import { aiSuggestionSchema } from './ai.schema.js';
 import { parseRawNote } from './fallbackParser.js';
@@ -17,6 +18,7 @@ const GEMINI_RESPONSE_SCHEMA = {
     title: { type: 'STRING' },
     description: { type: 'STRING' },
     category: { type: 'STRING', enum: Object.values(OFFER_CATEGORIES) },
+    photoTag: { type: 'STRING', enum: DISH_PHOTO_TAGS },
     originalPriceMillimes: { type: 'INTEGER' },
     discountedPriceMillimes: { type: 'INTEGER' },
     startPriceMillimes: { type: 'INTEGER' },
@@ -69,8 +71,29 @@ function normalizeSuggestion(suggestion, rawText, options = {}) {
     ? Math.max(floorP + 100, Math.min(orig, Math.round(suggestion.startPriceMillimes)))
     : Math.max(floorP + 100, Math.min(orig, Math.round((orig * 0.8) / 100) * 100));
 
+  const photoTag = resolveDishPhotoTag({
+    photoTag: suggestion.photoTag,
+    category: suggestion.category,
+    title: String(suggestion.title || fallback.title),
+    rawNote: rawText,
+    surpriseContents: suggestion.surpriseContents || '',
+    description: String(suggestion.description || fallback.description),
+    isSurpriseBasket: Boolean(suggestion.isSurpriseBasket),
+  });
+  const suggestedPhotoUrl = resolveDishPhoto({
+    photoTag,
+    category: suggestion.category,
+    title: String(suggestion.title || fallback.title),
+    rawNote: rawText,
+    surpriseContents: suggestion.surpriseContents || '',
+    description: String(suggestion.description || fallback.description),
+    isSurpriseBasket: Boolean(suggestion.isSurpriseBasket),
+  });
+
   return {
     ...suggestion,
+    photoTag,
+    suggestedPhotoUrl,
     title: String(suggestion.title || fallback.title).slice(0, 80),
     description: String(suggestion.description || fallback.description).slice(0, 500),
     originalPriceMillimes: orig,

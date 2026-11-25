@@ -23,15 +23,30 @@ const CACHED_PATHS = new Set([
   '/api/v1/impact/filieres',
 ]);
 
+// Routes temps réel strictement exclues du cache HTTP et applicatif
+const NO_STORE_PREFIXES = [
+  '/api/v1/dashboards',
+  '/api/v1/orders',
+  '/api/v1/merchants/me',
+  '/api/v1/users/me',
+];
+
 const CACHE_TTL_MS = 30 * 1000; // 30 secondes
 
 export function readCacheMiddleware(req, res, next) {
+  const rawPath = req.originalUrl ? req.originalUrl.split('?')[0] : req.path || '';
+  const method = req.method.toUpperCase();
+  const isNoStore = NO_STORE_PREFIXES.some((prefix) => rawPath.startsWith(prefix));
+
+  if (isNoStore && typeof res?.setHeader === 'function') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+  }
+
   // Désactivé sous environnement de test pour ne pas fausser les suites d'assertions
   if (process.env.NODE_ENV === 'test') {
     return next();
   }
-
-  const method = req.method.toUpperCase();
 
   // Pour toute mutation (POST, PATCH, DELETE, PUT), vider le cache immédiatement et à la fin de la réponse
   if (['POST', 'PATCH', 'DELETE', 'PUT'].includes(method)) {
@@ -41,6 +56,10 @@ export function readCacheMiddleware(req, res, next) {
         clearReadCache();
       }
     });
+    return next();
+  }
+
+  if (isNoStore) {
     return next();
   }
 

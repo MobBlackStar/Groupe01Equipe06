@@ -11,6 +11,8 @@ Règles métier obligatoires :
    - Rédige TOUJOURS "title" (appétissant, concis, 3 à 80 car.) et "description" (claire, gourmande, 15 à 300 car.) en FRANÇAIS naturel.
 2. Catégories strictes autorisées (category enum) :
    SANDWICH, PLAT_CHAUD, PIZZA, PATISSERIE, VIENNOISERIE, SALADE, BOISSON, SNACK, MIXTE.
+   Et choisis toujours "photoTag" parmi exactement :
+   burger, makloub, chapati, baguette, pizza, tacos, frites, brik, salade, plat_chaud, croissant, patisserie, boisson, surprise.
    Exemples de classement :
    - "eggs" / "oeufs" -> category: "SNACK", title: "Boîte d'œufs frais fermiers", weightGramsPerUnit: 360, isSurpriseBasket: false.
    - "salad" / "salade" -> category: "SALADE", isSurpriseBasket: false.

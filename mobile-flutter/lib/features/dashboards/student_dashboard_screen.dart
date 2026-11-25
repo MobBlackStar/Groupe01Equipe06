@@ -13,7 +13,8 @@ import '../../widgets/order_actions.dart';
 import '../impact/impact_screen.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
-  const StudentDashboardScreen({super.key});
+  final bool isActive;
+  const StudentDashboardScreen({super.key, this.isActive = true});
 
   @override
   State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
@@ -31,24 +32,37 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  @override
+  void didUpdateWidget(covariant StudentDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      _load(silent: true);
+    }
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent || _data == null) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final data = await CampusApi.shared.fetchStudentDashboard();
       if (!mounted) return;
       setState(() {
         _data = data;
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      if (_data == null) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 

@@ -5,11 +5,14 @@
 
 import { z } from 'zod';
 import { OFFER_CATEGORIES, PRICING_MODES, SURPRISE_RARITY } from '../../../../shared/constants.js';
+import { DISH_PHOTO_TAGS } from '../../../../shared/dishPhotos.js';
 
 export const aiSuggestionSchema = z.object({
   title: z.string().min(3).max(80),
   description: z.string().min(10).max(500),
   category: z.nativeEnum(OFFER_CATEGORIES),
+  photoTag: z.enum(DISH_PHOTO_TAGS).optional(),
+  suggestedPhotoUrl: z.string().url().optional(),
   originalPriceMillimes: z.number().int().min(500).max(100000),
   discountedPriceMillimes: z.number().int().min(100),
   startPriceMillimes: z.number().int().min(200).optional(),

@@ -277,14 +277,19 @@ export default function OfferFormPage() {
           ? aiData.surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
           : aiData.surprise?.teaser || prev.surprise.privateContents);
 
-      const autoPhoto = resolveOfferImage({
-        category: nextCategory,
-        title: nextTitle,
-        rawNote,
-        surpriseContents: nextPrivateContents,
-        description: nextDescription,
-        isSurpriseBasket: nextIsSurprise,
-      });
+      const autoPhoto =
+        (typeof aiData.suggestedPhotoUrl === 'string' && aiData.suggestedPhotoUrl.startsWith('http')
+          ? aiData.suggestedPhotoUrl
+          : null) ||
+        resolveOfferImage({
+          photoTag: aiData.photoTag,
+          category: nextCategory,
+          title: nextTitle,
+          rawNote,
+          surpriseContents: nextPrivateContents,
+          description: nextDescription,
+          isSurpriseBasket: nextIsSurprise,
+        });
 
       return {
         ...prev,

@@ -12,6 +12,7 @@ import { demoTokensAllowed, getOrProvisionDemoUser, findDemoMerchant, DEMO_MERCH
 import { resolveMerchantId } from '../../utils/merchantResolver.js';
 import { fcmService } from '../notifications/fcm.service.js';
 import { getUserTokens, getMerchantTokens } from '../notifications/fcmTokens.js';
+import { checkUserUniqueness, normalizeTunisianPhone } from '../auth/auth.service.js';
 
 export const usersService = {
   /**
@@ -112,6 +113,21 @@ export const usersService = {
 
     for (const field of protectedFields) {
       delete sanitizedUpdates[field];
+    }
+
+    if (Object.prototype.hasOwnProperty.call(sanitizedUpdates, 'phone')) {
+      const normalizedPhone = normalizeTunisianPhone(sanitizedUpdates.phone);
+      if (normalizedPhone) {
+        const { phoneTaken } = await checkUserUniqueness({ phone: normalizedPhone, excludeUid: uid });
+        if (phoneTaken) {
+          throw new AppError(
+            'Ce numéro de téléphone est déjà utilisé par un autre compte.',
+            409,
+            'PHONE_ALREADY_IN_USE'
+          );
+        }
+      }
+      sanitizedUpdates.phone = normalizedPhone;
     }
 
     // Préférences partielles : on fusionne avec l'existant (sinon désactiver « push » effaçait « email »)

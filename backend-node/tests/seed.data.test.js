@@ -57,9 +57,9 @@ describe('Jour 8 — Intégrité des Données de Démonstration (Seed & Reset)',
   const docs = (prefix) => entries.filter((e) => e.path.startsWith(prefix) && e.path.split('/').length === prefix.split('/').length).map((e) => e.data);
   const doc = (path) => entries.find((e) => e.path === path)?.data;
 
-  test('4. Le jeu de données contient 25 offres dont 3 paniers surprises COMMON, RARE et LEGENDARY, en prix fixe et dégressif', () => {
+  test('4. Le jeu de données contient 20 offres dont 3 paniers surprises COMMON, RARE et LEGENDARY, en prix fixe et dégressif', () => {
     const offers = docs('offers/');
-    assert.equal(offers.length, 25);
+    assert.equal(offers.length, 20);
     const surprises = offers.filter((o) => o.isSurpriseBasket);
     assert.equal(surprises.length, 3);
     assert.deepEqual(surprises.map((o) => o.rarity).sort(), [RARITY_TIERS.COMMON, RARITY_TIERS.LEGENDARY, RARITY_TIERS.RARE].sort());

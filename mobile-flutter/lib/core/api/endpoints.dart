@@ -4,6 +4,7 @@
 // Module : Infrastructure Mobile
 
 class Endpoints {
+  static const String checkAvailability = '/auth/check-availability';
   static const String registerProfile = '/auth/register-profile';
   static const String me = '/users/me';
   static const String fcmToken = '/users/me/fcm-token';

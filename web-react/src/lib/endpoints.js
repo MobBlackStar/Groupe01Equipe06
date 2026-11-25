@@ -5,6 +5,7 @@
 
 export const ENDPOINTS = {
   // Auth & Utilisateurs
+  CHECK_AVAILABILITY: '/auth/check-availability',
   REGISTER_PROFILE: '/auth/register-profile',
   ME: '/users/me',
   USERS_ME: '/users/me',
