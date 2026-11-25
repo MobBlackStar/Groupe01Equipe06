@@ -62,6 +62,7 @@ export const paymentsController = {
       provider: result?.provider || 'none',
       toEmail: result?.toEmail || targetEmail,
       error: result?.error || null,
+      ...(result?.errorDetail ? { errorDetail: result.errorDetail } : {}),
       config: getEmailProviderStatus(),
     });
   }),

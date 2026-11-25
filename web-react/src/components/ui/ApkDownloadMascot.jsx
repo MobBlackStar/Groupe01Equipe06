@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { QRCodeSVG } from 'qrcode.react';
+import HalftoneMascotQr from '../../features/ticket/HalftoneMascotQr.jsx';
 import { isEmbedded } from '../../lib/embed.js';
 
 export const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk';
@@ -161,27 +161,14 @@ export default function ApkDownloadMascot() {
               </p>
             </div>
 
-            {/* Conteneur QR Code Niveau H avec Sticker Mascotte CampusSave pour le Jury */}
+            {/* Conteneur QR Code Halftone Mascotte Haute Visibilité pour le Jury */}
             <div className="my-6 flex flex-col items-center">
-              <div className="p-4 rounded-2xl bg-white border-2 border-[#111111] shadow-[4px_4px_0px_#111111] relative">
-                <QRCodeSVG
+              <div className="p-3 rounded-2xl bg-white border-2 border-[#111111] shadow-[4px_4px_0px_#111111]">
+                <HalftoneMascotQr
                   value={apkUrl}
-                  size={210}
-                  level="H"
-                  includeMargin={true}
-                  bgColor="#FFFFFF"
-                  fgColor="#111111"
+                  size={230}
+                  className="w-[230px] h-[230px] rounded-xl"
                 />
-                {/* Badge circulaire die-cut de la mascotte CampusSave (tolérance EC niveau H 30 %) */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-12 h-12 rounded-full bg-white border-2 border-[#111111] p-0.5 flex items-center justify-center shadow-sm overflow-hidden">
-                    <img
-                      src="/assets/brand/mascot-sticker-256.png"
-                      alt="Mascotte CampusSave"
-                      className="w-full h-full object-contain rounded-full"
-                    />
-                  </div>
-                </div>
               </div>
               <span className="text-[11px] font-mono text-[#666] mt-3 uppercase tracking-wider font-bold">
                 Scan direct · URL officielle GitHub Release
