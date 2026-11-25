@@ -26,6 +26,7 @@ const AdminUsersPage = lazy(() => import('../features/admin/AdminUsersPage.jsx')
 const BrowsePage = lazy(() => import('../features/explore/BrowsePage.jsx'));
 const OfferDetailPage = lazy(() => import('../features/explore/OfferDetailPage.jsx'));
 const CheckoutPage = lazy(() => import('../features/checkout/CheckoutPage.jsx'));
+const KonnectSandboxPage = lazy(() => import('../features/checkout/KonnectSandboxPage.jsx'));
 const PaymentReturnPage = lazy(() => import('../features/checkout/PaymentReturnPage.jsx'));
 const LivingTicketPage = lazy(() => import('../features/ticket/LivingTicketPage.jsx'));
 const BagPage = lazy(() => import('../features/orders/BagPage.jsx'));
@@ -103,6 +104,7 @@ export function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfileRoute />} />
         </Route>
+        <Route path="/payment/konnect-sandbox" element={<KonnectSandboxPage />} />
         <Route path="/payment/return" element={<PaymentReturnPage />} />
         <Route path="/impact" element={<StudentLayout><ImpactDashboardPage /></StudentLayout>} />
 

@@ -19,8 +19,10 @@ export const paymentsController = {
   }),
 
   verifyPayment: asyncHandler(async (req, res) => {
-    const { orderId, paymentRef } = req.body;
-    const result = await paymentsService.verifyPayment(orderId, paymentRef);
+    const { orderId, paymentRef, receiptEmail } = req.body;
+    const result = await paymentsService.verifyPayment(orderId, paymentRef, {
+      receiptEmail: typeof receiptEmail === 'string' && receiptEmail.trim() ? receiptEmail.trim() : undefined,
+    });
     res.json(result);
   }),
 };

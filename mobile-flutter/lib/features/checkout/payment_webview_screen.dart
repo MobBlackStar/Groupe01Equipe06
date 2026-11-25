@@ -88,14 +88,24 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   }
 
   bool _checkInterceptUrl(String url) {
-    if (url.contains('payment/return') || url.contains('o=${widget.orderId}')) {
-      final uri = Uri.parse(url);
-      final isFailed = uri.queryParameters['failed'] == '1' || url.contains('failed=1');
+    final uri = Uri.tryParse(url);
+    final isSandboxGateway = url.contains('konnect-sandbox');
+    final isReturnUrl = url.contains('payment/return') ||
+        url.contains('payment-return') ||
+        (!isSandboxGateway && uri != null && uri.queryParameters['o'] == widget.orderId);
+
+    if (isReturnUrl && uri != null) {
+      final interceptedRef = uri.queryParameters['payment_ref'] ?? uri.queryParameters['paymentId'] ?? widget.paymentRef;
+      final receiptEmail = uri.queryParameters['receiptEmail'];
+      final isFailed = uri.queryParameters['failed'] == '1' ||
+          uri.queryParameters['status'] == 'failed' ||
+          url.contains('failed=1') ||
+          (interceptedRef != null && interceptedRef.endsWith('-fail'));
 
       if (isFailed) {
         _handlePaymentFailed();
       } else {
-        _handlePaymentSuccess();
+        _handlePaymentSuccess(paymentRef: interceptedRef, receiptEmail: receiptEmail);
       }
       return true;
     }
@@ -103,14 +113,18 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   }
 
   /// Retour de passerelle : le serveur reste seul juge. `confirmed:false` ou une erreur ne sont JAMAIS un succès.
-  Future<void> _handlePaymentSuccess() async {
+  Future<void> _handlePaymentSuccess({String? paymentRef, String? receiptEmail}) async {
     if (_isVerifying) return;
     setState(() {
       _isVerifying = true;
     });
 
     try {
-      final confirmed = await CampusApi.shared.verifyPayment(widget.orderId, paymentRef: widget.paymentRef);
+      final confirmed = await CampusApi.shared.verifyPayment(
+        widget.orderId,
+        paymentRef: paymentRef ?? widget.paymentRef,
+        receiptEmail: receiptEmail,
+      );
       if (!mounted) return;
       if (confirmed) {
         ScaffoldMessenger.of(context).showSnackBar(

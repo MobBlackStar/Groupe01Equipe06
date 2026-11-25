@@ -9,6 +9,7 @@ import { db } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
 import { konnectClient, isSimulatedKonnectMode } from './konnect.client.js';
 import { fcmService } from '../notifications/fcm.service.js';
+import { sendOrderReceiptEmail } from '../notifications/email.service.js';
 import { ORDER_STATUS, PAYMENT_STATUS, REWARD_STATUS } from '../../../../shared/constants.js';
 import { rewardKey } from '../../../../shared/loyalty.js';
 import { normalizeOrderItems } from '../../../../shared/orders.js';
@@ -85,10 +86,14 @@ export const paymentsService = {
   /**
    * Confirmation idempotente du paiement (déclenchée par Webhook Konnect, vérification retour client ou récompense).
    */
-  async confirmPayment(orderId, source = 'WEBHOOK') {
+  async confirmPayment(orderId, source = 'WEBHOOK', options = {}) {
     const orderRef = db.collection('orders').doc(orderId);
     const now = new Date();
     const todayKey = getTunisDayKey(now.getTime());
+    const overrideEmail =
+      typeof options?.receiptEmail === 'string' && options.receiptEmail.trim()
+        ? options.receiptEmail.trim()
+        : null;
 
     let studentTokens = [];
     let merchantTokens = [];
@@ -151,6 +156,7 @@ export const paymentsService = {
 
       const updatedOrder = {
         ...order,
+        ...(overrideEmail ? { receiptEmail: overrideEmail } : {}),
         status: ORDER_STATUS.PAID,
         payment: {
           ...(order.payment || {}),
@@ -169,6 +175,7 @@ export const paymentsService = {
       };
 
       transaction.update(orderRef, {
+        ...(overrideEmail ? { receiptEmail: overrideEmail } : {}),
         status: ORDER_STATUS.PAID,
         payment: updatedOrder.payment,
         ticket: updatedOrder.ticket,
@@ -241,25 +248,47 @@ export const paymentsService = {
       return { order: updatedOrder, confirmed: true };
     });
 
-    // 5. NOTIFICATIONS FCM POST-COMMIT (Hors transaction)
+    // 5. NOTIFICATIONS FCM & REÇU E-MAIL POST-COMMIT (Hors transaction, strictement non bloquants)
     try {
       if (result.confirmed && !result.alreadyConfirmed) {
-        const studentUserDoc = await db.collection('users').doc(result.order.studentId).get();
-        if (studentUserDoc.exists) {
-          studentTokens = studentUserDoc.data().fcmTokens || [];
+        const [studentUserDoc, merchantDoc, resolvedMerchantTokens] = await Promise.all([
+          db.collection('users').doc(result.order.studentId).get(),
+          db.collection('merchants').doc(result.order.merchantId).get(),
+          getMerchantTokens(result.order.merchantId),
+        ]);
+
+        const studentData = studentUserDoc.exists ? studentUserDoc.data() : null;
+        const merchantData = merchantDoc.exists ? merchantDoc.data() : null;
+        if (studentData) {
+          studentTokens = studentData.fcmTokens || [];
         }
+        merchantTokens = resolvedMerchantTokens || [];
 
-        merchantTokens = await getMerchantTokens(result.order.merchantId);
-
+        const sideEffects = [];
         if (studentTokens.length > 0) {
-          await fcmService.notifyTicketReady(studentTokens, result.order.orderCode);
+          sideEffects.push(fcmService.notifyTicketReady(studentTokens, result.order.orderCode));
         }
         if (merchantTokens.length > 0) {
-          await fcmService.notifyOrderPaid(merchantTokens, result.order.orderCode);
+          sideEffects.push(fcmService.notifyOrderPaid(merchantTokens, result.order.orderCode));
+        }
+        sideEffects.push(
+          sendOrderReceiptEmail({
+            order: result.order,
+            student: studentData,
+            merchant: merchantData,
+            overrideEmail,
+          })
+        );
+
+        const settled = await Promise.allSettled(sideEffects);
+        for (const item of settled) {
+          if (item.status === 'rejected') {
+            logger.warn({ err: item.reason?.message || String(item.reason) }, 'Effet de bord post-paiement échoué (non bloquant)');
+          }
         }
       }
-    } catch (pushErr) {
-      logger.warn({ err: pushErr.message }, 'Expédition de notification push post-paiement échouée (non bloquante)');
+    } catch (sideEffectErr) {
+      logger.warn({ err: sideEffectErr.message }, 'Expédition de notification / e-mail post-paiement échouée (non bloquante)');
     }
 
     return result;
@@ -316,7 +345,7 @@ export const paymentsService = {
   /**
    * Vérification de paiement appelée par la page de retour client (`/payment/return`).
    */
-  async verifyPayment(orderId, paymentRef) {
+  async verifyPayment(orderId, paymentRef, options = {}) {
     const orderDoc = await db.collection('orders').doc(orderId).get();
     if (!orderDoc.exists) {
       throw new AppError('Commande introuvable', 404, 'ORDER_NOT_FOUND');
@@ -352,7 +381,7 @@ export const paymentsService = {
     const status = (paymentDetails.status || '').toLowerCase();
 
     if (status === 'completed' || status === 'paid' || status === 'success') {
-      const result = await this.confirmPayment(orderId, 'RETURN_VERIFY');
+      const result = await this.confirmPayment(orderId, 'RETURN_VERIFY', options);
       return { ...result, confirmed: true };
     }
 

@@ -123,10 +123,11 @@ class CampusApi {
   /// `POST /payments/konnect/verify` → `{ order, confirmed }`. `paymentRef` n'est envoyé que s'il existe
   /// (passerelle simulée : absent, le serveur retrouve la référence de la commande).
   /// Renvoie `true` uniquement si le serveur a confirmé le paiement.
-  Future<bool> verifyPayment(String orderId, {String? paymentRef}) async {
+  Future<bool> verifyPayment(String orderId, {String? paymentRef, String? receiptEmail}) async {
     final data = await _call(() => _dio.post(Endpoints.verifyPayment, data: {
           'orderId': orderId,
           if (paymentRef != null && paymentRef.isNotEmpty) 'paymentRef': paymentRef,
+          if (receiptEmail != null && receiptEmail.trim().isNotEmpty) 'receiptEmail': receiptEmail.trim(),
         }));
     return data['confirmed'] == true;
   }

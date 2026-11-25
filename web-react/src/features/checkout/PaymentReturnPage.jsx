@@ -6,15 +6,20 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { Spinner } from '../../components/ui/index.js';
-import { ArrowRight, RotateCcw, Ticket } from 'lucide-react';
+import { ArrowRight, RotateCcw, Ticket, MailCheck } from 'lucide-react';
 
 export default function PaymentReturnPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
 
   const orderId = searchParams.get('orderId') || searchParams.get('o') || 'ord-demo-essectx';
   const paymentRef = searchParams.get('payment_ref') || searchParams.get('paymentId');
+  const receiptEmail = searchParams.get('receiptEmail') || '';
+  const failedParam = searchParams.get('failed') === '1' || searchParams.get('status') === 'failed';
+  const displayReceiptEmail = receiptEmail || user?.email || profile?.email || '';
 
   const [state, setState] = useState('VERIFYING'); // 'VERIFYING', 'SUCCESS', 'FAILED'
   const [errorMessage, setErrorMessage] = useState(null);
@@ -23,13 +28,21 @@ export default function PaymentReturnPage() {
     let isMounted = true;
 
     async function verify() {
+      if (failedParam || (paymentRef && paymentRef.endsWith('-fail'))) {
+        if (isMounted) {
+          setState('FAILED');
+          setErrorMessage('Paiement refusé par la banque (simulation Sandbox). Aucun montant n’a été débité.');
+        }
+        return;
+      }
+
       setState('VERIFYING');
       try {
-        // `paymentRef` n'est envoyé que s'il est présent dans l'URL (passerelle simulée : absent → le serveur
-        // retrouve la référence enregistrée sur la commande). Un `null` serait refusé par la validation Zod.
+        // `paymentRef` et `receiptEmail` ne sont envoyés que s'ils sont présents.
         const res = await apiClient.post(ENDPOINTS.VERIFY_PAYMENT, {
           orderId,
           ...(paymentRef ? { paymentRef } : {}),
+          ...(receiptEmail ? { receiptEmail } : {}),
         });
 
         if (!isMounted) return;
@@ -57,12 +70,12 @@ export default function PaymentReturnPage() {
       }
     }
 
-    const timer = setTimeout(verify, 1200);
+    const timer = setTimeout(verify, 900);
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [orderId, paymentRef]);
+  }, [orderId, paymentRef, receiptEmail, failedParam]);
 
   // Libellé et couleur du statut affiché sur le reçu
   const receiptStatus = {
@@ -115,6 +128,12 @@ export default function PaymentReturnPage() {
                   <p className="cs-lead mt-5 max-w-xl">
                     Votre commande a été réglée avec succès. Votre ticket de retrait dynamique avec QR code tournant est prêt.
                   </p>
+                  {displayReceiptEmail && (
+                    <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#E7F5EC] border-2 border-[#1F7A3A] px-4 py-2 text-sm font-bold text-[#1F7A3A]">
+                      <MailCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>✓ Paiement Konnect validé • Reçu envoyé à {displayReceiptEmail}</span>
+                    </div>
+                  )}
                 </header>
 
                 <div className="mt-10 flex flex-col sm:flex-row gap-4">

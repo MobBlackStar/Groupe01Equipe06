@@ -286,7 +286,7 @@ export default function CheckoutPage() {
           window.location.href = payUrl;
         }
       } else {
-        navigate(`/payment/return?orderId=${orderRef}&payment_ref=demo-success`);
+        navigate(`/payment/konnect-sandbox?orderId=${encodeURIComponent(orderRef)}&payment_ref=demo-ksb-local`);
       }
     } catch (err) {
       const status = err?.response?.status;
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
         return;
       }
       console.warn('Mode démo / Konnect sandbox simulation :', err.message);
-      navigate(`/payment/return?orderId=${orderRef}&payment_ref=demo-success`);
+      navigate(`/payment/konnect-sandbox?orderId=${encodeURIComponent(orderRef)}&payment_ref=demo-ksb-local`);
     } finally {
       setIsSubmitting(false);
     }

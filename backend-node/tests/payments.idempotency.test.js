@@ -151,14 +151,23 @@ describe('Idempotence des Confirmations de Paiement Konnect (Dual-Path Confirmat
 
       const client = new KonnectClient(prodMockConfig);
       const initRes = await client.initPayment({ orderId: 'ord-live-sim-01', amountMillimes: 1500, description: '1x smile' });
-      assert.equal(initRes.paymentRef, 'demo-ord-live-sim-01');
-      assert.equal(initRes.payUrl, 'https://campussave-rouge.vercel.app/payment/return?o=ord-live-sim-01&payment_ref=demo-ord-live-sim-01');
+      assert.ok(initRes.paymentRef.startsWith('demo-ksb-'), 'La référence Sandbox doit commencer par demo-ksb-');
+      assert.equal(
+        initRes.payUrl,
+        `https://campussave-rouge.vercel.app/payment/konnect-sandbox?orderId=ord-live-sim-01&payment_ref=${initRes.paymentRef}`
+      );
 
       const details = await client.getPayment('demo-success');
       assert.equal(details.status, 'completed');
       assert.equal(details.paymentRef, 'demo-success');
 
-      // Vérification complète via paymentsService.verifyPayment -> PAID + Living Ticket nonce
+      const ksbDetails = await client.getPayment(initRes.paymentRef);
+      assert.equal(ksbDetails.status, 'completed');
+
+      const failedDetails = await client.getPayment(`${initRes.paymentRef}-fail`);
+      assert.equal(failedDetails.status, 'failed');
+
+      // Vérification complète via paymentsService.verifyPayment -> PAID + Living Ticket nonce + receiptEmail
       konnectClient.apiKey = 'konnect_dev_mock_key';
       konnectClient.walletId = 'wallet-test-01';
 
@@ -184,21 +193,44 @@ describe('Idempotence des Confirmations de Paiement Konnect (Dual-Path Confirmat
         pricing: { totalMillimes: 1500 },
         status: ORDER_STATUS.RESERVED,
         statusHistory: [],
-        payment: { provider: 'KONNECT', status: PAYMENT_STATUS.INITIATED, paymentRef: 'demo-ord-live-sim-01' },
+        payment: { provider: 'KONNECT', status: PAYMENT_STATUS.INITIATED, paymentRef: initRes.paymentRef },
         createdAt: now,
       });
 
-      const verification = await paymentsService.verifyPayment('ord-live-sim-01', 'demo-success');
+      const verification = await paymentsService.verifyPayment('ord-live-sim-01', initRes.paymentRef, {
+        receiptEmail: 'jury.test@essect.u-tunis.tn',
+      });
       assert.equal(verification.confirmed, true);
       assert.equal(verification.order.status, ORDER_STATUS.PAID);
       assert.equal(verification.order.payment.status, PAYMENT_STATUS.COMPLETED);
       assert.equal(verification.order.payment.confirmedVia, 'RETURN_VERIFY');
+      assert.equal(verification.order.receiptEmail, 'jury.test@essect.u-tunis.tn');
       assert.ok(verification.order.ticket?.nonce, 'Le Living Ticket nonce doit être généré');
     } finally {
       process.env.NODE_ENV = prevNodeEnv;
       konnectClient.apiKey = prevKey;
       konnectClient.walletId = prevWallet;
     }
+  });
+
+  test('Panne Konnect Sandbox externe (HTTP 400 / timeout) bascule automatiquement vers /payment/konnect-sandbox', async () => {
+    const client = new KonnectClient({
+      NODE_ENV: 'production',
+      KONNECT_API_BASE: 'http://127.0.0.1:1/unreachable-konnect',
+      KONNECT_API_KEY: 'live_sandbox_key_real_format',
+      KONNECT_RECEIVER_WALLET_ID: 'wallet_real_format',
+      WEB_APP_URL: 'https://campussave-rouge.vercel.app',
+    });
+    const res = await client.initPayment({
+      orderId: 'ord-outage-fallback-01',
+      amountMillimes: 4200,
+      description: 'Test bascule Konnect Sandbox',
+    });
+    assert.ok(res.paymentRef.startsWith('demo-ksb-'));
+    assert.equal(
+      res.payUrl,
+      `https://campussave-rouge.vercel.app/payment/konnect-sandbox?orderId=ord-outage-fallback-01&payment_ref=${res.paymentRef}`
+    );
   });
 
 });

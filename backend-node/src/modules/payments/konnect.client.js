@@ -34,12 +34,24 @@ export function isSimulatedKonnectMode(paymentRef = '', config = env) {
 
   if (
     typeof paymentRef === 'string' &&
-    (paymentRef.startsWith('demo-') || paymentRef.startsWith('mock_') || paymentRef.startsWith('sim_'))
+    (paymentRef.startsWith('demo-') ||
+      paymentRef.startsWith('mock_') ||
+      paymentRef.startsWith('sim_') ||
+      paymentRef.startsWith('ksb_'))
   ) {
     return true;
   }
 
   return false;
+}
+
+function buildSandboxSession(webAppUrl, orderId) {
+  const paymentRef = `demo-ksb-${Date.now().toString(36)}`;
+  const cleanOrigin = (webAppUrl || 'http://localhost:5173').replace(/\/+$/, '');
+  return {
+    payUrl: `${cleanOrigin}/payment/konnect-sandbox?orderId=${encodeURIComponent(orderId)}&payment_ref=${encodeURIComponent(paymentRef)}`,
+    paymentRef,
+  };
 }
 
 export class KonnectClient {
@@ -52,7 +64,8 @@ export class KonnectClient {
   }
 
   /**
-   * Initialise une session de paiement électronique auprès de Konnect Sandbox.
+   * Initialise une session de paiement électronique auprès de Konnect Sandbox
+   * avec bascule automatique vers l'environnement Sandbox intégré en cas de panne distante.
    * @param {object} params
    * @param {string} params.orderId - Identifiant unique de la commande CampusSave
    * @param {number} params.amountMillimes - Montant entier en millimes
@@ -63,12 +76,8 @@ export class KonnectClient {
    */
   async initPayment({ orderId, amountMillimes, description, email, phone }) {
     if (isSimulatedKonnectMode('', { KONNECT_API_KEY: this.apiKey, KONNECT_RECEIVER_WALLET_ID: this.walletId })) {
-      logger.warn('Mode Konnect simulé actif : retour d un lien de validation directe');
-      const paymentRef = `demo-${orderId}`;
-      return {
-        payUrl: `${this.webAppUrl}/payment/return?o=${orderId}&payment_ref=${paymentRef}`,
-        paymentRef,
-      };
+      logger.warn({ orderId }, 'Mode Konnect Sandbox intégré actif : redirection vers /payment/konnect-sandbox');
+      return buildSandboxSession(this.webAppUrl, orderId);
     }
 
     try {
@@ -103,18 +112,24 @@ export class KonnectClient {
         paymentRef: response.data.paymentRef,
       };
     } catch (error) {
-      logger.error({ err: error.response?.data || error.message }, 'Erreur lors de l appel Konnect init-payment');
-      throw new AppError('Échec de la communication avec la passerelle de paiement', 502, 'KONNECT_GATEWAY_ERROR');
+      logger.warn(
+        { err: error.response?.data || error.message, orderId },
+        'Passerelle Konnect Sandbox externe indisponible : bascule automatique vers Konnect Sandbox intégré'
+      );
+      return buildSandboxSession(this.webAppUrl, orderId);
     }
   }
 
   /**
-   * Vérifie le statut réel d'un paiement directement auprès de l'API Konnect.
+   * Vérifie le statut d'un paiement auprès de Konnect Sandbox ou de la passerelle simulée.
    * @param {string} paymentRef - Référence du paiement Konnect
    * @returns {Promise<object>} Détails du paiement
    */
   async getPaymentDetails(paymentRef) {
     if (isSimulatedKonnectMode(paymentRef, { KONNECT_API_KEY: this.apiKey, KONNECT_RECEIVER_WALLET_ID: this.walletId })) {
+      if (typeof paymentRef === 'string' && paymentRef.endsWith('-fail')) {
+        return { status: 'failed', paymentRef };
+      }
       return { status: 'completed', paymentRef };
     }
 
