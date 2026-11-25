@@ -5,6 +5,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { BagProvider } from './context/BagContext.jsx';
 import { AppRouter } from './routes/AppRouter.jsx';
 import ApkDownloadMascot from './components/ui/ApkDownloadMascot.jsx';
 
@@ -79,8 +80,10 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <AppRouter />
-          <ApkDownloadMascot />
+          <BagProvider>
+            <AppRouter />
+            <ApkDownloadMascot />
+          </BagProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>
