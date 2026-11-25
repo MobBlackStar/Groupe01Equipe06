@@ -3,11 +3,30 @@
 // 🎯 À retenir pour la soutenance : "Render bloquant les ports SMTP sortants, notre service utilise prioritairement HTTPS Port 443 (Google Apps Script / API Brevo) en asynchrone non bloquant avec repli SMTP local sécurisé."
 // Module : Notifications & Reçus Électroniques
 
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import nodemailer from 'nodemailer';
 import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 import { formatTND } from '../../../../shared/money.js';
 import { normalizeOrderItems } from '../../../../shared/orders.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+let MASCOT_BASE64 = '';
+for (const relPath of [
+  '../../assets/mascot-sticker-256.png',
+  '../../../../web-react/public/assets/brand/mascot-sticker-256.png',
+]) {
+  try {
+    MASCOT_BASE64 = readFileSync(resolve(__dirname, relPath)).toString('base64');
+    if (MASCOT_BASE64) break;
+  } catch {
+    // Repli sur le chemin suivant
+  }
+}
+
+export { MASCOT_BASE64 };
 
 const DEFAULT_PUBLIC_ORIGIN = 'https://campussave-rouge.vercel.app';
 const HTTPS_TIMEOUT_MS = 8000;
@@ -87,8 +106,7 @@ function formatTunisReceiptDate(value) {
   }
 }
 
-export function buildOrderReceiptText({ order, student, merchant, overrideEmail, publicOrigin: explicitOrigin }) {
-  const origin = explicitOrigin || resolvePublicOrigin();
+export function buildOrderReceiptText({ order, student, merchant, overrideEmail }) {
   const { studentName } = resolveReceiptRecipient({ order, student, overrideEmail });
 
   const orderId = order?.orderId || order?.id || '';
@@ -109,7 +127,6 @@ export function buildOrderReceiptText({ order, student, merchant, overrideEmail,
     ? order.pricing.totalMillimes
     : Math.max(0, subtotalMillimes - discountMillimes);
   const savedMillimes = Number(order?.pricing?.savedMillimes || 0);
-  const ticketUrl = `${origin}/app/orders/${encodeURIComponent(orderId)}/ticket`;
 
   const itemLines = items.map(
     (item) => `- ${item.quantity}x ${item.title} : ${formatTND(item.lineSubtotalMillimes)}`
@@ -118,25 +135,24 @@ export function buildOrderReceiptText({ order, student, merchant, overrideEmail,
   return [
     `Bonjour ${studentName},`,
     '',
-    `Votre paiement pour la commande #${orderCode} chez ${merchantName} est confirmé (Konnect).`,
+    `Merci d'avoir sauvé un panier anti-gaspi chez ${merchantName} sur CampusSave ESSECT !`,
     `Date : ${dateLabel}`,
-    `Référence paiement : ${paymentRef}`,
+    `Référence Konnect : ${paymentRef}`,
     '',
-    'Détail des plats :',
+    'Détail du panier sauvé :',
     ...itemLines,
     '',
     `Total payé : ${formatTND(totalMillimes)}`,
     `Économie réalisée : ${formatTND(savedMillimes)}`,
     '',
-    `Votre Living Ticket QR : ${ticketUrl}`,
+    `CODE DE RETRAIT : #${orderCode} — ${merchantName}`,
+    "Ouvrez votre application CampusSave -> Mes Commandes pour présenter votre Living Ticket QR rotatif au comptoir.",
     '',
     'CampusSave — ESSECT Montfleury, Tunis',
   ].join('\n');
 }
 
-export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail, publicOrigin: explicitOrigin }) {
-  const origin = explicitOrigin || resolvePublicOrigin();
-  const mascotUrl = `${origin}/assets/brand/mascot-sticker-256.png`;
+export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail }) {
   const { studentName } = resolveReceiptRecipient({ order, student, overrideEmail });
 
   const orderId = order?.orderId || order?.id || '';
@@ -160,7 +176,6 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
 
   const foodSavedGrams = Number(order?.impact?.foodSavedGrams || 350);
   const co2SavedGrams = Number(order?.impact?.co2SavedGrams || 875);
-  const ticketUrl = `${origin}/app/orders/${encodeURIComponent(orderId)}/ticket`;
 
   const itemsRowsHtml = items
     .map(
@@ -197,7 +212,7 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td valign="middle" style="vertical-align:middle;">
-                    <img src="${escapeHtml(mascotUrl)}" alt="CampusSave Mascotte" width="52" height="52" style="width:52px;height:52px;border-radius:12px;border:2px solid #FFD000;vertical-align:middle;margin-right:12px;display:inline-block;" />
+                    <img src="cid:mascot" alt="CampusSave" width="52" height="52" style="width:52px;height:52px;border-radius:12px;border:2px solid #FFD000;vertical-align:middle;margin-right:12px;display:inline-block;" />
                     <span style="display:inline-block;vertical-align:middle;">
                       <span style="display:block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:900;letter-spacing:1.2px;color:#FFD000;text-transform:uppercase;">
                         CAMPUSSAVE • ESSECT MONTFLEURY
@@ -299,12 +314,21 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
             </td>
           </tr>
 
-          <!-- Direct CTA Button -->
+          <!-- Griddle Pickup Ticket Box -->
           <tr>
             <td align="center" style="padding:0 24px 28px 24px;">
-              <a href="${escapeHtml(ticketUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background-color:#DA0711;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:900;text-decoration:none;padding:14px 28px;border-radius:999px;border:2px solid #111111;">
-                Ouvrir mon Living Ticket QR →
-              </a>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FAF3E6;border:2px dashed #111111;border-radius:14px;">
+                <tr>
+                  <td align="center" style="padding:18px 20px;">
+                    <div style="font-family:'Courier New',Courier,monospace;font-size:18px;font-weight:900;color:#111111;letter-spacing:1px;">
+                      CODE DE RETRAIT : #${escapeHtml(orderCode)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#5E5850;margin-top:8px;">
+                      Ouvrez votre application CampusSave &rarr; Mes Commandes pour présenter votre Living Ticket QR rotatif au comptoir.
+                    </div>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -400,7 +424,7 @@ export const emailService = {
             text,
             html,
             fromName: fromName || 'CampusSave ESSECT',
-            replyTo,
+            mascotBase64: MASCOT_BASE64,
           }),
         });
         const bodyText = await res.text().catch(() => '');
@@ -498,6 +522,17 @@ export const emailService = {
           subject,
           text,
           html,
+          ...(MASCOT_BASE64
+            ? {
+                attachments: [
+                  {
+                    filename: 'mascot.png',
+                    content: Buffer.from(MASCOT_BASE64, 'base64'),
+                    cid: 'mascot',
+                  },
+                ],
+              }
+            : {}),
         });
 
         logger.info({ orderId, toEmail, provider: 'smtp', messageId: info?.messageId }, 'Receipt email sent via SMTP');

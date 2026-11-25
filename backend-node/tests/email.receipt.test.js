@@ -6,9 +6,11 @@ import http from 'node:http';
 process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 = '';
 process.env.NODE_ENV = 'test';
 const {
+  MASCOT_BASE64,
   getEmailProviderStatus,
   resolveReceiptRecipient,
   resolvePublicOrigin,
+  buildOrderReceiptText,
   buildOrderReceiptHtml,
   sendOrderReceiptEmail,
 } = await import('../src/modules/notifications/email.service.js');
@@ -60,15 +62,23 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(resolvePublicOrigin('https://campussave-rouge.vercel.app/'), 'https://campussave-rouge.vercel.app');
   });
 
-  test('buildOrderReceiptHtml embarque le logo Vercel HTTPS, la palette Griddle, les montants TND et le lien ticket', () => {
+  test('buildOrderReceiptHtml embarque cid:mascot, la palette Griddle, les montants TND et zéro lien vercel.app', () => {
     const html = buildOrderReceiptHtml({
       order: sampleOrder,
       student: { displayName: 'Yassine Trabelsi', email: 'yassine@essect.u-tunis.tn' },
       merchant: { name: 'Munchies & Baguette Ali Trad' },
       publicOrigin: resolvePublicOrigin('http://localhost:5175'),
     });
+    const text = buildOrderReceiptText({
+      order: sampleOrder,
+      student: { displayName: 'Yassine Trabelsi', email: 'yassine@essect.u-tunis.tn' },
+      merchant: { name: 'Munchies & Baguette Ali Trad' },
+    });
 
-    assert.ok(html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
+    assert.ok(MASCOT_BASE64 && MASCOT_BASE64.length > 100);
+    assert.ok(html.includes('src="cid:mascot"'));
+    assert.ok(!html.includes('vercel.app'));
+    assert.ok(!text.includes('vercel.app'));
     assert.ok(html.includes('#FAF3E6'));
     assert.ok(html.includes('#FAF6EE'));
     assert.ok(html.includes('#111111'));
@@ -83,7 +93,8 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.ok(html.includes('10,200 DT'));
     assert.ok(html.includes('5,800 DT'));
     assert.ok(html.includes('+1100g de nourriture sauvée'));
-    assert.ok(html.includes('https://campussave-rouge.vercel.app/app/orders/ord-email-01/ticket'));
+    assert.ok(html.includes('CODE DE RETRAIT : #CS-991AB'));
+    assert.ok(text.includes('CODE DE RETRAIT : #CS-991AB'));
   });
 
   test('sendOrderReceiptEmail simule en mode test sans erreur et expédie avec transport injecté hors mode test', async () => {
@@ -124,7 +135,9 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(sentPayloads[0].to, 'examiner@essect.u-tunis.tn');
     assert.equal(sentPayloads[0].subject, 'Confirmation de commande #CS-991AB — Munchies & Baguette Ali Trad');
     assert.ok(sentPayloads[0].text.includes('1x Baguette Farcie Escalope'));
-    assert.ok(sentPayloads[0].html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
+    assert.ok(sentPayloads[0].html.includes('src="cid:mascot"'));
+    assert.ok(!sentPayloads[0].html.includes('vercel.app'));
+    assert.equal(sentPayloads[0].attachments?.[0]?.cid, 'mascot');
   });
 
   test('Tier 1 HTTPS MAIL_WEBHOOK_URL (port 443) envoie le JSON complet avec redirect: follow', async () => {
@@ -154,9 +167,12 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(calls[0].body.secret, 'bridge-secret-123');
     assert.equal(calls[0].body.to, 'yassine@essect.u-tunis.tn');
     assert.equal(calls[0].body.fromName, 'CampusSave ESSECT');
-    assert.ok(calls[0].body.replyTo);
+    assert.equal(calls[0].body.replyTo, undefined);
+    assert.ok(typeof calls[0].body.mascotBase64 === 'string' && calls[0].body.mascotBase64.length > 100);
     assert.ok(calls[0].body.text.includes('2x Makloub Chawarma'));
-    assert.ok(calls[0].body.html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
+    assert.ok(!calls[0].body.text.includes('vercel.app'));
+    assert.ok(calls[0].body.html.includes('src="cid:mascot"'));
+    assert.ok(!calls[0].body.html.includes('vercel.app'));
   });
 
   test('Tier 2 HTTPS BREVO_API_KEY (port 443) envoie vers api.brevo.com/v3/smtp/email', async () => {
