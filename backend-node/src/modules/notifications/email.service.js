@@ -381,6 +381,7 @@ export const emailService = {
 
     let lastProvider = 'none';
     let lastError = null;
+    let lastErrorDetail = null;
 
     // Tier 1: Google Apps Script HTTPS Gmail Bridge (Port 443)
     if (webhookUrl) {
@@ -408,6 +409,8 @@ export const emailService = {
           (typeof res.url === 'string' && res.url.includes('accounts.google.com'));
 
         if (isHtmlResponse) {
+          lastErrorDetail = bodyText.replace(/\s+/g, ' ').trim().slice(0, 200);
+          logger.warn({ orderId, toEmail, errorDetail: lastErrorDetail }, 'Tier 1 webhook returned non-JSON HTML body');
           throw new Error('APPS_SCRIPT_NOT_PUBLIC_OR_HTML_RESPONSE');
         }
         if (!res.ok) {
@@ -514,7 +517,14 @@ export const emailService = {
     }
 
     if (lastError) {
-      return { sent: false, simulated: false, provider: lastProvider, toEmail, error: lastError };
+      return {
+        sent: false,
+        simulated: false,
+        provider: lastProvider,
+        toEmail,
+        error: lastError,
+        ...(lastErrorDetail ? { errorDetail: lastErrorDetail } : {}),
+      };
     }
 
     logger.info({ orderId, toEmail }, 'Receipt email skipped or simulated (no active mail provider)');

@@ -327,9 +327,9 @@ export const paymentsService = {
                 pending: true,
                 provider: 'timeout',
                 toEmail: overrideEmail || targetOrder.receiptEmail || '',
-                error: 'EMAIL_RACE_TIMEOUT_3000MS',
+                error: 'EMAIL_RACE_TIMEOUT_5500MS',
               }),
-            3000
+            5500
           )
         ),
       ]);
