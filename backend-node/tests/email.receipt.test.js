@@ -1,14 +1,18 @@
 // Module : Tests & Validation Notifications E-mail
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import http from 'node:http';
 
 process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 = '';
+process.env.NODE_ENV = 'test';
 const {
+  getEmailProviderStatus,
   resolveReceiptRecipient,
   resolvePublicOrigin,
   buildOrderReceiptHtml,
   sendOrderReceiptEmail,
 } = await import('../src/modules/notifications/email.service.js');
+const { default: app } = await import('../src/app.js');
 
 describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', () => {
   const sampleOrder = {
@@ -176,5 +180,103 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(calls[0].init.headers['api-key'], 'xkeysib-test-123');
     assert.equal(calls[0].body.sender.email, 'noreply@campussave.tn');
     assert.equal(calls[0].body.to[0].email, 'ritej@essect.u-tunis.tn');
+  });
+
+  test('getEmailProviderStatus détecte le fournisseur actif sans exposer aucun secret et supprime les espaces SMTP', async () => {
+    assert.deepEqual(
+      getEmailProviderStatus({ MAIL_WEBHOOK_URL: 'https://example.com', BREVO_API_KEY: 'k', MAIL_USER: 'u', MAIL_PASS: 'p' }),
+      { activeProvider: 'webhook', hasWebhook: true, hasBrevo: true, hasSmtp: true }
+    );
+    assert.deepEqual(
+      getEmailProviderStatus({ MAIL_WEBHOOK_URL: '', BREVO_API_KEY: 'k', MAIL_USER: 'u', MAIL_PASS: 'p' }),
+      { activeProvider: 'brevo', hasWebhook: false, hasBrevo: true, hasSmtp: true }
+    );
+    assert.deepEqual(
+      getEmailProviderStatus({ MAIL_WEBHOOK_URL: '', BREVO_API_KEY: '', MAIL_USER: ' u@gmail.com ', MAIL_PASS: '   ' }),
+      { activeProvider: 'none', hasWebhook: false, hasBrevo: false, hasSmtp: false }
+    );
+
+    let receivedAuth = null;
+    await sendOrderReceiptEmail({
+      order: sampleOrder,
+      student: { email: 'yassine@essect.u-tunis.tn' },
+      config: {
+        NODE_ENV: 'production',
+        MAIL_USER: ' campussave@gmail.com ',
+        MAIL_PASS: ' abcd efgh ijkl mnop ',
+      },
+      transportFactory: (authInfo) => {
+        receivedAuth = authInfo;
+        return { async sendMail() { return { messageId: 'ok' }; } };
+      },
+    });
+    assert.equal(receivedAuth?.mailUser, 'campussave@gmail.com');
+    assert.equal(receivedAuth?.mailPass, 'abcdefghijklmnop');
+  });
+
+  test('Apps Script retournant une page HTML Google Login renvoie APPS_SCRIPT_NOT_PUBLIC_OR_HTML_RESPONSE et SMTP ETIMEDOUT renvoie un diagnostic explicite', async () => {
+    const htmlRes = await sendOrderReceiptEmail({
+      order: sampleOrder,
+      student: { email: 'yassine@essect.u-tunis.tn' },
+      config: {
+        NODE_ENV: 'production',
+        MAIL_WEBHOOK_URL: 'https://script.google.com/macros/s/private/exec',
+      },
+      fetchImpl: async () => new Response('<!doctype html><html><title>Sign in - Google Accounts</title></html>', { status: 200 }),
+    });
+    assert.equal(htmlRes.sent, false);
+    assert.equal(htmlRes.provider, 'webhook');
+    assert.equal(htmlRes.error, 'APPS_SCRIPT_NOT_PUBLIC_OR_HTML_RESPONSE');
+
+    const timeoutRes = await sendOrderReceiptEmail({
+      order: sampleOrder,
+      student: { email: 'yassine@essect.u-tunis.tn' },
+      config: {
+        NODE_ENV: 'production',
+        MAIL_USER: 'campussave@gmail.com',
+        MAIL_PASS: 'abcdefghijklmnop',
+      },
+      transportFactory: () => ({
+        async sendMail() {
+          const err = new Error('Connection timeout');
+          err.code = 'ETIMEDOUT';
+          throw err;
+        },
+      }),
+    });
+    assert.equal(timeoutRes.sent, false);
+    assert.equal(timeoutRes.provider, 'smtp');
+    assert.equal(timeoutRes.error, 'SMTP_BLOCKED_ON_HOST_USE_PORT_443_WEBHOOK_OR_BREVO');
+  });
+
+  test('GET /api/v1/health expose mailProvider et POST /api/v1/payments/email-test renvoie le diagnostic complet', async () => {
+    const server = http.createServer(app);
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const { port } = server.address();
+      const baseUrl = `http://127.0.0.1:${port}/api/v1`;
+
+      const healthRes = await fetch(`${baseUrl}/health`);
+      assert.equal(healthRes.status, 200);
+      const healthBody = await healthRes.json();
+      assert.equal(healthBody.ok, true);
+      assert.ok(['webhook', 'brevo', 'smtp', 'none'].includes(healthBody.mailProvider));
+
+      const testRes = await fetch(`${baseUrl}/payments/email-test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token:student-yassine:STUDENT:yassine@essect.u-tunis.tn',
+        },
+        body: JSON.stringify({ email: 'feditouati11@gmail.com' }),
+      });
+      assert.equal(testRes.status, 200);
+      const body = await testRes.json();
+      assert.equal(body.toEmail, 'feditouati11@gmail.com');
+      assert.equal(typeof body.ok, 'boolean');
+      assert.ok(body.config && typeof body.config.activeProvider === 'string');
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 });

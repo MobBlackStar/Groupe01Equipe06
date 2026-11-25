@@ -18,6 +18,7 @@ import { radarRouter } from './modules/radar/radar.routes.js';
 import { loyaltyRouter } from './modules/loyalty/loyalty.routes.js';
 import { dashboardsRouter } from './modules/dashboards/dashboards.routes.js';
 import { impactRouter } from './modules/impact/impact.routes.js';
+import { getEmailProviderStatus } from './modules/notifications/email.service.js';
 
 export const apiRouter = Router();
 
@@ -26,6 +27,7 @@ apiRouter.get('/health', (req, res) => {
   res.json({
     ok: true,
     firestore: 'up',
+    mailProvider: getEmailProviderStatus().activeProvider,
     time: new Date().toISOString(),
     serverTime: Date.now(),
   });

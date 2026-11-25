@@ -22,6 +22,27 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+export function getEmailProviderStatus(config = env) {
+  const webhookUrl = (config?.MAIL_WEBHOOK_URL ?? env.MAIL_WEBHOOK_URL ?? '').trim();
+  const brevoApiKey = (config?.BREVO_API_KEY ?? env.BREVO_API_KEY ?? '').trim();
+  const mailUser = (config?.MAIL_USER ?? env.MAIL_USER ?? '').trim();
+  const mailPass = (config?.MAIL_PASS ?? env.MAIL_PASS ?? '').replace(/\s+/g, '');
+
+  const hasWebhook = Boolean(webhookUrl);
+  const hasBrevo = Boolean(brevoApiKey);
+  const hasSmtp = Boolean(mailUser && mailPass);
+
+  const activeProvider = hasWebhook
+    ? 'webhook'
+    : hasBrevo
+    ? 'brevo'
+    : hasSmtp
+    ? 'smtp'
+    : 'none';
+
+  return { activeProvider, hasWebhook, hasBrevo, hasSmtp };
+}
+
 export function resolvePublicOrigin(webAppUrl = env.WEB_APP_URL) {
   const candidate = typeof webAppUrl === 'string' ? webAppUrl.trim() : '';
   if (candidate && !candidate.includes('localhost') && !candidate.includes('127.0.0.1')) {
@@ -267,13 +288,13 @@ export const emailService = {
     const webhookSecret = (config?.MAIL_WEBHOOK_SECRET ?? env.MAIL_WEBHOOK_SECRET ?? '').trim();
     const brevoApiKey = (config?.BREVO_API_KEY ?? env.BREVO_API_KEY ?? '').trim();
     const mailUser = (config?.MAIL_USER ?? env.MAIL_USER ?? '').trim();
-    const mailPass = (config?.MAIL_PASS ?? env.MAIL_PASS ?? '').trim();
+    const mailPass = (config?.MAIL_PASS ?? env.MAIL_PASS ?? '').replace(/\s+/g, '');
     const fromName = (config?.MAIL_FROM_NAME ?? env.MAIL_FROM_NAME ?? 'CampusSave ESSECT').trim() || 'CampusSave ESSECT';
     const fromEmail = (config?.MAIL_FROM_EMAIL ?? env.MAIL_FROM_EMAIL ?? mailUser).trim();
 
     if (!toEmail) {
       logger.info({ orderId }, 'Receipt email skipped (no recipient email)');
-      return { sent: false, simulated: true, provider: 'none', toEmail: '' };
+      return { sent: false, simulated: true, provider: 'none', toEmail: '', error: 'MISSING_RECIPIENT_EMAIL' };
     }
 
     const hasExplicitInjector = Boolean(transportFactory) || webhookUrl || brevoApiKey;
@@ -295,12 +316,16 @@ export const emailService = {
     const subject = `[CampusSave] Reçu #${orderCode} • ${merchantName} (${totalFormatted})`;
     const text = `Bonjour ${studentName},\nVotre paiement pour la commande #${orderCode} chez ${merchantName} (${totalFormatted}) est confirmé.\nConsultez votre Living Ticket QR : ${publicOrigin}/app/orders/${orderId}/ticket`;
 
+    let lastProvider = 'none';
+    let lastError = null;
+
     // Tier 1: Google Apps Script HTTPS Gmail Bridge (Port 443)
     if (webhookUrl) {
+      lastProvider = 'webhook';
       try {
         const res = await fetchImpl(webhookUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           redirect: 'follow',
           signal: AbortSignal.timeout(HTTPS_TIMEOUT_MS),
           body: JSON.stringify({
@@ -312,19 +337,40 @@ export const emailService = {
             fromName,
           }),
         });
+        const bodyText = await res.text().catch(() => '');
+        const isHtmlResponse =
+          /<!doctype html|<html/i.test(bodyText) ||
+          (typeof res.url === 'string' && res.url.includes('accounts.google.com'));
+
+        if (isHtmlResponse) {
+          throw new Error('APPS_SCRIPT_NOT_PUBLIC_OR_HTML_RESPONSE');
+        }
         if (!res.ok) {
-          const bodyPreview = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status} ${bodyPreview.slice(0, 120)}`);
+          throw new Error(`HTTP ${res.status} ${bodyText.slice(0, 120)}`);
+        }
+        if (bodyText.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(bodyText);
+            if (parsed?.ok === false) {
+              throw new Error(parsed.error || 'APPS_SCRIPT_REJECTED');
+            }
+          } catch (jsonErr) {
+            if (jsonErr?.message && !jsonErr.message.includes('JSON')) {
+              throw jsonErr;
+            }
+          }
         }
         logger.info({ orderId, toEmail, provider: 'webhook' }, 'Receipt email delivered via HTTPS webhook');
         return { sent: true, simulated: false, provider: 'webhook', toEmail };
       } catch (err) {
-        logger.warn({ orderId, toEmail, err: err?.message }, 'Tier 1 HTTPS mail webhook failed');
+        lastError = err?.message || 'WEBHOOK_FAILED';
+        logger.warn({ orderId, toEmail, err: lastError }, 'Tier 1 HTTPS mail webhook failed');
       }
     }
 
     // Tier 2: Brevo Transactional REST API (Port 443)
     if (brevoApiKey) {
+      lastProvider = 'brevo';
       try {
         const senderEmail = fromEmail || 'no-reply@campussave.tn';
         const res = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
@@ -349,15 +395,17 @@ export const emailService = {
         logger.info({ orderId, toEmail, provider: 'brevo', messageId: json?.messageId }, 'Receipt email delivered via Brevo HTTPS');
         return { sent: true, simulated: false, provider: 'brevo', toEmail, messageId: json?.messageId };
       } catch (err) {
-        logger.warn({ orderId, toEmail, err: err?.message }, 'Tier 2 Brevo HTTPS mail failed');
+        lastError = err?.message || 'BREVO_FAILED';
+        logger.warn({ orderId, toEmail, err: lastError }, 'Tier 2 Brevo HTTPS mail failed');
       }
     }
 
-    // Tier 3: Local Dev SMTP Fallback (only when neither Tier 1 nor Tier 2 succeeded, with strict 5s timeouts)
+    // Tier 3: Local Dev SMTP Fallback (only when neither Tier 1 nor Tier 2 is set, with strict 5s timeouts)
     if (!webhookUrl && !brevoApiKey && ((mailUser && mailPass) || transportFactory)) {
+      lastProvider = 'smtp';
       try {
         const transporter = transportFactory
-          ? transportFactory()
+          ? transportFactory({ mailUser, mailPass })
           : nodemailer.createTransport({
               host: config?.MAIL_HOST || env.MAIL_HOST || 'smtp.gmail.com',
               port: Number(config?.MAIL_PORT ?? env.MAIL_PORT) || 587,
@@ -385,13 +433,25 @@ export const emailService = {
         logger.info({ orderId, toEmail, provider: 'smtp', messageId: info?.messageId }, 'Receipt email sent via SMTP');
         return { sent: true, simulated: false, provider: 'smtp', toEmail, messageId: info?.messageId };
       } catch (err) {
-        logger.warn({ orderId, toEmail, err: err?.message }, 'Tier 3 SMTP mail failed');
-        return { sent: false, simulated: false, provider: 'smtp', toEmail, error: err?.message };
+        const rawErr = err?.message || String(err || '');
+        const code = err?.code || '';
+        const isBlocked =
+          code === 'ETIMEDOUT' ||
+          code === 'ECONNREFUSED' ||
+          code === 'ESOCKET' ||
+          /timeout|ETIMEDOUT|ECONNREFUSED/i.test(rawErr);
+        const friendlyErr = isBlocked ? 'SMTP_BLOCKED_ON_HOST_USE_PORT_443_WEBHOOK_OR_BREVO' : rawErr;
+        logger.warn({ orderId, toEmail, err: friendlyErr, rawErr }, 'Tier 3 SMTP mail failed');
+        return { sent: false, simulated: false, provider: 'smtp', toEmail, error: friendlyErr };
       }
     }
 
+    if (lastError) {
+      return { sent: false, simulated: false, provider: lastProvider, toEmail, error: lastError };
+    }
+
     logger.info({ orderId, toEmail }, 'Receipt email skipped or simulated (no active mail provider)');
-    return { sent: false, simulated: true, provider: 'none', toEmail };
+    return { sent: false, simulated: true, provider: 'none', toEmail, error: 'NO_MAIL_PROVIDER_CONFIGURED' };
   },
 };
 

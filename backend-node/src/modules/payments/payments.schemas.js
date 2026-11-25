@@ -14,3 +14,7 @@ export const verifyPaymentSchema = z.object({
   paymentRef: z.string().nullish(), // absent en passerelle simulée ; le serveur retrouve alors la référence de la commande
   receiptEmail: z.string().email('Adresse e-mail invalide').or(z.literal('')).nullish(),
 });
+
+export const emailTestSchema = z.object({
+  email: z.string().email('Adresse e-mail invalide').optional().or(z.literal('')),
+});

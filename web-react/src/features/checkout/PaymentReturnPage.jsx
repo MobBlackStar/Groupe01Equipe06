@@ -8,10 +8,15 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Spinner } from '../../components/ui/index.js';
-import { ArrowRight, RotateCcw, Ticket, MailCheck } from 'lucide-react';
+import { ArrowRight, RotateCcw, Ticket, MailCheck, ShieldCheck } from 'lucide-react';
 
 // Déduplique les appels stricts en cours (y compris React 18 StrictMode double-mount) sans jamais bloquer l'état
 const inFlightVerifications = new Map();
+const MIN_VERIFY_DISPLAY_MS = 1600;
+const STEP_LABELS = [
+  'Connexion sécurisée à la passerelle Konnect...',
+  'Validation 3D-Secure & édition du reçu thermique...',
+];
 
 export default function PaymentReturnPage() {
   const [searchParams] = useSearchParams();
@@ -25,6 +30,8 @@ export default function PaymentReturnPage() {
   const displayReceiptEmail = receiptEmail || user?.email || profile?.email || '';
 
   const [state, setState] = useState('VERIFYING'); // 'VERIFYING', 'SUCCESS', 'FAILED'
+  const [verifyStage, setVerifyStage] = useState(0);
+  const [emailDelivery, setEmailDelivery] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const lastCompletedKeyRef = useRef('');
@@ -32,13 +39,11 @@ export default function PaymentReturnPage() {
   const runVerification = useCallback(async (forceFresh = false) => {
     const key = `${orderId}|${paymentRef || ''}|${receiptEmail}|${failedParam}`;
     if (failedParam || (paymentRef && paymentRef.endsWith('-fail'))) {
-      setState('FAILED');
-      setErrorMessage('Paiement refusé par la banque (simulation Sandbox). Aucun montant n’a été débité.');
-      return { ok: false };
+      return { data: { confirmed: false, status: 'failed' } };
     }
 
     if (!forceFresh && lastCompletedKeyRef.current === key) {
-      return { ok: true };
+      return { data: { confirmed: true } };
     }
 
     let requestPromise = !forceFresh ? inFlightVerifications.get(key) : null;
@@ -66,20 +71,40 @@ export default function PaymentReturnPage() {
     let isMounted = true;
     const key = `${orderId}|${paymentRef || ''}|${receiptEmail}|${failedParam}`;
 
-    async function verify() {
-      if (failedParam || (paymentRef && paymentRef.endsWith('-fail'))) {
-        if (isMounted) {
-          setState('FAILED');
-          setErrorMessage('Paiement refusé par la banque (simulation Sandbox). Aucun montant n’a été débité.');
-        }
-        return;
-      }
+    if (failedParam || (paymentRef && paymentRef.endsWith('-fail'))) {
+      setState('FAILED');
+      setErrorMessage('Paiement refusé par la banque (simulation Sandbox). Aucun montant n’a été débité.');
+      return () => {
+        isMounted = false;
+      };
+    }
 
-      setState('VERIFYING');
+    setState('VERIFYING');
+    setVerifyStage(0);
+    const stageTimer = setTimeout(() => {
+      if (isMounted) setVerifyStage(1);
+    }, 800);
+
+    async function verify() {
       try {
-        const res = await runVerification(retryCount > 0);
+        const [apiOutcome] = await Promise.allSettled([
+          runVerification(retryCount > 0),
+          new Promise((resolve) => setTimeout(resolve, MIN_VERIFY_DISPLAY_MS)),
+        ]);
         if (!isMounted) return;
+
+        if (apiOutcome.status === 'rejected') {
+          throw apiOutcome.reason;
+        }
+
+        const res = apiOutcome.value;
         lastCompletedKeyRef.current = key;
+        const delivery = res?.data?.emailDelivery || null;
+        if (delivery) {
+          console.info('Diagnostic livraison reçu e-mail :', delivery);
+        }
+        setEmailDelivery(delivery);
+
         if (res?.data?.confirmed === false) {
           setState('FAILED');
           setErrorMessage(`Le paiement n'est pas confirmé par la passerelle (statut : ${res.data.status || 'en attente'}).`);
@@ -104,6 +129,7 @@ export default function PaymentReturnPage() {
     verify();
     return () => {
       isMounted = false;
+      clearTimeout(stageTimer);
     };
   }, [orderId, paymentRef, receiptEmail, failedParam, retryCount, runVerification]);
 
@@ -142,7 +168,9 @@ export default function PaymentReturnPage() {
                 </p>
                 <div className="mt-10 flex items-center gap-4">
                   <Spinner size="lg" />
-                  <span className="cs-label">Connexion à la banque</span>
+                  <span className="cs-label transition-opacity duration-300">
+                    {STEP_LABELS[verifyStage] || STEP_LABELS[0]}
+                  </span>
                 </div>
               </header>
             )}
@@ -158,10 +186,17 @@ export default function PaymentReturnPage() {
                   <p className="cs-lead mt-5 max-w-xl">
                     Votre commande a été réglée avec succès. Votre ticket de retrait dynamique avec QR code tournant est prêt.
                   </p>
-                  {displayReceiptEmail && (
+                  {emailDelivery?.sent === true ? (
                     <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#E7F5EC] border-2 border-[#1F7A3A] px-4 py-2 text-sm font-bold text-[#1F7A3A]">
                       <MailCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>✓ Paiement Konnect validé • Reçu envoyé à {displayReceiptEmail}</span>
+                      <span>
+                        ✓ Paiement Konnect validé • Reçu envoyé à {emailDelivery.toEmail || displayReceiptEmail}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#FAF6EE] border-2 border-[#111111] px-4 py-2 text-sm font-bold text-[#111111]">
+                      <ShieldCheck className="w-4 h-4 shrink-0 text-[#1F7A3A]" aria-hidden="true" />
+                      <span>✓ Paiement Konnect validé • Ticket QR prêt pour le retrait</span>
                     </div>
                   )}
                 </header>

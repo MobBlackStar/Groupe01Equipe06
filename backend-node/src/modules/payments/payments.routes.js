@@ -7,7 +7,7 @@ import { Router } from 'express';
 import { paymentsController } from './payments.controller.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { validate } from '../../middleware/validate.js';
-import { initPaymentSchema, verifyPaymentSchema } from './payments.schemas.js';
+import { initPaymentSchema, verifyPaymentSchema, emailTestSchema } from './payments.schemas.js';
 
 export const paymentsRouter = Router();
 
@@ -31,4 +31,12 @@ paymentsRouter.post(
   authenticate,
   validate({ body: verifyPaymentSchema }),
   paymentsController.verifyPayment
+);
+
+// Diagnostic d'envoi de reçu e-mail en conditions réelles
+paymentsRouter.post(
+  '/email-test',
+  authenticate,
+  validate({ body: emailTestSchema }),
+  paymentsController.sendTestEmail
 );

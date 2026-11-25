@@ -107,8 +107,16 @@ export const paymentsService = {
 
       const order = orderDoc.data();
 
-      // 1. GARANTIE D'IDEMPOTENCE STRICTE
+      // 1. GARANTIE D'IDEMPOTENCE STRICTE (tout en permettant l'expédition tardive unique du reçu si absent)
       if (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.COMPLETED) {
+        const shouldSendLateReceipt = Boolean(overrideEmail && order.receiptSent !== true);
+        if (shouldSendLateReceipt) {
+          transaction.update(orderRef, {
+            receiptEmail: overrideEmail,
+            updatedAt: now,
+          });
+        }
+
         // Enregistrement d'audit pour traçabilité de la tentative redondante
         const eventRef = db.collection('payment_events').doc();
         transaction.set(eventRef, {
@@ -119,7 +127,8 @@ export const paymentsService = {
           timestamp: now,
         });
 
-        return { order, alreadyConfirmed: true };
+        const mergedOrder = shouldSendLateReceipt ? { ...order, receiptEmail: overrideEmail } : order;
+        return { order: mergedOrder, alreadyConfirmed: true, dispatchReceiptOnly: shouldSendLateReceipt };
       }
 
       if (order.status !== ORDER_STATUS.RESERVED) {
@@ -248,52 +257,85 @@ export const paymentsService = {
       return { order: updatedOrder, confirmed: true };
     });
 
-    // 5. NOTIFICATIONS FCM & REÇU E-MAIL POST-COMMIT (Hors transaction, strictement fire-and-forget)
-    if (result.confirmed && !result.alreadyConfirmed) {
-      void (async () => {
+    // 5. NOTIFICATIONS FCM (fire-and-forget) & REÇU E-MAIL BORNÉ (max 3000 ms) POST-COMMIT
+    let emailDelivery = null;
+
+    if ((result.confirmed && !result.alreadyConfirmed) || result.dispatchReceiptOnly) {
+      const targetOrder = result.order;
+
+      const emailPromise = (async () => {
         try {
-          const [studentUserDoc, merchantDoc, resolvedMerchantTokens] = await Promise.all([
-            db.collection('users').doc(result.order.studentId).get(),
-            db.collection('merchants').doc(result.order.merchantId).get(),
-            getMerchantTokens(result.order.merchantId),
+          const [studentUserDoc, merchantDoc] = await Promise.all([
+            db.collection('users').doc(targetOrder.studentId).get(),
+            db.collection('merchants').doc(targetOrder.merchantId).get(),
           ]);
 
           const studentData = studentUserDoc.exists ? studentUserDoc.data() : null;
           const merchantData = merchantDoc.exists ? merchantDoc.data() : null;
-          if (studentData) {
-            studentTokens = studentData.fcmTokens || [];
-          }
-          merchantTokens = resolvedMerchantTokens || [];
 
-          const sideEffects = [];
-          if (studentTokens.length > 0) {
-            sideEffects.push(fcmService.notifyTicketReady(studentTokens, result.order.orderCode));
+          if (result.confirmed && !result.alreadyConfirmed) {
+            // Notifications push strictement fire-and-forget (n'allongent pas /verify)
+            void (async () => {
+              try {
+                if (studentData) {
+                  studentTokens = studentData.fcmTokens || [];
+                }
+                merchantTokens = (await getMerchantTokens(targetOrder.merchantId)) || [];
+                const pushJobs = [];
+                if (studentTokens.length > 0) {
+                  pushJobs.push(fcmService.notifyTicketReady(studentTokens, targetOrder.orderCode));
+                }
+                if (merchantTokens.length > 0) {
+                  pushJobs.push(fcmService.notifyOrderPaid(merchantTokens, targetOrder.orderCode));
+                }
+                if (pushJobs.length > 0) await Promise.allSettled(pushJobs);
+              } catch (pushErr) {
+                logger.warn({ err: pushErr?.message }, 'Expédition FCM post-paiement échouée (non bloquante)');
+              }
+            })();
           }
-          if (merchantTokens.length > 0) {
-            sideEffects.push(fcmService.notifyOrderPaid(merchantTokens, result.order.orderCode));
-          }
-          sideEffects.push(
-            sendOrderReceiptEmail({
-              order: result.order,
-              student: studentData,
-              merchant: merchantData,
-              overrideEmail,
-            })
-          );
 
-          const settled = await Promise.allSettled(sideEffects);
-          for (const item of settled) {
-            if (item.status === 'rejected') {
-              logger.warn({ err: item.reason?.message || String(item.reason) }, 'Effet de bord post-paiement échoué (non bloquant)');
-            }
+          const delivery = await sendOrderReceiptEmail({
+            order: targetOrder,
+            student: studentData,
+            merchant: merchantData,
+            overrideEmail,
+          });
+
+          if (delivery?.sent === true) {
+            void orderRef.update({ receiptSent: true, updatedAt: new Date() }).catch(() => {});
           }
-        } catch (sideEffectErr) {
-          logger.warn({ err: sideEffectErr?.message }, 'Expédition de notification / e-mail post-paiement échouée (non bloquante)');
+          return delivery;
+        } catch (err) {
+          logger.warn({ err: err?.message }, 'Expédition du reçu e-mail échouée (non bloquante)');
+          return {
+            sent: false,
+            provider: 'error',
+            toEmail: overrideEmail || targetOrder.receiptEmail || '',
+            error: err?.message || 'EMAIL_DISPATCH_ERROR',
+          };
         }
       })();
+
+      emailDelivery = await Promise.race([
+        emailPromise,
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                sent: false,
+                pending: true,
+                provider: 'timeout',
+                toEmail: overrideEmail || targetOrder.receiptEmail || '',
+                error: 'EMAIL_RACE_TIMEOUT_3000MS',
+              }),
+            3000
+          )
+        ),
+      ]);
     }
 
-    return result;
+    return emailDelivery ? { ...result, emailDelivery } : result;
   },
 
   /**
@@ -355,9 +397,17 @@ export const paymentsService = {
 
     const order = orderDoc.data();
 
-    // Si déjà validée, retour immédiat
-    if (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.COMPLETED) {
+    // Si déjà validée, retour immédiat sauf si un reçu e-mail n'a pas encore été envoyé et est explicitement demandé
+    if (
+      (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.COMPLETED) &&
+      (!options?.receiptEmail || order.receiptSent === true)
+    ) {
       return { order, confirmed: true, alreadyConfirmed: true };
+    }
+
+    if (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.COMPLETED) {
+      const result = await this.confirmPayment(orderId, 'RETURN_VERIFY', options);
+      return { ...result, confirmed: true };
     }
 
     const effectiveRef =
