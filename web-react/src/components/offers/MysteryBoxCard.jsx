@@ -4,15 +4,17 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ArrowUpRight } from 'lucide-react';
+import { MapPin, ArrowUpRight, ShoppingBag } from 'lucide-react';
 import PriceTicker from './PriceTicker.jsx';
 import CountdownChip from './CountdownChip.jsx';
 import RarityBadge from './RarityBadge.jsx';
 import { SURPRISE_RARITY } from '@shared/constants.js';
 import { calculateWalkingMinutes } from '@shared/geo.js';
 import { resolveOfferImage } from '../../lib/offerImages.js';
+import { useBag } from '../../context/BagContext.jsx';
 
 export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
+  const { addToBag } = useBag();
   if (!offer) return null;
 
   const id = offer.id || offer._id;
@@ -75,14 +77,31 @@ export default function MysteryBoxCard({ offer, className = '', index = 0 }) {
         <h3 className="cs-h3 mt-3 line-clamp-2">Panier surprise · {merchantName}</h3>
         <p className="mt-1.5 text-base leading-snug line-clamp-2">{teaser}</p>
 
-        <div className="mt-auto pt-5 flex items-end justify-between gap-3">
+        <div className="mt-auto pt-5 flex items-end justify-between gap-2">
           <PriceTicker offer={offer} size="md" />
-          <span
-            aria-hidden="true"
-            className="shrink-0 w-12 h-12 rounded-full bg-[#111111] text-[#FFD000] border-2 border-[#111111] flex items-center justify-center transition-transform duration-300 group-hover:rotate-45"
-          >
-            <ArrowUpRight className="w-6 h-6" strokeWidth={2.5} />
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            {available > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToBag(offer, 1);
+                }}
+                aria-label={`Ajouter panier surprise ${merchantName} au sac`}
+                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-full bg-white hover:bg-[#111111] hover:text-[#FFD000] text-[#111111] border-2 border-[#111111] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <ShoppingBag className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Ajouter</span>
+              </button>
+            )}
+            <span
+              aria-hidden="true"
+              className="shrink-0 w-11 h-11 rounded-full bg-[#111111] text-[#FFD000] border-2 border-[#111111] flex items-center justify-center transition-transform duration-300 group-hover:rotate-45"
+            >
+              <ArrowUpRight className="w-5 h-5" strokeWidth={2.5} />
+            </span>
+          </div>
         </div>
       </div>
     </Link>

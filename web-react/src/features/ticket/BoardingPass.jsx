@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import HalftoneMascotQr from './HalftoneMascotQr.jsx';
+import { normalizeOrderItems } from '@shared/orders.js';
 import { generateClientTicketData } from '../../lib/ticketCrypto.js';
 import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
 
@@ -71,6 +72,9 @@ export default function BoardingPass({
   const orderCode = ticket?.orderCode || 'CS-8K4M9';
   const offerTitle = ticket?.offerTitle || 'Baguette Farcie Escalope Panée';
   const quantity = ticket?.quantity || 2;
+  const ticketLines = Array.isArray(ticket?.items) && ticket.items.length > 0
+    ? normalizeOrderItems({ items: ticket.items })
+    : [{ offerId: 'single', title: offerTitle, quantity }];
 
   const pickupWindow = formatTunisTimeWindow(ticket?.pickupStartAt, ticket?.pickupEndAt);
   const pickupDate = formatTunisDate(ticket?.pickupStartAt, { fallback: '' });
@@ -145,9 +149,13 @@ export default function BoardingPass({
 
           <div>
             <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#5E5850]">Commande</p>
-            <p className="text-[16px] sm:text-[17px] font-bold leading-snug mt-2">
-              <span className="text-[#DA0711]">{quantity} ×</span> {offerTitle}
-            </p>
+            <ul className="mt-2 space-y-1.5">
+              {ticketLines.map((line, idx) => (
+                <li key={`${line.offerId}-${idx}`} className="text-[16px] sm:text-[17px] font-bold leading-snug">
+                  <span className="text-[#DA0711]">{line.quantity} ×</span> {line.title}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 

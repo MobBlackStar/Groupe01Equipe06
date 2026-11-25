@@ -17,12 +17,14 @@ import { calculateWalkingMinutes } from '@shared/geo.js';
 import { calculateImpact, calculateEquivalences } from '@shared/impact.js';
 import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
 import { formatTunisTime } from '../../lib/formatters.js';
-import { Store, Clock, Flame, Minus, Plus, MapPin, ArrowLeft, ArrowRight, Lock } from 'lucide-react';
+import { Store, Clock, Flame, Minus, Plus, MapPin, ArrowLeft, ArrowRight, Lock, ShoppingBag } from 'lucide-react';
 import { formatCategory } from '../../components/offers/OfferCard.jsx';
+import { useBag } from '../../context/BagContext.jsx';
 
 export default function OfferDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToBag } = useBag();
 
   const [offer, setOffer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -389,15 +391,31 @@ export default function OfferDetailPage() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleReserve}
-              disabled={isSubmitting || maxAvailable <= 0}
-              className="cs-btn cs-btn-red cs-btn-lg cs-btn-block mt-6"
-            >
-              {isSubmitting ? 'Verrouillage en cours…' : maxAvailable <= 0 ? 'Épuisé' : 'Bloquer mon prix 10 min'}
-              {!isSubmitting && maxAvailable > 0 && <ArrowRight className="w-6 h-6" strokeWidth={2.5} />}
-            </button>
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => addToBag(currentOffer, quantity)}
+                disabled={maxAvailable <= 0}
+                className="cs-btn cs-btn-mustard cs-btn-lg cs-btn-block"
+              >
+                <ShoppingBag className="w-5 h-5" strokeWidth={2.5} aria-hidden="true" />
+                <span>
+                  {maxAvailable <= 0
+                    ? 'Épuisé'
+                    : `Ajouter au sac (${quantity})`}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReserve}
+                disabled={isSubmitting || maxAvailable <= 0}
+                className="cs-btn cs-btn-red cs-btn-lg cs-btn-block"
+              >
+                {isSubmitting ? 'Verrouillage en cours…' : maxAvailable <= 0 ? 'Épuisé' : 'Réserver directement (10 min)'}
+                {!isSubmitting && maxAvailable > 0 && <ArrowRight className="w-6 h-6" strokeWidth={2.5} />}
+              </button>
+            </div>
 
             <p className="mt-4 flex items-center justify-center gap-2 text-base text-[#5E5850] text-center">
               <Lock className="w-4 h-4 shrink-0" />

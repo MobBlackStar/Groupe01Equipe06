@@ -8,8 +8,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
+import { normalizeOrderItems } from '@shared/orders.js';
 import { formatTunisDate, formatTunisTimeWindow } from '../../lib/formatters.js';
-import { getDistinctGriddleFoodImage } from '../../lib/griddleAssets.js';
+import { resolveOfferImage, SAFE_FOOD_FALLBACK_IMG } from '../../lib/offerImages.js';
 import { Spinner } from '../../components/ui/index.js';
 import {
   Clock,
@@ -187,10 +188,11 @@ export default function CheckoutPage() {
 
   // Normalisation d'affichage : l'API renvoie `pricing`, `offerSnapshot`, `merchantSnapshot`
   // alors que la démo utilise des champs à plat.
+  const orderItems = normalizeOrderItems(currentOrder);
   const pricing = currentOrder.pricing || {};
   const offerSnap = currentOrder.offerSnapshot || {};
   const orderRef = currentOrder.id || currentOrder.orderId || orderId || MOCK_ORDER_ID;
-  const quantity = Number(currentOrder.quantity) || 1;
+  const quantity = orderItems.reduce((sum, it) => sum + it.quantity, 0) || Number(currentOrder.quantity) || 1;
   const lockedUnit = Number(currentOrder.lockedUnitPriceMillimes ?? pricing.lockedUnitPriceMillimes);
   const originalUnit = Number(currentOrder.originalUnitPriceMillimes ?? pricing.originalUnitPriceMillimes);
   const offerTitle = currentOrder.offerTitle || currentOrder.title || offerSnap.title || 'Offre anti-gaspi';
@@ -202,7 +204,8 @@ export default function CheckoutPage() {
     currentOrder.photoUrl ||
     offerSnap.photoUrl ||
     offerSnap.imageUrl ||
-    getDistinctGriddleFoodImage(offerSnap.category || currentOrder.category || 'fast-food', currentOrder.offerId || orderRef);
+    orderItems[0]?.photoUrl ||
+    resolveOfferImage({ category: offerSnap.category || currentOrder.category, title: offerTitle });
 
   const expiresAtMs = toMillis(currentOrder.reservationExpiresAt) ?? (Date.now() + 600000);
   const secondsLeft = Math.max(0, Math.floor((expiresAtMs - now) / 1000));
@@ -211,8 +214,18 @@ export default function CheckoutPage() {
   const minStr = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const secStr = String(secondsLeft % 60).padStart(2, '0');
 
-  const subtotalMillimes = lockedUnit * quantity;
-  const originalTotal = (Number.isFinite(originalUnit) ? originalUnit : lockedUnit) * quantity;
+  const computedSubtotal = orderItems.reduce((sum, it) => sum + it.lineSubtotalMillimes, 0);
+  const subtotalMillimes = Number.isFinite(Number(pricing.subtotalMillimes))
+    ? Number(pricing.subtotalMillimes)
+    : computedSubtotal || lockedUnit * quantity;
+  const computedOriginal = orderItems.reduce(
+    (sum, it) => sum + (it.originalUnitPriceMillimes || it.unitPriceMillimes) * it.quantity,
+    0
+  );
+  const originalTotal =
+    computedOriginal > 0
+      ? computedOriginal
+      : (Number.isFinite(originalUnit) ? originalUnit : lockedUnit) * quantity;
   const baseSaved = Math.max(0, originalTotal - subtotalMillimes);
 
   // Remise et total calculés par le SERVEUR au moment de la réservation (coupon choisi sur la fiche offre).
@@ -382,18 +395,24 @@ export default function CheckoutPage() {
 
             {/* Lignes d'articles */}
             <div className="space-y-3">
-              <div className="flex justify-between items-start gap-4">
-                <span className="font-bold text-[17px] break-words min-w-0">
-                  {quantity}× {offerTitle}
-                </span>
-                <span className="font-bold text-[17px] whitespace-nowrap">{money(subtotalMillimes)}</span>
-              </div>
-              <div className="flex justify-between gap-4 text-[#5E5850] pl-4">
-                <span>Prix unitaire scellé</span>
-                <span className="whitespace-nowrap">{money(lockedUnit)}</span>
-              </div>
+              {orderItems.map((line, idx) => (
+                <div key={`${line.offerId}-${idx}`} className="space-y-1">
+                  <div className="flex justify-between items-start gap-4">
+                    <span className="font-bold text-[17px] break-words min-w-0">
+                      {line.quantity}× {line.title}
+                    </span>
+                    <span className="font-bold text-[17px] whitespace-nowrap">
+                      {money(line.lineSubtotalMillimes)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-4 text-[#5E5850] pl-4 text-sm">
+                    <span>Prix unitaire scellé</span>
+                    <span className="whitespace-nowrap">{money(line.unitPriceMillimes)}</span>
+                  </div>
+                </div>
+              ))}
               {discountAmount > 0 && (
-                <div className="flex justify-between gap-4 text-[#1F7A3A] font-bold pl-4">
+                <div className="flex justify-between gap-4 text-[#1F7A3A] font-bold pl-4 pt-1">
                   <span>Avantage ÉcoPoints</span>
                   <span className="whitespace-nowrap">-{money(discountAmount)}</span>
                 </div>

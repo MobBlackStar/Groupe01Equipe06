@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
+import { normalizeOrderItems } from '@shared/orders.js';
 import { formatTunisDate, formatTunisTime, formatTunisTimeWindow } from '../../lib/formatters.js';
 import { EmptyState, Spinner, Tabs } from '../../components/ui/index.js';
 import { QrCode, Clock, User, ArrowRight } from 'lucide-react';
@@ -24,18 +25,20 @@ function toDateInput(v) {
 // Normalise une commande (mock ou API) pour l'affichage : jamais de NaN / ISO brut / 0,000 DT
 function orderView(o) {
   const snap = o.offerSnapshot || {};
+  const lines = normalizeOrderItems(o);
   const start = toDateInput(o.pickupStartAt ?? snap.pickupStartAt);
   const end = toDateInput(o.pickupEndAt ?? snap.pickupEndAt);
   const totalRaw = o.totalPriceMillimes ?? o.pricing?.totalMillimes;
   const totalNum = Number(totalRaw);
   const created = toDateInput(o.createdAt);
   const createdTime = formatTunisTime(created);
-  const qty = Number(o.quantity);
+  const qty = lines.length > 0 ? lines.reduce((sum, l) => sum + l.quantity, 0) : Number(o.quantity);
 
   return {
     key: o.id || o.orderId || o.orderCode,
     code: o.orderCode || '—',
     title: o.offerTitle || snap.title || 'Offre anti-gaspi',
+    lines,
     customer: o.customerName || o.studentSnapshot?.displayName || 'Étudiant ESSECT',
     quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
     total: totalRaw != null && Number.isFinite(totalNum) && totalNum > 0 ? formatTND(totalNum) : '—',
@@ -220,6 +223,19 @@ export default function MerchantOrdersPage() {
                     </span>
                   </div>
                   <h3 className="cs-h3 line-clamp-2">{o.title}</h3>
+                  {o.lines.length > 1 && (
+                    <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Détail des articles à remettre">
+                      {o.lines.map((line, idx) => (
+                        <li
+                          key={`${line.offerId}-${idx}`}
+                          className="inline-flex items-center gap-1 rounded-full bg-[#EDE6D7] border border-[#111111]/25 px-2.5 py-0.5 text-xs font-semibold text-[#111111]"
+                        >
+                          <span className="text-[#DA0711] font-bold">{line.quantity}×</span>
+                          <span>{line.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-base">
                     <span className="inline-flex items-center gap-2 font-semibold">
                       <Clock className="w-4 h-4 text-[#DA0711]" aria-hidden="true" />

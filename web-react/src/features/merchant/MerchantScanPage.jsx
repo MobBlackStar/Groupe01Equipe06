@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
+import { normalizeOrderItems } from '@shared/orders.js';
 import { QrCode, KeyRound, CheckCircle2, RotateCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
 import Spinner from '../../components/ui/Spinner.jsx';
 
@@ -242,6 +243,22 @@ export default function MerchantScanPage() {
                   <dd className="font-bold text-[#1F7A3A] text-right">{points != null ? `+${points} pts` : '—'}</dd>
                 </div>
               </dl>
+
+              {/* Détail des articles à remettre */}
+              {result.order && normalizeOrderItems(result.order).length > 0 && (
+                <>
+                  <hr className="cs-receipt-rule" />
+                  <p className="font-bold uppercase text-[#111111] mb-2.5 text-sm">🛍️ Articles à remettre</p>
+                  <ul className="space-y-1.5 text-base">
+                    {normalizeOrderItems(result.order).map((line, idx) => (
+                      <li key={`${line.offerId}-${idx}`} className="flex justify-between gap-4">
+                        <span>{line.title}</span>
+                        <span className="font-bold text-[#DA0711]">x{line.quantity}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
 
               {/* Révélation du panier surprise */}
               {result.isSurprise && result.reveal && (
