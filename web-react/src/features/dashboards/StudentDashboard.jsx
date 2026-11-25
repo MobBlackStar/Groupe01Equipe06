@@ -195,7 +195,7 @@ export default function StudentDashboard() {
   const studentName = user?.displayName || profile?.fullName || (isReal ? 'Étudiant' : 'Ritej Bejaoui');
   const filiere = user?.filiere || profile?.filiere || (isReal ? 'ESSECT' : '3A E-Business');
 
-  const mealsSaved = finiteOrNull(stats.ordersCompleted);
+  const mealsSaved = finiteOrNull(stats.mealsRescued ?? stats.ordersCompleted);
   const co2Grams = finiteOrNull(stats.co2SavedGrams);
 
   const chartSeries = (data.savingsHistory || (isReal ? [] : DEMO_STUDENT_DASHBOARD.savingsHistory)).map((item) => ({
@@ -203,10 +203,9 @@ export default function StudentDashboard() {
     value: metricMode === 'money' ? Math.round(Number(item.value || 0) / 1000) : Number(item.co2 || 0),
   }));
 
-  // Seules les commandes retirées (COMPLETED) sont des "repas récupérés" : on écarte
-  // les réservations en cours, expirées ou annulées (pas d'économie ni de notation possibles).
+  // Commandes confirmées (PAID + COMPLETED) pour synchroniser les métriques ; la notation reste réservée aux retraits COMPLETED.
   const recentOrders = (data.recentOrders || [])
-    .filter((order) => order.status === ORDER_STATUS.COMPLETED)
+    .filter((order) => order.status === ORDER_STATUS.COMPLETED || order.status === ORDER_STATUS.PAID)
     .map((order) => {
       const price =
         finiteOrNull(order.priceMillimes) ??
@@ -229,6 +228,9 @@ export default function StudentDashboard() {
     });
 
   const renderRating = (order, block) => {
+    if (order.status === ORDER_STATUS.PAID) {
+      return <span className="cs-pill cs-pill-mustard">Payée · À retirer</span>;
+    }
     const raw = order.rating;
     const stars = typeof raw === 'object' && raw !== null ? raw.stars : raw;
     const numStars = Number.isFinite(Number(stars)) && Number(stars) > 0 ? Number(stars) : null;
@@ -289,7 +291,7 @@ export default function StudentDashboard() {
             subtitle="Invendus rachetés à Montfleury"
             icon={<ShoppingBag className="w-5 h-5" />}
             accent="red"
-            badge="+3 cette sem."
+            badge={stats.ordersPaid > 0 ? `${stats.ordersPaid} à retirer` : 'Synchronisé'}
             positive={true}
           />
           <KpiCard

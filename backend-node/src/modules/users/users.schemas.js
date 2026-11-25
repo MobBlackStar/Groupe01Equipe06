@@ -6,10 +6,14 @@
 import { z } from 'zod';
 import { isValidAvatarValue } from '../../../../shared/avatars.js';
 import { FILIERES } from '../../../../shared/constants.js';
+import { normalizeTunisianPhone } from '../auth/auth.service.js';
 
 export const updateProfileSchema = z.object({
   displayName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères').max(60).optional(),
-  phone: z.string().regex(/^\+216[2-9]\d{7}$/, 'Numéro tunisien invalide (+216XXXXXXXX)').optional().nullable(),
+  phone: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : normalizeTunisianPhone(v)),
+    z.string().regex(/^\+216[2-9]\d{7}$/, 'Numéro tunisien invalide (+216XXXXXXXX)').nullable()
+  ).optional(),
   avatarUrl: z.string().refine(isValidAvatarValue, 'Avatar invalide (adresse http(s) ou avatar prédéfini)').optional().nullable(),
   filiereId: z.nativeEnum(FILIERES).optional().nullable(),
   notificationPrefs: z.object({

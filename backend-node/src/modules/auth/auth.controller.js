@@ -7,6 +7,11 @@ import { authService } from './auth.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 export const authController = {
+  checkAvailability: asyncHandler(async (req, res) => {
+    const result = await authService.checkAvailability(req.body || {});
+    res.json(result);
+  }),
+
   registerProfile: asyncHandler(async (req, res) => {
     const result = await authService.registerProfile(req.user, req.body);
     res.status(201).json(result);

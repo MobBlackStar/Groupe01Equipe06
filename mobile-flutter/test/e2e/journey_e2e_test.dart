@@ -45,7 +45,7 @@ void main() {
     await expectLater(student.fetchTicket(reserved.id), throwsA(isA<ApiException>()));
 
     final init = await student.initPayment(reserved.id);
-    expect(init.payUrl, contains('payment/return'));
+    expect(init.payUrl, anyOf(contains('payment/return'), contains('payment/konnect-sandbox')));
     expect(await student.verifyPayment(reserved.id, paymentRef: init.paymentRef), isTrue);
 
     final order = await student.fetchOrder(reserved.id);

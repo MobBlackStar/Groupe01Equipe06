@@ -65,7 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text,
         role: _selectedRole,
         displayName: _nameController.text.trim(),
-        phone: phone.isNotEmpty ? phone : null,
+        phone: phone.isNotEmpty && phone != '+216' ? phone : null,
         filiereId: _selectedRole == 'STUDENT' ? _selectedFiliere : null,
       );
 

@@ -84,31 +84,60 @@ export default function RegisterPage() {
     localStorage.removeItem('campussave_token');
 
     try {
-      let uid = `user_${Date.now()}`;
-      if (auth) {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          formData.email,
-          formData.password
-        );
-        uid = userCredential.user.uid;
-      }
-
       // Formatage rigoureux du profil pour l'API
-      const cleanPhone = formData.phone && formData.phone.trim() !== '+216' && formData.phone.trim() !== ''
-        ? formData.phone.trim()
-        : null;
+      const cleanEmail = formData.email.trim().toLowerCase();
+      const rawPhone = formData.phone ? formData.phone.replace(/[\s\-().]/g, '').trim() : '';
+      const cleanPhone = rawPhone && rawPhone !== '+216' && rawPhone !== '+' ? rawPhone : null;
       const cleanFiliereId = formData.role === ROLES.STUDENT && formData.filiereId
         ? formData.filiereId
         : null;
 
+      // 2. Pré-vérification serveur d'unicité avant création Firebase Auth
+      try {
+        const availRes = await apiClient.post(ENDPOINTS.CHECK_AVAILABILITY, {
+          email: cleanEmail,
+          ...(cleanPhone ? { phone: cleanPhone } : {}),
+        });
+        const avail = availRes.data || {};
+        if (avail.emailTaken || avail.phoneTaken) {
+          const nextErrors = {};
+          if (avail.emailTaken) nextErrors.email = 'Cette adresse email est déjà associée à un compte.';
+          if (avail.phoneTaken) nextErrors.phone = 'Ce numéro de téléphone est déjà utilisé par un autre compte.';
+          setErrors(nextErrors);
+          setServerMsg({
+            type: 'error',
+            text: avail.emailTaken
+              ? 'Cette adresse email est déjà associée à un compte.'
+              : 'Ce numéro de téléphone est déjà utilisé par un autre compte.',
+          });
+          return;
+        }
+      } catch (availErr) {
+        if (availErr.response?.status === 409) throw availErr;
+      }
+
+      if (auth) {
+        await createUserWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          formData.password
+        );
+      }
+
       // Appel endpoint backend pour initialiser le document utilisateur et les custom claims
-      await apiClient.post(ENDPOINTS.REGISTER_PROFILE, {
-        role: formData.role,
-        displayName: formData.displayName.trim(),
-        phone: cleanPhone,
-        filiereId: cleanFiliereId,
-      });
+      try {
+        await apiClient.post(ENDPOINTS.REGISTER_PROFILE, {
+          role: formData.role,
+          displayName: formData.displayName.trim(),
+          phone: cleanPhone,
+          filiereId: cleanFiliereId,
+        });
+      } catch (profileErr) {
+        if (auth?.currentUser && profileErr?.response?.status === 409) {
+          await auth.currentUser.delete().catch(() => {});
+        }
+        throw profileErr;
+      }
 
       // Actualisation forcée du jeton Firebase Auth pour intégrer le claim de rôle
       if (auth?.currentUser) {
@@ -143,9 +172,13 @@ export default function RegisterPage() {
     } catch (err) {
       console.error('Erreur inscription:', err);
       let errorMsg = "Une erreur est survenue lors de l'inscription.";
-      if (err.code === 'auth/email-already-in-use') {
+      const apiErrCode = err.response?.data?.error?.code;
+      if (err.code === 'auth/email-already-in-use' || apiErrCode === 'EMAIL_ALREADY_IN_USE') {
         errorMsg = 'Cette adresse email est déjà associée à un compte.';
         setErrors((prev) => ({ ...prev, email: errorMsg }));
+      } else if (apiErrCode === 'PHONE_ALREADY_IN_USE') {
+        errorMsg = 'Ce numéro de téléphone est déjà utilisé par un autre compte.';
+        setErrors((prev) => ({ ...prev, phone: errorMsg }));
       } else if (err.code === 'auth/weak-password') {
         errorMsg = 'Le mot de passe choisi doit comporter au moins 6 caractères.';
         setErrors((prev) => ({ ...prev, password: errorMsg }));

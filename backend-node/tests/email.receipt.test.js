@@ -74,7 +74,8 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.ok(html.includes('#111111'));
     assert.ok(html.includes('#FFD000'));
     assert.ok(html.includes('#DA0711'));
-    assert.ok(html.includes('[PAYÉ • KONNECT MODE TEST]'));
+    assert.ok(html.includes('Paiement confirmé • Konnect'));
+    assert.ok(!html.includes('[PAYÉ • KONNECT MODE TEST]'));
     assert.ok(html.includes('#CS-991AB'));
     assert.ok(html.includes('1x Baguette Farcie Escalope'));
     assert.ok(html.includes('2x Makloub Chawarma'));
@@ -120,7 +121,8 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(liveResult.toEmail, 'examiner@essect.u-tunis.tn');
     assert.equal(sentPayloads.length, 1);
     assert.equal(sentPayloads[0].to, 'examiner@essect.u-tunis.tn');
-    assert.ok(sentPayloads[0].subject.includes('#CS-991AB'));
+    assert.equal(sentPayloads[0].subject, 'Confirmation de commande #CS-991AB — Munchies & Baguette Ali Trad');
+    assert.ok(sentPayloads[0].text.includes('1x Baguette Farcie Escalope'));
     assert.ok(sentPayloads[0].html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
   });
 
@@ -150,6 +152,9 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(calls[0].init.redirect, 'follow');
     assert.equal(calls[0].body.secret, 'bridge-secret-123');
     assert.equal(calls[0].body.to, 'yassine@essect.u-tunis.tn');
+    assert.equal(calls[0].body.fromName, 'CampusSave ESSECT');
+    assert.ok(calls[0].body.replyTo);
+    assert.ok(calls[0].body.text.includes('2x Makloub Chawarma'));
     assert.ok(calls[0].body.html.includes('https://campussave-rouge.vercel.app/assets/brand/mascot-sticker-256.png'));
   });
 
@@ -180,6 +185,7 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.equal(calls[0].init.headers['api-key'], 'xkeysib-test-123');
     assert.equal(calls[0].body.sender.email, 'noreply@campussave.tn');
     assert.equal(calls[0].body.to[0].email, 'ritej@essect.u-tunis.tn');
+    assert.ok(calls[0].body.textContent.includes('10,200 DT'));
   });
 
   test('getEmailProviderStatus détecte le fournisseur actif sans exposer aucun secret et supprime les espaces SMTP', async () => {

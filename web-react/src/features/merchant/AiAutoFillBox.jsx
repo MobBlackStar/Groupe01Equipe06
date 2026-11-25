@@ -7,6 +7,7 @@ import { apiClient } from '../../lib/api.js';
 import { ENDPOINTS } from '../../lib/endpoints.js';
 import { OFFER_CATEGORIES, PRICING_MODES, SURPRISE_RARITY } from '@shared/constants.js';
 import { calculateImpact } from '@shared/impact.js';
+import { resolveDishPhoto, resolveDishPhotoTag } from '@shared/dishPhotos.js';
 import { Sparkles, AlertTriangle } from 'lucide-react';
 
 // Lexique culinaire tunisien aligné sur le parseur backend pour le fallback hors-ligne
@@ -27,7 +28,9 @@ const CLIENT_TUNISIAN_LEXICON = [
   { pattern: '(?:p[aâ]tisseries?|g[aâ]teaux?|millefeuilles?|[eé]clairs?)', name: 'Pâtisserie', weight: 220, category: OFFER_CATEGORIES.PATISSERIE, defaultPrice: 4500 },
   { pattern: 'viennoiseries?', name: 'Viennoiserie', weight: 85, category: OFFER_CATEGORIES.VIENNOISERIE, defaultPrice: 1500 },
   { pattern: 'pizzas?', name: 'Pizza', weight: 500, category: OFFER_CATEGORIES.PIZZA, defaultPrice: 8500 },
-  { pattern: '(?:chawarmas?|shawarmas?|tacos|burgers?|paninis?)', name: 'Spécialité Grill', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7000 },
+  { pattern: '(?:cheeseburgers?|burgers?)', name: 'Burger Smash', weight: 360, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7500 },
+  { pattern: 'tacos?', name: 'Tacos', weight: 380, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7000 },
+  { pattern: '(?:chawarmas?|shawarmas?|paninis?)', name: 'Spécialité Grill', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 7000 },
   { pattern: '(?:sandwichs?\\s+au\\s+thon|sandwichs?\\s+thon|sandwiches|sandwichs?)', name: 'Sandwich', weight: 350, category: OFFER_CATEGORIES.SANDWICH, defaultPrice: 4500 },
   { pattern: 'salade?s?', name: 'Salade', weight: 250, category: OFFER_CATEGORIES.SALADE, defaultPrice: 4000 },
   { pattern: '(?<!avec\\s)(?<!au\\s)(?:eggs?|oeufs?|œufs|adham)', name: 'Œufs frais fermiers', weight: 360, category: OFFER_CATEGORIES.SNACK, defaultPrice: 3500 },
@@ -114,10 +117,15 @@ function clientParseRawNote(rawNote) {
       ? surpriseItems.map((it) => `${it.quantity}x ${it.name}`).join(' + ')
       : `${totalQty}x Assortiment surprise du chef`;
 
+  const photoTag = resolveDishPhotoTag({ category, title, rawNote, surpriseContents, isSurpriseBasket });
+  const suggestedPhotoUrl = resolveDishPhoto({ photoTag, category, title, rawNote, surpriseContents, isSurpriseBasket });
+
   return {
     title,
     description: `Offre préparée le jour même avec des ingrédients frais. Sauvez ${totalQty} portion(s) avant la fermeture à ${String(closingHour).padStart(2, '0')}h${String(closingMinute).padStart(2, '0')}.`,
     category,
+    photoTag,
+    suggestedPhotoUrl,
     originalPriceMillimes: originalPerUnit,
     discountedPriceMillimes: discountedPerUnit,
     startPriceMillimes: startPrice,

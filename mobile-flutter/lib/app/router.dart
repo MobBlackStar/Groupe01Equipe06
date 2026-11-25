@@ -153,7 +153,7 @@ class _StudentShellState extends State<StudentShell> {
         const RadarScreen(),
         _currentIndex == 2 ? const MyOrdersScreen() : const SizedBox.shrink(),
         _currentIndex == 3 ? const LoyaltyCardScreen() : const SizedBox.shrink(),
-        const StudentDashboardScreen(),
+        StudentDashboardScreen(isActive: _currentIndex == 4),
       ];
 
   static const _tabs = [
@@ -220,7 +220,7 @@ class _MerchantShellState extends State<MerchantShell> {
   // Seul l'onglet affiché est construit (sauf le bilan) : le scanner n'allume la caméra que lorsqu'il est visible,
   // et chaque liste se recharge depuis le serveur à chaque ouverture.
   List<Widget> get _pages => [
-        const MerchantDashboardScreen(),
+        MerchantDashboardScreen(isActive: _currentIndex == 0),
         _currentIndex == 1 ? const MerchantOffersScreen() : const SizedBox.shrink(),
         _currentIndex == 2 ? const ScannerScreen() : const SizedBox.shrink(),
         _currentIndex == 3 ? const MerchantOrdersScreen() : const SizedBox.shrink(),

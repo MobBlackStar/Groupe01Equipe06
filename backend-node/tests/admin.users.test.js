@@ -114,10 +114,41 @@ describe('Gestion Administrateur des Utilisateurs (Modifier & Supprimer)', () =>
     assert.equal(doc.exists, false);
 
     const auditSnap = await db.collection('admin_audit')
-      .where('action', '==', 'DELETE_USER')
+      .where('action', '==', 'USER_DELETED')
       .where('targetId', '==', targetUid)
       .get();
     assert.equal(auditSnap.empty, false);
+  });
+
+  test('adminService.deleteUser supprime en cascade le commerce rattaché et marque ses offres DELETED', async () => {
+    const merchUid = 'merch-cascade-del-01';
+    const storeId = 'store-cascade-del-01';
+    await db.collection('users').doc(merchUid).set({
+      uid: merchUid,
+      email: 'cascade.merchant@essect.u-tunis.tn',
+      displayName: 'Commerçant Cascade',
+      role: ROLES.MERCHANT,
+      merchantId: storeId,
+    });
+    await db.collection('merchants').doc(storeId).set({
+      id: storeId,
+      ownerUid: merchUid,
+      name: 'Boutique À Supprimer',
+      status: 'APPROVED',
+    });
+    await db.collection('offers').doc('offer-cascade-01').set({
+      id: 'offer-cascade-01',
+      merchantId: storeId,
+      title: 'Baguette Test',
+      status: 'ACTIVE',
+    });
+
+    const res = await adminService.deleteUser(merchUid, adminUid);
+    assert.equal(res.ok, true);
+    assert.ok(res.deletedMerchants.includes(storeId));
+    assert.equal((await db.collection('users').doc(merchUid).get()).exists, false);
+    assert.equal((await db.collection('merchants').doc(storeId).get()).exists, false);
+    assert.equal((await db.collection('offers').doc('offer-cascade-01').get()).data().status, 'DELETED');
   });
 
   test('adminService.deleteUser refuse la suppression de soi-même (403 FORBIDDEN)', async () => {

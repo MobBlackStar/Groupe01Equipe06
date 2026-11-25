@@ -87,6 +87,53 @@ function formatTunisReceiptDate(value) {
   }
 }
 
+export function buildOrderReceiptText({ order, student, merchant, overrideEmail, publicOrigin: explicitOrigin }) {
+  const origin = explicitOrigin || resolvePublicOrigin();
+  const { studentName } = resolveReceiptRecipient({ order, student, overrideEmail });
+
+  const orderId = order?.orderId || order?.id || '';
+  const orderCode = order?.orderCode || orderId || 'CS-CAMPUSSAVE';
+  const paymentRef = order?.payment?.paymentRef || 'KONNECT-TEST';
+  const merchantName =
+    merchant?.name ||
+    order?.merchantSnapshot?.name ||
+    'Commerce Partenaire ESSECT';
+  const dateLabel = formatTunisReceiptDate(order?.payment?.confirmedAt || order?.updatedAt || order?.createdAt);
+
+  const items = normalizeOrderItems(order || {});
+  const subtotalMillimes = Number.isFinite(order?.pricing?.subtotalMillimes)
+    ? order.pricing.subtotalMillimes
+    : items.reduce((sum, it) => sum + it.lineSubtotalMillimes, 0);
+  const discountMillimes = Number(order?.pricing?.discountMillimes || 0);
+  const totalMillimes = Number.isFinite(order?.pricing?.totalMillimes)
+    ? order.pricing.totalMillimes
+    : Math.max(0, subtotalMillimes - discountMillimes);
+  const savedMillimes = Number(order?.pricing?.savedMillimes || 0);
+  const ticketUrl = `${origin}/app/orders/${encodeURIComponent(orderId)}/ticket`;
+
+  const itemLines = items.map(
+    (item) => `- ${item.quantity}x ${item.title} : ${formatTND(item.lineSubtotalMillimes)}`
+  );
+
+  return [
+    `Bonjour ${studentName},`,
+    '',
+    `Votre paiement pour la commande #${orderCode} chez ${merchantName} est confirmé (Konnect).`,
+    `Date : ${dateLabel}`,
+    `Référence paiement : ${paymentRef}`,
+    '',
+    'Détail des plats :',
+    ...itemLines,
+    '',
+    `Total payé : ${formatTND(totalMillimes)}`,
+    `Économie réalisée : ${formatTND(savedMillimes)}`,
+    '',
+    `Votre Living Ticket QR : ${ticketUrl}`,
+    '',
+    'CampusSave — ESSECT Montfleury, Tunis',
+  ].join('\n');
+}
+
 export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail, publicOrigin: explicitOrigin }) {
   const origin = explicitOrigin || resolvePublicOrigin();
   const mascotUrl = `${origin}/assets/brand/mascot-sticker-256.png`;
@@ -159,7 +206,7 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
                   </td>
                   <td align="right" valign="middle" style="vertical-align:middle;">
                     <span style="display:inline-block;background-color:#DA0711;color:#FFFFFF;font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:999px;border:1px solid #FFD000;letter-spacing:0.6px;white-space:nowrap;">
-                      [PAYÉ • KONNECT MODE TEST]
+                      Paiement confirmé • Konnect
                     </span>
                   </td>
                 </tr>
@@ -311,10 +358,16 @@ export const emailService = {
       overrideEmail,
       publicOrigin,
     });
+    const text = buildOrderReceiptText({
+      order,
+      student,
+      merchant,
+      overrideEmail,
+      publicOrigin,
+    });
     const merchantName = merchant?.name || order?.merchantSnapshot?.name || 'Commerce ESSECT';
-    const totalFormatted = formatTND(order?.pricing?.totalMillimes || 0);
-    const subject = `[CampusSave] Reçu #${orderCode} • ${merchantName} (${totalFormatted})`;
-    const text = `Bonjour ${studentName},\nVotre paiement pour la commande #${orderCode} chez ${merchantName} (${totalFormatted}) est confirmé.\nConsultez votre Living Ticket QR : ${publicOrigin}/app/orders/${orderId}/ticket`;
+    const subject = `Confirmation de commande #${orderCode} — ${merchantName}`;
+    const replyTo = fromEmail || mailUser || 'number2.fedi@gmail.com';
 
     let lastProvider = 'none';
     let lastError = null;
@@ -333,8 +386,10 @@ export const emailService = {
             to: toEmail,
             toName: studentName,
             subject,
+            text,
             html,
-            fromName,
+            fromName: fromName || 'CampusSave ESSECT',
+            replyTo,
           }),
         });
         const bodyText = await res.text().catch(() => '');
@@ -383,7 +438,9 @@ export const emailService = {
           body: JSON.stringify({
             sender: { name: fromName, email: senderEmail },
             to: [{ email: toEmail, name: studentName }],
+            replyTo: { email: replyTo, name: fromName },
             subject,
+            textContent: text,
             htmlContent: html,
           }),
         });

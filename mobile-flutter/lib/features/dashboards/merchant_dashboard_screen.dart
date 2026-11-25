@@ -11,7 +11,8 @@ import '../../services/campus_api.dart';
 import '../../widgets/griddle.dart';
 
 class MerchantDashboardScreen extends StatefulWidget {
-  const MerchantDashboardScreen({super.key});
+  final bool isActive;
+  const MerchantDashboardScreen({super.key, this.isActive = true});
 
   @override
   State<MerchantDashboardScreen> createState() => _MerchantDashboardScreenState();
@@ -29,24 +30,37 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  @override
+  void didUpdateWidget(covariant MerchantDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      _load(silent: true);
+    }
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent || _data == null) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final data = await CampusApi.shared.fetchMerchantDashboard(range: _is7d ? '7d' : '30d');
       if (!mounted) return;
       setState(() {
         _data = data;
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+      if (_data == null) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -82,7 +96,8 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
     final rating = _n(kpis['ratingAvg']).toDouble();
     final reviews = _n(kpis['reviewsCount']).toInt();
     final noShow = _n(kpis['noShowsPercent']).toDouble();
-    final totalRevenue = series.fold<num>(0, (a, e) => a + _n(e['value']));
+    final seriesRevenue = series.fold<num>(0, (a, e) => a + _n(e['value']));
+    final totalRevenue = kpis['revenueMillimes'] is num ? _n(kpis['revenueMillimes']) : seriesRevenue;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),

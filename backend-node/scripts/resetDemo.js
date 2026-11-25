@@ -16,7 +16,12 @@ async function purgeCollection(name, label) {
   const docs = snap.docs;
   for (let i = 0; i < docs.length; i += 400) {
     const batch = db.batch();
-    docs.slice(i, i + 400).forEach((doc) => batch.delete(doc.ref));
+    for (const doc of docs.slice(i, i + 400)) {
+      if (name === 'offers') {
+        batch.delete(doc.ref.collection('private').doc('contents'));
+      }
+      batch.delete(doc.ref);
+    }
     await batch.commit();
   }
   console.log(`🧹 ${docs.length} ${label} purgé(e)s.`);

@@ -5,3 +5,4 @@ export * from './pricing.js';
 export * from './rarity.js';
 export * from './loyalty.js';
 export * from './impact.js';
+export * from './dishPhotos.js';
