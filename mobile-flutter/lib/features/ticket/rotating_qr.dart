@@ -5,8 +5,8 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/crypto/ticket_crypto.dart';
+import 'halftone_mascot_qr.dart';
 
 import '../../app/theme.dart';
 class RotatingQr extends StatefulWidget {
@@ -153,19 +153,9 @@ class _RotatingQrState extends State<RotatingQr> {
               ],
             ),
             child: qrPayload.isNotEmpty
-                ? QrImageView(
+                ? HalftoneMascotQr(
                     data: qrPayload,
-                    version: QrVersions.auto,
                     size: 210,
-                    backgroundColor: Colors.white,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: Colors.black,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: Colors.black,
-                    ),
                   )
                 : const SizedBox(
                     width: 210,

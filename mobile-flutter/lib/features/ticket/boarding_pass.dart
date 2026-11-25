@@ -4,10 +4,10 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../app/theme.dart';
 import '../../core/crypto/ticket_crypto.dart';
 import '../../core/time/server_clock.dart';
+import 'halftone_mascot_qr.dart';
 
 /// Découpe thermique avec encoches de perforation latérales et crantage zig-zag en bas
 class ThermalReceiptClipper extends CustomClipper<Path> {
@@ -299,10 +299,10 @@ class _BoardingPassState extends State<BoardingPass> {
                 children: [
                   // Boîtier QR Code blanc pur pour contraste de lecture optimal
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppTheme.ink,
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppTheme.ink, width: 2),
                       boxShadow: const [
                         BoxShadow(
@@ -312,11 +312,9 @@ class _BoardingPassState extends State<BoardingPass> {
                         ),
                       ],
                     ),
-                    child: QrImageView(
+                    child: HalftoneMascotQr(
                       data: ticketData['qrPayload'] as String,
-                      version: QrVersions.auto,
-                      size: 165.0,
-                      backgroundColor: AppTheme.ink,
+                      size: 196.0,
                     ),
                   ),
                   const SizedBox(height: 12),
