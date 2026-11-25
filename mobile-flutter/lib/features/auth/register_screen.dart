@@ -3,6 +3,7 @@
 // 🎯 À retenir pour la soutenance : "Cet écran mobile offre un sélecteur de rôle visuel et injecte immédiatement le custom claim correspondant via notre API sécurisée."
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
@@ -78,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       );
-      Navigator.of(context).pop();
+      context.go(_selectedRole == 'MERCHANT' ? '/merchant' : '/student');
     } on FirebaseAuthException catch (e) {
       String msg = 'Erreur d\'inscription Firebase';
       if (e.code == 'email-already-in-use') {
@@ -131,38 +132,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: AppTheme.cream,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(alignment: Alignment.centerLeft, child: GIconButton(icon: Icons.arrow_back, tooltip: 'Retour', onPressed: () => Navigator.maybePop(context))),
-              const SizedBox(height: 14),
-              const GPageHeader(eyebrow: 'Rejoindre CampusSave', title: 'Créer un compte', titleSize: 54, lead: 'Sauvez des repas à Montfleury, gagnez des EcoPoints.'),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GIconButton(
+                  icon: Icons.arrow_back,
+                  tooltip: 'Retour',
+                  onPressed: () => context.canPop() ? context.pop() : context.go('/login'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const GPageHeader(
+                eyebrow: 'Rejoindre CampusSave · ESSECT',
+                title: 'Créer un compte',
+                titleSize: 50,
+                lead: 'Sauvez des repas à Montfleury ou publiez vos invendus.',
+              ),
               const SizedBox(height: 22),
               Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(
-                  child: Text(
-                    'CampusSave 🥗',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.red,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Center(
-                  child: Text(
-                    "Rejoignez l'écosystème solidaire ESSECT",
-                    style: TextStyle(fontSize: 13, color: AppTheme.muted),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
                 // Sélecteur de Rôle
                 const Text(
                   'CHOISISSEZ VOTRE PROFIL',
@@ -294,6 +289,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   text: "S'inscrire sur CampusSave →",
                   isLoading: _isLoading,
                   onPressed: _handleSubmit,
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => context.canPop() ? context.pop() : context.go('/login'),
+                    child: const Text('Déjà inscrit ? Se connecter'),
+                  ),
                 ),
                 const SizedBox(height: 20),
               ],

@@ -9,6 +9,11 @@ import crypto from 'node:crypto';
 import { ORDER_STATUS, PAYMENT_STATUS } from '../../shared/constants.js';
 import { AppError } from '../src/utils/AppError.js';
 
+process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 = '';
+const { db } = await import('../src/config/firebase.js');
+const { KonnectClient, konnectClient, isSimulatedKonnectMode } = await import('../src/modules/payments/konnect.client.js');
+const { paymentsService } = await import('../src/modules/payments/payments.service.js');
+
 describe('Idempotence des Confirmations de Paiement Konnect (Dual-Path Confirmation)', () => {
 
   test('Premier appel : confirme le paiement, génère le nonce Living Ticket et journalise CONFIRMED', async () => {
@@ -125,6 +130,75 @@ describe('Idempotence des Confirmations de Paiement Konnect (Dual-Path Confirmat
     }, (err) => {
       return err.statusCode === 409 && err.code === 'INVALID_STATUS';
     });
+  });
+
+  test('Mode Konnect simulé en production (KONNECT_API_KEY=konnect_dev_mock_key + paymentRef=demo-success) valide en 200 PAID', async () => {
+    const prevNodeEnv = process.env.NODE_ENV;
+    const prevKey = konnectClient.apiKey;
+    const prevWallet = konnectClient.walletId;
+
+    try {
+      process.env.NODE_ENV = 'production';
+      const prodMockConfig = {
+        NODE_ENV: 'production',
+        KONNECT_API_KEY: 'konnect_dev_mock_key',
+        KONNECT_RECEIVER_WALLET_ID: 'wallet-test-01',
+        WEB_APP_URL: 'https://campussave-rouge.vercel.app',
+      };
+
+      assert.equal(isSimulatedKonnectMode('', prodMockConfig), true);
+      assert.equal(isSimulatedKonnectMode('demo-success', { KONNECT_API_KEY: 'live_key', KONNECT_RECEIVER_WALLET_ID: 'live_wallet' }), true);
+
+      const client = new KonnectClient(prodMockConfig);
+      const initRes = await client.initPayment({ orderId: 'ord-live-sim-01', amountMillimes: 1500, description: '1x smile' });
+      assert.equal(initRes.paymentRef, 'demo-ord-live-sim-01');
+      assert.equal(initRes.payUrl, 'https://campussave-rouge.vercel.app/payment/return?o=ord-live-sim-01&payment_ref=demo-ord-live-sim-01');
+
+      const details = await client.getPayment('demo-success');
+      assert.equal(details.status, 'completed');
+      assert.equal(details.paymentRef, 'demo-success');
+
+      // Vérification complète via paymentsService.verifyPayment -> PAID + Living Ticket nonce
+      konnectClient.apiKey = 'konnect_dev_mock_key';
+      konnectClient.walletId = 'wallet-test-01';
+
+      const now = new Date();
+      await db.collection('merchants').doc('merchant-mohsen').set({
+        id: 'merchant-mohsen',
+        name: 'Mohsen salabika',
+        stats: { ordersPaid: 0, totalRevenueMillimes: 0 },
+      });
+      await db.collection('offers').doc('off-smile-01').set({
+        id: 'off-smile-01',
+        title: 'smile',
+        quantitySold: 0,
+        quantityAvailable: 5,
+      });
+      await db.collection('orders').doc('ord-live-sim-01').set({
+        id: 'ord-live-sim-01',
+        orderCode: 'CS-SMILE1',
+        studentId: 'student-real-01',
+        merchantId: 'merchant-mohsen',
+        offerId: 'off-smile-01',
+        quantity: 1,
+        pricing: { totalMillimes: 1500 },
+        status: ORDER_STATUS.RESERVED,
+        statusHistory: [],
+        payment: { provider: 'KONNECT', status: PAYMENT_STATUS.INITIATED, paymentRef: 'demo-ord-live-sim-01' },
+        createdAt: now,
+      });
+
+      const verification = await paymentsService.verifyPayment('ord-live-sim-01', 'demo-success');
+      assert.equal(verification.confirmed, true);
+      assert.equal(verification.order.status, ORDER_STATUS.PAID);
+      assert.equal(verification.order.payment.status, PAYMENT_STATUS.COMPLETED);
+      assert.equal(verification.order.payment.confirmedVia, 'RETURN_VERIFY');
+      assert.ok(verification.order.ticket?.nonce, 'Le Living Ticket nonce doit être généré');
+    } finally {
+      process.env.NODE_ENV = prevNodeEnv;
+      konnectClient.apiKey = prevKey;
+      konnectClient.walletId = prevWallet;
+    }
   });
 
 });

@@ -129,25 +129,26 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: campusDark,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Align(
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // En-tête Griddle : même accroche que la page de connexion du site
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Image.asset('assets/brand/logo-full.png', height: 120, filterQuality: FilterQuality.medium, errorBuilder: (_, __, ___) => Text('CAMPUSSAVE', style: AppTheme.display(40, AppTheme.red))),
-                      ],
+                    child: Image.asset(
+                      'assets/brand/logo-full.png',
+                      height: 84,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (_, __, ___) => Text('CAMPUSSAVE', style: AppTheme.display(40, AppTheme.red)),
                     ),
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 16),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text('PLATEFORME OFFICIELLE ESSECT MONTFLEURY', style: AppTheme.eyebrow()),
@@ -157,10 +158,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerLeft,
                     child: RichText(
                       text: TextSpan(
-                        style: AppTheme.display(68),
+                        style: AppTheme.display(58),
                         children: [
                           const TextSpan(text: 'FAIT POUR\nÊTRE '),
-                          TextSpan(text: 'PARTAGÉ.', style: AppTheme.display(68, AppTheme.red)),
+                          TextSpan(text: 'PARTAGÉ.', style: AppTheme.display(58, AppTheme.red)),
                         ],
                       ),
                     ),
@@ -170,10 +171,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Connectez-vous pour sauver les invendus alimentaires chauds et frais des commerces de Montfleury à prix dégressif.',
-                      style: AppTheme.body(17, AppTheme.ink),
+                      style: AppTheme.body(16, AppTheme.ink),
                     ),
                   ),
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 22),
 
                   // Carte de Connexion
                   Container(
@@ -185,6 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Form(
                       key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -239,6 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               hintText: 'etudiant@essect.u-tunis.tn',
                               hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
+                              errorMaxLines: 2,
                               filled: true,
                               fillColor: AppTheme.paper,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -277,6 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               hintText: '••••••••',
                               hintStyle: const TextStyle(color: AppTheme.muted, fontSize: 13),
+                              errorMaxLines: 2,
                               filled: true,
                               fillColor: AppTheme.paper,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -334,6 +338,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontSize: 14,
                                     ),
                                   ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Bouton Inscription bien visible
+                          OutlinedButton(
+                            onPressed: _isSubmitting ? null : () => context.push('/register'),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: AppTheme.paper,
+                              foregroundColor: AppTheme.ink,
+                              side: const BorderSide(color: AppTheme.ink, width: 1.5),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Pas encore de compte ? Créer un compte →',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
+                            ),
                           ),
                         ],
                       ),

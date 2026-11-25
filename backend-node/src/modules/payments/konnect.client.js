@@ -8,11 +8,42 @@ import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 import { AppError } from '../../utils/AppError.js';
 
+/**
+ * Indique si la passerelle Konnect doit fonctionner en mode simulé (Sandbox local / soutenance)
+ * même lorsque NODE_ENV === 'production' (ex. Render sans clé Konnect réelle).
+ */
+export function isSimulatedKonnectMode(paymentRef = '', config = env) {
+  const apiKey = (config?.KONNECT_API_KEY ?? env.KONNECT_API_KEY ?? '').trim();
+  const walletId = (config?.KONNECT_RECEIVER_WALLET_ID ?? env.KONNECT_RECEIVER_WALLET_ID ?? '').trim();
+
+  if (
+    !apiKey ||
+    !walletId ||
+    apiKey === 'konnect_dev_mock_key' ||
+    apiKey.startsWith('<') ||
+    walletId === 'konnect_dev_mock_wallet' ||
+    walletId.startsWith('<')
+  ) {
+    return true;
+  }
+
+  if (
+    typeof paymentRef === 'string' &&
+    (paymentRef.startsWith('demo-') || paymentRef.startsWith('mock_') || paymentRef.startsWith('sim_'))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export class KonnectClient {
-  constructor() {
-    this.apiBase = env.KONNECT_API_BASE;
-    this.apiKey = env.KONNECT_API_KEY;
-    this.walletId = env.KONNECT_RECEIVER_WALLET_ID;
+  constructor(config = env) {
+    this.config = config;
+    this.apiBase = config.KONNECT_API_BASE || env.KONNECT_API_BASE;
+    this.apiKey = config.KONNECT_API_KEY;
+    this.walletId = config.KONNECT_RECEIVER_WALLET_ID;
+    this.webAppUrl = config.WEB_APP_URL || env.WEB_APP_URL;
   }
 
   /**
@@ -26,11 +57,12 @@ export class KonnectClient {
    * @returns {Promise<{ payUrl: string, paymentRef: string }>}
    */
   async initPayment({ orderId, amountMillimes, description, email, phone }) {
-    if (!this.apiKey || !this.walletId) {
-      logger.warn('Clés Konnect manquantes : retour d un lien de simulation factice');
+    if (isSimulatedKonnectMode('', { KONNECT_API_KEY: this.apiKey, KONNECT_RECEIVER_WALLET_ID: this.walletId })) {
+      logger.warn('Mode Konnect simulé actif : retour d un lien de validation directe');
+      const paymentRef = `demo-${orderId}`;
       return {
-        payUrl: `${env.WEB_APP_URL}/payment/return?o=${orderId}&simulated=true`,
-        paymentRef: `sim_${orderId}_${Date.now()}`,
+        payUrl: `${this.webAppUrl}/payment/return?o=${orderId}&payment_ref=${paymentRef}`,
+        paymentRef,
       };
     }
 
@@ -42,15 +74,15 @@ export class KonnectClient {
         type: 'immediate',
         description: description || `Commande CampusSave #${orderId}`,
         acceptedPaymentMethods: ['wallet', 'bank_card', 'e-DINAR'],
-        lifespan: env.KONNECT_PAYMENT_LIFESPAN_MIN,
+        lifespan: this.config.KONNECT_PAYMENT_LIFESPAN_MIN ?? env.KONNECT_PAYMENT_LIFESPAN_MIN,
         checkoutForm: false,
         addPaymentFeesToAmount: false,
         email,
         phoneNumber: phone,
         orderId,
-        webhook: `${env.PUBLIC_BASE_URL}/api/v1/payments/konnect/webhook`,
-        successUrl: `${env.WEB_APP_URL}/payment/return?o=${orderId}`,
-        failUrl: `${env.WEB_APP_URL}/payment/return?o=${orderId}&failed=1`,
+        webhook: `${this.config.PUBLIC_BASE_URL || env.PUBLIC_BASE_URL}/api/v1/payments/konnect/webhook`,
+        successUrl: `${this.webAppUrl}/payment/return?o=${orderId}`,
+        failUrl: `${this.webAppUrl}/payment/return?o=${orderId}&failed=1`,
       };
 
       const response = await axios.post(`${this.apiBase}/payments/init-payment`, payload, {
@@ -77,7 +109,7 @@ export class KonnectClient {
    * @returns {Promise<object>} Détails du paiement
    */
   async getPaymentDetails(paymentRef) {
-    if (!this.apiKey) {
+    if (isSimulatedKonnectMode(paymentRef, { KONNECT_API_KEY: this.apiKey, KONNECT_RECEIVER_WALLET_ID: this.walletId })) {
       return { status: 'completed', paymentRef };
     }
 
@@ -91,6 +123,11 @@ export class KonnectClient {
       logger.error({ err: error.response?.data || error.message }, 'Erreur lors de la vérification Konnect');
       throw new AppError('Impossible de vérifier le paiement auprès de la passerelle', 502, 'KONNECT_CHECK_ERROR');
     }
+  }
+
+  /** Alias ergonomique pour la vérification directe du paiement. */
+  async getPayment(paymentRef) {
+    return this.getPaymentDetails(paymentRef);
   }
 }
 

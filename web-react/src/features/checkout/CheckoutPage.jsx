@@ -260,13 +260,27 @@ export default function CheckoutPage() {
         orderId: orderRef,
       });
 
+      if (response.data?.paidWithReward) {
+        navigate(`/app/orders/${orderRef}/ticket`);
+        return;
+      }
+
       const payUrl = response.data?.payUrl;
       if (payUrl) {
-        window.location.href = payUrl;
+        if (payUrl.startsWith(window.location.origin)) {
+          navigate(payUrl.slice(window.location.origin.length));
+        } else {
+          window.location.href = payUrl;
+        }
       } else {
         navigate(`/payment/return?orderId=${orderRef}&payment_ref=demo-success`);
       }
     } catch (err) {
+      const status = err?.response?.status;
+      if (status === 410 || status === 409 || status === 403 || status === 404) {
+        setErrorMessage(err.response?.data?.error?.message || "Impossible d'initier le paiement pour cette réservation.");
+        return;
+      }
       console.warn('Mode démo / Konnect sandbox simulation :', err.message);
       navigate(`/payment/return?orderId=${orderRef}&payment_ref=demo-success`);
     } finally {

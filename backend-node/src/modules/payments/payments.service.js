@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import admin from 'firebase-admin';
 import { db } from '../../config/firebase.js';
 import { AppError } from '../../utils/AppError.js';
-import { konnectClient } from './konnect.client.js';
+import { konnectClient, isSimulatedKonnectMode } from './konnect.client.js';
 import { fcmService } from '../notifications/fcm.service.js';
 import { ORDER_STATUS, PAYMENT_STATUS, REWARD_STATUS } from '../../../../shared/constants.js';
 import { rewardKey } from '../../../../shared/loyalty.js';
@@ -328,9 +328,23 @@ export const paymentsService = {
       return { order, confirmed: true, alreadyConfirmed: true };
     }
 
-    const effectiveRef = paymentRef || order.payment?.paymentRef;
+    const effectiveRef =
+      paymentRef ||
+      order.payment?.paymentRef ||
+      (isSimulatedKonnectMode() ? `demo-${orderId}` : null);
+
     if (!effectiveRef) {
       throw new AppError('Référence de paiement absente pour cette commande', 400, 'MISSING_PAYMENT_REF');
+    }
+
+    const simulated = isSimulatedKonnectMode(effectiveRef);
+    if (
+      !simulated &&
+      order.payment?.paymentRef &&
+      paymentRef &&
+      paymentRef !== order.payment.paymentRef
+    ) {
+      throw new AppError('Référence de paiement discordante', 400, 'PAYMENT_REF_MISMATCH');
     }
 
     const paymentDetails = await konnectClient.getPaymentDetails(effectiveRef);

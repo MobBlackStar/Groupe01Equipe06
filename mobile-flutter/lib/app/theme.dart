@@ -193,6 +193,7 @@ class AppTheme {
         labelStyle: label(),
         floatingLabelStyle: label(red),
         errorStyle: const TextStyle(fontFamily: fontBody, fontSize: minText, color: red, fontWeight: FontWeight.w600),
+        errorMaxLines: 2,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: ink, width: 2)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: ink, width: 2)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: const BorderSide(color: red, width: 2.5)),

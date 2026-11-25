@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../features/auth/login_screen.dart';
+import '../features/auth/register_screen.dart';
 import '../features/radar/radar_screen.dart';
 import '../features/dashboards/student_dashboard_screen.dart';
 import '../features/dashboards/merchant_dashboard_screen.dart';
@@ -38,17 +39,17 @@ class AppRouter {
     refreshListenable: authService,
     redirect: (BuildContext context, GoRouterState state) {
       final isAuth = authService.isAuthenticated;
-      final isLoggingIn = state.matchedLocation == '/login';
+      final isAuthRoute = state.matchedLocation == '/login' || state.matchedLocation == '/register';
 
-      // Redirection vers login si non connecté
+      // Redirection vers login si non connecté (sauf routes d'authentification)
       if (!isAuth) {
-        return isLoggingIn ? null : '/login';
+        return isAuthRoute ? null : '/login';
       }
 
       final role = authService.role;
 
-      // Si l'utilisateur est connecté et arrive sur login, redirection selon son rôle
-      if (isLoggingIn) {
+      // Si l'utilisateur est connecté et arrive sur login/register, redirection selon son rôle
+      if (isAuthRoute) {
         if (role == 'MERCHANT') return '/merchant';
         return '/student';
       }
@@ -67,6 +68,10 @@ class AppRouter {
       GoRoute(
         path: '/login',
         builder: (context, state) => LoginScreen(authService: authService),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/radar',

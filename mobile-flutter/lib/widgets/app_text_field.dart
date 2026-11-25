@@ -51,6 +51,7 @@ class AppTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           keyboardType: keyboardType,
           obscureText: obscureText,
           enabled: enabled,
@@ -61,6 +62,7 @@ class AppTextField extends StatelessWidget {
             hintText: hint ?? hintText,
             helperText: helperText,
             helperStyle: AppTheme.body(13, AppTheme.muted),
+            errorMaxLines: 2,
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
           ),
