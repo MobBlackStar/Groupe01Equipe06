@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { isEmbedded } from '../../lib/embed.js';
 
-const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk';
+export const DEFAULT_APK_URL = 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk';
 const STORAGE_KEY = 'cs.mascot_dismissed';
 
 export default function ApkDownloadMascot() {
@@ -161,21 +161,25 @@ export default function ApkDownloadMascot() {
               </p>
             </div>
 
-            {/* Conteneur QR Code Haute Visibilité pour le Jury */}
+            {/* Conteneur QR Code Niveau H avec Sticker Mascotte CampusSave pour le Jury */}
             <div className="my-6 flex flex-col items-center">
               <div className="p-4 rounded-2xl bg-white border-2 border-[#111111] shadow-[4px_4px_0px_#111111] relative">
                 <QRCodeSVG
                   value={apkUrl}
-                  size={190}
+                  size={210}
                   level="H"
                   includeMargin={true}
                   bgColor="#FFFFFF"
                   fgColor="#111111"
                 />
-                {/* Pastille centrale de la mascotte */}
+                {/* Badge circulaire die-cut de la mascotte CampusSave (tolérance EC niveau H 30 %) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-10 h-10 rounded-full bg-[#FFD000] border-2 border-[#111111] flex items-center justify-center text-lg shadow-sm">
-                    🍔
+                  <div className="w-12 h-12 rounded-full bg-white border-2 border-[#111111] p-0.5 flex items-center justify-center shadow-sm overflow-hidden">
+                    <img
+                      src="/assets/brand/mascot-sticker-256.png"
+                      alt="Mascotte CampusSave"
+                      className="w-full h-full object-contain rounded-full"
+                    />
                   </div>
                 </div>
               </div>

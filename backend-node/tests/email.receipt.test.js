@@ -74,8 +74,9 @@ describe('Service Reçu E-mail Griddle (SMTP Gmail & Résolution Dynamique)', ()
     assert.ok(html.includes('#111111'));
     assert.ok(html.includes('#FFD000'));
     assert.ok(html.includes('#DA0711'));
-    assert.ok(html.includes('Paiement confirmé • Konnect'));
+    assert.ok(html.includes('Commande confirmée'));
     assert.ok(!html.includes('[PAYÉ • KONNECT MODE TEST]'));
+    assert.ok(html.includes("merci d'avoir sauvé un panier anti-gaspi chez"));
     assert.ok(html.includes('#CS-991AB'));
     assert.ok(html.includes('1x Baguette Farcie Escalope'));
     assert.ok(html.includes('2x Makloub Chawarma'));

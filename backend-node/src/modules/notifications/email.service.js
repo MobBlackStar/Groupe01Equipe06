@@ -184,6 +184,9 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
   <title>Reçu CampusSave #${escapeHtml(orderCode)}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#FAF3E6;color:#111111;font-family:Arial,Helvetica,sans-serif;">
+  <span style="display:none;font-size:1px;color:#FAF3E6;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    Bonjour ${escapeHtml(studentName)}, merci d'avoir sauvé un panier anti-gaspi chez ${escapeHtml(merchantName)} sur CampusSave ESSECT !
+  </span>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FAF3E6;padding:24px 12px;">
     <tr>
       <td align="center">
@@ -206,11 +209,18 @@ export function buildOrderReceiptHtml({ order, student, merchant, overrideEmail,
                   </td>
                   <td align="right" valign="middle" style="vertical-align:middle;">
                     <span style="display:inline-block;background-color:#DA0711;color:#FFFFFF;font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:700;padding:6px 10px;border-radius:999px;border:1px solid #FFD000;letter-spacing:0.6px;white-space:nowrap;">
-                      Paiement confirmé • Konnect
+                      Commande confirmée
                     </span>
                   </td>
                 </tr>
               </table>
+            </td>
+          </tr>
+
+          <!-- Warm Greeting -->
+          <tr>
+            <td style="padding:20px 24px 0 24px;font-size:14px;line-height:1.5;color:#111111;">
+              Bonjour <strong>${escapeHtml(studentName)}</strong>, merci d'avoir sauvé un panier anti-gaspi chez <strong>${escapeHtml(merchantName)}</strong> sur CampusSave ESSECT !
             </td>
           </tr>
 
