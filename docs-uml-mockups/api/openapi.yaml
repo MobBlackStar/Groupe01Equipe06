@@ -422,7 +422,7 @@ paths:
                   $ref: '#/components/schemas/Order'
     post:
       tags: [Commandes & Réservations]
-      summary: Réservation atomique d'un panier sous concurrence stricte
+      summary: Réservation atomique d'un sac mono-commerce (ou d'une offre) sous concurrence stricte
       requestBody:
         required: true
         content:
@@ -438,6 +438,12 @@ paths:
                 $ref: '#/components/schemas/Order'
         '409':
           description: Stock insuffisant ou offre expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Sac mixte multi-commerces (MIXED_MERCHANTS), récompense indisponible ou validation
           content:
             application/json:
               schema:
@@ -1197,6 +1203,35 @@ components:
           type: number
           example: 0.95
 
+    OrderLine:
+      type: object
+      properties:
+        offerId:
+          type: string
+          example: off-1
+        title:
+          type: string
+          example: Makloub Escalope Panée & Double Fromage
+        quantity:
+          type: integer
+          example: 1
+        unitPriceMillimes:
+          type: integer
+          example: 3800
+        originalUnitPriceMillimes:
+          type: integer
+          example: 7800
+        lineSubtotalMillimes:
+          type: integer
+          example: 3800
+        isSurpriseBasket:
+          type: boolean
+          example: false
+        rarity:
+          type: string
+          nullable: true
+          example: COMMON
+
     Order:
       type: object
       properties:
@@ -1224,15 +1259,20 @@ components:
         offerTitle:
           type: string
           example: Makloub Escalope Panée & Double Fromage
+        items:
+          type: array
+          description: Lignes normalisées du sac mono-commerce
+          items:
+            $ref: '#/components/schemas/OrderLine'
         quantity:
           type: integer
-          example: 1
+          example: 2
         lockedUnitPriceMillimes:
           type: integer
           example: 3800
         totalPriceMillimes:
           type: integer
-          example: 3800
+          example: 7600
         status:
           $ref: '#/components/schemas/OrderStatus'
         reservationExpiresAt:
@@ -1244,8 +1284,23 @@ components:
 
     CreateOrderRequest:
       type: object
-      required: [offerId]
+      description: Accepte soit un sac mono-commerce (`items[]`), soit le format historique (`offerId`, `quantity`).
       properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [offerId, quantity]
+            properties:
+              offerId:
+                type: string
+                example: off-1
+              quantity:
+                type: integer
+                minimum: 1
+                default: 1
+                example: 1
         offerId:
           type: string
           example: off-1
@@ -1253,6 +1308,10 @@ components:
           type: integer
           default: 1
           example: 1
+        rewardId:
+          type: string
+          nullable: true
+          example: rw_100
 
     LivingTicketPayload:
       type: object

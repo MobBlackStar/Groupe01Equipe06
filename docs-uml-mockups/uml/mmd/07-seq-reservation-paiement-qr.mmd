@@ -30,24 +30,24 @@ sequenceDiagram
     end
 
     rect rgb(243, 244, 246)
-    Note over S,FS: Réservation atomique (M5)
-    S->>+APP: choisir la quantité (et éventuellement une récompense), « Réserver »
-    APP->>+API: POST /orders {offerId, quantity, rewardId?}
+    Note over S,FS: Réservation atomique mono-commerce (M5)
+    S->>+APP: remplir son sac mono-commerce (1..N articles) et coupon, « Réserver & Payer »
+    APP->>+API: POST /orders {items: [{offerId, quantity}], rewardId?}
     API->>API: authenticate · requireRole(STUDENT) · validate
     critical Transaction Firestore (lectures avant écritures, rejouée en cas de conflit)
-        API->>FS: lire offers/{offerId} et users/{uid}
-        FS-->>API: offre, profil
-        API->>API: vérifier ACTIVE, avant pickupEnd, qty ≤ maxPerOrder et ≤ quantityAvailable
-        API->>API: prix verrouillé = computeUnitPrice(offre, heure serveur), total = max(0, sous-total − remise)
-        API->>FS: offre : quantityAvailable −= qty (SOLD_OUT si 0), hasOrders = true
+        API->>FS: lire offers/{offerId} du sac et users/{uid}
+        FS-->>API: offres, profil
+        API->>API: vérifier un seul commerce (sinon 422 MIXED_MERCHANTS), ACTIVE, avant pickupEnd, qty ≤ maxPerOrder et ≤ quantityAvailable
+        API->>API: prix verrouillés = computeUnitPrice(offre, heure serveur), total = max(0, somme(sous-totaux) − remise)
+        API->>FS: pour chaque offre : quantityAvailable −= qty (SOLD_OUT si 0), hasOrders = true
         API->>FS: récompense : status LOCKED
-        API->>FS: créer orders/{id} RESERVED, reservationExpiresAt = maintenant + 10 min
+        API->>FS: créer orders/{id} RESERVED, items[], reservationExpiresAt = maintenant + 10 min
         FS-->>API: commit
     end
-    alt stock insuffisant ou données invalides
-        API-->>APP: 409 OFFER_SOLD_OUT / 422 erreurs de validation
+    alt stock insuffisant, commerces multiples ou données invalides
+        API-->>APP: 409 OFFER_SOLD_OUT / 422 MIXED_MERCHANTS
     else réservation créée
-        API-->>APP: 201 commande RESERVED, prix verrouillé, échéance
+        API-->>APP: 201 commande RESERVED, items[], prix verrouillés, échéance
     end
     deactivate API
     APP-->>-S: récapitulatif + compte à rebours de 10 min

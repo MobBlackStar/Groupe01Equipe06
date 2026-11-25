@@ -30,6 +30,16 @@ package "Commandes, paiement et retrait" {
     + cancel() : void
     + expire() : void
   }
+  class OrderLine <<datatype>> {
+    + offerId : String
+    + title : String
+    + quantity : Integer
+    + originalUnitPriceMillimes : Integer
+    + unitPriceMillimes : Integer
+    + lineSubtotalMillimes : Integer
+    + isSurpriseBasket : Boolean
+    + rarity : String [0..1]
+  }
   class Payment <<datatype>> {
     + provider : PaymentProvider
     + status : PaymentStatus
@@ -118,10 +128,11 @@ class Store <<voir 05b>>
 class Offer <<voir 05b>>
 
 Student "1" -- "0..*" Order : passe >
-Offer "1" -- "0..*" Order : concerne <
+Offer "1" -- "0..*" OrderLine : référence <
 Store "1" -- "0..*" Order : traite >
 Reward "0..1" <-- "0..1" Order : applique <
 
+Order "1" *-- "1..*" OrderLine : items
 Order "1" *-- "1" Payment : payment
 Order "1" *-- "0..1" LivingTicket : ticket
 Order "1" *-- "1" Pickup : pickup
