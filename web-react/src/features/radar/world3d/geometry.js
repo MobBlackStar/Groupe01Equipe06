@@ -50,6 +50,9 @@ export function buildBuildingMesh(buildings, maxDistanceM) {
   const nrm = new Int8Array(vMax * 4);
   const idx = new Uint32Array(iMax);
   const props = [];
+  // jupe d'ombre de contact : un ruban au sol le long de chaque mur, sombre au pied, transparent à 2-4 m
+  const skirtPos = [];
+  const skirtFade = [];
   let v = 0;
   let ii = 0;
 
@@ -91,6 +94,13 @@ export function buildBuildingMesh(buildings, maxDistanceM) {
       }
     }
     const h = b.h;
+    // ESSECT : l'institution au cœur de la scène (< 60 m de l'origine) reçoit un matériau signature
+    let kind = b.k;
+    if (b.k === 1) {
+      let mx = 0; let my = 0;
+      for (let i = 0; i < n; i++) { mx += flat[2 * i]; my += flat[2 * i + 1]; }
+      if (Math.hypot(mx / n, my / n) < 60) kind = 4;
+    }
     let s = 0;
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n;
@@ -103,6 +113,14 @@ export function buildBuildingMesh(buildings, maxDistanceM) {
       const len = Math.hypot(dx, dy) || 1e-6;
       const nx = (dy / len) * 127;
       const ny = (-dx / len) * 127;
+      {
+        const W = Math.min(4, 1.8 + h * 0.09);
+        const ox = (dy / len) * W;
+        const oy = (-dx / len) * W;
+        // deux triangles : a, c, c', a'  (z 0,06 : au-dessus des chaussées)
+        skirtPos.push(ax, ay, 0.06, cx, cy, 0.06, cx + ox, cy + oy, 0.06, ax, ay, 0.06, cx + ox, cy + oy, 0.06, ax + ox, ay + oy, 0.06);
+        skirtFade.push(0, 0, 1, 0, 1, 1);
+      }
       const base = v;
       const corners = [
         [ax, ay, 0, s],
@@ -116,7 +134,7 @@ export function buildBuildingMesh(buildings, maxDistanceM) {
         pos[v * 3 + 2] = z;
         misc[v * 4] = ss;
         misc[v * 4 + 1] = b.u;
-        misc[v * 4 + 2] = b.k;
+        misc[v * 4 + 2] = kind;
         misc[v * 4 + 3] = h;
         nrm[v * 4] = nx;
         nrm[v * 4 + 1] = ny;
@@ -139,7 +157,7 @@ export function buildBuildingMesh(buildings, maxDistanceM) {
       pos[v * 3 + 1] = flat[2 * i + 1];
       pos[v * 3 + 2] = h;
       misc[v * 4 + 1] = b.u;
-      misc[v * 4 + 2] = b.k;
+      misc[v * 4 + 2] = kind;
       misc[v * 4 + 3] = h;
       nrm[v * 4 + 2] = 127;
       nrm[v * 4 + 3] = 127;
@@ -166,7 +184,10 @@ export function buildBuildingMesh(buildings, maxDistanceM) {
       }
     }
   }
-  return { pos: pos.subarray(0, v * 3), misc: misc.subarray(0, v * 4), nrm: nrm.subarray(0, v * 4), idx: idx.subarray(0, ii), vertexCount: v, props };
+  return {
+    pos: pos.subarray(0, v * 3), misc: misc.subarray(0, v * 4), nrm: nrm.subarray(0, v * 4), idx: idx.subarray(0, ii), vertexCount: v, props,
+    skirt: { pos: new Float32Array(skirtPos), fade: new Float32Array(skirtFade) },
+  };
 }
 
 /** Prisme unitaire à n côtés (rayon 1, hauteur 1, base en z=0) avec normales latérales et couvercle. */
@@ -407,12 +428,16 @@ export function buildRoadMesh(roads) {
       normals[i] = [mx * k, my * k];
     }
     const base = pos.length / 3;
+    let total = 0;
+    for (let i = 1; i < n; i++) total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    // type et longueur totale dans le même flottant : type + 4 × longueur (le shader en tire les passages piétons aux extrémités)
+    const packed = type + 4 * Math.round(total);
     let u = uOffset;
     for (let i = 0; i < n; i++) {
       if (i > 0) u += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
       const [nx, ny] = normals[i];
       pos.push(pts[i][0] + nx * half, pts[i][1] + ny * half, z, pts[i][0] - nx * half, pts[i][1] - ny * half, z);
-      att.push(u, 1, type, width, u, -1, type, width);
+      att.push(u, 1, packed, width, u, -1, packed, width);
     }
     for (let i = 0; i < n - 1; i++) {
       const a = base + i * 2;

@@ -92,22 +92,31 @@ class _RadarScreenState extends State<RadarScreen> {
     if (_mode == _RadarMode.native2d) {
       return NativeRadarView(extraActions: [_toggleButton()]);
     }
+    // Vue 3D plein écran : la page web (mode embed) porte ses propres pastilles de rayon et sa fiche glissable ;
+    // seul le bouton de bascule 2D flotte par-dessus, sous la barre de la page.
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        title: Row(
+      body: SafeArea(
+        bottom: false,
+        child: Stack(
           children: [
-            Container(width: 10, height: 10, decoration: const BoxDecoration(color: AppTheme.red, shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Text('RADAR MONTFLEURY', style: AppTheme.display(28)),
+            Positioned.fill(
+              child: RadarWebView(
+                key: ValueKey(_webViewGeneration),
+                onUnavailable: _fallBack,
+                onOpenOffer: _openOffer,
+              ),
+            ),
+            Positioned(
+              left: 12,
+              top: 76,
+              child: Material(
+                color: Colors.transparent,
+                child: _toggleButton(),
+              ),
+            ),
           ],
         ),
-        actions: [_toggleButton()],
-      ),
-      body: RadarWebView(
-        key: ValueKey(_webViewGeneration),
-        onUnavailable: _fallBack,
-        onOpenOffer: _openOffer,
       ),
     );
   }

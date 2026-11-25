@@ -8,7 +8,7 @@ import { paletteFor, lightDirection } from './timeOfDay.js';
 import { MAP_CONFIG } from '../mapStyle.js';
 import {
   BUILDING_VS, BUILDING_FS, TREE_VS, TREE_FS, PROP_VS, PROP_FS, BIRD_VS, BIRD_FS, BEACON_VS, BEACON_FS, ROAD_VS, ROAD_FS,
-  SHADOW_FS, GROUND_VS, GROUND_FS,
+  SHADOW_FS, GROUND_VS, GROUND_FS, SWEEP_VS, SWEEP_FS, SKIRT_VS, SKIRT_FS,
 } from './shaders.js';
 import { buildBuildingMesh, buildRoadMesh, prism, icosphere, palm, bird, column, quad, buildTreeInstances, buildBirds } from './geometry.js';
 
@@ -41,6 +41,16 @@ function program(gl, vs, fs, name, attribs) {
     uniforms[info.name] = gl.getUniformLocation(p, info.name);
   }
   return { p, u: uniforms };
+}
+
+/** Produit de deux matrices 4x4 colonne-majeure, écrit dans `o` (aucune allocation dans la boucle de rendu). */
+function mulInto(o, a, b) {
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+  }
+  return o;
 }
 
 /** Produit de deux matrices 4x4 colonne-majeure, en double précision. */
@@ -83,6 +93,11 @@ function buf(gl, target, data, usage = gl.STATIC_DRAW) {
  * @param {object} data - monde pré-calculé (décimètres autour de l'ESSECT)
  */
 export function createWorld3DLayer(maplibregl, data) {
+  // déclarés AVANT `state` : `shadowsOn` en dépend (sinon ReferenceError et tout le monde 3D tombe)
+  const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lowEnd = (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 8) <= 4) || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  const isMobileOrEmbed = isEmbedded() || (typeof window !== 'undefined' && (window.innerWidth < 768 || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches && window.innerWidth < 1024)));
+  const cullDistanceM = isMobileOrEmbed ? 650 : undefined;
   const state = {
     ok: false,
     map: null,
@@ -100,13 +115,13 @@ export function createWorld3DLayer(maplibregl, data) {
     shadowRedraws: 0,
     beaconCount: 0,
     pendingBeacons: null,
+    sel: -1,
+    hover: -1,
+    sweepRadius: 1500,
+    walking: false,
     stats: {},
   };
   state.pal = paletteFor(state.sun.altitudeDeg);
-  const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const lowEnd = (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 8) <= 4) || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
-  const isMobileOrEmbed = isEmbedded() || (typeof window !== 'undefined' && (window.innerWidth < 768 || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches && window.innerWidth < 1024)));
-  const cullDistanceM = isMobileOrEmbed ? 650 : undefined;
 
   const origin = MAP_CONFIG.ESSECT_COORDS;
   const merc = maplibregl.MercatorCoordinate.fromLngLat(origin, 0);
@@ -144,6 +159,8 @@ export function createWorld3DLayer(maplibregl, data) {
         G.beacon = program(gl, BEACON_VS, BEACON_FS, 'beacon', { aPos: 0, iPos: 3, iCol: 4 });
         G.road = program(gl, ROAD_VS, ROAD_FS, 'road', { aPos: 0, aRd: 1 });
         G.ground = program(gl, GROUND_VS, GROUND_FS, 'ground', { aPos: 0 });
+        G.sweep = program(gl, SWEEP_VS, SWEEP_FS, 'sweep', { aPos: 0 });
+        G.skirt = program(gl, SKIRT_VS, SKIRT_FS, 'skirt', { aPos: 0, aFade: 1 });
         // passes d'ombre : mêmes sommets que le rendu, mais aucun calcul de couleur
         G.shBld = program(gl, BUILDING_VS, SHADOW_FS, 'shadowBuilding', { aPos: 0, aMisc: 1, aNrm: 2 });
         G.shTree = program(gl, TREE_VS, SHADOW_FS, 'shadowTree', { aPos: 0, aNrm: 1, aAux: 2, iPos: 3, iPar: 4 });
@@ -205,6 +222,17 @@ export function createWorld3DLayer(maplibregl, data) {
         gl.vertexAttribPointer(2, 4, gl.BYTE, true, 0, 0);
         G.bldIdx = buf(gl, gl.ELEMENT_ARRAY_BUFFER, bm.idx);
         G.bldCount = bm.idx.length;
+
+        // --- ombres de contact au pied des murs
+        G.skirtVAO = gl.createVertexArray();
+        gl.bindVertexArray(G.skirtVAO);
+        buf(gl, gl.ARRAY_BUFFER, bm.skirt.pos);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        buf(gl, gl.ARRAY_BUFFER, bm.skirt.fade);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0);
+        G.skirtCount = bm.skirt.fade.length;
 
         // --- maillage + instances générique
         const meshVAO = (mesh, instBuf, instAttrs, stride) => {
@@ -310,6 +338,9 @@ export function createWorld3DLayer(maplibregl, data) {
     },
   };
 
+  const L = new Float64Array(16);
+  const mvp = new Float64Array(16);
+  const mvp32 = new Float32Array(16);
   function draw(gl, matrix) {
       if (!state.ok || !state.map) return;
       const map = state.map;
@@ -325,15 +356,16 @@ export function createWorld3DLayer(maplibregl, data) {
       if (import.meta.env.DEV && globalThis.__w3dSkip && globalThis.__w3dSkip.all) return;
 
       // matrice locale (mètres : est, nord, haut) -> écran, en double précision
-      const L = new Float64Array([mScale, 0, 0, 0, 0, -mScale, 0, 0, 0, 0, mScale, 0, merc.x, merc.y, merc.z, 1]);
-      const mvp = mul(matrix, L);
-      const mvp32 = new Float32Array(mvp);
+      L[0] = mScale; L[5] = -mScale; L[10] = mScale; L[12] = merc.x; L[13] = merc.y; L[14] = merc.z; L[15] = 1;
+      mulInto(mvp, matrix, L);
+      for (let i = 0; i < 16; i++) mvp32[i] = mvp[i];
       const cam = cameraPosition(mvp);
 
       const pal = state.pal;
       const sunDir = lightDirection(state.sun); // soleil, ou lune la nuit : c'est elle qui projette les ombres
       const night = Math.max(state.night, pal.night);
       const time = (performance.now() / 1000) % 3600;
+      const sweep = reduceMotion ? 0.6 : (time * 0.85) % (Math.PI * 2); // un tour en ~7 s
       const skipQA = (import.meta.env.DEV && globalThis.__w3dSkip) || {};
       const shadowsActive = state.shadowsOn && !skipQA.shadows;
 
@@ -353,7 +385,7 @@ export function createWorld3DLayer(maplibregl, data) {
         if (u.uAmb) gl.uniform3f(u.uAmb, pal.amb[0], pal.amb[1], pal.amb[2]);
         if (u.uGround) gl.uniform3f(u.uGround, pal.ground[0], pal.ground[1], pal.ground[2]);
         if (u.uFogCol) gl.uniform3f(u.uFogCol, pal.fog[0], pal.fog[1], pal.fog[2]); // le jour : crème #FAF3E6 en linéaire
-        if (u.uFogDen) gl.uniform1f(u.uFogDen, 0.00062);
+        if (u.uFogDen) gl.uniform1f(u.uFogDen, 0.00044);
         if (u.uNight) gl.uniform1f(u.uNight, night);
         if (u.uTime) gl.uniform1f(u.uTime, time);
         if (u.uShadow) {
@@ -403,6 +435,20 @@ export function createWorld3DLayer(maplibregl, data) {
         gl.depthMask(true);
       }
 
+      // 0c. ombres de contact (multiplicatives), cachées par les immeubles grâce au test de profondeur
+      if (G.skirtCount && !skip.skirt) {
+        gl.depthMask(false);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.DST_COLOR, gl.ZERO);
+        gl.useProgram(G.skirt.p);
+        gl.uniformMatrix4fv(G.skirt.u.uMVP, false, mvp32);
+        gl.uniform1f(G.skirt.u.uNight, night);
+        gl.bindVertexArray(G.skirtVAO);
+        gl.drawArrays(gl.TRIANGLES, 0, G.skirtCount);
+        gl.disable(gl.BLEND);
+        gl.depthMask(true);
+      }
+
       // 1. immeubles : un seul dessin
       gl.useProgram(G.bld.p);
       setCommon(G.bld);
@@ -444,6 +490,22 @@ export function createWorld3DLayer(maplibregl, data) {
       gl.bindVertexArray(G.birdMesh.vao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, G.birdMesh.count, G.birdCount);
 
+      // 4b. balayage radar au sol (secteur + anneaux tous les 500 m), au-dessus du sol, sous les balises
+      if (!skip.sweep && state.sweepRadius > 0 && !state.walking) {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.depthMask(false);
+        gl.useProgram(G.sweep.p);
+        gl.uniformMatrix4fv(G.sweep.u.uMVP, false, mvp32);
+        gl.uniform1f(G.sweep.u.uRadius, state.sweepRadius);
+        gl.uniform1f(G.sweep.u.uSweep, sweep);
+        gl.uniform1f(G.sweep.u.uNight, night);
+        gl.bindVertexArray(G.groundVAO);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
+      }
+
       // 5. balises : lumière additive, sans écrire la profondeur
       if (state.beaconCount && !skip.beacons) {
         gl.enable(gl.BLEND);
@@ -451,14 +513,26 @@ export function createWorld3DLayer(maplibregl, data) {
         gl.depthMask(false);
         gl.useProgram(G.beacon.p);
         setCommon(G.beacon);
+        gl.uniform1f(G.beacon.u.uSel, state.sel);
+        gl.uniform1f(G.beacon.u.uHover, state.hover);
+        gl.uniform1f(G.beacon.u.uSweep, sweep);
+        gl.uniform1f(G.beacon.u.uWalk, state.walking ? 1 : 0);
         gl.bindVertexArray(G.column.vao);
         gl.uniform1i(G.beacon.u.uPart, 2); // halo large d'abord (derrière), puis le noyau
-        gl.drawElementsInstanced(gl.TRIANGLES, G.column.count, gl.UNSIGNED_SHORT, 0, state.beaconCount);
+        if (!state.walking) gl.drawElementsInstanced(gl.TRIANGLES, G.column.count, gl.UNSIGNED_SHORT, 0, state.beaconCount);
         gl.uniform1i(G.beacon.u.uPart, 0);
         gl.drawElementsInstanced(gl.TRIANGLES, G.column.count, gl.UNSIGNED_SHORT, 0, state.beaconCount);
         gl.uniform1i(G.beacon.u.uPart, 1);
         gl.bindVertexArray(G.ring.vao);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, G.ring.count, state.beaconCount);
+        // deux anneaux flottants par balise (même maillage, un seul dessin instancié chacun) ; pas en mode marcher
+        if (!state.walking) {
+        gl.uniform1i(G.beacon.u.uPart, 3);
+        gl.uniform1f(G.beacon.u.uRingK, 0);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, G.ring.count, state.beaconCount);
+        gl.uniform1f(G.beacon.u.uRingK, 1);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, G.ring.count, state.beaconCount);
+        }
         gl.depthMask(true);
         gl.disable(gl.BLEND);
       }
@@ -601,6 +675,27 @@ export function createWorld3DLayer(maplibregl, data) {
         arr.set([x, y, b.height || 85, r, g, bl, (i * 0.37) % 1], i * 7);
       });
       state.pendingBeacons = arr;
+      state.map?.triggerRepaint();
+    },
+    /** Balise mise en avant (index dans la liste passée à setBeacons, -1 = aucune). */
+    setSelected(index) {
+      state.sel = Number.isInteger(index) ? index : -1;
+      state.map?.triggerRepaint();
+    },
+    setHover(index) {
+      const v = Number.isInteger(index) ? index : -1;
+      if (v === state.hover) return;
+      state.hover = v;
+      state.map?.triggerRepaint();
+    },
+    /** Mode marcher : balises affinées, sans halo ni anneaux (la caméra est à hauteur d'yeux), sans balayage. */
+    setWalking(on) {
+      state.walking = Boolean(on);
+      state.map?.triggerRepaint();
+    },
+    /** Rayon du balayage radar au sol (m) ; 0 le masque. */
+    setSweepRadius(m) {
+      state.sweepRadius = Math.max(0, Number(m) || 0);
       state.map?.triggerRepaint();
     },
     /** Soleil et ambiance (QA / futur sélecteur d'heure) : azimut (° depuis le nord), hauteur (°), nuit 0..1 */

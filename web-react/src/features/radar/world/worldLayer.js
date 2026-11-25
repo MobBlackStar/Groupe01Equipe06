@@ -128,8 +128,9 @@ function addLayers(map, world) {
         type: 'fill',
         source: GREEN_SRC,
         paint: {
-          'fill-color': ['match', ['get', 'k'], 'wood', '#C3D79B', 'pitch', '#CFE3B4', '#DCE6BC'],
-          'fill-opacity': 0.9,
+          'fill-color': ['match', ['get', 'k'], 'wood', '#8DBB68', 'pitch', '#A9D37F', '#B4D48A'],
+          'fill-opacity': 0.95,
+          'fill-outline-color': '#5E8F45',
         },
       },
       roadId
@@ -228,6 +229,7 @@ function addWorld3D(map, world, st) {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
   });
   if (st.pendingBeacons) w3d.setBeacons(st.pendingBeacons);
+  applyFocus(st);
 }
 
 /**
@@ -250,10 +252,38 @@ export function setWorldBeacons(map, merchants) {
   // Le campus : colonne rouge Griddle, plus haute (repère de la scène)
   list.unshift({ lng: MAP_CONFIG.ESSECT_COORDS[0], lat: MAP_CONFIG.ESSECT_COORDS[1], color: '#DA0711', height: 120 });
   st.pendingBeacons = list;
+  // index de chaque commerce dans la liste des balises (0 = ESSECT), pour la mise en avant
+  st.beaconIndex = new Map();
+  (merchants || [])
+    .filter((m) => m.location && Number.isFinite(m.location.lng) && Number.isFinite(m.location.lat))
+    .forEach((m, i) => st.beaconIndex.set(String(m.id), i + 1));
   if (st.w3d) {
     st.w3d.setBeacons(list);
     softenPillars(map);
+    applyFocus(st);
   }
+}
+
+function applyFocus(st) {
+  if (!st.w3d) return;
+  const f = st.focus || {};
+  const idx = (id) => (id != null && st.beaconIndex?.has(String(id)) ? st.beaconIndex.get(String(id)) : -1);
+  st.w3d.setSelected(idx(f.selectedId));
+  st.w3d.setWalking(Boolean(f.walking));
+  st.w3d.setHover(idx(f.hoverId));
+  if (f.radiusM !== undefined) st.w3d.setSweepRadius(f.radiusM);
+}
+
+/**
+ * Mise en avant dans la scène 3D : balise choisie (plus grande, anneau qui clignote), balise survolée, rayon du balayage.
+ * @param {object} map
+ * @param {{selectedId?: string|null, hoverId?: string|null, radiusM?: number}} focus
+ */
+export function setWorldFocus(map, focus) {
+  const st = states.get(map);
+  if (!st) return;
+  st.focus = { ...(st.focus || {}), ...focus };
+  applyFocus(st);
 }
 
 /**

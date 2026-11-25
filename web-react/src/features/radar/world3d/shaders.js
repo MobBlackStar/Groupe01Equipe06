@@ -16,7 +16,7 @@ float vnoise3(vec3 p){ return mix(vnoise(p.xy + p.z * 7.13), vnoise(p.yz * 1.17 
 vec3 applyFog(vec3 col, vec3 pos, vec3 cam, vec3 fogCol, float den){
   float d = length(pos - cam);
   float h = max(pos.z, 0.);
-  float f = 1. - exp(-pow(d * den, 1.35) * (1.15 - .35 * smoothstep(0., 60., h)));
+  float f = 1. - exp(-pow(d * den, 1.6) * (1.15 - .35 * smoothstep(0., 60., h)));
   return mix(col, fogCol, clamp(f, 0., .96));
 }
 
@@ -105,7 +105,16 @@ void main(){
   float seed = vMisc.y, kind = vMisc.z, h = vMisc.w;
   vec3 albedo; float glass = 0.; float emis = 0.; float ao = 1.;
 
-  if (vRoof > .5) {
+  bool landmark = kind > 3.5;
+  if (vRoof > .5 && landmark) {
+    // ESSECT vu du ciel : toit rayé rouge Griddle / crème, comme un auvent géant, avec un liseré moutarde
+    float st = stripeAA(vPos.x * .71 + vPos.y * .71, 4.2);
+    albedo = mix(vec3(.84, .12, .10), vec3(.98, .94, .86), st);
+    float n = vnoise(vPos.xy * 2.1);
+    albedo *= .94 + .1 * n;
+    emis = .10 * uNight;
+    ao = 1.;
+  } else if (vRoof > .5) {
     // Toit-terrasse : gravillon, auvents d'étanchéité, rebord clair
     float n = vnoise(vPos.xy * 1.3) * .6 + vnoise(vPos.xy * 5.1) * .4;
     float rk = hash11(seed * 17.);
@@ -196,6 +205,27 @@ void main(){
     albedo = mix(albedo, plaster(kind, seed) * .80, fade);
     glass *= 1. - fade;
     emis *= 1. - fade;
+    if (landmark) {
+      // ESSECT : pierre crème, pilastres rouges, grandes baies, bandeau moutarde lumineux en couronne
+      float bay = 3.6, fl = 4.0;
+      vec2 g = vec2(fract(s / bay), fract(t / fl));
+      albedo = vec3(.97, .93, .84) * (.94 + .08 * stain);
+      float pil = 1. - step(.16, g.x);
+      albedo = mix(albedo, vec3(.80, .15, .11), pil);
+      float crownBand = smoothstep(h - 1.7, h - 1.55, t) * (1. - smoothstep(h - .45, h - .35, t));
+      glass = 0.; emis = 0.;
+      if (pil < .5 && crownBand < .5 && t < h - 1.7) {
+        float win = step(.26, g.x) * step(g.x, .92) * step(.16, g.y) * step(g.y, .84);
+        if (win > .5) {
+          glass = 1.;
+          albedo = vec3(.09, .12, .16);
+          emis = .18 + .95 * uNight;                       // salles de cours éclairées le soir
+        }
+      }
+      albedo = mix(albedo, vec3(1., .80, 0.), crownBand);
+      emis = max(emis, crownBand * (.25 + 1.1 * uNight));
+      albedo *= mix(.62, 1., smoothstep(0., 3.5, t));      // pied du bâtiment assombri (contact avec le sol)
+    }
     // Ambiance : le pied des murs est assombri par le sol et la rue
     ao = mix(.58, 1., smoothstep(0., 4.5, t)) * mix(.82, 1., smoothstep(0., 22., h));
   }
@@ -409,21 +439,38 @@ precision highp float;
 precision highp int;
 uniform mat4 uMVP;
 uniform float uTime;
-uniform int uPart;      // 0 colonne, 1 anneau au sol
+uniform int uPart;      // 0 colonne, 1 anneau au sol, 2 halo, 3 anneau flottant
+uniform float uSel, uHover, uSweep, uRingK, uWalk;
+uniform vec3 uCam;
 in vec3 aPos;           // colonne : rayon unitaire, z 0..1 ; anneau : quad -1..1
 in vec3 iPos;           // x, y, hauteur de colonne
 in vec4 iCol;           // rgb + phase
-out vec3 vPos; out vec3 vLocal; out vec4 vCol; out float vH;
+out vec3 vPos; out vec3 vLocal; out vec4 vCol; out float vH; out float vSel; out float vPing;
 void main(){
+  float id = float(gl_InstanceID);
+  float sel = max(id == uSel ? 1. : 0., id == uHover ? .6 : 0.);
+  // « ping » : la balise s'illumine quand le balayage radar passe sur elle (intensité exp(-k * temps écoulé))
+  float ang = atan(iPos.x, iPos.y);
+  float lag = mod(uSweep - ang, 6.28318);
+  float ping = id < .5 ? 0. : exp(-lag * 1.6);
   vec3 w;
-  if (uPart != 1) {
-    float pulse = 1. + .07 * sin(uTime * 2.2 + iCol.w * 6.);
+  // taille plancher à l'écran : vue de loin, la colonne garde ~3 px de large (la lueur reste lisible)
+  float far = max(1., length(uCam.xy - iPos.xy) / 700.);
+  float grow = (1. + .55 * sel) * far * mix(1., .3, uWalk);
+  if (uPart == 0 || uPart == 2) {
+    float pulse = 1. + .07 * sin(uTime * 2.2 + iCol.w * 6.) + .25 * ping;
     float rad = uPart == 0 ? 2.8 : 8.5;   // noyau lumineux + halo large
-    w = vec3(iPos.xy + aPos.xy * rad * pulse, aPos.z * iPos.z);
+    w = vec3(iPos.xy + aPos.xy * rad * pulse * grow, aPos.z * iPos.z * (1. + .15 * sel));
+  } else if (uPart == 1) {
+    w = vec3(iPos.xy + aPos.xy * 15. * grow, .25);
   } else {
-    w = vec3(iPos.xy + aPos.xy * 15., .25);
+    // deux anneaux horizontaux qui flottent et respirent le long de la colonne
+    float bob = sin(uTime * 1.7 + iCol.w * 6.283 + uRingK * 2.4) * 3.5;
+    float z = iPos.z * (uRingK < .5 ? .62 : .36) + bob;
+    float r = (uRingK < .5 ? 9.5 : 7.) * grow * (1. + .18 * ping);
+    w = vec3(iPos.xy + aPos.xy * r, z);
   }
-  vPos = w; vLocal = aPos; vCol = iCol; vH = iPos.z;
+  vPos = w; vLocal = aPos; vCol = iCol; vH = iPos.z; vSel = sel; vPing = ping;
   gl_Position = uMVP * vec4(w, 1.);
 }`;
 
@@ -432,25 +479,41 @@ precision highp float;
 precision highp int;
 uniform float uTime;
 uniform int uPart;
-in vec3 vPos; in vec3 vLocal; in vec4 vCol; in float vH;
+uniform float uNight;
+in vec3 vPos; in vec3 vLocal; in vec4 vCol; in float vH; in float vSel; in float vPing;
 out vec4 outColor;
 void main(){
   // Mélange alpha pré-multiplié : la lumière colorée reste lisible sur le fond crème (l'additif y disparaît)
+  vec3 hot = mix(vCol.rgb, vec3(1., .97, .86), .35);   // cœur plus clair que la teinte : la lumière « brûle » au centre
+  float boost = 1. + .6 * vSel + .7 * vPing;
   if (uPart == 0) {
     float g = 1. - vLocal.z;
     float a = (pow(g, 1.1) * .62 + pow(g, 5.) * .30) * (.82 + .18 * sin(uTime * 3. + vCol.w * 6. - vLocal.z * 9.));
-    outColor = vec4(vCol.rgb * a, a);
+    a = clamp(a * boost, 0., 1.);
+    vec3 c = mix(vCol.rgb, hot, pow(g, 4.));
+    outColor = vec4(c * a, a);
   } else if (uPart == 2) {
     float g = 1. - vLocal.z;
-    float a = pow(g, 1.8) * .22;
+    float a = pow(g, 1.8) * (.22 + .12 * uNight) * boost;
     outColor = vec4(vCol.rgb * a, a);
-  } else {
+  } else if (uPart == 1) {
     float r = length(vLocal.xy);
     float t = fract(uTime * .38 + vCol.w);
     float ring = smoothstep(.12, .0, abs(r - t)) * (1. - t);
     float core = smoothstep(.30, .0, r) * .75;
-    float a = clamp(ring * .95 + core, 0., 1.) * step(r, 1.);
-    outColor = vec4(vCol.rgb * a, a);
+    float pingRing = smoothstep(.10, .0, abs(r - .55 - .4 * (1. - vPing))) * vPing; // onde du balayage
+    float selRing = vSel * smoothstep(.06, .0, abs(r - .92)) * (.7 + .3 * sin(uTime * 6.));
+    float a = clamp(ring * .95 + core + pingRing + selRing, 0., 1.) * step(r, 1.);
+    outColor = vec4(mix(vCol.rgb, hot, core) * a, a);
+  } else {
+    // anneau flottant : bande nette + tirets qui tournent (lecture « radar »)
+    float r = length(vLocal.xy);
+    float band = smoothstep(.09, .0, abs(r - .86));
+    float ang = atan(vLocal.y, vLocal.x);
+    float dash = step(.35, fract(ang * 1.9099 + uTime * .5 * (vCol.w > .5 ? 1. : -1.)));
+    float glow = smoothstep(.45, .0, abs(r - .86)) * .22;
+    float a = clamp((band * (.55 + .45 * dash) + glow) * (.75 + .25 * vSel) * boost, 0., 1.) * step(r, 1.);
+    outColor = vec4(mix(vCol.rgb, hot, band * .4) * a, a);
   }
 }`;
 
@@ -484,20 +547,35 @@ float stripeAA(float x, float period){
   return mix(v, .5, smoothstep(.22, .7, w));
 }
 void main(){
-  float u = vRd.x, v = vRd.y, type = vRd.z, width = vRd.w;
+  float u = vRd.x, v = vRd.y, width = vRd.w;
+  float tz = floor(vRd.z + .5);                 // valeur constante par voie : on arrondit la dérive d'interpolation
+  float type = mod(tz, 4.), roadLen = floor(tz / 4.);
   vec3 albedo;
-  float grain = vnoise(vPos.xy * 2.3) * .6 + vnoise(vPos.xy * 9.) * .4;
+  // grain fin fondu dès qu'il devient plus petit qu'un pixel (sinon « neige » scintillante en vue rasante)
+  float pxw = fwidth(vPos.x) + fwidth(vPos.y);
+  float g1 = mix(vnoise(vPos.xy * 2.3), .5, smoothstep(.25, .9, pxw));
+  float g2 = mix(vnoise(vPos.xy * 9.), .5, smoothstep(.06, .22, pxw));
+  float grain = g1 * .6 + g2 * .4;
   if (type < .5) {
-    albedo = mix(vec3(.58, .56, .53), vec3(.66, .63, .58), grain);             // asphalte chaud
-    float kerb = smoothstep(.84, .90, abs(v));
-    albedo = mix(albedo, vec3(.80, .77, .70), kerb);                            // bordure claire
+    // asphalte chaud et sombre (la rue se lit contre le sol clair), rapiéçages, bordure blanche
+    albedo = mix(vec3(.33, .32, .31), vec3(.40, .38, .36), grain);
+    albedo *= .92 + .14 * vnoise(vPos.xy * .35);
+    float kerb = smoothstep(.86, .92, abs(v));
+    albedo = mix(albedo, vec3(.93, .90, .84), kerb);
     if (width >= 6.5) {
       float dash = stripeAA(u, 7.) * (1. - smoothstep(.03, .06, abs(v)));
-      albedo = mix(albedo, vec3(.96, .93, .84), dash * .85);                    // axe pointillé
+      albedo = mix(albedo, vec3(.98, .96, .88), dash * .9);                     // axe pointillé
     }
+    // passages piétons aux deux bouts de la voie (les carrefours) : bandes blanches de 0,5 m
+    float endD = min(u, roadLen - u);
+    float zebraZone = (1. - smoothstep(4.2, 4.6, endD)) * step(1.4, endD) * step(abs(v), .84) * step(4.5, width) * step(14., roadLen);
+    float bars = step(.5, fract(v * width * .5 / 1.0));
+    albedo = mix(albedo, vec3(.97, .95, .90), zebraZone * bars * .92);
   } else if (type < 1.5) {
     float joint = min(stripeAA(u, 1.1), stripeAA(v * (width * .5 + 1.7), 1.1));
-    albedo = vec3(.86, .82, .74) * (.94 + .08 * joint) * (.95 + .08 * grain);   // trottoir dallé
+    albedo = vec3(.80, .74, .64) * (.92 + .10 * joint) * (.94 + .1 * grain);    // trottoir dallé
+    float curb = smoothstep(.80, .86, abs(v)) * (1. - smoothstep(.93, .97, abs(v)));
+    albedo = mix(albedo, vec3(.95, .92, .86), curb * .8);                        // arête du trottoir
   } else if (type < 2.5) {
     float joint = min(stripeAA(u, 1.4), stripeAA(v * width * .5, 1.4));
     albedo = mix(vec3(.84, .77, .66), vec3(.78, .70, .58), grain) * (.95 + .06 * joint); // place piétonne
@@ -505,11 +583,53 @@ void main(){
     albedo = mix(vec3(.74, .64, .48), vec3(.66, .56, .42), grain);              // sentier de terre
   }
   albedo = pow(albedo, vec3(2.2));
-  vec3 col = albedo * (uSunCol * max(uSun.z, 0.) + mix(uGround, uAmb, .85));
+  vec3 col = albedo * (uSunCol * max(uSun.z, 0.) * .85 + mix(uGround, uAmb, .85));
   col = applyFog(col, vPos, uCam, uFogCol, uFogDen);
   col = tone(col);
   col += (hash21(gl_FragCoord.xy + 5.) - .5) / 255.;
   outColor = vec4(col, 1.);
+}`;
+
+// ---------------------------------------------------------------------------------------------
+// Balayage radar : disque au sol autour de l'ESSECT, secteur qui tourne avec une traîne, anneaux de distance tous les 500 m
+// (mélange pré-multiplié : rouge lisible sur le crème le jour, lueur la nuit)
+// ---------------------------------------------------------------------------------------------
+
+export const SWEEP_VS = /* glsl */ `#version 300 es
+precision highp float;
+uniform mat4 uMVP;
+uniform float uRadius;
+in vec3 aPos;
+out vec2 vXY;
+void main(){
+  vXY = aPos.xy * uRadius;
+  gl_Position = uMVP * vec4(vXY, .45, 1.);
+}`;
+
+export const SWEEP_FS = /* glsl */ `#version 300 es
+precision highp float;
+uniform float uRadius, uSweep, uNight, uTime;
+in vec2 vXY;
+out vec4 o;
+void main(){
+  float d = length(vXY);
+  if (d > uRadius) discard;
+  float ang = atan(vXY.x, vXY.y);
+  float lag = mod(uSweep - ang, 6.28318);
+  float trail = exp(-lag * 2.6) * smoothstep(0., .02, lag + .02);
+  float edge = smoothstep(.035, 0., lag) ;
+  float px = fwidth(d);
+  float rings = 0.;
+  float step500 = 500.;
+  float rr = abs(fract(d / step500 + .5) - .5) * step500;
+  rings = (1. - smoothstep(px * .8, px * 2.2, rr)) * step(80., d);
+  float rim = 1. - smoothstep(px, px * 3., abs(d - uRadius));
+  float fadeIn = smoothstep(40., 160., d) * (1. - smoothstep(uRadius * .9, uRadius, d) * .5);
+  float a = (trail * .20 + edge * .40) * fadeIn + rings * .22 + rim * .55;
+  a *= mix(1., 1.6, uNight);
+  vec3 c = mix(vec3(.855, .027, .067), vec3(1., .62, .30), uNight * .6);
+  a = clamp(a, 0., .85);
+  o = vec4(c * a, a);
 }`;
 
 // ---------------------------------------------------------------------------------------------
@@ -533,10 +653,40 @@ export const GROUND_FS = /* glsl */ `#version 300 es
 precision highp float;
 precision highp int;
 ${SHADOW_GLSL}
+${COMMON}
 uniform vec3 uTint, uShadowTint;
 in vec3 vPos;
 out vec4 outColor;
 void main(){
   float f = shadowFactor(vPos, vec3(0., 0., 1.));
-  outColor = vec4(uTint * mix(uShadowTint, vec3(1.), f), 1.);
+  // terre battue et dallages : grandes taches douces + grain fin, fondus avec la distance (aucun moiré)
+  float big = vnoise(vPos.xy * .018) * .6 + vnoise(vPos.xy * .07) * .4;
+  float fine = vnoise(vPos.xy * .9);
+  float px = fwidth(vPos.x) + fwidth(vPos.y);
+  fine = mix(fine, .5, smoothstep(.25, .9, px));
+  vec3 soil = mix(vec3(.90, .85, .76), vec3(.97, .93, .86), big) * (.96 + .06 * fine);
+  outColor = vec4(uTint * soil * mix(uShadowTint, vec3(1.), f), 1.);
+}`;
+
+// Ombre de contact au pied des immeubles (multiplicative) : le bâtiment « pèse » sur le sol
+export const SKIRT_VS = /* glsl */ `#version 300 es
+precision highp float;
+uniform mat4 uMVP;
+in vec3 aPos;
+in float aFade;
+out float vFade;
+void main(){
+  vFade = aFade;
+  gl_Position = uMVP * vec4(aPos, 1.);
+}`;
+
+export const SKIRT_FS = /* glsl */ `#version 300 es
+precision highp float;
+uniform float uNight;
+in float vFade;
+out vec4 o;
+void main(){
+  float k = mix(.58, 1., smoothstep(0., 1., vFade));
+  k = mix(k, 1., uNight * .55);
+  o = vec4(vec3(k), 1.);
 }`;

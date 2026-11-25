@@ -9,6 +9,10 @@ const EYE_HEIGHT_M = 2.0; // hauteur d'yeux « de jeu » : à 1,7 m, regarder pl
 const STOP_BEFORE_END_M = 9; // on s'arrête devant la barrière : assez loin pour la voir en entier, au centre de l'écran
 const BARRIER_SRC = 'walk-barrier-src';
 const BARRIER_LAYER = 'walk-barrier';
+const TRAIL_SRC = 'walk-trail-src';
+const TRAIL_GLOW = 'walk-trail-glow';
+const TRAIL_DOTS = 'walk-trail-dots';
+const CRUMB_STEP_M = 4;
 
 export const WALK_SPEEDS = {
   calm: { label: 'Balade', metersPerSecond: 5 },
@@ -130,6 +134,116 @@ function removeBarrier(map) {
   }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Fil d'Ariane lumineux : des points tous les 4 m sur le reste du chemin, une onde moutarde qui avance vers la porte
+// (une seule source, deux calques ; l'animation ne change qu'une propriété de peinture, ~12 fois par seconde)
+// ---------------------------------------------------------------------------------------------
+
+function trailData(path) {
+  const features = [];
+  for (let d = 0; d <= path.length; d += CRUMB_STEP_M) {
+    features.push({ type: 'Feature', properties: { d }, geometry: { type: 'Point', coordinates: path.frame.toLL(sampleAt(path, d)) } });
+  }
+  const line = { type: 'Feature', properties: { d: -1 }, geometry: { type: 'LineString', coordinates: path.pts.map(path.frame.toLL) } };
+  return { type: 'FeatureCollection', features: [line, ...features] };
+}
+
+function addTrail(map, path) {
+  const data = trailData(path);
+  if (map.getSource(TRAIL_SRC)) map.getSource(TRAIL_SRC).setData(data);
+  else map.addSource(TRAIL_SRC, { type: 'geojson', data });
+  if (!map.getLayer(TRAIL_GLOW)) {
+    map.addLayer({
+      id: TRAIL_GLOW,
+      type: 'line',
+      source: TRAIL_SRC,
+      filter: ['==', ['geometry-type'], 'LineString'],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#FFD000', 'line-width': ['interpolate', ['linear'], ['zoom'], 16, 6, 20, 26], 'line-blur': 8, 'line-opacity': 0.55 },
+    });
+  }
+  if (!map.getLayer(TRAIL_DOTS)) {
+    map.addLayer({
+      id: TRAIL_DOTS,
+      type: 'circle',
+      source: TRAIL_SRC,
+      filter: ['==', ['geometry-type'], 'Point'],
+      paint: {
+        'circle-color': '#FFD000',
+        'circle-stroke-color': '#111111',
+        'circle-stroke-width': 1.5,
+        'circle-pitch-alignment': 'map',
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 16, 2.5, 20, 9],
+        'circle-opacity': 0.9,
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+  }
+}
+
+/** Points déjà dépassés : effacés ; points à venir : une onde lumineuse court vers la porte. */
+function animateTrail(map, walked, phase) {
+  if (!map.getLayer(TRAIL_DOTS)) return;
+  const ahead = ['-', ['get', 'd'], walked];
+  const wave = ['%', ['+', ['-', 0, ahead], phase], 24];
+  const visible = ['case', ['<', ahead, -1], 0, ['>', ahead, 140], 0, 1];
+  map.setPaintProperty(TRAIL_DOTS, 'circle-opacity', ['*', visible, ['interpolate', ['linear'], wave, 0, 1, 6, 0.35, 24, 0.35]]);
+  map.setPaintProperty(TRAIL_DOTS, 'circle-stroke-opacity', ['*', visible, 0.8]);
+  const pulse = ['interpolate', ['linear'], wave, 0, 1.55, 6, 1, 24, 1];
+  // le zoom doit rester l'entrée de l'interpolation de plus haut niveau (règle des expressions MapLibre)
+  map.setPaintProperty(TRAIL_DOTS, 'circle-radius', ['interpolate', ['linear'], ['zoom'], 16, ['*', 2.5, pulse], 20, ['*', 9, pulse]]);
+}
+
+function removeTrail(map) {
+  try {
+    [TRAIL_DOTS, TRAIL_GLOW].forEach((id) => map.getLayer(id) && map.removeLayer(id));
+    if (map.getSource(TRAIL_SRC)) map.removeSource(TRAIL_SRC);
+  } catch {
+    /* carte déjà détruite */
+  }
+}
+
+/** Virages du chemin (changement de cap > 35°), pour le repère flottant « prochain virage ». */
+function findTurns(path) {
+  const turns = [];
+  for (let d = 12; d < path.length - 10; d += 3) {
+    const before = bearingRad(sampleAt(path, d - 8), sampleAt(path, d));
+    const after = bearingRad(sampleAt(path, d), sampleAt(path, d + 8));
+    const delta = angleDelta(before, after);
+    if (Math.abs(delta) > toRad(35) && (!turns.length || d - turns[turns.length - 1].d > 18)) turns.push({ d, right: delta > 0 });
+  }
+  return turns;
+}
+
+function createWaypoint() {
+  const el = document.createElement('div');
+  el.className = 'cs-walk-waypoint';
+  el.innerHTML = '<span class="cs-walk-waypoint__arrow" aria-hidden="true"></span><span class="cs-walk-waypoint__txt"></span>';
+  return el;
+}
+
+/** Confettis Griddle à l'arrivée (éléments CSS, retirés après l'animation ; rien si l'utilisateur limite les animations). */
+function celebrate(container) {
+  if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div');
+  box.className = 'cs-confetti';
+  box.setAttribute('aria-hidden', 'true');
+  const colors = ['#DA0711', '#FFD000', '#1F7A3A', '#FAF3E6', '#111111'];
+  for (let i = 0; i < 36; i++) {
+    const c = document.createElement('i');
+    const a = (i / 36) * Math.PI * 2 + Math.random() * 0.3;
+    const r = 140 + Math.random() * 180;
+    c.style.setProperty('--dx', `${Math.cos(a) * r}px`);
+    c.style.setProperty('--dy', `${Math.sin(a) * r * 0.8 - 120}px`);
+    c.style.setProperty('--rot', `${Math.round(Math.random() * 720 - 360)}deg`);
+    c.style.setProperty('--delay', `${Math.round(Math.random() * 120)}ms`);
+    c.style.background = colors[i % colors.length];
+    box.appendChild(c);
+  }
+  container.appendChild(box);
+  setTimeout(() => box.remove(), 2200);
+}
+
 /** Panneau posé devant la barrière (texte via textContent : aucun HTML venant de l'API n'est interprété). */
 function createSign({ name, subtitle, onReserve, reserveLabel }) {
   const el = document.createElement('div');
@@ -202,7 +316,11 @@ export function startWalk(map, opts) {
     raf: 0,
     sign: null,
     started: false,
+    trailTick: 0,
+    waypoint: null,
+    turnIdx: 0,
   };
+  const turns = findTurns(path);
 
   const emit = () =>
     opts.onState?.({
@@ -213,11 +331,12 @@ export function startWalk(map, opts) {
       speed: s.speedKey,
     });
 
-  const placeCamera = (bob) => {
+  const placeCamera = (bob, dt = 1 / 60) => {
     const here = sampleAt(path, s.d);
     const ahead = sampleAt(path, Math.min(path.length, s.d + 14));
     const target = bearingRad(here, ahead);
-    s.heading += angleDelta(s.heading, target) * 0.12; // virages adoucis
+    // virages amortis, indépendants de la cadence d'affichage (même douceur à 30, 60 ou 120 images/s)
+    s.heading += angleDelta(s.heading, target) * (1 - Math.exp(-dt * 6.5));
     const look = s.heading + s.yaw;
     const eye = EYE_HEIGHT_M + bob;
     // MapLibre 4.7 n'a pas d'API « caméra libre » : on calcule centre/zoom/inclinaison/cap d'une caméra posée à hauteur d'yeux
@@ -235,8 +354,33 @@ export function startWalk(map, opts) {
       })
         .setLngLat(path.frame.toLL(endM))
         .addTo(map);
+      celebrate(map.getContainer());
+      opts.onArrive?.();
+    }
+    if (s.waypoint) {
+      s.waypoint.remove();
+      s.waypoint = null;
     }
     emit();
+  };
+
+  // repère flottant au-dessus du prochain virage : flèche + distance restante
+  const updateWaypoint = () => {
+    while (s.turnIdx < turns.length && turns[s.turnIdx].d < s.d + 2) s.turnIdx++;
+    const next = turns[s.turnIdx];
+    if (!next || next.d - s.d > 120 || s.arrived) {
+      if (s.waypoint) s.waypoint.getElement().classList.add('is-hidden');
+      return;
+    }
+    if (!s.waypoint) {
+      s.waypoint = new maplibregl.Marker({ element: createWaypoint(), anchor: 'bottom' }).setLngLat(path.frame.toLL(sampleAt(path, next.d))).addTo(map);
+      s.waypoint.getElement().classList.add('cs-walk-keep');
+    }
+    const el = s.waypoint.getElement();
+    el.classList.remove('is-hidden');
+    el.classList.toggle('is-right', next.right);
+    s.waypoint.setLngLat(path.frame.toLL(sampleAt(path, next.d)));
+    el.querySelector('.cs-walk-waypoint__txt').textContent = `${Math.max(1, Math.round(next.d - s.d))} m`;
   };
 
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -254,7 +398,13 @@ export function startWalk(map, opts) {
       if (stopAt - s.d < 0.05) finish();
       else emit();
     }
-    placeCamera(bob);
+    placeCamera(bob, dt || 1 / 60);
+    s.trailTick += dt;
+    if (s.trailTick > 0.08) {
+      s.trailTick = 0;
+      animateTrail(map, s.d, reduceMotion ? 0 : (now / 1000) * 30);
+      updateWaypoint();
+    }
     s.raf = requestAnimationFrame(frame);
   };
 
@@ -290,6 +440,8 @@ export function startWalk(map, opts) {
   window.addEventListener('keydown', onKey);
 
   addBarrier(map, path.frame, endM, endHeading);
+  addTrail(map, path);
+  animateTrail(map, 0, 0);
 
   // Plongée vers le point de départ, puis la marche démarre
   const startPoint = path.frame.toLL(path.pts[0]);
@@ -321,7 +473,9 @@ export function startWalk(map, opts) {
       canvas.removeEventListener('pointercancel', onUp);
       window.removeEventListener('keydown', onKey);
       if (s.sign) s.sign.remove();
+      if (s.waypoint) s.waypoint.remove();
       removeBarrier(map);
+      removeTrail(map);
       handlers.forEach((h) => wasEnabled[h] && map[h]?.enable?.());
       map.getContainer().classList.remove('cs-walking');
       map.setLight(savedLight);
@@ -349,9 +503,12 @@ export function startWalk(map, opts) {
           s.sign = null;
         }
       }
+      s.turnIdx = 0;
       if (stopAt - s.d < 0.05) finish();
       else emit();
       placeCamera(0);
+      animateTrail(map, s.d, 0);
+      updateWaypoint();
     },
     getState: () => ({ d: s.d, length: stopAt, arrived: s.arrived, paused: s.paused, started: s.started }),
   };

@@ -12,9 +12,10 @@ import { ENDPOINTS } from '../../lib/endpoints.js';
 import { formatTND } from '@shared/money.js';
 import { mockMerchants, mockOffers } from '../../mocks/index.js';
 import { getFramerFoodImage } from '../../lib/framerAssets.js';
-import { MAP_CONFIG, add3DBuildingsLayer, isMapReady } from './mapStyle.js';
+import { MAP_CONFIG, add3DBuildingsLayer, isMapReady, installStyleFallback } from './mapStyle.js';
 import { applyAtmosphere, atmosphereStats } from './atmosphere.js';
-import { applyWorld, worldStats, setWorldBeacons } from './world/worldLayer.js';
+import { applyWorld, worldStats, setWorldBeacons, setWorldFocus } from './world/worldLayer.js';
+import { addStreetLabels } from './streetLabels.js';
 import { auditRoutes } from './routeAudit.js';
 import { setupBeaconLayers, createFikaNumberedMarkers } from './beaconLayer.js';
 import { setupCircuitRoute, updateWalkingPath, getWalkRoute } from './walkingPath.js';
@@ -71,6 +72,8 @@ export default function HoloRadarPage() {
   const markersRef = useRef([]);
 
   const [radiusM, setRadiusM] = useState(1500);
+  const radiusRef = useRef(1500);
+  radiusRef.current = radiusM;
   const [radarData, setRadarData] = useState(null);
   const [selectedMerchant, setSelectedMerchant] = useState(null);
   // Trajet piéton réel (par les rues) vers le commerce sélectionné : { distanceM, durationS, source } | null
@@ -206,6 +209,35 @@ clockRef.current = clock;
     }
   }, []);
 
+  // Fiche du commerce sur téléphone : poignée glissable (haut = agrandir, bas = réduire puis fermer)
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const sheetRef = useRef(null);
+  const sheetDragRef = useRef(null);
+  useEffect(() => setSheetExpanded(false), [selectedMerchant]);
+  const onSheetTouchStart = (e) => {
+    const el = sheetRef.current;
+    if (!el || window.innerWidth >= 640) return;
+    sheetDragRef.current = { y: e.touches[0].clientY, dy: 0, atTop: el.scrollTop <= 0 };
+  };
+  const onSheetTouchMove = (e) => {
+    const d = sheetDragRef.current;
+    const el = sheetRef.current;
+    if (!d || !el) return;
+    d.dy = e.touches[0].clientY - d.y;
+    if (d.atTop && d.dy > 0) el.style.transform = `translateY(${Math.min(d.dy, 240)}px)`;
+  };
+  const onSheetTouchEnd = () => {
+    const d = sheetDragRef.current;
+    const el = sheetRef.current;
+    sheetDragRef.current = null;
+    if (!d || !el) return;
+    el.style.transform = '';
+    if (d.atTop && d.dy > 80) {
+      if (sheetExpanded) setSheetExpanded(false);
+      else handleCloseDrawer();
+    } else if (d.dy < -50 && !sheetExpanded) setSheetExpanded(true);
+  };
+
   // Désélection et recentrage vers le Campus ESSECT
   const handleCloseDrawer = useCallback(() => {
     setSelectedMerchant(null);
@@ -231,6 +263,7 @@ clockRef.current = clock;
     const offers = merchant.activeOffers || [];
     const firstOfferId = offers[0]?.id || offers[0]?.offerId;
     setWalkState({ progress: 0, metersLeft: Math.round(route.distanceM || 0), paused: false, arrived: false, speed: 'brisk' });
+    setWorldFocus(map, { walking: true });
     walkRef.current = startWalk(map, {
       coordinates: route.coordinates,
       name: merchant.name,
@@ -247,6 +280,10 @@ clockRef.current = clock;
       onStop: () => {
         walkRef.current = null;
         setWalkState(null);
+        setWorldFocus(map, { walking: false });
+      },
+      onArrive: () => {
+        if (embed) postToHost({ type: 'walkArrived', merchantId: String(merchant.id ?? '') });
       },
     });
     if (import.meta.env.DEV) window.__radarWalk = walkRef.current; // hook QA (absent en production)
@@ -292,16 +329,33 @@ clockRef.current = clock;
     (map, merchants) => {
       // Supprime les anciens marqueurs pour éviter toute fuite de mémoire
       if (markersRef.current && markersRef.current.length > 0) {
+        markersRef.current.dispose?.();
         markersRef.current.forEach((m) => m.remove());
         markersRef.current = [];
       }
 
       if (map && merchants && merchants.length > 0) {
-        markersRef.current = createFikaNumberedMarkers(map, merchants, handleSelectMerchant);
+        markersRef.current = createFikaNumberedMarkers(map, merchants, handleSelectMerchant, {
+          onHover: (m) => setWorldFocus(map, { hoverId: m ? m.id : null }),
+        });
+        markersRef.current.setSelected?.(selectedIdRef.current);
       }
     },
     [handleSelectMerchant]
   );
+
+  // Commerce choisi : mis en avant dans la scène 3D (balise plus grande) et dans les étiquettes (toujours ouverte)
+  const selectedIdRef = useRef(null);
+  selectedIdRef.current = selectedMerchant?.id ?? null;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    setWorldFocus(map, { selectedId: selectedMerchant?.id ?? null });
+    markersRef.current?.setSelected?.(selectedMerchant?.id ?? null);
+  }, [selectedMerchant]);
+  useEffect(() => {
+    if (mapRef.current) setWorldFocus(mapRef.current, { radiusM });
+  }, [radiusM]);
 
   // Dernière liste de commerces, lisible depuis les callbacks MapLibre sans dépendance périmée
   const merchantsRef = useRef([]);
@@ -324,6 +378,7 @@ clockRef.current = clock;
       // Monde pré-calculé (Overture) puis lumière/ombres/brume dessus ; sans lui, on garde les bâtiments des tuiles
       applyWorld(map).then((world) => {
         applyAtmosphere(map, world || undefined);
+        if (world) addStreetLabels(map, world);
         applyTimeOfDay(map, clockRef.current); // réapplique l'heure choisie (le calque arrive après le style)
         if (!readySentRef.current) {
           readySentRef.current = true;
@@ -332,6 +387,7 @@ clockRef.current = clock;
       });
       setupBeaconLayers(map, merchants, handleSelectMerchant);
       setWorldBeacons(map, merchants); // colonnes de lumière WebGL2 (si le calque 3D est actif)
+      setWorldFocus(map, { radiusM: radiusRef.current, selectedId: selectedIdRef.current });
       setupCircuitRoute(map, merchants);
       refreshMarkers(map, merchants);
     },
@@ -360,6 +416,12 @@ clockRef.current = clock;
           attributionControl: false,
         });
 
+        // tuiles externes muettes ou en panne : fond crème hors ligne, le monde 3D dessine les rues lui-même
+        installStyleFallback(map);
+        map.once('idle', () => {
+          // crédits repliés sur téléphone (le bouton ⓘ les rouvre) : la carte reste plein écran
+          if (window.innerWidth < 640) mapContainerRef.current?.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+        });
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         // Crédit obligatoire des données ouvertes (ODbL) : OpenStreetMap / OpenFreeMap pour le fond, Overture Maps pour les bâtiments
         map.addControl(
@@ -394,7 +456,7 @@ clockRef.current = clock;
         });
 
         map.on('error', (e) => {
-          console.warn('MapLibre WebGL incident :', e);
+          console.warn('MapLibre WebGL incident :', e?.error?.message || e?.error || e?.type || e);
         });
 
         mapRef.current = map;
@@ -843,7 +905,22 @@ clockRef.current = clock;
 
         {/* 6. TIROIR LATÉRAL : DÉTAILS D'UN COMMERCE CIBLÉ AVEC DRONE SWOOP */}
         {selectedMerchant && !walkState && (
-          <div className="absolute bottom-0 sm:top-0 right-0 z-40 w-full sm:w-[440px] h-[42dvh] sm:h-full bg-[#FAF3E6] rounded-t-3xl sm:rounded-none border-t-2 sm:border-t-0 sm:border-l-2 border-[#111111] shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.35)] sm:shadow-none p-4 sm:p-6 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+          <div
+            ref={sheetRef}
+            onTouchStart={onSheetTouchStart}
+            onTouchMove={onSheetTouchMove}
+            onTouchEnd={onSheetTouchEnd}
+            className={`absolute bottom-0 sm:top-0 right-0 z-40 w-full sm:w-[440px] ${sheetExpanded ? 'h-[80dvh]' : 'h-[42dvh]'} sm:h-full bg-[#FAF3E6] rounded-t-3xl sm:rounded-none border-t-2 sm:border-t-0 sm:border-l-2 border-[#111111] shadow-[0_-12px_30px_-12px_rgba(0,0,0,0.35)] sm:shadow-none px-4 pb-4 pt-2 sm:p-6 flex flex-col overflow-y-auto overscroll-contain transition-[height] duration-300 animate-in slide-in-from-right`}
+          >
+            {/* Poignée : glisser vers le haut pour agrandir, vers le bas pour fermer (téléphone) */}
+            <button
+              type="button"
+              onClick={() => setSheetExpanded((v) => !v)}
+              aria-label={sheetExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'}
+              className="sm:hidden self-center mb-2 py-2 px-6 touch-none"
+            >
+              <span className="block w-12 h-1.5 rounded-full bg-[#111111]/40" aria-hidden="true" />
+            </button>
             {/* Bouton de fermeture */}
             <div className="flex items-center justify-between gap-3 mb-5">
               <span className="cs-eyebrow flex items-center gap-2">

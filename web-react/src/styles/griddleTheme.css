@@ -614,7 +614,7 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
 /* ============================================================
    13. MODE MARCHER (Holo-Radar) : panneau d'arrivée + barre de contrôle
    ============================================================ */
-.cs-walking .maplibregl-marker:not(.cs-walk-sign) { visibility: hidden !important; pointer-events: none; }
+.cs-walking .maplibregl-marker:not(.cs-walk-sign):not(.cs-walk-keep) { visibility: hidden !important; pointer-events: none; }
 .cs-walking .maplibregl-ctrl-top-right { display: none; }
 .cs-walking .cs-map-haze { --haze: 1; }
 .cs-walk-sign {
@@ -654,7 +654,7 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
 @media (prefers-reduced-motion: reduce) { .cs-ui-fade { transition: none; } }
 
 /* Le calque 3D WebGL2 a sa propre brume : on allège le voile CSS pour ne pas gommer les couleurs */
-.cs-w3d .cs-map-haze { opacity: .45; }
+.cs-w3d .cs-map-haze { opacity: .3; }
 
 /* ============================================================
    15. SÉLECTEUR D'HEURE (Holo-Radar)
@@ -671,7 +671,96 @@ select.cs-input { appearance: none; padding-right: 2.75rem; background-image: ur
 /* ============================================================
    16. ÉDITEUR DE SPOT (SpotEditor) : épingle déplaçable + repère ESSECT
    ============================================================ */
-.cs-spot-pin { width: 28px; height: 28px; border-radius: 9999px; background: var(--cs-leaf); border: 3px solid var(--cs-ink); box-shadow: 0 0 0 4px rgba(250, 243, 230, 0.9); cursor: grab; }
-.cs-spot-pin.is-outside { background: var(--cs-red); }
+.cs-spot-pin { position: relative; width: 44px; height: 58px; cursor: grab; --pin: var(--cs-leaf); }
+.cs-spot-pin.is-outside { --pin: var(--cs-red); }
 .cs-spot-pin:active { cursor: grabbing; }
+/* tête en goutte : la pointe est exactement la position enregistrée */
+.cs-spot-pin__head {
+  position: absolute; left: 50%; top: 2px; width: 36px; height: 36px; margin-left: -18px; z-index: 2;
+  background: var(--pin); border: 3px solid var(--cs-ink); border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  box-shadow: -3px 3px 0 var(--cs-ink); transition: transform .2s ease, background-color .2s ease;
+}
+.cs-spot-pin__head::after { content: ''; position: absolute; inset: 9px; border-radius: 9999px; background: var(--cs-cream); border: 2.5px solid var(--cs-ink); }
+.cs-spot-pin__shadow { position: absolute; left: 50%; bottom: -3px; width: 22px; height: 8px; margin-left: -11px; border-radius: 50%; background: rgba(17, 17, 17, .35); filter: blur(1.5px); transition: transform .2s ease, opacity .2s ease; }
+.cs-spot-pin__halo { position: absolute; left: 50%; bottom: -14px; width: 56px; height: 24px; margin-left: -28px; border-radius: 50%; border: 3px solid var(--pin); opacity: 0; animation: cs-pin-halo 2s ease-out infinite; }
+.cs-spot-pin.is-lifted .cs-spot-pin__head { transform: translateY(-12px) rotate(-45deg); }
+.cs-spot-pin.is-lifted .cs-spot-pin__shadow { transform: scale(.7); opacity: .5; }
+.cs-spot-pin.is-drop .cs-spot-pin__head { animation: cs-pin-drop .5s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes cs-pin-halo { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes cs-pin-drop { 0% { transform: translateY(-26px) rotate(-45deg); } 100% { transform: translateY(0) rotate(-45deg); } }
+@media (prefers-reduced-motion: reduce) { .cs-spot-pin__halo, .cs-spot-pin.is-drop .cs-spot-pin__head { animation: none; } }
 .cs-spot-essect { padding: 0.15rem 0.6rem; border-radius: 9999px; background: var(--cs-red); color: var(--cs-cream); border: 2px solid var(--cs-ink); font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.06em; pointer-events: none; }
+
+
+/* ============================================================
+   17. ÉTIQUETTES DU RADAR : pastille + nom + prix, repli sans chevauchement
+   ============================================================ */
+.cs-badge { display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; transform-origin: 18px 100%; }
+.cs-badge__body { display: flex; align-items: center; filter: drop-shadow(0 8px 12px rgba(17, 17, 17, .28)); transition: transform .18s ease; }
+.cs-badge__num {
+  position: relative; z-index: 1; width: 36px; height: 36px; flex: none; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+  background: var(--cs-red); color: #fff; font-weight: 700; font-size: 1rem; border: 2px solid var(--cs-ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cs-urgency, var(--cs-red)) 55%, transparent);
+}
+.cs-badge__label {
+  display: flex; align-items: center; gap: .45rem; margin-left: -10px; padding: .3rem .75rem .3rem 1rem; max-width: 280px; overflow: hidden;
+  background: var(--cs-cream); color: var(--cs-ink); border: 2px solid var(--cs-ink); border-radius: 9999px;
+  font-size: 13px; font-weight: 600; text-transform: uppercase; white-space: nowrap;
+  transition: max-width .22s ease, opacity .18s ease, padding .22s ease, border-width .22s ease;
+}
+.cs-badge__name { overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+.cs-badge__price { padding: 0 .4rem; border-radius: 9999px; background: var(--cs-mustard); border: 1.5px solid var(--cs-ink); font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: -.02em; }
+.cs-badge__min { color: var(--cs-red); }
+.cs-badge__stem { width: 3px; height: 10px; margin-left: 16.5px; background: var(--cs-ink); border-radius: 2px; }
+.cs-badge.is-collapsed .cs-badge__label { max-width: 0; opacity: 0; padding-left: 0; padding-right: 0; border-width: 0; }
+.maplibregl-marker.cs-badge { z-index: 4; }
+.maplibregl-marker.cs-badge.is-collapsed { z-index: 3; }
+.maplibregl-marker.cs-badge.is-selected { z-index: 6; }
+.cs-badge.is-hidden { opacity: 0; pointer-events: none; }
+.cs-badge { transition: opacity .2s ease; }
+.cs-badge:hover .cs-badge__body, .cs-badge:focus-visible .cs-badge__body { transform: translateY(-3px) scale(1.06); }
+.cs-badge:hover .cs-badge__label { max-width: 280px; opacity: 1; padding: .3rem .75rem .3rem 1rem; border-width: 2px; }
+.cs-badge:focus-visible { outline: none; }
+.cs-badge:focus-visible .cs-badge__num { outline: 3px solid var(--cs-mustard); outline-offset: 2px; }
+.cs-badge.is-selected { z-index: 5; }
+.cs-badge.is-selected .cs-badge__num { background: var(--cs-ink); color: var(--cs-mustard); animation: cs-badge-ping 1.6s ease-out infinite; }
+.cs-badge.is-selected .cs-badge__label { background: var(--cs-mustard); }
+.cs-badge.is-pop .cs-badge__body { animation: cs-badge-pop .42s cubic-bezier(.3, 1.6, .5, 1); }
+.cs-badge--essect .cs-badge__num { background: var(--cs-mustard); color: var(--cs-ink); width: 40px; height: 40px; font-size: 1.1rem; }
+.cs-badge--essect .cs-badge__label { background: var(--cs-ink); color: var(--cs-cream); }
+@keyframes cs-badge-pop { 0% { transform: scale(1); } 40% { transform: scale(1.22) translateY(-4px); } 100% { transform: scale(1); } }
+@keyframes cs-badge-ping { 0% { box-shadow: 0 0 0 0 rgba(255, 208, 0, .9); } 100% { box-shadow: 0 0 0 14px rgba(255, 208, 0, 0); } }
+@media (prefers-reduced-motion: reduce) { .cs-badge.is-pop .cs-badge__body, .cs-badge.is-selected .cs-badge__num { animation: none; } .cs-badge__label { transition: none; } }
+
+
+/* ============================================================
+   18. MODE MARCHER : repère du prochain virage + confettis d'arrivée
+   ============================================================ */
+.cs-walk-waypoint { display: flex; flex-direction: column; align-items: center; gap: .2rem; pointer-events: none; animation: cs-waypoint-bob 1.6s ease-in-out infinite; transition: opacity .25s ease; }
+.cs-walk-waypoint.is-hidden { opacity: 0; }
+.cs-walk-waypoint__arrow {
+  width: 46px; height: 46px; border-radius: 9999px; background: var(--cs-mustard); border: 3px solid var(--cs-ink); box-shadow: 0 6px 0 var(--cs-ink), 0 0 24px rgba(255, 208, 0, .8);
+  display: flex; align-items: center; justify-content: center;
+}
+.cs-walk-waypoint__arrow::before { content: '↰'; font-size: 1.6rem; font-weight: 900; color: var(--cs-ink); line-height: 1; }
+.cs-walk-waypoint.is-right .cs-walk-waypoint__arrow::before { content: '↱'; }
+.cs-walk-waypoint__txt { padding: .1rem .55rem; border-radius: 9999px; background: var(--cs-ink); color: var(--cs-cream); font-family: 'Space Mono', monospace; font-size: .8125rem; font-weight: 700; }
+@keyframes cs-waypoint-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.cs-confetti { position: absolute; left: 50%; top: 52%; width: 0; height: 0; z-index: 8; pointer-events: none; }
+.cs-confetti i { position: absolute; width: 10px; height: 16px; border: 1.5px solid #111; border-radius: 3px; opacity: 0; animation: cs-confetti 1.7s cubic-bezier(.15, .7, .3, 1) var(--delay) forwards; }
+@keyframes cs-confetti {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 260px)) rotate(var(--rot)); }
+}
+@media (prefers-reduced-motion: reduce) { .cs-walk-waypoint { animation: none; } }
+
+/* Plaques de rue (indépendantes des tuiles) */
+.maplibregl-marker:has(> .cs-street-label), .cs-street-label { z-index: 2; }
+.cs-street-label {
+  pointer-events: none; padding: .15rem .55rem; border-radius: .4rem; white-space: nowrap;
+  background: rgba(17, 17, 17, .78); color: var(--cs-cream); border: 1.5px solid rgba(250, 243, 230, .7);
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(17, 17, 17, .2); transition: opacity .25s ease;
+}
+.cs-street-label.is-hidden { opacity: 0; }

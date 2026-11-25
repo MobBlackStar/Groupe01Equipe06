@@ -8,22 +8,18 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Crosshair, MapPin, ClipboardPaste } from 'lucide-react';
 import { assessSpot, parseCoordinates, snapToRoads } from '@shared/spot.js';
 import { BUSINESS_RULES, ESSECT_COORDINATES } from '@shared/constants.js';
-import { MAP_CONFIG, add3DBuildingsLayer, isMapReady } from './mapStyle.js';
-import { applyWorld, loadWorld } from './world/worldLayer.js';
+import { MAP_CONFIG, add3DBuildingsLayer, isMapReady, installStyleFallback } from './mapStyle.js';
+import { applyWorld, loadWorld, setWorldFocus } from './world/worldLayer.js';
+import { addStreetLabels } from './streetLabels.js';
 import { applyAtmosphere } from './atmosphere.js';
 import { applyTimeOfDay } from './timeControl.js';
 
 const RADIUS_SRC = 'spot-radius-src';
 const CONNECTOR_SRC = 'spot-connector-src';
 const ROADS_SRC = 'spot-local-roads-src';
+const SPOT_DAYLIGHT_MIN = 12 * 60 + 30; // midi et demi : façades et rues bien lisibles pour poser l'épingle
 const ROAD_NAMES = ['Autoroute', 'Grande avenue', 'Avenue', 'Rue', 'Rue résidentielle', 'Zone de rencontre', 'Voie de service', 'Place piétonne', 'Sentier'];
 const M_LAT = 111320;
-
-const LOCAL_FALLBACK_STYLE = {
-  version: 8,
-  sources: {},
-  layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#FAF3E6' } }],
-};
 
 function roadsGeoJson(raw) {
   if (!raw?.roads?.length || !raw?.origin) return emptyFC;
@@ -126,8 +122,8 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
         container: containerRef.current,
         style: MAP_CONFIG.DEFAULT_STYLE,
         center: [start.lng, start.lat],
-        zoom: 15.6,
-        pitch: 52,
+        zoom: 16.4,
+        pitch: 56,
         bearing: -12,
         maxPitch: 70,
         antialias: true,
@@ -144,16 +140,21 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
 
     // Repère de l'ESSECT (point rouge) — élément HTML, indépendant du style de carte
     const essectEl = document.createElement('div');
-    essectEl.className = 'cs-spot-essect';
+    essectEl.className = 'cs-badge cs-badge--essect';
     essectEl.title = 'ESSECT Montfleury';
-    essectEl.textContent = 'ESSECT';
-    new maplibregl.Marker({ element: essectEl, anchor: 'center' }).setLngLat([ESSECT_COORDINATES.lng, ESSECT_COORDINATES.lat]).addTo(map);
+    essectEl.style.pointerEvents = 'none';
+    essectEl.innerHTML = '<div class="cs-badge__body"><span class="cs-badge__num">★</span><span class="cs-badge__label"><span class="cs-badge__name">ESSECT</span></span></div><span class="cs-badge__stem" aria-hidden="true"></span>';
+    new maplibregl.Marker({ element: essectEl, anchor: 'bottom' }).setLngLat([ESSECT_COORDINATES.lng, ESSECT_COORDINATES.lat]).addTo(map);
 
     // Épingle du spot : déplaçable
     const pinEl = document.createElement('div');
     pinEl.className = 'cs-spot-pin';
-    const marker = new maplibregl.Marker({ element: pinEl, draggable: true, anchor: 'center' }).setLngLat([start0(value).lng, start0(value).lat]);
+    pinEl.innerHTML = '<span class="cs-spot-pin__halo" aria-hidden="true"></span><span class="cs-spot-pin__head" aria-hidden="true"></span><span class="cs-spot-pin__shadow" aria-hidden="true"></span>';
+    pinEl.setAttribute('aria-label', 'Épingle du commerce (glisser pour déplacer)');
+    const marker = new maplibregl.Marker({ element: pinEl, draggable: true, anchor: 'bottom' }).setLngLat([start0(value).lng, start0(value).lat]);
+    marker.on('dragstart', () => pinEl.classList.add('is-lifted'));
     marker.on('dragend', () => {
+      pinEl.classList.remove('is-lifted');
       if (disabledRef.current) return;
       const ll = marker.getLngLat();
       emit({ lat: ll.lat, lng: ll.lng });
@@ -166,11 +167,8 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
       emit({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     });
 
-    let styleReady = false;
-    let switchedToFallback = false;
 
     const installLayers = async () => {
-      styleReady = true;
       if (!isMapReady(map)) return;
       try {
         if (!map.getSource(RADIUS_SRC)) {
@@ -182,8 +180,34 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
         if (!map.getSource(CONNECTOR_SRC)) {
           map.addSource(CONNECTOR_SRC, { type: 'geojson', data: emptyFC });
         }
+        if (!map.getLayer('spot-connector-glow')) {
+          map.addLayer({
+            id: 'spot-connector-glow',
+            type: 'line',
+            source: CONNECTOR_SRC,
+            filter: ['==', ['geometry-type'], 'LineString'],
+            layout: { 'line-cap': 'round' },
+            paint: { 'line-color': '#FFD000', 'line-width': 12, 'line-blur': 6, 'line-opacity': 0.75 },
+          });
+        }
         if (!map.getLayer('spot-connector')) {
-          map.addLayer({ id: 'spot-connector', type: 'line', source: CONNECTOR_SRC, paint: { 'line-color': '#111111', 'line-width': 3, 'line-dasharray': [1.2, 1.4] } });
+          map.addLayer({
+            id: 'spot-connector',
+            type: 'line',
+            source: CONNECTOR_SRC,
+            filter: ['==', ['geometry-type'], 'LineString'],
+            paint: { 'line-color': '#111111', 'line-width': 3, 'line-dasharray': [1.2, 1.4] },
+          });
+        }
+        if (!map.getLayer('spot-entry')) {
+          // la « porte sur la rue » : pastille moutarde cerclée d'encre au bout du trait
+          map.addLayer({
+            id: 'spot-entry',
+            type: 'circle',
+            source: CONNECTOR_SRC,
+            filter: ['==', ['geometry-type'], 'Point'],
+            paint: { 'circle-radius': 7, 'circle-color': '#FFD000', 'circle-stroke-color': '#111111', 'circle-stroke-width': 3, 'circle-pitch-alignment': 'map' },
+          });
         }
 
         add3DBuildingsLayer(map);
@@ -210,30 +234,26 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
           }
         }
         applyAtmosphere(map, world || undefined);
-        applyTimeOfDay(map, null);
+        applyTimeOfDay(map, SPOT_DAYLIGHT_MIN);
+        if (world) {
+          setWorldFocus(map, { radiusM: 0 }); // pas de balayage radar ici : l'éditeur reste calme
+          addStreetLabels(map, world);
+        }
       } catch (e) {
         console.warn('SpotEditor : erreur ajout couches locales :', e);
       }
     };
 
-    const activateFallbackStyle = () => {
-      if (switchedToFallback || styleReady) return;
-      switchedToFallback = true;
-      try {
-        map.setStyle(LOCAL_FALLBACK_STYLE);
-      } catch {
-        /* carte démontée */
-      }
-    };
-
     map.on('style.load', installLayers);
-    map.on('error', () => {
-      if (!styleReady) activateFallbackStyle();
+    // crédits repliés sur petit écran (le bouton ⓘ les rouvre) : la carte reste dégagée
+    map.once('idle', () => {
+      if (window.innerWidth < 640) containerRef.current?.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
     });
-    const fallbackTimer = setTimeout(activateFallbackStyle, 3500);
+    // tuiles externes en panne : fond crème hors ligne ; rues, parcs, immeubles et plaques de rue restent dessinés
+    const stopFallback = installStyleFallback(map, 3500);
 
     return () => {
-      clearTimeout(fallbackTimer);
+      stopFallback();
       try {
         map.remove();
       } catch {
@@ -257,12 +277,22 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
     marker.setLngLat([value.lng, value.lat]);
     if (!marker._map) marker.addTo(map);
     const inside = assessSpot(value.lat, value.lng).withinRadius;
-    marker.getElement().classList.toggle('is-outside', !inside);
+    const pin = marker.getElement();
+    pin.classList.toggle('is-outside', !inside);
+    pin.classList.remove('is-drop');
+    void pin.offsetWidth; // relance l'animation de pose
+    pin.classList.add('is-drop');
     if (map.getLayer('spot-radius')) map.setPaintProperty('spot-radius', 'line-color', inside ? '#1F7A3A' : '#DA0711');
     if (map.getSource(CONNECTOR_SRC)) {
       map.getSource(CONNECTOR_SRC).setData(
         entry
-          ? { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[value.lng, value.lat], [entry.lng, entry.lat]] } }
+          ? {
+              type: 'FeatureCollection',
+              features: [
+                { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[value.lng, value.lat], [entry.lng, entry.lat]] } },
+                { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [entry.lng, entry.lat] } },
+              ],
+            }
           : emptyFC
       );
     }

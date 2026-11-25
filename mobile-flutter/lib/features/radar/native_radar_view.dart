@@ -3,8 +3,10 @@
 // 🎯 À retenir pour la soutenance : "L'écran Radar mobile offre aux étudiants une vision géospatiale immédiate des opportunités anti-gaspillage : le rayon est ajustable de 500m à 3000m et chaque commerce indique son temps de marche exact depuis le campus."
 // Module : Cartographie & Géolocalisation Mobile
 
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -27,7 +29,7 @@ class NativeRadarView extends StatefulWidget {
   State<NativeRadarView> createState() => _NativeRadarViewState();
 }
 
-class _NativeRadarViewState extends State<NativeRadarView> {
+class _NativeRadarViewState extends State<NativeRadarView> with TickerProviderStateMixin {
   static const LatLng essectCoords = LatLng(36.7871, 10.1748);
   static const List<int> availableRadiiM = [500, 1000, 1500, 2000, 3000];
 
@@ -38,10 +40,95 @@ class _NativeRadarViewState extends State<NativeRadarView> {
   List<Map<String, dynamic>> _merchants = [];
   Map<String, dynamic>? _selectedMerchant;
 
+  /// Balayage radar et anneaux pulsés autour de l'ESSECT (seule la couche dessinée se repeint, pas la carte).
+  late final AnimationController _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+
+  /// Vol animé de la caméra vers un commerce (centre + zoom interpolés, courbe douce).
+  AnimationController? _fly;
+
+  /// Itinéraires piétons pré-calculés par les rues (mêmes données que le site web), clé « lng,lat|lng,lat ».
+  Map<String, List<LatLng>> _streetRoutes = const {};
+
   @override
   void initState() {
     super.initState();
     _fetchRadarData();
+    _loadStreetRoutes();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.of(context).disableAnimations) {
+        _pulse.value = 0.3;
+      } else {
+        _pulse.repeat();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    _fly?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadStreetRoutes() async {
+    try {
+      final raw = jsonDecode(await rootBundle.loadString('assets/radar/street_routes.json')) as Map<String, dynamic>;
+      final routes = (raw['routes'] as Map<String, dynamic>? ?? {});
+      final parsed = <String, List<LatLng>>{};
+      routes.forEach((key, value) {
+        final coords = (value as Map<String, dynamic>)['c'] as List<dynamic>? ?? const [];
+        parsed[key] = coords.map((c) {
+          final pair = c as List<dynamic>;
+          return LatLng((pair[1] as num).toDouble(), (pair[0] as num).toDouble());
+        }).toList();
+      });
+      if (mounted) setState(() => _streetRoutes = parsed);
+    } catch (_) {
+      // sans fichier d'itinéraires : trait direct ESSECT -> commerce
+    }
+  }
+
+  /// Chemin par les rues depuis l'ESSECT ; à défaut, la ligne droite.
+  List<LatLng> _routeTo(LatLng dest) {
+    String k(LatLng p) => '${p.longitude.toStringAsFixed(5)},${p.latitude.toStringAsFixed(5)}';
+    final route = _streetRoutes['${k(essectCoords)}|${k(dest)}'];
+    return (route != null && route.length > 1) ? route : [essectCoords, dest];
+  }
+
+  /// Déplacement de caméra animé (comme `flyTo` sur le web) : 700 ms, courbe ease-in-out, zoom qui « respire ».
+  void _flyTo(LatLng dest, double zoom) {
+    final camera = _mapController.camera;
+    final from = camera.center;
+    final fromZoom = camera.zoom;
+    _fly?.dispose();
+    final reduce = MediaQuery.of(context).disableAnimations;
+    if (reduce) {
+      _mapController.move(dest, zoom);
+      return;
+    }
+    final ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    final curve = CurvedAnimation(parent: ctrl, curve: Curves.easeInOutCubic);
+    ctrl.addListener(() {
+      final t = curve.value;
+      final lat = from.latitude + (dest.latitude - from.latitude) * t;
+      final lng = from.longitude + (dest.longitude - from.longitude) * t;
+      final dip = sin(t * pi) * 0.6; // léger dézoom au milieu du trajet
+      _mapController.move(LatLng(lat, lng), fromZoom + (zoom - fromZoom) * t - dip);
+    });
+    _fly = ctrl;
+    ctrl.forward();
+  }
+
+  int? _minPriceMillimes(Map<String, dynamic> merchant) {
+    final prices = (merchant['activeOffers'] as List<dynamic>? ?? [])
+        .map((o) => (o as Map)['currentPriceMillimes'] ?? o['currentPrice'])
+        .whereType<num>()
+        .map((n) => n.toInt())
+        .where((n) => n > 0)
+        .toList();
+    if (prices.isEmpty) return null;
+    return prices.reduce(min);
   }
 
   Future<void> _fetchRadarData() async {
@@ -103,8 +190,10 @@ class _NativeRadarViewState extends State<NativeRadarView> {
       _selectedMerchant = merchant;
     });
 
-    _mapController.move(LatLng(lat, lng), 16.5);
-    _showMerchantBottomSheet(merchant);
+    _flyTo(LatLng(lat, lng), 16.6);
+    Future.delayed(const Duration(milliseconds: 420), () {
+      if (mounted) _showMerchantBottomSheet(merchant);
+    });
   }
 
   Future<void> _openGoogleMapsDirections(double lat, double lng) async {
@@ -471,72 +560,27 @@ class _NativeRadarViewState extends State<NativeRadarView> {
         ),
       ),
 
-      // Marqueurs Commerçants
-      ..._merchants.map((m) {
+      // Marqueurs Commerçants : épingle Griddle (numéro + prix « dès »), mise en avant si choisie
+      ..._merchants.asMap().entries.map((entry) {
+        final m = entry.value;
         final loc = m['location'] as Map<String, dynamic>?;
         final lat = (loc?['lat'] as num?)?.toDouble() ?? (m['lat'] as num?)?.toDouble() ?? 36.7871;
         final lng = (loc?['lng'] as num?)?.toDouble() ?? (m['lng'] as num?)?.toDouble() ?? 10.1748;
         final urgencyColor = _parseHexColor(m['beaconUrgencyColor'] as String?, AppTheme.red);
-        final offersCount = (m['activeOffers'] as List<dynamic>? ?? []).length;
         final isSelected = _selectedMerchant?['id'] == m['id'];
+        final price = _minPriceMillimes(m);
 
         return Marker(
           point: LatLng(lat, lng),
-          width: 52,
-          height: 52,
-          child: GestureDetector(
+          width: 132,
+          height: 66,
+          alignment: Alignment.topCenter, // la pointe de l'épingle touche le point exact
+          child: _PricePin(
+            number: entry.key + 1,
+            priceLabel: price != null ? Money.formatTND(price) : null,
+            urgency: urgencyColor,
+            selected: isSelected,
             onTap: () => _onMerchantTapped(m),
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                // Halo lumineux d'urgence
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: isSelected ? 48 : 42,
-                  height: isSelected ? 48 : 42,
-                  decoration: BoxDecoration(
-                    color: AppTheme.biscuit,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: urgencyColor, width: isSelected ? 3 : 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: urgencyColor.withOpacity(isSelected ? 0.7 : 0.4),
-                        blurRadius: isSelected ? 12 : 8,
-                        spreadRadius: isSelected ? 3 : 1,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.restaurant,
-                    color: urgencyColor,
-                    size: 20,
-                  ),
-                ),
-
-                // Badge du nombre de paniers disponibles
-                if (offersCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: urgencyColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$offersCount',
-                        style: const TextStyle(
-                          color: AppTheme.cream,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
           ),
         );
       }),
@@ -553,16 +597,10 @@ class _NativeRadarViewState extends State<NativeRadarView> {
         AppTheme.red,
       );
 
-      polylines.add(
-        Polyline(
-          points: [
-            essectCoords,
-            LatLng(mLat, mLng),
-          ],
-          color: urgencyColor,
-          strokeWidth: 3.5,
-        ),
-      );
+      final route = _routeTo(LatLng(mLat, mLng));
+      polylines
+        ..add(Polyline(points: route, color: AppTheme.mustard.withValues(alpha: 0.55), strokeWidth: 12)) // lueur
+        ..add(Polyline(points: route, color: urgencyColor, strokeWidth: 5, borderColor: AppTheme.ink, borderStrokeWidth: 1.5));
     }
 
     return Scaffold(
@@ -593,7 +631,7 @@ class _NativeRadarViewState extends State<NativeRadarView> {
               setState(() {
                 _selectedMerchant = null;
               });
-              _mapController.move(essectCoords, 15.5);
+              _flyTo(essectCoords, 15.5);
             },
           ),
           IconButton(
@@ -631,19 +669,8 @@ class _NativeRadarViewState extends State<NativeRadarView> {
                 ),
               ),
 
-              // Cercle de portée du radar (rayon sélectionné)
-              CircleLayer(
-                circles: [
-                  CircleMarker(
-                    point: essectCoords,
-                    radius: _selectedRadiusM.toDouble(),
-                    useRadiusInMeter: true,
-                    color: AppTheme.red.withOpacity(0.06),
-                    borderColor: AppTheme.red.withOpacity(0.4),
-                    borderStrokeWidth: 1.5,
-                  ),
-                ],
-              ),
+              // Portée du radar : disque, anneaux tous les 500 m, secteur qui balaie et ondes pulsées autour de l'ESSECT
+              _RadarSweepLayer(animation: _pulse, center: essectCoords, radiusM: _selectedRadiusM.toDouble()),
 
               // Ligne piétonne
               if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
@@ -877,4 +904,170 @@ class _RadarGridBackdropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+
+/// Épingle Griddle : pastille numérotée + étiquette prix, tige encre ; grossit et se cercle de moutarde quand elle est choisie.
+class _PricePin extends StatelessWidget {
+  const _PricePin({required this.number, required this.priceLabel, required this.urgency, required this.selected, required this.onTap});
+
+  final int number;
+  final String? priceLabel;
+  final Color urgency;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Commerce $number${priceLabel != null ? ', dès $priceLabel' : ''}',
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedScale(
+          scale: selected ? 1.12 : 1,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutBack,
+          alignment: Alignment.bottomCenter,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected ? AppTheme.ink : AppTheme.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.ink, width: 2),
+                      boxShadow: [BoxShadow(color: urgency.withValues(alpha: 0.65), blurRadius: selected ? 14 : 8, spreadRadius: selected ? 3 : 1)],
+                    ),
+                    child: Text('$number', style: TextStyle(color: selected ? AppTheme.mustard : AppTheme.cream, fontSize: 15, fontWeight: FontWeight.w800)),
+                  ),
+                  if (priceLabel != null)
+                    Transform.translate(
+                      offset: const Offset(-6, 0),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(10, 4, 8, 4),
+                        decoration: BoxDecoration(
+                          color: selected ? AppTheme.mustard : AppTheme.cream,
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: AppTheme.ink, width: 2),
+                          boxShadow: const [BoxShadow(color: Color(0x33111111), blurRadius: 6, offset: Offset(0, 3))],
+                        ),
+                        child: Text(priceLabel!, style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+                      ),
+                    ),
+                ],
+              ),
+              Container(width: 3, height: 12, decoration: BoxDecoration(color: AppTheme.ink, borderRadius: BorderRadius.circular(2))),
+              Container(width: 10, height: 4, decoration: BoxDecoration(color: AppTheme.ink.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(4))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Couche flutter_map : le radar autour de l'ESSECT, dessiné en pixels écran à partir de la caméra courante.
+class _RadarSweepLayer extends StatelessWidget {
+  const _RadarSweepLayer({required this.animation, required this.center, required this.radiusM});
+
+  final Animation<double> animation;
+  final LatLng center;
+  final double radiusM;
+
+  @override
+  Widget build(BuildContext context) {
+    final camera = MapCamera.of(context);
+    final c = camera.getOffsetFromOrigin(center);
+    final edge = camera.getOffsetFromOrigin(LatLng(center.latitude + radiusM / 111320.0, center.longitude));
+    final rPx = (edge - c).distance;
+    final pxPerM = radiusM > 0 ? rPx / radiusM : 0.0;
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _SweepPainter(animation: animation, center: c, radiusPx: rPx, pxPerM: pxPerM),
+        ),
+      ),
+    );
+  }
+}
+
+class _SweepPainter extends CustomPainter {
+  _SweepPainter({required this.animation, required this.center, required this.radiusPx, required this.pxPerM}) : super(repaint: animation);
+
+  final Animation<double> animation;
+  final Offset center;
+  final double radiusPx;
+  final double pxPerM;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (radiusPx <= 0) return;
+    final t = animation.value;
+    final disc = Paint()..color = AppTheme.red.withValues(alpha: 0.05);
+    canvas.drawCircle(center, radiusPx, disc);
+
+    // anneaux de distance tous les 500 m
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = AppTheme.red.withValues(alpha: 0.22);
+    for (double m = 500; m * pxPerM < radiusPx - 2; m += 500) {
+      canvas.drawCircle(center, m * pxPerM, ring);
+    }
+    canvas.drawCircle(
+      center,
+      radiusPx,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..color = AppTheme.red.withValues(alpha: 0.55),
+    );
+
+    // secteur qui balaie (dégradé conique : bord net, traîne qui s'efface)
+    final angle = t * 2 * pi;
+    final rect = Rect.fromCircle(center: center, radius: radiusPx);
+    final sweep = Paint()
+      ..shader = SweepGradient(
+        startAngle: 0,
+        endAngle: 2 * pi,
+        colors: [AppTheme.red.withValues(alpha: 0), AppTheme.red.withValues(alpha: 0), AppTheme.red.withValues(alpha: 0.26)],
+        stops: const [0, 0.78, 1],
+        transform: GradientRotation(angle - 2 * pi),
+      ).createShader(rect);
+    canvas.drawCircle(center, radiusPx, sweep);
+    final tip = Offset(center.dx + cos(angle) * radiusPx, center.dy + sin(angle) * radiusPx);
+    canvas.drawLine(
+      center,
+      tip,
+      Paint()
+        ..strokeWidth = 2
+        ..color = AppTheme.red.withValues(alpha: 0.7),
+    );
+
+    // trois ondes qui partent du campus
+    for (var i = 0; i < 3; i++) {
+      final p = (t * 1.5 + i / 3) % 1.0;
+      final r = 14 + p * min(radiusPx, 140.0);
+      canvas.drawCircle(
+        center,
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5 * (1 - p) + 0.5
+          ..color = AppTheme.red.withValues(alpha: 0.55 * (1 - p)),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SweepPainter old) => old.center != center || old.radiusPx != radiusPx || old.pxPerM != pxPerM;
 }

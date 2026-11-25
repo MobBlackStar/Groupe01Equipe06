@@ -141,3 +141,45 @@ export function add3DBuildingsLayer(map) {
     console.warn('[MapLibre] Impossible d injecter la couche 3D des bâtiments :', e);
   }
 }
+
+/**
+ * Style de secours hors ligne : fond crème seul. Le monde 3D (rues, trottoirs, parcs, immeubles, arbres) et les plaques de
+ * rue sont dessinés par l'application : la carte reste complète même si les tuiles externes ne répondent pas.
+ */
+export const OFFLINE_STYLE = {
+  version: 8,
+  sources: {},
+  layers: [{ id: 'background', type: 'background', paint: { 'background-color': MAP_CONFIG.COLORS.BACKGROUND } }],
+};
+
+/**
+ * Bascule sur OFFLINE_STYLE si le style distant n'est pas chargé après `timeoutMs` ou échoue avant d'être chargé.
+ * @returns {() => void} annule la surveillance
+ */
+export function installStyleFallback(map, timeoutMs = 4500) {
+  let loaded = false;
+  let switched = false;
+  const toOffline = () => {
+    if (loaded || switched) return;
+    switched = true;
+    try {
+      map.setStyle(OFFLINE_STYLE);
+    } catch {
+      /* carte démontée */
+    }
+  };
+  const onLoad = () => {
+    loaded = true;
+  };
+  const onError = () => {
+    if (!loaded) toOffline();
+  };
+  map.on('style.load', onLoad);
+  map.on('error', onError);
+  const timer = setTimeout(toOffline, timeoutMs);
+  return () => {
+    clearTimeout(timer);
+    map.off('style.load', onLoad);
+    map.off('error', onError);
+  };
+}
