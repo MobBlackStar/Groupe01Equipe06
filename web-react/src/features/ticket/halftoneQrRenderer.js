@@ -6,10 +6,9 @@
 import QRCode from 'qrcode';
 
 export const DEFAULT_MASCOT_URL = '/assets/brand/mascot-sticker.png';
-const QUIET_MODULES = 3;
-const MASCOT_MARGIN_MODULES = 2;
-const MASCOT_DOT_RADIUS_RATIO = 0.21; // ~42 % de la largeur de cellule
-const OUTER_DOT_RADIUS_RATIO = 0.35;
+const QUIET_MODULES = 4;
+const MASCOT_DOT_RATIO = 0.56; // Carré centré haute lisibilité (56 % cellule -> ~31 % surface, ~69 % illustration visible)
+const OUTER_MODULE_RATIO = 1.0; // Blocs pleins sans couture hors mascotte pour verrouillage caméra sans moiré
 
 /**
  * Construit la matrice QR brute au niveau maximal de correction d'erreur H (30 %).
@@ -30,6 +29,16 @@ export function isFinderOrSeparator(row, col, size) {
 }
 
 /**
+ * Identifie les motifs de synchronisation (Timing Patterns, ligne 6 & colonne 6) indispensables au verrouillage caméra.
+ */
+export function isTimingPattern(row, col, size) {
+  return (
+    (row === 6 && col >= 8 && col < size - 8) ||
+    (col === 6 && row >= 8 && row < size - 8)
+  );
+}
+
+/**
  * Identifie uniquement les motifs d'alignement internes (excluant l'info de format en row/col <= 8).
  */
 export function isAlignmentPatternModule(row, col, modules) {
@@ -37,11 +46,12 @@ export function isAlignmentPatternModule(row, col, modules) {
 }
 
 /**
- * Renvoie true si la case doit rester en carré plein noir/blanc ultra-net.
+ * Renvoie true si la case doit rester en carré plein noir/blanc ultra-net (Finders, Timing, Alignement).
  */
 export function isSolidStructuralModule(row, col, modules) {
   return (
     isFinderOrSeparator(row, col, modules.size) ||
+    isTimingPattern(row, col, modules.size) ||
     isAlignmentPatternModule(row, col, modules)
   );
 }
@@ -50,8 +60,9 @@ export function isSolidStructuralModule(row, col, modules) {
  * Calcule le rectangle centré de la mascotte à l'intérieur de la matrice QR.
  */
 export function computeMascotRect(moduleCount, cellSize, quietModules = QUIET_MODULES) {
-  const origin = (quietModules + MASCOT_MARGIN_MODULES) * cellSize;
-  const span = Math.max(0, moduleCount - MASCOT_MARGIN_MODULES * 2) * cellSize;
+  const marginModules = Math.max(3, Math.round(moduleCount * 0.14));
+  const origin = (quietModules + marginModules) * cellSize;
+  const span = Math.max(0, moduleCount - marginModules * 2) * cellSize;
   return { x: origin, y: origin, size: span };
 }
 
@@ -66,7 +77,6 @@ export function driveHalftoneQrRender({
   clearWhite,
   drawMascotLayer,
   fillRect,
-  fillCircle,
 }) {
   const qr = createHalftoneQrMatrix(payload);
   const N = qr.modules.size;
@@ -108,20 +118,27 @@ export function driveHalftoneQrRender({
       const luminance = 0.299 * mr + 0.587 * mg + 0.114 * mb;
 
       if (overMascot) {
-        const dotRadius = cell * MASCOT_DOT_RADIUS_RATIO;
+        const dotSize = cell * MASCOT_DOT_RATIO;
+        const dx = cx - dotSize / 2;
+        const dy = cy - dotSize / 2;
         if (isDark) {
-          if (luminance < 125) {
-            fillCircle(cx, cy, dotRadius + cell * 0.055, 'rgba(255, 255, 255, 0.84)', [255, 255, 255, 215]);
+          if (luminance < 150) {
+            const halo = dotSize + cell * 0.18;
+            fillRect(cx - halo / 2, cy - halo / 2, halo, halo, 'rgba(255, 255, 255, 0.94)', [255, 255, 255, 240]);
           }
-          fillCircle(cx, cy, dotRadius, 'rgba(17, 17, 17, 1)', [17, 17, 17, 255]);
+          fillRect(dx, dy, dotSize, dotSize, 'rgba(17, 17, 17, 1)', [17, 17, 17, 255]);
         } else {
-          if (luminance > 180) {
-            fillCircle(cx, cy, dotRadius + cell * 0.045, 'rgba(17, 17, 17, 0.22)', [17, 17, 17, 55]);
+          if (luminance > 170) {
+            const rim = dotSize + cell * 0.1;
+            fillRect(cx - rim / 2, cy - rim / 2, rim, rim, 'rgba(17, 17, 17, 0.31)', [17, 17, 17, 80]);
           }
-          fillCircle(cx, cy, dotRadius, 'rgba(255, 255, 255, 1)', [255, 255, 255, 255]);
+          fillRect(dx, dy, dotSize, dotSize, 'rgba(255, 255, 255, 1)', [255, 255, 255, 255]);
         }
       } else if (isDark) {
-        fillCircle(cx, cy, cell * OUTER_DOT_RADIUS_RATIO, 'rgba(17, 17, 17, 1)', [17, 17, 17, 255]);
+        const modSize = cell * OUTER_MODULE_RATIO;
+        fillRect(cx - modSize / 2, cy - modSize / 2, modSize, modSize, 'rgba(17, 17, 17, 1)', [17, 17, 17, 255]);
+      } else {
+        fillRect(x0, y0, cell, cell, 'rgba(255, 255, 255, 1)', [255, 255, 255, 255]);
       }
     }
   }
@@ -170,7 +187,7 @@ export function drawHalftoneQrToCanvas(ctx, { payload, pixelSize, mascotSampler 
     drawMascotLayer: mascotSampler
       ? ({ mascotRect }) => {
           ctx.save();
-          ctx.globalAlpha = 0.94;
+          ctx.globalAlpha = 0.82;
           ctx.drawImage(mascotSampler.image, mascotRect.x, mascotRect.y, mascotRect.size, mascotRect.size);
           ctx.restore();
         }
@@ -178,12 +195,6 @@ export function drawHalftoneQrToCanvas(ctx, { payload, pixelSize, mascotSampler 
     fillRect: (x, y, w, h, cssColor) => {
       ctx.fillStyle = cssColor;
       ctx.fillRect(x, y, w + 0.35, h + 0.35);
-    },
-    fillCircle: (cx, cy, r, cssColor) => {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = cssColor;
-      ctx.fill();
     },
   });
 }
@@ -242,9 +253,9 @@ export function renderHalftoneQrPixels({ payload, pixelSize = 560, mascotPng }) 
                   setPixel(
                     px,
                     py,
-                    Math.round(mr * 0.94 + 255 * 0.06),
-                    Math.round(mg * 0.94 + 255 * 0.06),
-                    Math.round(mb * 0.94 + 255 * 0.06),
+                    Math.round(mr * 0.82 + 255 * 0.18),
+                    Math.round(mg * 0.82 + 255 * 0.18),
+                    Math.round(mb * 0.82 + 255 * 0.18),
                     ma
                   );
                 }
@@ -255,28 +266,16 @@ export function renderHalftoneQrPixels({ payload, pixelSize = 560, mascotPng }) 
       : null,
     fillRect: (x, y, w, h, _css, rgba) => {
       const [r, g, b, a] = rgba;
-      for (let py = Math.max(0, Math.floor(y)); py < Math.min(pixelSize, Math.ceil(y + h)); py += 1) {
-        for (let px = Math.max(0, Math.floor(x)); px < Math.min(pixelSize, Math.ceil(x + w)); px += 1) {
-          setPixel(px, py, r, g, b, a);
-        }
-      }
-    },
-    fillCircle: (cx, cy, rad, _css, rgba) => {
-      const [r, g, b, a] = rgba;
-      const r2 = rad * rad;
-      for (
-        let py = Math.max(0, Math.floor(cy - rad - 1));
-        py <= Math.min(pixelSize - 1, Math.ceil(cy + rad + 1));
-        py += 1
-      ) {
-        const dy = py + 0.5 - cy;
-        for (
-          let px = Math.max(0, Math.floor(cx - rad - 1));
-          px <= Math.min(pixelSize - 1, Math.ceil(cx + rad + 1));
-          px += 1
-        ) {
-          const dx = px + 0.5 - cx;
-          if (dx * dx + dy * dy <= r2) {
+      const xStart = Math.max(0, Math.floor(x));
+      const xEnd = Math.min(pixelSize, Math.ceil(x + w));
+      const yStart = Math.max(0, Math.floor(y));
+      const yEnd = Math.min(pixelSize, Math.ceil(y + h));
+      for (let py = yStart; py < yEnd; py += 1) {
+        const cy = py + 0.5;
+        if (cy < y || cy > y + h) continue;
+        for (let px = xStart; px < xEnd; px += 1) {
+          const cx = px + 0.5;
+          if (cx >= x && cx <= x + w) {
             setPixel(px, py, r, g, b, a);
           }
         }

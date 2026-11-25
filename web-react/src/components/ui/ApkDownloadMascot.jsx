@@ -162,12 +162,12 @@ export default function ApkDownloadMascot() {
             </div>
 
             {/* Conteneur QR Code Halftone Mascotte Haute Visibilité pour le Jury */}
-            <div className="my-6 flex flex-col items-center">
+            <div className="my-5 flex flex-col items-center">
               <div className="p-3 rounded-2xl bg-white border-2 border-[#111111] shadow-[4px_4px_0px_#111111]">
                 <HalftoneMascotQr
                   value={apkUrl}
-                  size={230}
-                  className="w-[230px] h-[230px] rounded-xl"
+                  size={280}
+                  className="w-[270px] h-[270px] sm:w-[280px] sm:h-[280px] rounded-xl"
                 />
               </div>
               <span className="text-[11px] font-mono text-[#666] mt-3 uppercase tracking-wider font-bold">
