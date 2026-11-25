@@ -23,7 +23,7 @@ import {
 const DEMO_ROLES = [
   { type: 'student', label: 'Étudiant', hint: 'Yassine', Icon: GraduationCap, iconClass: 'bg-[#DA0711] text-white' },
   { type: 'merchant', label: 'Commerçant', hint: 'Baguette', Icon: Store, iconClass: 'bg-[#FFD000] text-[#111111]' },
-  { type: 'admin', label: 'Admin', hint: 'ESSECT', Icon: ShieldCheck, iconClass: 'bg-[#111111] text-[#FAF3E6]' },
+  { type: 'admin', label: 'Admin', hint: 'Admin', Icon: ShieldCheck, iconClass: 'bg-[#111111] text-[#FAF3E6]' },
 ];
 
 export function LoginPage() {
@@ -107,14 +107,14 @@ export function LoginPage() {
     <div className="min-h-screen bg-[#FAF3E6] text-[#111111] overflow-x-hidden flex flex-col justify-center">
       {/* 💡 Concept : Polaroïd centré à gauche, formulaire principal pleine largeur empilé à droite et barre démo sur une ligne pour tenir dans 100vh sans aucun scroll */}
       {/* 🎯 Pour la soutenance : "La hiérarchie met en valeur la connexion réelle Firebase tout en gardant un accès démo 1-clic compact sous la main." */}
-      <div className="cs-container py-5 sm:py-6 lg:py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <div className="cs-container py-5 sm:py-6 lg:py-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
           {/* =========================================================================
               COLONNE GAUCHE : POLAROID CENTRÉ + STICKERS KNEWAVE (sans logo orphelin)
               ========================================================================= */}
           <div className="order-2 lg:order-1 lg:col-span-5 flex items-center justify-center">
-            <div className="relative w-full max-w-[300px] sm:max-w-[360px] lg:max-w-[410px] px-3 py-3">
-              <figure className="cs-polaroid lg:!p-3.5 lg:!pb-14 rotate-[-3deg] hover:rotate-0">
+            <div className="relative w-full max-w-[290px] sm:max-w-[340px] lg:max-w-[385px] px-3 py-2">
+              <figure className="cs-polaroid lg:!p-3 lg:!pb-12 rotate-[-3deg] hover:rotate-0">
                 <span className="rs-tape-tl" />
                 <span className="rs-tape-tr" />
                 <div className="cs-photo rounded-[4px] aspect-square">
@@ -276,15 +276,13 @@ export function LoginPage() {
                   Créer un compte →
                 </Link>
               </p>
-              <a
-                href={import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk'}
-                download="CampusSave.apk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#DA0711] hover:underline inline-flex items-center gap-1"
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('campussave:open-apk-modal'))}
+                className="font-bold text-[#DA0711] hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
                 <span>📱 APK Android →</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>

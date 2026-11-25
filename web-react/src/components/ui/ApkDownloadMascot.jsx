@@ -25,6 +25,9 @@ export default function ApkDownloadMascot() {
     } catch {
       // Ignorer si localStorage restreint
     }
+    const handleOpenModal = () => setIsOpen(true);
+    window.addEventListener('campussave:open-apk-modal', handleOpenModal);
+    return () => window.removeEventListener('campussave:open-apk-modal', handleOpenModal);
   }, []);
 
   // Ne jamais afficher dans la WebView mobile (?embed=1)
@@ -54,12 +57,12 @@ export default function ApkDownloadMascot() {
   return (
     <>
       {/* =========================================================================
-          BOUTON FLOTTANT / MASCOTTE (BAS-DROITE, AU-DESSUS DE LA NAVIGATION MOBILE)
+          BOUTON FLOTTANT / MASCOTTE (AU-DESSUS DE LA NAVIGATION BASSE < LG, MASQUÉ SUR AUTH < 2XL)
           ========================================================================= */}
       <aside
         aria-label="Téléchargement de l'application Android"
-        className={`fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] sm:bottom-5 right-4 sm:right-5 z-40 select-none max-w-[calc(100vw-2rem)] w-auto ${
-          isAuthPage ? 'hidden sm:block' : ''
+        className={`fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-5 right-4 lg:right-5 z-40 select-none max-w-[calc(100vw-2rem)] w-auto ${
+          isAuthPage ? 'hidden 2xl:block' : ''
         }`}
       >
         {isDismissed ? (
