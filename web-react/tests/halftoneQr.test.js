@@ -11,10 +11,32 @@ import jsQR from 'jsqr';
 import {
   createHalftoneQrMatrix,
   isFinderOrSeparator,
+  isTimingPattern,
   isAlignmentPatternModule,
   isSolidStructuralModule,
   renderHalftoneQrPixels,
 } from '../src/features/ticket/halftoneQrRenderer.js';
+
+function blur3x3(src, width, height) {
+  const out = new Uint8ClampedArray(src.length);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      let r = 0; let g = 0; let b = 0; let count = 0;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          const nx = x + dx; const ny = y + dy;
+          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+            const i = (ny * width + nx) * 4;
+            r += src[i]; g += src[i + 1]; b += src[i + 2]; count += 1;
+          }
+        }
+      }
+      const oi = (y * width + x) * 4;
+      out[oi] = r / count; out[oi + 1] = g / count; out[oi + 2] = b / count; out[oi + 3] = 255;
+    }
+  }
+  return out;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const mascotPath = resolve(__dirname, '../public/assets/brand/mascot-sticker.png');
@@ -36,7 +58,9 @@ describe('Halftone Mascot QR Code — Structure & Décodabilité jsQR', () => {
     // L'info de format en ligne 8 / colonne 8 reste en point halftone et n'est pas marquée comme alignement
     assert.equal(isAlignmentPatternModule(8, N - 8, qr.modules), false);
     assert.equal(isAlignmentPatternModule(N - 8, 8, qr.modules), false);
-    // Le motif d'alignement (N - 7, N - 7) est protégé en carré plein
+    // Les motifs de synchronisation (row 6 / col 6) et d'alignement (N - 7, N - 7) sont protégés en carré plein
+    assert.equal(isTimingPattern(6, 10, N), true);
+    assert.equal(isSolidStructuralModule(6, 10, qr.modules), true);
     assert.equal(isAlignmentPatternModule(N - 7, N - 7, qr.modules), true);
 
     // Au centre de l'image, les données sont bien des modules halftone non structurels
@@ -71,13 +95,18 @@ describe('Halftone Mascot QR Code — Structure & Décodabilité jsQR', () => {
     assert.equal(decoded.data, payload);
   });
 
-  test('décode exactement l URL officielle CampusSave.apk rendue par halftoneQrRenderer avec mascot-sticker.png', () => {
+  test('décode exactement l URL officielle CampusSave.apk rendue par halftoneQrRenderer (net + flou optique caméra)', () => {
     const apkUrl = 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk';
-    for (const pixelSize of [600, 460]) {
+    for (const pixelSize of [600, 560, 544, 340, 280]) {
       const rendered = renderHalftoneQrPixels({ payload: apkUrl, pixelSize, mascotPng });
-      const decoded = jsQR(rendered.data, rendered.width, rendered.height);
-      assert.ok(decoded, `jsQR doit décoder CampusSave.apk (${pixelSize}px)`);
-      assert.equal(decoded.data, apkUrl);
+      const sharpDecoded = jsQR(rendered.data, rendered.width, rendered.height);
+      assert.ok(sharpDecoded, `jsQR net doit décoder CampusSave.apk (${pixelSize}px)`);
+      assert.equal(sharpDecoded.data, apkUrl);
+
+      const blurred = blur3x3(rendered.data, rendered.width, rendered.height);
+      const blurDecoded = jsQR(blurred, rendered.width, rendered.height);
+      assert.ok(blurDecoded, `jsQR sous flou caméra 3x3 doit décoder CampusSave.apk (${pixelSize}px)`);
+      assert.equal(blurDecoded.data, apkUrl);
     }
   });
 });
