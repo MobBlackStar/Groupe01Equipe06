@@ -9,6 +9,7 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import { ORDER_STATUS } from '../../../../shared/constants.js';
 import { calculateEcoPoints, getLoyaltyTier, getNextRewardMilestone, evaluateMilestones } from '../../../../shared/loyalty.js';
+import { normalizeOrderItems, getTotalOrderQuantity } from '../../../../shared/orders.js';
 import { getTunisDayKey } from '../../utils/tunisTime.js';
 import { deriveTicketKey, verifyQrPayload, verifyManualCode } from './ticket.crypto.js';
 import { fcmService } from '../notifications/fcm.service.js';
@@ -132,6 +133,8 @@ export const ticketsService = {
       }
 
       // 2. LECTURES DES AUTRES DOCUMENTS DE LA TRANSACTION
+      const items = normalizeOrderItems(order);
+      const totalOrderQuantity = getTotalOrderQuantity(order);
       const studentRef = db.collection('users').doc(order.studentId);
       const merchantRef = db.collection('merchants').doc(order.merchantId);
       const merchantDailyRef = merchantRef.collection('daily').doc(todayKey);
@@ -141,10 +144,11 @@ export const ticketsService = {
       const filiereId = order.studentSnapshot?.filiereId;
       const filiereRef = filiereId ? db.collection('filieres').doc(filiereId) : null;
 
-      const isSurprise = !!order.offerSnapshot?.isSurpriseBasket;
-      const surpriseContentRef = isSurprise
-        ? db.collection('offers').doc(order.offerId).collection('private').doc('contents')
-        : null;
+      const surpriseItems = items.filter((it) => it.isSurpriseBasket && it.offerId);
+      const isSurprise = surpriseItems.length > 0 || !!order.offerSnapshot?.isSurpriseBasket;
+      const surpriseContentRefs = surpriseItems.map((it) =>
+        db.collection('offers').doc(it.offerId).collection('private').doc('contents')
+      );
 
       const [
         studentDoc,
@@ -153,7 +157,7 @@ export const ticketsService = {
         globalImpactDoc,
         globalDailyDoc,
         filiereDoc,
-        surpriseContentDoc,
+        ...surpriseContentDocs
       ] = await Promise.all([
         transaction.get(studentRef),
         transaction.get(merchantRef),
@@ -161,7 +165,7 @@ export const ticketsService = {
         transaction.get(globalImpactRef),
         transaction.get(globalDailyRef),
         filiereRef ? transaction.get(filiereRef) : Promise.resolve(null),
-        surpriseContentRef ? transaction.get(surpriseContentRef) : Promise.resolve(null),
+        ...surpriseContentRefs.map((ref) => transaction.get(ref)),
       ]);
 
       // 3. VÉRIFICATION CRYPTOGRAPHIQUE HMAC-SHA256 EN TEMPS CONSTANT
@@ -201,12 +205,25 @@ export const ticketsService = {
       const studentData = studentDoc.exists ? studentDoc.data() : {};
       const isFirstCompletedOrder = (studentData.stats?.ordersCompleted || 0) === 0;
 
-      const pointsAwarded = calculateEcoPoints({
-        quantity: order.quantity || 1,
-        isSurpriseBasket: isSurprise,
-        rarity: order.offerSnapshot?.rarity,
-        isFirstCompletedOrder,
-      });
+      const pointsAwarded =
+        items.length > 0
+          ? items.reduce(
+              (acc, it, idx) =>
+                acc +
+                calculateEcoPoints({
+                  quantity: it.quantity || 1,
+                  isSurpriseBasket: it.isSurpriseBasket,
+                  rarity: it.rarity || order.offerSnapshot?.rarity,
+                  isFirstCompletedOrder: idx === 0 && isFirstCompletedOrder,
+                }),
+              0
+            )
+          : calculateEcoPoints({
+              quantity: totalOrderQuantity,
+              isSurpriseBasket: isSurprise,
+              rarity: order.offerSnapshot?.rarity,
+              isFirstCompletedOrder,
+            });
 
       const pointsBefore = studentData.ecoPoints || 0;
       const pointsAfter = pointsBefore + pointsAwarded;
@@ -225,15 +242,25 @@ export const ticketsService = {
         ...newUnlockedRewards,
       ].slice(-20);
 
-      // 5. RÉVÉLATION DU CONTENU MYSTÈRE (PANIER SURPRISE)
+      // 5. RÉVÉLATION DU CONTENU MYSTÈRE (TOUS LES PANIERS SURPRISE DU SAC)
       let revealData = null;
-      if (isSurprise && surpriseContentDoc?.exists) {
-        const contents = surpriseContentDoc.data();
-        revealData = {
-          items: contents.items || [],
-          note: contents.note || '',
-          revealedAt: now,
-        };
+      if (isSurprise) {
+        const revealedItems = [];
+        const notes = [];
+        for (const docSnap of surpriseContentDocs) {
+          if (docSnap?.exists) {
+            const contents = docSnap.data();
+            if (Array.isArray(contents.items)) revealedItems.push(...contents.items);
+            if (contents.note) notes.push(contents.note);
+          }
+        }
+        if (revealedItems.length > 0 || notes.length > 0) {
+          revealData = {
+            items: revealedItems,
+            note: notes.join(' · '),
+            revealedAt: now,
+          };
+        }
       }
 
       // 6. ÉCRITURES ATOMIQUES SUR TOUTES LES COLLECTIONS
@@ -275,7 +302,7 @@ export const ticketsService = {
         loyaltyTier: tierAfter,
         nextRewardAt,
         unlockedRewards: updatedUnlockedRewards,
-        totalMealsRescued: admin.firestore.FieldValue.increment(order.quantity || 1),
+        totalMealsRescued: admin.firestore.FieldValue.increment(totalOrderQuantity),
         'stats.ordersCompleted': admin.firestore.FieldValue.increment(1),
         'stats.totalSpentMillimes': admin.firestore.FieldValue.increment(order.pricing?.totalMillimes || 0),
         'stats.totalSavedMillimes': admin.firestore.FieldValue.increment(order.pricing?.savedMillimes || 0),
@@ -290,7 +317,7 @@ export const ticketsService = {
         'stats.ordersCompleted': admin.firestore.FieldValue.increment(1),
         'stats.foodSavedGrams': admin.firestore.FieldValue.increment(order.impact?.foodSavedGrams || 0),
         'stats.co2SavedGrams': admin.firestore.FieldValue.increment(order.impact?.co2SavedGrams || 0),
-        'stats.mealsRescued': admin.firestore.FieldValue.increment(order.quantity || 1),
+        'stats.mealsRescued': admin.firestore.FieldValue.increment(totalOrderQuantity),
         updatedAt: now,
       });
 
@@ -298,7 +325,7 @@ export const ticketsService = {
         transaction.update(merchantDailyRef, {
           ordersCompleted: admin.firestore.FieldValue.increment(1),
           foodSavedGrams: admin.firestore.FieldValue.increment(order.impact?.foodSavedGrams || 0),
-          mealsRescued: admin.firestore.FieldValue.increment(order.quantity || 1),
+          mealsRescued: admin.firestore.FieldValue.increment(totalOrderQuantity),
           updatedAt: now,
         });
       } else {
@@ -308,7 +335,7 @@ export const ticketsService = {
           ordersCompleted: 1,
           revenueMillimes: order.pricing?.totalMillimes || 0,
           foodSavedGrams: order.impact?.foodSavedGrams || 0,
-          mealsRescued: order.quantity || 1,
+          mealsRescued: totalOrderQuantity,
           createdAt: now,
           updatedAt: now,
         });
@@ -318,7 +345,7 @@ export const ticketsService = {
       const impactFood = order.impact?.foodSavedGrams || 0;
       const impactCo2 = order.impact?.co2SavedGrams || 0;
       const impactSavings = order.pricing?.savedMillimes || 0;
-      const qty = order.quantity || 1;
+      const qty = totalOrderQuantity;
 
       if (globalImpactDoc.exists) {
         transaction.update(globalImpactRef, {

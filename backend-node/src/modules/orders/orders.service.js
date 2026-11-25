@@ -7,25 +7,55 @@ import admin from 'firebase-admin';
 import { db } from '../../config/firebase.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
-import { ORDER_STATUS, OFFER_STATUS, BUSINESS_RULES, REWARD_STATUS } from '../../../../shared/constants.js';
+import { ORDER_STATUS, OFFER_STATUS, BUSINESS_RULES, REWARD_STATUS, SURPRISE_RARITY } from '../../../../shared/constants.js';
 import { computeUnitPrice } from '../../../../shared/pricing.js';
 import { rewardKey } from '../../../../shared/loyalty.js';
+import { normalizeOrderItems, formatOrderSummaryTitle } from '../../../../shared/orders.js';
 import { generateOrderCode } from '../../utils/orderCode.js';
 import { deriveTicketKey } from '../tickets/ticket.crypto.js';
 import { resolveMerchantId } from '../../utils/merchantResolver.js';
 
+function toEpochMs(v) {
+  if (!v) return NaN;
+  if (typeof v?.toDate === 'function') return v.toDate().getTime();
+  if (v?._seconds) return v._seconds * 1000;
+  if (v?.seconds) return v.seconds * 1000;
+  return new Date(v).getTime();
+}
+
+function mergeRequestedItems(body = {}) {
+  const rawList =
+    Array.isArray(body.items) && body.items.length > 0
+      ? body.items
+      : body.offerId
+      ? [{ offerId: body.offerId, quantity: body.quantity }]
+      : [];
+
+  const merged = new Map();
+  for (const row of rawList) {
+    const qty = Number(row.quantity) || 0;
+    merged.set(row.offerId, (merged.get(row.offerId) || 0) + qty);
+  }
+
+  return [...merged.entries()].map(([offerId, quantity]) => ({ offerId, quantity }));
+}
+
 export const ordersService = {
   /**
-   * Crée une réservation atomique avec décrémentation du stock et verrouillage du prix.
+   * Crée une réservation atomique (mono-offre ou sac multi-lignes du même commerce) avec décrémentation des stocks et verrouillage des prix.
    */
   async createOrder(studentUser, body) {
     const studentId = studentUser.uid;
-    const { offerId, quantity, rewardId } = body;
+    const requestedItems = mergeRequestedItems(body);
+    if (requestedItems.length === 0 || requestedItems.length > 10) {
+      throw new AppError('Le sac doit contenir entre 1 et 10 articles distincts', 422, 'INVALID_ORDER_ITEMS');
+    }
+    const { rewardId } = body;
 
     const orderRef = db.collection('orders').doc();
     const orderId = orderRef.id;
-    const offerRef = db.collection('offers').doc(offerId);
     const userRef = db.collection('users').doc(studentId);
+    const offerRefs = requestedItems.map((row) => db.collection('offers').doc(row.offerId));
 
     const now = new Date();
     const nowMs = now.getTime();
@@ -33,50 +63,118 @@ export const ordersService = {
     const reservationExpiresAt = new Date(nowMs + BUSINESS_RULES.RESERVATION_HOLD_MINUTES * 60 * 1000);
 
     const createdOrder = await db.runTransaction(async (transaction) => {
-      // 1. LECTURES ATOMIQUES AVANT TOUTE ÉCRITURE
-      const offerDoc = await transaction.get(offerRef);
-      if (!offerDoc.exists) {
-        throw new AppError('Offre introuvable', 404, 'OFFER_NOT_FOUND');
-      }
+      // 1. LECTURES ATOMIQUES AVANT TOUTE ÉCRITURE (règle stricte Firestore)
+      const [userDoc, ...offerDocs] = await Promise.all([
+        transaction.get(userRef),
+        ...offerRefs.map((ref) => transaction.get(ref)),
+      ]);
 
-      const userDoc = await transaction.get(userRef);
-
-      const offer = offerDoc.data();
       const userData = userDoc.exists ? userDoc.data() : null;
-
-      // Vérification du statut de l'utilisateur
       if (userData?.status === 'SUSPENDED') {
         throw new AppError('Compte étudiant suspendu', 403, 'USER_SUSPENDED');
       }
 
-      // Vérification du statut de l'offre et du stock
-      const quantityAvailable = offer.quantityAvailable ?? offer.remainingQuantity ?? offer.quantity ?? 0;
+      // 2. VALIDATIONS MULTI-ARTICLES & RÈGLE MONO-COMMERÇANT
+      let sharedMerchantId = null;
+      let sharedMerchantSnapshot = null;
+      const lineRecords = [];
 
-      if (offer.status === OFFER_STATUS.SOLD_OUT || quantityAvailable <= 0 || quantity > quantityAvailable) {
-        throw new AppError(
-          `Stock insuffisant : ${quantityAvailable} portion(s) restante(s)`,
-          409,
-          'OFFER_SOLD_OUT',
-          { requested: quantity, available: quantityAvailable }
-        );
+      for (let i = 0; i < requestedItems.length; i += 1) {
+        const { offerId, quantity } = requestedItems[i];
+        const offerDoc = offerDocs[i];
+        if (!offerDoc.exists) {
+          throw new AppError('Offre introuvable', 404, 'OFFER_NOT_FOUND');
+        }
+
+        const offer = offerDoc.data();
+        if (!sharedMerchantId) {
+          sharedMerchantId = offer.merchantId;
+          sharedMerchantSnapshot = {
+            id: offer.merchantId,
+            name: offer.merchantSnapshot?.name || '',
+            location: offer.merchantSnapshot?.location || null,
+          };
+        } else if (offer.merchantId !== sharedMerchantId) {
+          throw new AppError(
+            "Un sac ne peut contenir que des offres d'un seul commerce",
+            422,
+            'MIXED_MERCHANTS'
+          );
+        }
+
+        if (quantity < 1 || quantity > 50) {
+          throw new AppError(`Quantité invalide pour "${offer.title}"`, 422, 'INVALID_QUANTITY');
+        }
+
+        const quantityAvailable = offer.quantityAvailable ?? offer.remainingQuantity ?? offer.quantity ?? 0;
+        if (offer.status === OFFER_STATUS.SOLD_OUT || quantityAvailable <= 0 || quantity > quantityAvailable) {
+          throw new AppError(
+            `Stock insuffisant pour "${offer.title}" : ${quantityAvailable} portion(s) restante(s)`,
+            409,
+            'OFFER_SOLD_OUT',
+            { offerId, offerTitle: offer.title, requested: quantity, available: quantityAvailable }
+          );
+        }
+
+        if (Number.isInteger(offer.maxPerOrder) && offer.maxPerOrder > 0 && quantity > offer.maxPerOrder) {
+          throw new AppError(
+            `Maximum ${offer.maxPerOrder} portion(s) autorisée(s) pour "${offer.title}"`,
+            422,
+            'MAX_PER_ORDER_EXCEEDED',
+            { offerId, maxPerOrder: offer.maxPerOrder, requested: quantity }
+          );
+        }
+
+        if (offer.status !== OFFER_STATUS.ACTIVE) {
+          throw new AppError(`L'offre "${offer.title}" n'est plus active`, 409, 'OFFER_NOT_ACTIVE');
+        }
+
+        const pickupEndMs = toEpochMs(offer.pickupEndAt);
+        if (nowMs >= pickupEndMs) {
+          throw new AppError(`Le créneau de retrait de "${offer.title}" est expiré`, 409, 'OFFER_EXPIRED');
+        }
+
+        const lockedUnitPriceMillimes = computeUnitPrice(offer, nowMs);
+        const originalUnitPriceMillimes =
+          offer.pricing?.originalPriceMillimes || offer.originalPriceMillimes || lockedUnitPriceMillimes;
+        const weightPerUnit = offer.weightGramsPerUnit || 400;
+        const lineSubtotalMillimes = lockedUnitPriceMillimes * quantity;
+        const foodSavedGrams = quantity * weightPerUnit;
+        const co2SavedGrams = Math.round(foodSavedGrams * BUSINESS_RULES.CO2_FACTOR_PER_GRAM_FOOD);
+
+        lineRecords.push({
+          offerRef: offerRefs[i],
+          offer,
+          quantityAvailable,
+          item: {
+            offerId,
+            title: offer.title,
+            photoUrl: offer.photoUrl || offer.imageUrl || null,
+            category: offer.category,
+            quantity,
+            unitPriceMillimes: lockedUnitPriceMillimes,
+            originalUnitPriceMillimes,
+            lineSubtotalMillimes,
+            isSurpriseBasket: !!offer.isSurpriseBasket,
+            rarity: offer.rarity || null,
+            pickupStartAt: offer.pickupStartAt,
+            pickupEndAt: offer.pickupEndAt,
+            weightGramsPerUnit: weightPerUnit,
+            foodSavedGrams,
+            co2SavedGrams,
+            pricingMode: offer.pricing?.mode || offer.pricingType || 'FIXED',
+          },
+        });
       }
 
-      if (offer.status !== OFFER_STATUS.ACTIVE) {
-        throw new AppError('Cette offre n est plus active', 409, 'OFFER_NOT_ACTIVE');
-      }
+      // 3. CALCUL GLOBAL DU PRIX, DES RÉCOMPENSES & DE L'IMPACT
+      const items = lineRecords.map((r) => r.item);
+      const totalQuantity = items.reduce((s, it) => s + it.quantity, 0);
+      const subtotalMillimes = items.reduce((s, it) => s + it.lineSubtotalMillimes, 0);
+      const originalTotal = items.reduce((s, it) => s + it.originalUnitPriceMillimes * it.quantity, 0);
+      const foodSavedGrams = items.reduce((s, it) => s + it.foodSavedGrams, 0);
+      const co2SavedGrams = Math.round(foodSavedGrams * BUSINESS_RULES.CO2_FACTOR_PER_GRAM_FOOD);
 
-      // Vérification temporelle : le retrait ne doit pas être déjà expiré
-      const pickupEndMs = offer.pickupEndAt?.toDate
-        ? offer.pickupEndAt.toDate().getTime()
-        : new Date(offer.pickupEndAt).getTime();
-
-      if (nowMs >= pickupEndMs) {
-        throw new AppError('Le créneau de retrait de cette offre est expiré', 409, 'OFFER_EXPIRED');
-      }
-
-      // 2. CALCUL DU PRIX ET DES RÉDUCTIONS
-      const lockedUnitPriceMillimes = computeUnitPrice(offer, nowMs);
-      const subtotalMillimes = lockedUnitPriceMillimes * quantity;
       let discountMillimes = 0;
       let rewardSnapshot = null;
       let updatedRewards = null;
@@ -90,35 +188,33 @@ export const ordersService = {
         }
 
         const reward = unlockedRewards[rewardIndex];
-
         if (reward.status !== REWARD_STATUS.AVAILABLE) {
           throw new AppError('Cette récompense n est plus disponible', 422, 'REWARD_NOT_AVAILABLE');
         }
 
-        // Vérification de validité temporelle
         if (reward.expiresAt) {
-          const expMs = reward.expiresAt.toDate ? reward.expiresAt.toDate().getTime() : new Date(reward.expiresAt).getTime();
+          const expMs = toEpochMs(reward.expiresAt);
           if (nowMs > expMs) {
             throw new AppError('Cette récompense est expirée', 422, 'REWARD_EXPIRED');
           }
         }
 
-        // Vérification du type de récompense
         if (reward.type === 'FREE_SURPRISE') {
-          if (!offer.isSurpriseBasket || offer.rarity !== 'COMMON') {
+          const freeSurpriseLine = items.find((it) => it.isSurpriseBasket && it.rarity === SURPRISE_RARITY.COMMON);
+          if (!freeSurpriseLine) {
             throw new AppError(
-              'La récompense Panier Surprise Gratuit s applique exclusivement aux paniers de rareté COMMON',
+              'La récompense Panier Surprise Gratuit nécessite au moins un panier surprise de rareté COMMON dans votre sac',
               422,
-              'REWARD_NOT_APPLICABLE'
+              'REWARD_UNAVAILABLE'
             );
           }
-          // Offre une portion gratuite, plafonnée (plan : cap 4000 millimes)
-          discountMillimes = lockedUnitPriceMillimes;
+          // Déduit uniquement la valeur de 1 unité du panier surprise COMMON (plafonnée)
+          discountMillimes = freeSurpriseLine.unitPriceMillimes;
         } else if (reward.type === 'PERCENT_OFF') {
           const percent = reward.percentOff || 10;
           discountMillimes = Math.round((subtotalMillimes * percent) / 100);
         }
-        // ALG-LOYALTY : chaque récompense porte un plafond (PERCENT_OFF 2000, FREE_SURPRISE 4000 millimes)
+
         if (Number.isInteger(reward.maxDiscountMillimes)) {
           discountMillimes = Math.min(discountMillimes, reward.maxDiscountMillimes);
         }
@@ -129,7 +225,6 @@ export const ordersService = {
           discountMillimes,
         };
 
-        // Verrouillage de la récompense dans le document utilisateur
         updatedRewards = [...unlockedRewards];
         updatedRewards[rewardIndex] = {
           ...reward,
@@ -140,32 +235,35 @@ export const ordersService = {
       }
 
       const totalMillimes = Math.max(0, subtotalMillimes - discountMillimes);
-      const originalUnitPrice = offer.pricing?.originalPriceMillimes || offer.originalPriceMillimes || lockedUnitPriceMillimes;
-      const originalTotal = originalUnitPrice * quantity;
       const savedMillimes = Math.max(0, originalTotal - totalMillimes);
 
-      // Calcul de l'impact écologique
-      const weightPerUnit = offer.weightGramsPerUnit || 400;
-      const foodSavedGrams = quantity * weightPerUnit;
-      const co2SavedGrams = Math.round(foodSavedGrams * BUSINESS_RULES.CO2_FACTOR_PER_GRAM_FOOD);
+      // Fenêtre horaire englobante sur toutes les lignes du sac
+      const startCandidates = items.map((it) => ({ raw: it.pickupStartAt, ms: toEpochMs(it.pickupStartAt) })).filter((x) => Number.isFinite(x.ms));
+      const endCandidates = items.map((it) => ({ raw: it.pickupEndAt, ms: toEpochMs(it.pickupEndAt) })).filter((x) => Number.isFinite(x.ms));
+      startCandidates.sort((a, b) => a.ms - b.ms);
+      endCandidates.sort((a, b) => b.ms - a.ms);
+      const encompassingStartAt = startCandidates[0]?.raw ?? items[0].pickupStartAt;
+      const encompassingEndAt = endCandidates[0]?.raw ?? items[0].pickupEndAt;
 
-      // 3. ÉCRITURES ATOMIQUES
-      // Mise à jour de l'offre
-      const newAvailable = quantityAvailable - quantity;
-      const offerUpdates = {
-        quantityAvailable: newAvailable,
-        remainingQuantity: newAvailable,
-        hasOrders: true,
-        updatedAt: now,
-      };
+      const primaryItem = items[0];
+      const surpriseItem = items.find((it) => it.isSurpriseBasket);
+      const avgWeightPerUnit = Math.round(foodSavedGrams / Math.max(1, totalQuantity));
 
-      if (newAvailable === 0) {
-        offerUpdates.status = OFFER_STATUS.SOLD_OUT;
+      // 4. ÉCRITURES ATOMIQUES
+      for (const line of lineRecords) {
+        const newAvailable = line.quantityAvailable - line.item.quantity;
+        const offerUpdates = {
+          quantityAvailable: newAvailable,
+          remainingQuantity: newAvailable,
+          hasOrders: true,
+          updatedAt: now,
+        };
+        if (newAvailable === 0) {
+          offerUpdates.status = OFFER_STATUS.SOLD_OUT;
+        }
+        transaction.update(line.offerRef, offerUpdates);
       }
 
-      transaction.update(offerRef, offerUpdates);
-
-      // Mise à jour de l'utilisateur si une récompense a été verrouillée
       if (updatedRewards) {
         transaction.update(userRef, {
           unlockedRewards: updatedRewards,
@@ -173,7 +271,6 @@ export const ordersService = {
         });
       }
 
-      // Création du document de commande
       const orderData = {
         orderId,
         orderCode,
@@ -183,29 +280,32 @@ export const ordersService = {
           displayName: userData?.displayName || studentUser.name || 'Étudiant ESSECT',
           filiereId: userData?.filiereId || null,
         },
-        merchantId: offer.merchantId,
-        merchantSnapshot: {
-          id: offer.merchantId,
-          name: offer.merchantSnapshot?.name || '',
-          location: offer.merchantSnapshot?.location || null,
-        },
-        offerId,
+        merchantId: sharedMerchantId,
+        merchantSnapshot: sharedMerchantSnapshot,
+        offerId: primaryItem.offerId,
+        items,
         offerSnapshot: {
-          title: offer.title,
-          photoUrl: offer.photoUrl || offer.imageUrl || null,
-          category: offer.category,
-          isSurpriseBasket: !!offer.isSurpriseBasket,
-          rarity: offer.rarity || null,
-          pickupStartAt: offer.pickupStartAt,
-          pickupEndAt: offer.pickupEndAt,
-          weightGramsPerUnit: weightPerUnit,
-          co2GramsPerUnit: Math.round(weightPerUnit * BUSINESS_RULES.CO2_FACTOR_PER_GRAM_FOOD),
+          title: formatOrderSummaryTitle(items),
+          photoUrl: primaryItem.photoUrl || null,
+          category: items.length === 1 ? primaryItem.category : 'MIXTE',
+          isSurpriseBasket: Boolean(surpriseItem),
+          rarity: surpriseItem?.rarity || null,
+          pickupStartAt: encompassingStartAt,
+          pickupEndAt: encompassingEndAt,
+          weightGramsPerUnit: avgWeightPerUnit,
+          co2GramsPerUnit: Math.round(avgWeightPerUnit * BUSINESS_RULES.CO2_FACTOR_PER_GRAM_FOOD),
         },
-        quantity,
+        quantity: totalQuantity,
         pricing: {
-          mode: offer.pricing?.mode || offer.pricingType || 'FIXED',
-          originalUnitPriceMillimes: originalUnitPrice,
-          lockedUnitPriceMillimes,
+          mode: items.length === 1 ? primaryItem.pricingMode : 'FIXED',
+          originalUnitPriceMillimes:
+            items.length === 1
+              ? primaryItem.originalUnitPriceMillimes
+              : Math.round(originalTotal / Math.max(1, totalQuantity)),
+          lockedUnitPriceMillimes:
+            items.length === 1
+              ? primaryItem.unitPriceMillimes
+              : Math.round(subtotalMillimes / Math.max(1, totalQuantity)),
           priceLockedAt: now,
           subtotalMillimes,
           reward: rewardSnapshot,
@@ -227,7 +327,7 @@ export const ordersService = {
           {
             status: ORDER_STATUS.RESERVED,
             timestamp: now,
-            note: 'Réservation créée avec blocage de stock 10 minutes',
+            note: `Réservation créée (${items.length} article${items.length > 1 ? 's' : ''}) avec blocage de stock 10 minutes`,
           },
         ],
         createdAt: now,
@@ -235,7 +335,6 @@ export const ordersService = {
       };
 
       transaction.set(orderRef, orderData);
-
       return orderData;
     });
 
@@ -265,37 +364,33 @@ export const ordersService = {
         throw new AppError('Seules les réservations en attente peuvent être annulées', 409, 'CANNOT_CANCEL');
       }
 
-      const offerRef = db.collection('offers').doc(order.offerId);
-      const offerDoc = await transaction.get(offerRef);
+      const items = normalizeOrderItems(order);
+      const offerRefs = items.map((it) => db.collection('offers').doc(it.offerId));
+      const userRef = order.pricing?.reward?.rewardId ? db.collection('users').doc(studentId) : null;
 
-      // Si une récompense a été verrouillée, la restituer
-      let userRef = null;
-      let userData = null;
-      if (order.pricing?.reward?.rewardId) {
-        userRef = db.collection('users').doc(studentId);
-        const userDoc = await transaction.get(userRef);
-        userData = userDoc.exists ? userDoc.data() : null;
-      }
+      // Lectures avant écritures
+      const [userDoc, ...offerDocs] = await Promise.all([
+        userRef ? transaction.get(userRef) : Promise.resolve(null),
+        ...offerRefs.map((ref) => transaction.get(ref)),
+      ]);
+      const userData = userDoc?.exists ? userDoc.data() : null;
 
-      // Restitution du stock de l'offre
-      if (offerDoc.exists) {
+      // Restitution du stock sur toutes les offres de la commande
+      for (let i = 0; i < items.length; i += 1) {
+        const offerDoc = offerDocs[i];
+        if (!offerDoc.exists) continue;
         const offer = offerDoc.data();
-        const restoredAvailable = (offer.quantityAvailable ?? offer.remainingQuantity ?? 0) + order.quantity;
+        const restoredAvailable = (offer.quantityAvailable ?? offer.remainingQuantity ?? 0) + items[i].quantity;
         const offerUpdates = {
           quantityAvailable: restoredAvailable,
           remainingQuantity: restoredAvailable,
           updatedAt: now,
         };
-
-        const pickupEndMs = offer.pickupEndAt?.toDate
-          ? offer.pickupEndAt.toDate().getTime()
-          : new Date(offer.pickupEndAt).getTime();
-
+        const pickupEndMs = toEpochMs(offer.pickupEndAt);
         if (offer.status === OFFER_STATUS.SOLD_OUT && now.getTime() < pickupEndMs) {
           offerUpdates.status = OFFER_STATUS.ACTIVE;
         }
-
-        transaction.update(offerRef, offerUpdates);
+        transaction.update(offerRefs[i], offerUpdates);
       }
 
       // Déverrouillage de la récompense
@@ -314,7 +409,6 @@ export const ordersService = {
         transaction.update(userRef, { unlockedRewards: updatedRewards, updatedAt: now });
       }
 
-      // Mise à jour de la commande
       const history = [...(order.statusHistory || [])];
       history.push({
         status: ORDER_STATUS.CANCELLED,
@@ -329,7 +423,6 @@ export const ordersService = {
       };
 
       transaction.update(orderRef, orderUpdates);
-
       return { ...order, ...orderUpdates };
     });
 

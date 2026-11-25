@@ -11,6 +11,7 @@ import { konnectClient } from './konnect.client.js';
 import { fcmService } from '../notifications/fcm.service.js';
 import { ORDER_STATUS, PAYMENT_STATUS, REWARD_STATUS } from '../../../../shared/constants.js';
 import { rewardKey } from '../../../../shared/loyalty.js';
+import { normalizeOrderItems } from '../../../../shared/orders.js';
 import { getTunisDayKey } from '../../utils/tunisTime.js';
 import { getMerchantTokens } from '../notifications/fcmTokens.js';
 import { logger } from '../../utils/logger.js';
@@ -125,18 +126,16 @@ export const paymentsService = {
       }
 
       // 2. LECTURES DES DOCUMENTS LIÉS DANS LA TRANSACTION
-      const offerRef = db.collection('offers').doc(order.offerId);
-      const offerDoc = await transaction.get(offerRef);
-
+      const items = normalizeOrderItems(order);
+      const offerRefs = items.map((it) => db.collection('offers').doc(it.offerId));
       const merchantRef = db.collection('merchants').doc(order.merchantId);
       const merchantDailyRef = merchantRef.collection('daily').doc(todayKey);
 
-      let userRef = null;
-      let userDoc = null;
-      if (order.pricing?.reward?.rewardId) {
-        userRef = db.collection('users').doc(order.studentId);
-        userDoc = await transaction.get(userRef);
-      }
+      const userRef = order.pricing?.reward?.rewardId ? db.collection('users').doc(order.studentId) : null;
+      const [userDoc, ...offerDocs] = await Promise.all([
+        userRef ? transaction.get(userRef) : Promise.resolve(null),
+        ...offerRefs.map((ref) => transaction.get(ref)),
+      ]);
 
       // 3. GÉNÉRATION DU NONCE CRYPTOGRAPHIQUE POUR LE BILLET (Living Ticket)
       const nonce = crypto.randomBytes(16).toString('base64url');
@@ -194,12 +193,14 @@ export const paymentsService = {
         transaction.update(userRef, { unlockedRewards: updatedRewards, updatedAt: now });
       }
 
-      // Incrémentation des ventes sur l'offre
-      if (offerDoc.exists) {
-        transaction.update(offerRef, {
-          quantitySold: admin.firestore.FieldValue.increment(order.quantity),
-          updatedAt: now,
-        });
+      // Incrémentation des ventes sur toutes les offres de la commande
+      for (let i = 0; i < items.length; i += 1) {
+        if (offerDocs[i]?.exists) {
+          transaction.update(offerRefs[i], {
+            quantitySold: admin.firestore.FieldValue.increment(items[i].quantity),
+            updatedAt: now,
+          });
+        }
       }
 
       // Incrémentation des statistiques du commerçant

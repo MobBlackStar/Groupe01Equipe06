@@ -6,6 +6,8 @@
 import { db } from '../config/firebase.js';
 import { logger } from '../utils/logger.js';
 import { ORDER_STATUS, OFFER_STATUS, REWARD_STATUS } from '../../../shared/constants.js';
+import { normalizeOrderItems } from '../../../shared/orders.js';
+import { rewardKey } from '../../../shared/loyalty.js';
 
 let isReservationSweeperRunning = false;
 
@@ -51,7 +53,8 @@ export async function runReservationSweeper() {
     for (const orderSnap of expiredDocs) {
       const order = orderSnap.data();
       const orderRef = orderSnap.ref;
-      const offerRef = db.collection('offers').doc(order.offerId);
+      const items = normalizeOrderItems(order);
+      const offerRefs = items.map((it) => db.collection('offers').doc(it.offerId));
       const userRef = order.pricing?.reward?.rewardId ? db.collection('users').doc(order.studentId) : null;
 
       await db.runTransaction(async (transaction) => {
@@ -61,11 +64,10 @@ export async function runReservationSweeper() {
           return;
         }
 
-        const offerDoc = await transaction.get(offerRef);
-        let userDoc = null;
-        if (userRef) {
-          userDoc = await transaction.get(userRef);
-        }
+        const [userDoc, ...offerDocs] = await Promise.all([
+          userRef ? transaction.get(userRef) : Promise.resolve(null),
+          ...offerRefs.map((ref) => transaction.get(ref)),
+        ]);
 
         // 2. ÉCRITURES ATOMIQUES
         // Clôture de la commande
@@ -82,11 +84,13 @@ export async function runReservationSweeper() {
           updatedAt: now,
         });
 
-        // Restauration du stock de l'offre
-        if (offerDoc.exists) {
+        // Restauration du stock de toutes les offres de la commande
+        for (let i = 0; i < items.length; i += 1) {
+          const offerDoc = offerDocs[i];
+          if (!offerDoc.exists) continue;
           const offer = offerDoc.data();
           const currentAvailable = offer.quantityAvailable ?? offer.remainingQuantity ?? 0;
-          const restoredStock = currentAvailable + order.quantity;
+          const restoredStock = currentAvailable + items[i].quantity;
 
           const offerUpdates = {
             quantityAvailable: restoredStock,
@@ -102,14 +106,14 @@ export async function runReservationSweeper() {
             offerUpdates.status = OFFER_STATUS.ACTIVE;
           }
 
-          transaction.update(offerRef, offerUpdates);
+          transaction.update(offerRefs[i], offerUpdates);
         }
 
         // Déverrouillage de la récompense étudiante
         if (userDoc && userDoc.exists) {
           const unlockedRewards = userDoc.data().unlockedRewards || [];
           const updatedRewards = unlockedRewards.map((rw) => {
-            if (rw.id === order.pricing?.reward?.rewardId && rw.status === REWARD_STATUS.LOCKED) {
+            if (rewardKey(rw) === order.pricing?.reward?.rewardId && rw.status === REWARD_STATUS.LOCKED) {
               return {
                 ...rw,
                 status: REWARD_STATUS.AVAILABLE,
