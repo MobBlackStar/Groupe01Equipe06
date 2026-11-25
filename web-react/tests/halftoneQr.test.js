@@ -18,7 +18,9 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const mascotPath = resolve(__dirname, '../public/assets/brand/mascot-sticker.png');
+const mascot256Path = resolve(__dirname, '../public/assets/brand/mascot-sticker-256.png');
 const mascotPng = PNG.sync.read(fs.readFileSync(mascotPath));
+const mascot256Png = PNG.sync.read(fs.readFileSync(mascot256Path));
 
 describe('Halftone Mascot QR Code — Structure & Décodabilité jsQR', () => {
   test('protège uniquement les 3 Finder Patterns et le motif d alignement (pas les bits de format)', () => {
@@ -67,5 +69,55 @@ describe('Halftone Mascot QR Code — Structure & Décodabilité jsQR', () => {
     const decoded = jsQR(rendered.data, rendered.width, rendered.height);
     assert.ok(decoded);
     assert.equal(decoded.data, payload);
+  });
+
+  test('décode exactement l URL officielle CampusSave.apk depuis le QR Niveau H avec sticker circulaire mascot-sticker-256.png', () => {
+    const apkUrl = 'https://github.com/MobBlackStar/campussave-releases/releases/latest/download/CampusSave.apk';
+    const qr = createHalftoneQrMatrix(apkUrl);
+    const N = qr.modules.size;
+    const quiet = 4;
+    const totalModules = N + quiet * 2;
+
+    for (const pixelSize of [220, 280, 440]) {
+      const data = new Uint8ClampedArray(pixelSize * pixelSize * 4).fill(255);
+      const cell = pixelSize / totalModules;
+      const badgeRadiusPx = pixelSize * 0.11;
+      const center = pixelSize / 2;
+
+      for (let py = 0; py < pixelSize; py += 1) {
+        for (let px = 0; px < pixelSize; px += 1) {
+          const dx = px - center;
+          const dy = py - center;
+          const dist = Math.hypot(dx, dy);
+          const idx = (py * pixelSize + px) * 4;
+
+          if (dist <= badgeRadiusPx) {
+            const u = (dx / (badgeRadiusPx * 2) + 0.5) * (mascot256Png.width - 1);
+            const v = (dy / (badgeRadiusPx * 2) + 0.5) * (mascot256Png.height - 1);
+            const mx = Math.max(0, Math.min(mascot256Png.width - 1, Math.round(u)));
+            const my = Math.max(0, Math.min(mascot256Png.height - 1, Math.round(v)));
+            const midx = (my * mascot256Png.width + mx) * 4;
+            if (mascot256Png.data[midx + 3] > 30) {
+              data[idx] = mascot256Png.data[midx];
+              data[idx + 1] = mascot256Png.data[midx + 1];
+              data[idx + 2] = mascot256Png.data[midx + 2];
+            }
+            continue;
+          }
+
+          const col = Math.floor(px / cell) - quiet;
+          const row = Math.floor(py / cell) - quiet;
+          if (row >= 0 && row < N && col >= 0 && col < N && qr.modules.get(row, col)) {
+            data[idx] = 17;
+            data[idx + 1] = 17;
+            data[idx + 2] = 17;
+          }
+        }
+      }
+
+      const decoded = jsQR(data, pixelSize, pixelSize);
+      assert.ok(decoded, `jsQR doit décoder CampusSave.apk (${pixelSize}px)`);
+      assert.equal(decoded.data, apkUrl);
+    }
   });
 });
