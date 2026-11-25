@@ -26,6 +26,7 @@ class OfferModel {
   final String? photoUrl;
   final String? rarity; // COMMON | RARE | LEGENDARY (paniers surprise)
   final int? startPriceMillimes; // départ d'une enchère dégressive (null pour un prix fixe)
+  final int? currentPriceMillimes; // prix courant calculé côté serveur si disponible
   final int? distanceFromEssectM; // distance réelle du commerce (merchantSnapshot), null si inconnue
 
   const OfferModel({
@@ -49,10 +50,41 @@ class OfferModel {
     this.photoUrl,
     this.rarity,
     this.startPriceMillimes,
+    this.currentPriceMillimes,
     this.distanceFromEssectM,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
+    final pricing = json['pricing'] is Map ? Map<String, dynamic>.from(json['pricing'] as Map) : const <String, dynamic>{};
+    final rawMode = (json['pricingType'] ?? pricing['mode'] ?? json['pricingMode'] ?? 'FIXED').toString().toUpperCase();
+    final isDutch = rawMode == 'DUTCH' || rawMode == 'DUTCH_AUCTION';
+
+    final originalPrice = (json['originalPriceMillimes'] as num?)?.toInt() ??
+        (pricing['originalPriceMillimes'] as num?)?.toInt() ??
+        0;
+    final startPrice = (json['startPriceMillimes'] as num?)?.toInt() ??
+        (pricing['startPriceMillimes'] as num?)?.toInt();
+    final currentServerPrice = (json['currentPriceMillimes'] as num?)?.toInt();
+
+    final rawTarget = (json['targetPriceMillimes'] as num?)?.toInt() ??
+        (isDutch ? (pricing['floorPriceMillimes'] as num?)?.toInt() : null) ??
+        (pricing['discountedPriceMillimes'] as num?)?.toInt() ??
+        (json['discountedPriceMillimes'] as num?)?.toInt() ??
+        (pricing['floorPriceMillimes'] as num?)?.toInt() ??
+        (json['floorPriceMillimes'] as num?)?.toInt() ??
+        currentServerPrice ??
+        startPrice ??
+        originalPrice;
+
+    int safeTarget = rawTarget > 0 ? rawTarget : 0;
+    if (safeTarget <= 0) {
+      final fallback = (pricing['discountedPriceMillimes'] as num?)?.toInt() ??
+          (pricing['startPriceMillimes'] as num?)?.toInt() ??
+          currentServerPrice ??
+          originalPrice;
+      safeTarget = fallback;
+    }
+
     return OfferModel(
       id: json['id'] as String? ?? '',
       merchantId: json['merchantId'] as String? ?? '',
@@ -61,23 +93,22 @@ class OfferModel {
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       category: json['category'] as String? ?? 'SANDWICH',
-      pricingType: json['pricingType'] as String? ??
-          (json['pricing'] is Map ? (json['pricing'] as Map)['mode'] as String? : null) ??
-          'FIXED',
-      originalPriceMillimes: (json['originalPriceMillimes'] as num?)?.toInt() ?? 0,
-      targetPriceMillimes: (json['targetPriceMillimes'] as num?)?.toInt() ?? 0,
+      pricingType: isDutch ? 'DUTCH' : 'FIXED',
+      originalPriceMillimes: originalPrice > 0 ? originalPrice : safeTarget,
+      targetPriceMillimes: safeTarget,
       decayHours: (json['decayHours'] as num?)?.toInt() ?? 2,
-      stepMillimes: (json['stepMillimes'] as num?)?.toInt() ?? 100,
-      quantity: (json['quantity'] as num?)?.toInt() ?? (json['quantityAvailable'] as num?)?.toInt() ?? 1,
+      stepMillimes: (json['stepMillimes'] as num?)?.toInt() ?? (pricing['roundingStepMillimes'] as num?)?.toInt() ?? 100,
+      quantity: (json['quantity'] as num?)?.toInt() ?? (json['quantityTotal'] as num?)?.toInt() ?? (json['quantityAvailable'] as num?)?.toInt() ?? 1,
       // L'API expose le stock sous `quantityAvailable` (alias historique : `remainingQuantity`)
-      remainingQuantity: (json['quantityAvailable'] as num?)?.toInt() ?? (json['remainingQuantity'] as num?)?.toInt() ?? 1,
+      remainingQuantity: (json['quantityAvailable'] as num?)?.toInt() ?? (json['remainingQuantity'] as num?)?.toInt() ?? (json['quantity'] as num?)?.toInt() ?? 1,
       pickupStartAt: parseApiDate(json['pickupStartAt']) ?? DateTime.now(),
       pickupEndAt: parseApiDate(json['pickupEndAt']) ?? DateTime.now().add(const Duration(hours: 2)),
       isSurpriseBasket: json['isSurpriseBasket'] as bool? ?? false,
       rarity: json['rarity'] as String?,
       status: json['status'] as String? ?? 'ACTIVE',
-      photoUrl: json['photoUrl'] as String?,
-      startPriceMillimes: (json['startPriceMillimes'] as num?)?.toInt(),
+      photoUrl: (json['photoUrl'] as String?) ?? (json['imageUrl'] as String?),
+      startPriceMillimes: startPrice,
+      currentPriceMillimes: currentServerPrice,
       distanceFromEssectM: (json['distanceFromEssectM'] as num?)?.toInt() ??
           (json['merchantSnapshot'] is Map ? ((json['merchantSnapshot'] as Map)['distanceFromEssectM'] as num?)?.toInt() : null),
     );
@@ -94,6 +125,8 @@ class OfferModel {
       'pricingType': pricingType,
       'originalPriceMillimes': originalPriceMillimes,
       'targetPriceMillimes': targetPriceMillimes,
+      'startPriceMillimes': startPriceMillimes,
+      'currentPriceMillimes': currentPriceMillimes,
       'decayHours': decayHours,
       'stepMillimes': stepMillimes,
       'quantity': quantity,

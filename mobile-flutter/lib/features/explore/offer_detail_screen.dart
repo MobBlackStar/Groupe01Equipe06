@@ -175,6 +175,7 @@ class _OfferDetailScreenState extends State<OfferDetailScreen> {
                         pricingType: offer.pricingType,
                         originalPriceMillimes: offer.originalPriceMillimes,
                         targetPriceMillimes: offer.targetPriceMillimes,
+                        startPriceMillimes: offer.startPriceMillimes,
                         pickupStartAt: offer.pickupStartAt,
                         pickupEndAt: offer.pickupEndAt,
                         stepMillimes: offer.stepMillimes,

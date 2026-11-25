@@ -64,7 +64,7 @@ class _LivePriceTextState extends State<LivePriceText> {
     final isDutch = widget.pricingType == 'DUTCH' ||
         widget.pricingType == Pricing.modeDutchAuction;
 
-    final currentPrice = Pricing.computeUnitPrice(
+    final computed = Pricing.computeUnitPrice(
       mode: isDutch ? Pricing.modeDutchAuction : Pricing.modeFixed,
       discountedPriceMillimes: widget.targetPriceMillimes,
       startPriceMillimes: widget.startPriceMillimes ?? widget.originalPriceMillimes,
@@ -74,6 +74,11 @@ class _LivePriceTextState extends State<LivePriceText> {
       roundingStepMillimes: widget.stepMillimes,
       nowMs: _nowMs,
     );
+    final currentPrice = computed > 0
+        ? computed
+        : (widget.targetPriceMillimes > 0
+            ? widget.targetPriceMillimes
+            : (widget.startPriceMillimes ?? widget.originalPriceMillimes));
 
     final discountPercent = widget.originalPriceMillimes > currentPrice && widget.originalPriceMillimes > 0
         ? (((widget.originalPriceMillimes - currentPrice) / widget.originalPriceMillimes) * 100).round()

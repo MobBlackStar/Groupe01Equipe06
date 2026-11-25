@@ -1,27 +1,52 @@
-// 💡 Concept & Analogie : Le standard téléphonique de l'application : il enregistre le numéro de l'appareil auprès du serveur, affiche une bannière quand un message arrive et ouvre le bon écran au toucher.
-// 🔄 Comparaison React / Flutter : Équivalent de `firebase-messaging-sw.js` + `lib/push.js` sous React : même route `POST /users/me/fcm-token`, mêmes types d'événements (ORDER_PAID, TICKET_READY…).
-// 🎯 À retenir pour la soutenance : "Dès la connexion (démo ou compte réel) l'appareil est enregistré ; au premier plan une bannière Griddle s'affiche, en arrière-plan Android affiche une bannière haute priorité grâce au canal campussave_high_importance."
+// 💡 Concept & Analogie : Le standard téléphonique de l'application : il enregistre le numéro de l'appareil auprès du serveur, déclenche une notification système Android avec la mascotte CampusSave et affiche une bannière Griddle quand l'application est ouverte.
+// 🔄 Comparaison React / Flutter : Équivalent de `firebase-messaging-sw.js` + `lib/push.js` + `MascotToast.jsx` sous React : même route `POST /users/me/fcm-token`, mêmes types d'événements (ORDER_PAID, TICKET_READY…).
+// 🎯 À retenir pour la soutenance : "Dès la connexion, l'appareil est enregistré ; en arrière-plan ou application fermée Android affiche le push haute priorité, et au premier plan une bannière avec notre mascotte + une notification système apparaissent."
 // Module : Infrastructure Mobile
 
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../app/theme.dart';
 import '../features/loyalty/loyalty_card_screen.dart';
 import '../features/merchant/merchant_orders_screen.dart';
 import '../features/merchant/merchant_store_screen.dart';
 import '../features/orders/my_orders_screen.dart';
+import '../firebase_options.dart';
 import 'campus_api.dart';
 
-/// Gestionnaire d'arrière-plan : doit être une fonction de premier niveau. Le système affiche lui-même la notification
-/// (message « notification » + canal haute importance) ; rien d'autre à faire ici.
+const String kCampusNotificationChannelId = 'campussave_high_importance';
+const String kCampusNotificationChannelName = 'Notifications CampusSave';
+const String kCampusNotificationChannelDesc = 'Commandes, tickets, retraits et nouvelles offres';
+
+final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+
+/// Gestionnaire d'arrière-plan : exécuté même lorsque l'application est minimisée ou fermée.
+/// Si le message ne contient pas de bloc `notification` (data-only), on affiche une notification système locale avec la mascotte.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    }
+  } catch (_) {}
+
   if (kDebugMode) {
-    debugPrint('Notification reçue en arrière-plan : ${message.notification?.title}');
+    debugPrint('Notification reçue en arrière-plan : ${message.notification?.title ?? message.data['title']}');
+  }
+
+  if (message.notification == null && (message.data['title'] != null || message.data['body'] != null)) {
+    await FcmService._ensureLocalPluginInitialized();
+    await FcmService.showSystemNotification(
+      (message.data['title'] ?? 'CampusSave').toString(),
+      (message.data['body'] ?? '').toString(),
+      data: message.data,
+    );
   }
 }
 
@@ -33,15 +58,49 @@ class FcmService {
 
   static String? _registeredToken;
   static bool _listening = false;
+  static bool _localInitialized = false;
   static OverlayEntry? _banner;
   static Timer? _bannerTimer;
 
   static bool get _supported => !kIsWeb;
 
+  static Future<void> _ensureLocalPluginInitialized() async {
+    if (_localInitialized || kIsWeb) return;
+    const androidSettings = AndroidInitializationSettings('ic_stat_campussave');
+    const initSettings = InitializationSettings(android: androidSettings);
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (details) {
+        if (details.payload == null || details.payload!.isEmpty) return;
+        try {
+          final parsed = jsonDecode(details.payload!) as Map<String, dynamic>;
+          _openFor(parsed);
+        } catch (_) {}
+      },
+    );
+
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(
+        const AndroidNotificationChannel(
+          kCampusNotificationChannelId,
+          kCampusNotificationChannelName,
+          description: kCampusNotificationChannelDesc,
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+        ),
+      );
+    }
+    _localInitialized = true;
+  }
+
   /// Écouteurs (premier plan, ouverture depuis la barre de notifications, rotation du jeton). À appeler une fois au démarrage.
   static Future<void> initialize() async {
     if (!_supported || _listening) return;
     try {
+      await _ensureLocalPluginInitialized();
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
       FirebaseMessaging.onMessageOpenedApp.listen((m) => _openFor(m.data));
@@ -59,6 +118,11 @@ class FcmService {
   static Future<PushStatus> registerForCurrentUser() async {
     if (!_supported) return PushStatus.unsupported;
     try {
+      await _ensureLocalPluginInitialized();
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.requestNotificationsPermission();
+
       final settings = await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
       if (settings.authorizationStatus == AuthorizationStatus.denied) return PushStatus.denied;
       final token = await FirebaseMessaging.instance.getToken();
@@ -106,23 +170,70 @@ class FcmService {
     }
   }
 
-  // ------------------------------------------------------------------ premier plan : bannière Griddle
+  /// Affiche une notification système Android (tête haute + tiroir de notifications + grande icône Mascotte).
+  static Future<void> showSystemNotification(
+    String title,
+    String body, {
+    Map<String, dynamic> data = const {},
+  }) async {
+    if (kIsWeb) return;
+    try {
+      await _ensureLocalPluginInitialized();
+      final androidDetails = AndroidNotificationDetails(
+        kCampusNotificationChannelId,
+        kCampusNotificationChannelName,
+        channelDescription: kCampusNotificationChannelDesc,
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: 'ic_stat_campussave',
+        largeIcon: const DrawableResourceAndroidBitmap('mascot_sticker'),
+        color: AppTheme.red,
+        playSound: true,
+        enableVibration: true,
+        styleInformation: body.isNotEmpty
+            ? BigTextStyleInformation(body, contentTitle: title)
+            : null,
+      );
+      final details = NotificationDetails(android: androidDetails);
+      final notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+      await _localNotifications.show(
+        notifId,
+        title,
+        body,
+        details,
+        payload: jsonEncode(data),
+      );
+    } catch (e) {
+      debugPrint('Notification système locale échouée : $e');
+    }
+  }
+
+  // ------------------------------------------------------------------ premier plan : système + bannière Mascotte Griddle
 
   static void _onForegroundMessage(RemoteMessage message) {
-    final title = message.notification?.title ?? 'CampusSave';
-    final body = message.notification?.body ?? '';
+    final title = message.notification?.title ?? message.data['title']?.toString() ?? 'CampusSave';
+    final body = message.notification?.body ?? message.data['body']?.toString() ?? '';
+    showSystemNotification(title, body, data: message.data);
     showBanner(title, body, onTap: () => _openFor(message.data));
   }
 
-  /// Bannière en haut de l'écran (disparaît seule après 5 s, toucher = ouvrir l'écran concerné).
+  /// Prévisualisation locale immédiate (système Android + bannière Mascotte) pour le bouton de test.
+  static Future<void> showMascotTestNotification() async {
+    const title = 'CampusSave : alerte fraîcheur !';
+    const body = 'Votre notification push fonctionne parfaitement (tiroir Android & bannière mascotte).';
+    await showSystemNotification(title, body, data: const {'type': 'TEST'});
+    showBanner(title, body);
+  }
+
+  /// Bannière Griddle avec la mascotte qui dépasse du coin supérieur (disparaît seule après 5 s).
   static void showBanner(String title, String body, {VoidCallback? onTap}) {
     final overlay = navigatorKey?.currentState?.overlay;
     if (overlay == null) return;
     _dismissBanner();
     _banner = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 12,
+        top: MediaQuery.of(context).padding.top + 14,
+        left: 16,
         right: 12,
         child: Material(
           color: Colors.transparent,
@@ -132,31 +243,80 @@ class FcmService {
               onTap?.call();
             },
             onVerticalDragEnd: (_) => _dismissBanner(),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-              decoration: BoxDecoration(
-                color: AppTheme.mustard,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppTheme.ink, width: 2),
-                boxShadow: const [BoxShadow(color: AppTheme.ink, offset: Offset(3, 3))],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.notifications_active, color: AppTheme.ink),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: AppTheme.h3(18), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        if (body.isNotEmpty) Text(body, style: AppTheme.body(14), maxLines: 2, overflow: TextOverflow.ellipsis),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(left: 16, top: 8),
+                  padding: const EdgeInsets.fromLTRB(48, 12, 10, 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cream,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppTheme.red, width: 2.5),
+                    boxShadow: const [BoxShadow(color: AppTheme.ink, offset: Offset(3, 4))],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '🔔 $title',
+                              style: AppTheme.h3(17, AppTheme.red),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (body.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                body,
+                                style: AppTheme.body(14, AppTheme.ink),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _dismissBanner,
+                        icon: const Icon(Icons.close, color: AppTheme.ink, size: 20),
+                        tooltip: 'Fermer',
+                      ),
+                    ],
+                  ),
+                ),
+                // Mascotte CampusSave qui dépasse joyeusement de la carte de notification
+                Positioned(
+                  left: 0,
+                  top: -6,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.ink.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
                       ],
                     ),
+                    child: Image.asset(
+                      'assets/brand/mascot-sticker.png',
+                      height: 58,
+                      width: 58,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const CircleAvatar(
+                        radius: 26,
+                        backgroundColor: AppTheme.mustard,
+                        child: Icon(Icons.notifications_active, color: AppTheme.ink),
+                      ),
+                    ),
                   ),
-                  IconButton(onPressed: _dismissBanner, icon: const Icon(Icons.close, color: AppTheme.ink), tooltip: 'Fermer'),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

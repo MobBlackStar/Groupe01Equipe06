@@ -5,6 +5,7 @@
 import { app, isFirebaseConfigured } from './firebase.js';
 import { apiClient } from './api.js';
 import { ENDPOINTS } from './endpoints.js';
+import { emitMascotNotification } from '../components/ui/MascotToast.jsx';
 
 const TOKEN_KEY = 'cs.fcm_token';
 const DEFAULT_VAPID_KEY = 'BGbbtY6VlRiqMVqesc7eDPpfx-dHUP3ay_Rlo4cJTm7Y0uim_80z6Ge4ySa7jpvXzEIVxjthsImJxhhr-hHL-gc';
@@ -47,7 +48,15 @@ async function obtainAndRegisterToken() {
     foregroundBound = true;
     onMessage(messaging, (payload) => {
       const n = payload.notification || {};
-      registration.showNotification(n.title || 'CampusSave', { body: n.body || '', icon: '/favicon.png', badge: '/favicon-32x32.png', data: payload.data || {} });
+      const title = n.title || 'CampusSave';
+      const body = n.body || '';
+      emitMascotNotification({ title, body, data: payload.data || {} });
+      registration.showNotification(title, {
+        body,
+        icon: '/assets/brand/mascot-sticker.png',
+        badge: '/favicon-32x32.png',
+        data: payload.data || {},
+      });
     });
   }
   return token;
@@ -87,5 +96,13 @@ export async function disablePush() {
 /** `POST /users/me/fcm-test` : renvoie `{ ok, tokensCount, sentCount, failedCount, mode, diagnostics }`. */
 export async function sendTestPush() {
   const res = await apiClient.post(`${ENDPOINTS.FCM_TOKEN.replace('/fcm-token', '/fcm-test')}`);
-  return res.data;
+  const data = res.data || {};
+  if (!data.sentCount || data.mode === 'memory') {
+    emitMascotNotification({
+      title: 'CampusSave : alerte fraîcheur !',
+      body: 'Votre notification push et le bandeau mascotte fonctionnent sur cet appareil.',
+      data: { type: 'TEST', route: '/profile' },
+    });
+  }
+  return data;
 }

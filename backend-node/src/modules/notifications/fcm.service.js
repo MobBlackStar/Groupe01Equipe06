@@ -36,11 +36,20 @@ export function buildFcmMessage({ title, body, data = {} }) {
     data: stringData,
     android: {
       priority: 'high',
-      notification: { channelId: ANDROID_CHANNEL_ID, sound: 'default', defaultSound: true, defaultVibrateTimings: true, visibility: 'public' },
+      notification: {
+        channelId: ANDROID_CHANNEL_ID,
+        icon: 'ic_stat_campussave',
+        color: '#DA0711',
+        imageUrl: 'https://campussave-rouge.vercel.app/assets/brand/mascot-sticker.png',
+        sound: 'default',
+        defaultSound: true,
+        defaultVibrateTimings: true,
+        visibility: 'public',
+      },
     },
     webpush: {
       headers: { Urgency: 'high', TTL: '86400' },
-      notification: { icon: '/favicon.png', badge: '/favicon-32x32.png', tag: type, renotify: true },
+      notification: { icon: '/favicon.png', badge: '/favicon-32x32.png', image: '/assets/brand/mascot-sticker.png', tag: type, renotify: true },
       ...(webLink.startsWith('http') ? { fcmOptions: { link: webLink } } : {}),
     },
     apns: { headers: { 'apns-priority': '10' }, payload: { aps: { sound: 'default' } } },

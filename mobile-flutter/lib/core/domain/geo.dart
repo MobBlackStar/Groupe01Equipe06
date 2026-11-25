@@ -8,9 +8,33 @@ const double kEssectLat = 36.7871;
 const double kEssectLng = 10.1748;
 const int kMaxMerchantDistanceM = 3000;
 
-/// Accepte « 36.7875, 10.1758 » ou « 36.7875 10.1758 » (coordonnées copiées depuis Google Maps ou Waze).
+/// Accepte « 36.7875, 10.1758 », « 36.7875 10.1758 » ou un lien Google Maps (@lat,lng, !3dlat!4dlng, ?q=lat,lng).
 ({double lat, double lng})? parseCoords(String raw) {
-  final m = RegExp(r'(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)').firstMatch(raw.trim());
+  final text = Uri.decodeFull(raw).trim();
+  if (text.isEmpty) return null;
+
+  // 1. Lien Google Maps « place » : !3dLAT!4dLNG prime sur @LAT,LNG
+  final bang = RegExp(r'!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)').firstMatch(text);
+  if (bang != null) {
+    final lat = double.tryParse(bang.group(1)!);
+    final lng = double.tryParse(bang.group(2)!);
+    if (lat != null && lng != null && lat.abs() <= 90 && lng.abs() <= 180) {
+      return (lat: lat, lng: lng);
+    }
+  }
+
+  // 2. Lien Google Maps @LAT,LNG ou ?q=LAT,LNG
+  final gmaps = RegExp(r'(?:@|[?&](?:q|ll|query)=)(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)').firstMatch(text);
+  if (gmaps != null) {
+    final lat = double.tryParse(gmaps.group(1)!);
+    final lng = double.tryParse(gmaps.group(2)!);
+    if (lat != null && lng != null && lat.abs() <= 90 && lng.abs() <= 180) {
+      return (lat: lat, lng: lng);
+    }
+  }
+
+  // 3. Coordonnées brutes « lat, lng » ou « lat lng »
+  final m = RegExp(r'(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)').firstMatch(text);
   if (m == null) return null;
   final lat = double.tryParse(m.group(1)!);
   final lng = double.tryParse(m.group(2)!);

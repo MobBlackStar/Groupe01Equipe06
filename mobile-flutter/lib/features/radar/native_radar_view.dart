@@ -7,9 +7,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/domain/money.dart';
+import '../../core/models/offer_model.dart';
+import '../../services/campus_api.dart';
+import '../explore/offer_detail_screen.dart';
 
 import '../../app/theme.dart';
 /// Carte 2D native (flutter_map) : version de secours du radar, toujours disponible hors ligne du serveur web.
@@ -103,11 +107,59 @@ class _NativeRadarViewState extends State<NativeRadarView> {
     _showMerchantBottomSheet(merchant);
   }
 
+  Future<void> _openGoogleMapsDirections(double lat, double lng) async {
+    final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible d\'ouvrir Google Maps sur cet appareil.')),
+      );
+    }
+  }
+
+  Future<void> _openOfferFromRadar(Map<String, dynamic> rawOffer, Map<String, dynamic> merchant, int distanceM) async {
+    final offerId = rawOffer['id']?.toString() ?? '';
+    OfferModel? resolved;
+    if (offerId.isNotEmpty) {
+      try {
+        final all = await CampusApi.shared.fetchOffers();
+        for (final o in all) {
+          if (o.id == offerId) {
+            resolved = o;
+            break;
+          }
+        }
+      } catch (_) {}
+    }
+    resolved ??= OfferModel.fromJson({
+      ...rawOffer,
+      'merchantId': rawOffer['merchantId'] ?? merchant['id'] ?? '',
+      'merchantName': rawOffer['merchantName'] ?? merchant['tradeName'] ?? merchant['name'],
+      'currentPriceMillimes': rawOffer['currentPriceMillimes'] ?? rawOffer['currentPrice'],
+      'distanceFromEssectM': distanceM,
+    });
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OfferDetailScreen(
+          offer: resolved!,
+          distanceFromEssectM: resolved.distanceFromEssectM ?? distanceM,
+        ),
+      ),
+    );
+  }
+
   void _showMerchantBottomSheet(Map<String, dynamic> merchant) {
     final urgencyColor = _parseHexColor(merchant['beaconUrgencyColor'] as String?, AppTheme.red);
     final offers = (merchant['activeOffers'] as List<dynamic>? ?? []);
     final int distanceM = (merchant['distanceFromEssectM'] as num?)?.toInt() ?? 0;
     final int walkingMins = (merchant['walkingMinutes'] as num?)?.toInt() ?? max<int>(1, (distanceM / 80).round());
+    final loc = merchant['location'] as Map<String, dynamic>?;
+    final double mLat = (loc?['lat'] as num?)?.toDouble() ?? (merchant['lat'] as num?)?.toDouble() ?? 36.7871;
+    final double mLng = (loc?['lng'] as num?)?.toDouble() ?? (merchant['lng'] as num?)?.toDouble() ?? 10.1748;
 
     showModalBottomSheet(
       context: context,
@@ -232,7 +284,22 @@ class _NativeRadarViewState extends State<NativeRadarView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _openGoogleMapsDirections(mLat, mLng),
+                  icon: const Icon(Icons.directions_outlined, size: 18, color: AppTheme.ink),
+                  label: const Text('Itinéraire Google Maps', style: TextStyle(color: AppTheme.ink, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: AppTheme.cream,
+                    side: const BorderSide(color: AppTheme.ink, width: 1.5),
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // Liste des paniers actifs
               Text(
@@ -255,15 +322,18 @@ class _NativeRadarViewState extends State<NativeRadarView> {
                 )
               else
                 ...offers.map((offer) {
-                  final priceMillimes = (offer['currentPrice'] as num?)?.toInt() ?? 3000;
-                  final isSurprise = offer['isSurprise'] == true;
-                  final rarity = offer['rarity'] as String? ?? 'COMMON';
+                  final rawOffer = Map<String, dynamic>.from(offer as Map);
+                  final priceMillimes = (rawOffer['currentPriceMillimes'] as num?)?.toInt() ??
+                      (rawOffer['currentPrice'] as num?)?.toInt() ??
+                      3000;
+                  final isSurprise = rawOffer['isSurprise'] == true || rawOffer['isSurpriseBasket'] == true;
+                  final rarity = rawOffer['rarity'] as String? ?? 'COMMON';
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.biscuit,
+                      color: AppTheme.cream,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSurprise ? AppTheme.red.withOpacity(0.5) : AppTheme.sand,
@@ -297,7 +367,7 @@ class _NativeRadarViewState extends State<NativeRadarView> {
                                   ],
                                   Expanded(
                                     child: Text(
-                                      offer['title'] as String? ?? 'Panier Sauvetage',
+                                      rawOffer['title'] as String? ?? 'Panier Sauvetage',
                                       style: const TextStyle(
                                         color: AppTheme.ink,
                                         fontSize: 14,
@@ -324,15 +394,7 @@ class _NativeRadarViewState extends State<NativeRadarView> {
                         ElevatedButton(
                           onPressed: () {
                             Navigator.of(ctx).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Panier sélectionné : ${offer['title']}',
-                                  style: const TextStyle(color: AppTheme.cream),
-                                ),
-                                backgroundColor: AppTheme.red,
-                              ),
-                            );
+                            _openOfferFromRadar(rawOffer, merchant, distanceM);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.red,
@@ -543,6 +605,13 @@ class _NativeRadarViewState extends State<NativeRadarView> {
       ),
       body: Stack(
         children: [
+          // Fond quadrillé Griddle de secours si les tuiles OSM tardent à charger
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _RadarGridBackdropPainter(),
+            ),
+          ),
+
           // Carte interactive OpenStreetMap (crème)
           FlutterMap(
             mapController: _mapController,
@@ -689,26 +758,77 @@ class _NativeRadarViewState extends State<NativeRadarView> {
               ),
             ),
 
-          // Légende des urgences en bas
+          // Liste rapide des commerces les plus proches + Légende en bas
           Positioned(
-            bottom: 16,
+            bottom: 12,
             left: 12,
             right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.biscuit.withOpacity(0.92),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.sand),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildLegendItem(AppTheme.red, 'Standard'),
-                  _buildLegendItem(AppTheme.orange, 'Ferme bientôt'),
-                  _buildLegendItem(AppTheme.red, 'Urgence éclair'),
-                ],
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_merchants.isNotEmpty)
+                  SizedBox(
+                    height: 76,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _merchants.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final m = _merchants[index];
+                        final name = (m['tradeName'] ?? m['name'] ?? 'Commerce').toString();
+                        final dist = (m['distanceFromEssectM'] as num?)?.toInt() ?? 0;
+                        final count = (m['activeOffers'] as List<dynamic>? ?? []).length;
+                        final selected = _selectedMerchant?['id'] == m['id'];
+                        return GestureDetector(
+                          onTap: () => _onMerchantTapped(m),
+                          child: Container(
+                            width: 215,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selected ? AppTheme.mustard : AppTheme.cream.withOpacity(0.96),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppTheme.ink, width: selected ? 2.5 : 1.5),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: AppTheme.ink, fontSize: 14, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$dist m · $count offre${count > 1 ? 's' : ''}',
+                                  style: const TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.biscuit.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.ink.withOpacity(0.15)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildLegendItem(AppTheme.mustard, 'Standard'),
+                      _buildLegendItem(AppTheme.orange, 'Ferme bientôt'),
+                      _buildLegendItem(AppTheme.red, 'Urgence éclair'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -721,19 +841,40 @@ class _NativeRadarViewState extends State<NativeRadarView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
+            border: Border.all(color: AppTheme.ink, width: 1),
           ),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
+          style: const TextStyle(color: AppTheme.ink, fontSize: 13, fontWeight: FontWeight.w600),
         ),
       ],
     );
   }
+}
+
+class _RadarGridBackdropPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = AppTheme.cream);
+    final linePaint = Paint()
+      ..color = AppTheme.ink.withValues(alpha: 0.06)
+      ..strokeWidth = 1;
+    const step = 36.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

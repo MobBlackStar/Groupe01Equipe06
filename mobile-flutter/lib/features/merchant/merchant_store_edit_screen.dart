@@ -9,6 +9,7 @@ import '../../core/domain/geo.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/griddle.dart';
+import '../../widgets/map_pin_picker.dart';
 
 class MerchantStoreEditScreen extends StatefulWidget {
   final Map<String, dynamic> store;
@@ -153,10 +154,21 @@ class _MerchantStoreEditScreenState extends State<MerchantStoreEditScreen> {
                 },
               ),
               const SizedBox(height: 14),
+              MapPinPicker(
+                initialLat: p?.lat ?? kEssectLat,
+                initialLng: p?.lng ?? kEssectLng,
+                onLocationChanged: (lat, lng, _, __) {
+                  setState(() {
+                    _point = (lat: lat, lng: lng);
+                    _coords.text = '$lat, $lng';
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
               AppTextField(
-                label: 'Coordonnées GPS',
+                label: 'Coordonnées GPS ou lien Google Maps',
                 hint: '36.7875, 10.1758',
-                helperText: 'Google Maps ou Waze : appui long sur le commerce, puis copier les coordonnées.',
+                helperText: 'Utilisez GPS ci-dessus, choisissez une rue ou collez un lien Google Maps.',
                 controller: _coords,
                 onChanged: (v) => setState(() => _point = parseCoords(v)),
                 validator: (v) => parseCoords(v ?? '') == null ? 'Coordonnées invalides' : null,

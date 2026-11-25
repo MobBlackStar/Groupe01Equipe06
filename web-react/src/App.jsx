@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { AppRouter } from './routes/AppRouter.jsx';
 import ApkDownloadMascot from './components/ui/ApkDownloadMascot.jsx';
+import MascotToast from './components/ui/MascotToast.jsx';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -80,6 +81,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <AppRouter />
+          <MascotToast />
           <ApkDownloadMascot />
         </AuthProvider>
       </BrowserRouter>

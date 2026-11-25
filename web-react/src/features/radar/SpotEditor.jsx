@@ -15,7 +15,32 @@ import { applyTimeOfDay } from './timeControl.js';
 
 const RADIUS_SRC = 'spot-radius-src';
 const CONNECTOR_SRC = 'spot-connector-src';
+const ROADS_SRC = 'spot-local-roads-src';
 const ROAD_NAMES = ['Autoroute', 'Grande avenue', 'Avenue', 'Rue', 'Rue résidentielle', 'Zone de rencontre', 'Voie de service', 'Place piétonne', 'Sentier'];
+const M_LAT = 111320;
+
+const LOCAL_FALLBACK_STYLE = {
+  version: 8,
+  sources: {},
+  layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#FAF3E6' } }],
+};
+
+function roadsGeoJson(raw) {
+  if (!raw?.roads?.length || !raw?.origin) return emptyFC;
+  const [lng0, lat0] = raw.origin;
+  const mLng = M_LAT * Math.cos((lat0 * Math.PI) / 180);
+  const features = raw.roads.map((road) => {
+    const coordinates = [];
+    for (let i = 0; i < road.r.length; i += 2) {
+      coordinates.push([
+        Number((lng0 + road.r[i] / 10 / mLng).toFixed(7)),
+        Number((lat0 + road.r[i + 1] / 10 / M_LAT).toFixed(7)),
+      ]);
+    }
+    return { type: 'Feature', properties: { k: road.k ?? 3 }, geometry: { type: 'LineString', coordinates } };
+  });
+  return { type: 'FeatureCollection', features };
+}
 
 /** Cercle (polygone) de rayon `radiusM` autour de l'ESSECT, pour tracer la limite des 3 km. */
 function circleFeature(radiusM, steps = 96) {
@@ -141,22 +166,74 @@ export default function SpotEditor({ value, onChange, presets = [], disabled = f
       emit({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     });
 
-    map.on('load', () => {
-      map.addSource(RADIUS_SRC, { type: 'geojson', data: circleFeature(BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS) });
-      map.addLayer({ id: 'spot-radius', type: 'line', source: RADIUS_SRC, paint: { 'line-color': '#1F7A3A', 'line-width': 3, 'line-dasharray': [2, 2] } });
-      map.addSource(CONNECTOR_SRC, { type: 'geojson', data: emptyFC });
-      map.addLayer({ id: 'spot-connector', type: 'line', source: CONNECTOR_SRC, paint: { 'line-color': '#111111', 'line-width': 3, 'line-dasharray': [1.2, 1.4] } });
-      // Monde 3D de Montfleury (immeubles, arbres, rues) : le même que le radar
-      if (isMapReady(map)) {
+    let styleReady = false;
+    let switchedToFallback = false;
+
+    const installLayers = async () => {
+      styleReady = true;
+      if (!isMapReady(map)) return;
+      try {
+        if (!map.getSource(RADIUS_SRC)) {
+          map.addSource(RADIUS_SRC, { type: 'geojson', data: circleFeature(BUSINESS_RULES.MAX_MERCHANT_DISTANCE_METERS) });
+        }
+        if (!map.getLayer('spot-radius')) {
+          map.addLayer({ id: 'spot-radius', type: 'line', source: RADIUS_SRC, paint: { 'line-color': '#1F7A3A', 'line-width': 3, 'line-dasharray': [2, 2] } });
+        }
+        if (!map.getSource(CONNECTOR_SRC)) {
+          map.addSource(CONNECTOR_SRC, { type: 'geojson', data: emptyFC });
+        }
+        if (!map.getLayer('spot-connector')) {
+          map.addLayer({ id: 'spot-connector', type: 'line', source: CONNECTOR_SRC, paint: { 'line-color': '#111111', 'line-width': 3, 'line-dasharray': [1.2, 1.4] } });
+        }
+
         add3DBuildingsLayer(map);
-        applyWorld(map).then((world) => {
-          applyAtmosphere(map, world || undefined);
-          applyTimeOfDay(map, null);
-        });
+        const world = await applyWorld(map);
+        if (world?.raw) {
+          worldRef.current = world;
+          if (!map.getSource(ROADS_SRC)) {
+            map.addSource(ROADS_SRC, { type: 'geojson', data: roadsGeoJson(world.raw) });
+          }
+          if (!map.getLayer('spot-local-roads')) {
+            map.addLayer(
+              {
+                id: 'spot-local-roads',
+                type: 'line',
+                source: ROADS_SRC,
+                paint: {
+                  'line-color': '#D7CBB6',
+                  'line-width': ['match', ['get', 'k'], 0, 5, 1, 4.5, 2, 3.5, 3, 2.5, 1.8],
+                  'line-opacity': 0.9,
+                },
+              },
+              map.getLayer('world-buildings') ? 'world-buildings' : 'spot-radius'
+            );
+          }
+        }
+        applyAtmosphere(map, world || undefined);
+        applyTimeOfDay(map, null);
+      } catch (e) {
+        console.warn('SpotEditor : erreur ajout couches locales :', e);
       }
+    };
+
+    const activateFallbackStyle = () => {
+      if (switchedToFallback || styleReady) return;
+      switchedToFallback = true;
+      try {
+        map.setStyle(LOCAL_FALLBACK_STYLE);
+      } catch {
+        /* carte démontée */
+      }
+    };
+
+    map.on('style.load', installLayers);
+    map.on('error', () => {
+      if (!styleReady) activateFallbackStyle();
     });
+    const fallbackTimer = setTimeout(activateFallbackStyle, 3500);
 
     return () => {
+      clearTimeout(fallbackTimer);
       try {
         map.remove();
       } catch {

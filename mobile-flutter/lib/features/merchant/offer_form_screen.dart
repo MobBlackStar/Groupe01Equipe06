@@ -117,7 +117,8 @@ class _OfferFormScreenState extends State<OfferFormScreen> {
 
   /// Saisie en dinars (7.500 ou 7,5) convertie en millimes entiers.
   static int? _toMillimes(String? raw) {
-    final v = double.tryParse((raw ?? '').trim().replaceAll(',', '.'));
+    final normalized = (raw ?? '').trim().replaceAll(',', '.').replaceAll(RegExp(r'\s+'), '');
+    final v = double.tryParse(normalized);
     if (v == null || v <= 0) return null;
     return (v * 1000).round();
   }

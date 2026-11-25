@@ -111,5 +111,41 @@ void main() {
       expect(o.merchantName, 'Le Vert');
       expect(o.rarity, 'COMMON');
     });
+
+    test('extrait correctement les prix imbriqués dans `pricing` (jamais 0,000 DT)', () {
+      final fixedOffer = OfferModel.fromJson({
+        'id': 'off-smilee',
+        'merchantId': 'm-mohsen',
+        'title': 'SMILEE',
+        'category': 'SNACK',
+        'pricing': {
+          'mode': 'FIXED',
+          'originalPriceMillimes': 7500,
+          'discountedPriceMillimes': 1500,
+        },
+        'currentPriceMillimes': 1500,
+      });
+      expect(fixedOffer.originalPriceMillimes, 7500);
+      expect(fixedOffer.targetPriceMillimes, 1500);
+      expect(fixedOffer.pricingType, 'FIXED');
+
+      final dutchOffer = OfferModel.fromJson({
+        'id': 'off-dutch-new',
+        'merchantId': 'm-mohsen',
+        'title': 'Makloub',
+        'category': 'SANDWICH',
+        'pricing': {
+          'mode': 'DUTCH_AUCTION',
+          'originalPriceMillimes': 8000,
+          'startPriceMillimes': 5000,
+          'floorPriceMillimes': 2500,
+          'roundingStepMillimes': 100,
+        },
+      });
+      expect(dutchOffer.originalPriceMillimes, 8000);
+      expect(dutchOffer.startPriceMillimes, 5000);
+      expect(dutchOffer.targetPriceMillimes, 2500);
+      expect(dutchOffer.pricingType, 'DUTCH');
+    });
   });
 }

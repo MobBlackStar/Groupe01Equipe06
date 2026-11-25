@@ -18,10 +18,13 @@ class Env {
     defaultValue: kReleaseMode ? _hostedApi : 'http://localhost:4000/api/v1',
   );
 
-  /// Adresse du site web hébergé (ex. GitHub Pages) : le radar 3D WebGL s'affiche dans une WebView sur
-  /// `<WEB_APP_URL>/app/radar?embed=1`. Au build : `--dart-define=WEB_APP_URL=https://<utilisateur>.github.io/<dépôt>`.
-  /// Vide (défaut) : aucune adresse devinée, le radar reste sur la carte 2D native.
-  static const String webAppUrl = String.fromEnvironment('WEB_APP_URL', defaultValue: '');
+  /// Adresse du site web hébergé : le radar 3D WebGL s'affiche dans une WebView sur
+  /// `<WEB_APP_URL>/app/radar?embed=1`. En release, pointe vers le site de production Vercel par défaut.
+  static const String _hostedWeb = 'https://campussave-rouge.vercel.app';
+  static const String webAppUrl = String.fromEnvironment(
+    'WEB_APP_URL',
+    defaultValue: kReleaseMode ? _hostedWeb : '',
+  );
 
   /// La vue 3D n'est proposée que si le site web est configuré.
   static bool get hasWebApp => webAppUrl.trim().isNotEmpty;

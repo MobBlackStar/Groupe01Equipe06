@@ -7,9 +7,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/domain/geo.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/griddle.dart';
+import '../../widgets/map_pin_picker.dart';
 
 class MerchantOnboardingScreen extends StatefulWidget {
   const MerchantOnboardingScreen({super.key});
@@ -31,12 +33,7 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
   String _selectedType = 'FAST_FOOD';
   bool _isLoading = false;
   String? _error;
-  ({double lat, double lng})? _coords;
-
-  // Mêmes valeurs que `shared/constants.js` (ESSECT_COORDINATES, MAX_MERCHANT_DISTANCE_METERS)
-  static const double essectLat = 36.7871;
-  static const double essectLng = 10.1748;
-  static const int maxDistanceM = 3000;
+  ({double lat, double lng})? _coords = (lat: kEssectLat, lng: kEssectLng);
 
   static const _types = {
     'FAST_FOOD': 'Fast-food',
@@ -45,6 +42,12 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
     'BOULANGERIE': 'Boulangerie',
     'PATISSERIE': 'Pâtisserie',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _coordsController.text = '$kEssectLat, $kEssectLng';
+  }
 
   @override
   void dispose() {
@@ -57,29 +60,11 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
     super.dispose();
   }
 
-  /// Accepte « 36.7875, 10.1758 » ou « 36.7875 10.1758 » (coordonnées copiées depuis Google Maps).
-  static ({double lat, double lng})? _parseCoords(String raw) {
-    final m = RegExp(r'(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)').firstMatch(raw.trim());
-    if (m == null) return null;
-    final lat = double.tryParse(m.group(1)!);
-    final lng = double.tryParse(m.group(2)!);
-    if (lat == null || lng == null || lat.abs() > 90 || lng.abs() > 180) return null;
-    return (lat: lat, lng: lng);
-  }
-
-  static int _distanceM(double lat, double lng) {
-    const earthRadius = 6371000;
-    final dLat = (lat - essectLat) * pi / 180;
-    final dLng = (lng - essectLng) * pi / 180;
-    final a = sin(dLat / 2) * sin(dLat / 2) + cos(essectLat * pi / 180) * cos(lat * pi / 180) * sin(dLng / 2) * sin(dLng / 2);
-    return (earthRadius * 2 * atan2(sqrt(a), sqrt(1 - a))).round();
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final c = _coords;
     if (c == null) return;
-    if (_distanceM(c.lat, c.lng) > maxDistanceM) {
+    if (distanceFromEssectM(c.lat, c.lng) > kMaxMerchantDistanceM) {
       setState(() => _error = 'Le commerce doit se trouver à moins de 3 000 m de l\'ESSECT.');
       return;
     }
@@ -110,9 +95,9 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final c = _coords;
-    final dist = c == null ? null : _distanceM(c.lat, c.lng);
+    final dist = c == null ? null : distanceFromEssectM(c.lat, c.lng);
     final walking = dist == null ? null : max(1, (dist * 1.3 / (5000 / 60)).round());
-    final eligible = dist != null && dist <= maxDistanceM;
+    final eligible = dist != null && dist <= kMaxMerchantDistanceM;
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
@@ -160,14 +145,32 @@ class _MerchantOnboardingScreenState extends State<MerchantOnboardingScreen> {
                 validator: (v) => (v == null || v.trim().length < 3) ? 'Adresse requise' : null,
               ),
               const SizedBox(height: 14),
+              MapPinPicker(
+                initialLat: c?.lat ?? kEssectLat,
+                initialLng: c?.lng ?? kEssectLng,
+                onLocationChanged: (lat, lng, _, __) {
+                  setState(() {
+                    _coords = (lat: lat, lng: lng);
+                    _coordsController.text = '$lat, $lng';
+                  });
+                },
+              ),
+              const SizedBox(height: 14),
               AppTextField(
-                label: 'Coordonnées GPS',
+                label: 'Coordonnées GPS ou lien Google Maps',
                 hint: '36.7875, 10.1758',
-                helperText: 'Dans Google Maps ou Waze : appui long sur le commerce, puis copier les coordonnées.',
+                helperText: 'Utilisez GPS ci-dessus, choisissez une rue ou collez un lien Google Maps.',
                 controller: _coordsController,
                 keyboardType: TextInputType.text,
-                onChanged: (v) => setState(() => _coords = _parseCoords(v)),
-                validator: (v) => _parseCoords(v ?? '') == null ? 'Coordonnées invalides' : null,
+                onChanged: (v) {
+                  final parsed = parseCoords(v);
+                  if (parsed != null) {
+                    setState(() => _coords = parsed);
+                  } else {
+                    setState(() => _coords = null);
+                  }
+                },
+                validator: (v) => parseCoords(v ?? '') == null ? 'Coordonnées invalides' : null,
               ),
               if (dist != null) ...[
                 const SizedBox(height: 14),

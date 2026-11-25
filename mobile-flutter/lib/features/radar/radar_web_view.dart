@@ -106,9 +106,11 @@ class _RadarWebViewState extends State<RadarWebView> {
         'token': token,
         'ecoPoints': profile.ecoPoints,
       });
+      final mode = auth.authMode == AuthMode.real ? 'REAL' : 'DEMO';
       await _controller.runJavaScript(
-        "try{localStorage.setItem('campussave_token', ${jsonEncode(token)});"
-        "localStorage.setItem('campussave_demo_session', ${jsonEncode(session)});}catch(e){}",
+        "try{localStorage.setItem('campussave_auth_mode', ${jsonEncode(mode)});"
+        "localStorage.setItem('campussave_token', ${jsonEncode(token)});"
+        "${auth.authMode == AuthMode.demo ? "localStorage.setItem('campussave_demo_session', ${jsonEncode(session)});" : "localStorage.removeItem('campussave_demo_session');"}}catch(e){}",
       );
     } catch (_) {
       // Sans session, la page demandera la connexion et préviendra le parent (auth-required)

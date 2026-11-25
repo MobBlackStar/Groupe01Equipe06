@@ -1,12 +1,34 @@
-// 💡 Concept & Analogie : Comme un plan cadastral interactif avec un compas numérique, ce widget permet au commerçant de positionner sa boutique et valide instantanément le respect du rayon piéton de 3 km.
-// 🔄 Comparaison React / Flutter : Équivalent direct de `MapPinPicker.jsx` sous React.
-// 🎯 À retenir pour la soutenance : "Ce sélecteur graphique calcule la distance Haversine en temps réel et avertit visuellement si le commerce sort de la zone éligible."
+// 💡 Concept & Analogie : Comme un plan cadastral interactif avec un compas numérique, ce widget permet au commerçant de positionner sa boutique via GPS, Google Maps, rues de Montfleury ou toucher direct.
+// 🔄 Comparaison React / Flutter : Équivalent direct de `SpotEditor.jsx` sous React (GPS + Google Maps + 6 rues Montfleury + carte interactive).
+// 🎯 À retenir pour la soutenance : "Ce sélecteur calcule la distance Haversine en temps réel, lit la puce GPS du smartphone et avertit visuellement si le commerce sort du rayon de 3 km."
 // Module : Cartographie & Géolocalisation Mobile
 
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../app/theme.dart';
+import '../core/domain/geo.dart';
+import 'griddle.dart';
+
+class MontfleuryStreetPreset {
+  final String label;
+  final double lat;
+  final double lng;
+
+  const MontfleuryStreetPreset(this.label, this.lat, this.lng);
+}
+
+const List<MontfleuryStreetPreset> kMontfleuryPresets = [
+  MontfleuryStreetPreset('Face ESSECT', 36.7865, 10.1739),
+  MontfleuryStreetPreset('Boulevard Ali Trad', 36.7885, 10.1762),
+  MontfleuryStreetPreset('Rue Galilée', 36.7872, 10.1748),
+  MontfleuryStreetPreset('Avenue Bab Jedid', 36.7915, 10.1710),
+  MontfleuryStreetPreset('Rue des Silos', 36.7845, 10.1780),
+  MontfleuryStreetPreset('Avenue de Bellevue', 36.7838, 10.1772),
+];
+
 class MapPinPicker extends StatefulWidget {
   final double initialLat;
   final double initialLng;
@@ -14,8 +36,8 @@ class MapPinPicker extends StatefulWidget {
 
   const MapPinPicker({
     super.key,
-    this.initialLat = 36.7885,
-    this.initialLng = 10.1762,
+    this.initialLat = kEssectLat,
+    this.initialLng = kEssectLng,
     this.onLocationChanged,
   });
 
@@ -24,46 +46,107 @@ class MapPinPicker extends StatefulWidget {
 }
 
 class _MapPinPickerState extends State<MapPinPicker> {
-  static const double essectLat = 36.7871;
-  static const double essectLng = 10.1748;
   static const double maxRangeM = 3500.0;
 
   late double _lat;
   late double _lng;
   int _distanceMeters = 0;
+  bool _gpsLoading = false;
+  String? _gpsError;
 
   @override
   void initState() {
     super.initState();
     _lat = widget.initialLat;
     _lng = widget.initialLng;
-    _recalculateDistance();
+    _distanceMeters = distanceFromEssectM(_lat, _lng);
   }
 
-  void _recalculateDistance() {
-    _distanceMeters = _calculateDistanceHaversine(essectLat, essectLng, _lat, _lng);
-    final isWithin = _distanceMeters <= 3000;
-    widget.onLocationChanged?.call(_lat, _lng, _distanceMeters, isWithin);
-  }
-
-  int _calculateDistanceHaversine(double lat1, double lng1, double lat2, double lng2) {
-    const r = 6371000.0; // Rayon de la Terre en mètres
-    final dLat = (lat2 - lat1) * (pi / 180.0);
-    final dLng = (lng2 - lng1) * (pi / 180.0);
-
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(lat1 * (pi / 180.0)) * cos(lat2 * (pi / 180.0)) * sin(dLng / 2) * sin(dLng / 2);
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-
-    return (r * c).round();
+  @override
+  void didUpdateWidget(covariant MapPinPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.initialLat - widget.initialLat).abs() > 1e-6 ||
+        (oldWidget.initialLng - widget.initialLng).abs() > 1e-6) {
+      setState(() {
+        _lat = widget.initialLat;
+        _lng = widget.initialLng;
+        _distanceMeters = distanceFromEssectM(_lat, _lng);
+      });
+    }
   }
 
   void _setCoordinates(double lat, double lng) {
+    final roundedLat = double.parse(lat.toStringAsFixed(6));
+    final roundedLng = double.parse(lng.toStringAsFixed(6));
+    final dist = distanceFromEssectM(roundedLat, roundedLng);
     setState(() {
-      _lat = double.parse(lat.toStringAsFixed(6));
-      _lng = double.parse(lng.toStringAsFixed(6));
-      _recalculateDistance();
+      _lat = roundedLat;
+      _lng = roundedLng;
+      _distanceMeters = dist;
+      _gpsError = null;
     });
+    widget.onLocationChanged?.call(roundedLat, roundedLng, dist, dist <= kMaxMerchantDistanceM);
+  }
+
+  Future<void> _useCurrentGps() async {
+    setState(() {
+      _gpsLoading = true;
+      _gpsError = null;
+    });
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        setState(() {
+          _gpsLoading = false;
+          _gpsError = 'GPS désactivé : activez la localisation sur votre téléphone ou choisissez une rue ci-dessous.';
+        });
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() {
+          _gpsLoading = false;
+          _gpsError = 'Autorisation de localisation refusée. Choisissez une rue de Montfleury ou ouvrez Google Maps.';
+        });
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 12),
+        ),
+      );
+      if (!mounted) return;
+      _setCoordinates(pos.latitude, pos.longitude);
+      setState(() => _gpsLoading = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _gpsLoading = false;
+        _gpsError = 'Position GPS indisponible pour le moment. Utilisez une rue ci-dessous ou Google Maps.';
+      });
+    }
+  }
+
+  Future<void> _openGoogleMaps() async {
+    final uri = Uri.parse('https://www.google.com/maps/@$_lat,$_lng,17z');
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        setState(() => _gpsError = 'Impossible d\'ouvrir Google Maps sur cet appareil.');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _gpsError = 'Impossible d\'ouvrir Google Maps sur cet appareil.');
+      }
+    }
   }
 
   void _handleTap(TapUpDetails details, Size size) {
@@ -72,85 +155,101 @@ class _MapPinPickerState extends State<MapPinPicker> {
 
     final centerX = size.width / 2;
     final centerY = size.height / 2;
-    final scale = (size.width * 0.42) / maxRangeM;
+    final scale = (min(size.width, size.height) * 0.44) / maxRangeM;
 
     final dLngM = (dx - centerX) / scale;
     final dLatM = (centerY - dy) / scale;
 
-    final newLat = essectLat + (dLatM / 111000.0);
-    final newLng = essectLng + (dLngM / 89000.0);
+    final newLat = kEssectLat + (dLatM / 111000.0);
+    final newLng = kEssectLng + (dLngM / 89000.0);
 
     _setCoordinates(newLat, newLng);
   }
 
   @override
   Widget build(BuildContext context) {
-    const campusLime = AppTheme.red;
-    const campusDark = AppTheme.cream;
-    const campusCard = AppTheme.biscuit;
-    const campusBorder = AppTheme.biscuit;
-
-    final isEligible = _distanceMeters <= 3000;
+    final isEligible = _distanceMeters <= kMaxMerchantDistanceM;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: campusCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: campusBorder),
+        color: AppTheme.biscuit,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.ink, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // En-tête et indicateur de distance
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '📍 Localisation Boutique',
-                style: TextStyle(
-                  color: AppTheme.ink,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              const Expanded(
+                child: Text(
+                  '📍 Localisation de la boutique',
+                  style: TextStyle(
+                    color: AppTheme.ink,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isEligible
-                      ? campusLime.withValues(alpha: 0.15)
-                      : AppTheme.red.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isEligible
-                        ? campusLime.withValues(alpha: 0.5)
-                        : AppTheme.red.withValues(alpha: 0.6),
-                  ),
+              GPill(
+                isEligible ? '$_distanceMeters m (Éligible)' : '$_distanceMeters m (> 3 km)',
+                color: isEligible ? const Color(0xFFDDEFD9) : AppTheme.red,
+                textColor: isEligible ? AppTheme.leaf : AppTheme.cream,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Actions rapides : GPS natif + Google Maps
+          Row(
+            children: [
+              Expanded(
+                child: GButton(
+                  _gpsLoading ? 'Localisation…' : 'Ma position GPS',
+                  icon: Icons.my_location,
+                  variant: GVariant.cream,
+                  small: true,
+                  loading: _gpsLoading,
+                  onPressed: _gpsLoading ? null : _useCurrentGps,
                 ),
-                child: Text(
-                  isEligible ? '$_distanceMeters m (Éligible)' : '$_distanceMeters m (> 3 km)',
-                  style: TextStyle(
-                    color: isEligible ? campusLime : AppTheme.red,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GButton(
+                  'Google Maps',
+                  icon: Icons.map_outlined,
+                  variant: GVariant.cream,
+                  small: true,
+                  onPressed: _openGoogleMaps,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Touchez la carte pour ajuster la position de votre établissement.',
-            style: TextStyle(color: AppTheme.muted, fontSize: 13),
-          ),
+
+          if (_gpsError != null) ...[
+            const SizedBox(height: 10),
+            GNotice(_gpsError!, icon: Icons.location_off_outlined, color: AppTheme.red),
+          ],
+
           const SizedBox(height: 12),
+          Text(
+            'Ou touchez le radar / choisissez une rue de Montfleury :',
+            style: AppTheme.body(13, AppTheme.muted),
+          ),
+          const SizedBox(height: 10),
 
           // Radar Graphique Interactif
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Container(
-              height: 220,
-              color: campusDark,
+              height: 190,
+              decoration: BoxDecoration(
+                color: AppTheme.cream,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.ink, width: 1.5),
+              ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return GestureDetector(
@@ -158,13 +257,13 @@ class _MapPinPickerState extends State<MapPinPicker> {
                     child: CustomPaint(
                       size: Size(constraints.maxWidth, constraints.maxHeight),
                       painter: _RadarMapPainter(
-                        centerLat: essectLat,
-                        centerLng: essectLng,
+                        centerLat: kEssectLat,
+                        centerLng: kEssectLng,
                         targetLat: _lat,
                         targetLng: _lng,
                         maxRangeM: maxRangeM,
                         isEligible: isEligible,
-                        campusLime: campusLime,
+                        accentColor: isEligible ? AppTheme.leaf : AppTheme.red,
                       ),
                     ),
                   );
@@ -174,37 +273,20 @@ class _MapPinPickerState extends State<MapPinPicker> {
           ),
           const SizedBox(height: 12),
 
-          // Raccourcis Repères de Montfleury
+          // Raccourcis 1-clic rues de Montfleury
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [
-              _buildLandmarkChip('Face ESSECT (120 m)', 36.7891, 10.1748),
-              _buildLandmarkChip('Baguette & Bag. (210 m)', 36.7885, 10.1762),
-              _buildLandmarkChip('Pâtisserie Masmoudi (340 m)', 36.7876, 10.1775),
-              _buildLandmarkChip('Bd 9 Avril (410 m)', 36.7865, 10.1735),
-            ],
+            children: kMontfleuryPresets.map((preset) {
+              final selected = (_lat - preset.lat).abs() < 1e-5 && (_lng - preset.lng).abs() < 1e-5;
+              return GChip(
+                preset.label,
+                selected: selected,
+                onTap: () => _setCoordinates(preset.lat, preset.lng),
+              );
+            }).toList(),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLandmarkChip(String label, double lat, double lng) {
-    return InkWell(
-      onTap: () => _setCoordinates(lat, lng),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: AppTheme.cream,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.biscuit),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-        ),
       ),
     );
   }
@@ -217,7 +299,7 @@ class _RadarMapPainter extends CustomPainter {
   final double targetLng;
   final double maxRangeM;
   final bool isEligible;
-  final Color campusLime;
+  final Color accentColor;
 
   _RadarMapPainter({
     required this.centerLat,
@@ -226,71 +308,64 @@ class _RadarMapPainter extends CustomPainter {
     required this.targetLng,
     required this.maxRangeM,
     required this.isEligible,
-    required this.campusLime,
+    required this.accentColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
     final centerY = size.height / 2;
-    final scale = (size.width * 0.42) / maxRangeM;
+    final scale = (min(size.width, size.height) * 0.44) / maxRangeM;
 
     final circlePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..color = AppTheme.ink.withValues(alpha: 0.08);
+      ..color = AppTheme.ink.withValues(alpha: 0.10);
 
-    // Cercles concentriques
     canvas.drawCircle(Offset(centerX, centerY), 1000 * scale, circlePaint);
     canvas.drawCircle(Offset(centerX, centerY), 2000 * scale, circlePaint);
 
-    // Cercle 3000m (Limite d'éligibilité)
     final limitPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 2.0
       ..color = isEligible
-          ? campusLime.withValues(alpha: 0.35)
-          : AppTheme.red.withValues(alpha: 0.4);
+          ? AppTheme.leaf.withValues(alpha: 0.55)
+          : AppTheme.red.withValues(alpha: 0.6);
     canvas.drawCircle(Offset(centerX, centerY), 3000 * scale, limitPaint);
 
-    // Axes en croix
     final axisPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8
-      ..color = AppTheme.ink.withValues(alpha: 0.05);
+      ..color = AppTheme.ink.withValues(alpha: 0.07);
     canvas.drawLine(Offset(centerX, 0), Offset(centerX, size.height), axisPaint);
     canvas.drawLine(Offset(0, centerY), Offset(size.width, centerY), axisPaint);
 
-    // Centre : ESSECT Montfleury
     final essectPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = campusLime;
+      ..color = AppTheme.red;
     canvas.drawCircle(Offset(centerX, centerY), 6, essectPaint);
 
-    // Position de l'épingle
     final dLatM = (targetLat - centerLat) * 111000.0;
     final dLngM = (targetLng - centerLng) * 89000.0;
-    final pinX = centerX + (dLngM * scale);
-    final pinY = centerY - (dLatM * scale);
+    final pinX = (centerX + (dLngM * scale)).clamp(12.0, size.width - 12.0);
+    final pinY = (centerY - (dLatM * scale)).clamp(12.0, size.height - 12.0);
 
-    // Ligne reliant campus et boutique
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = isEligible ? campusLime : AppTheme.red;
+      ..strokeWidth = 1.5
+      ..color = accentColor;
     canvas.drawLine(Offset(centerX, centerY), Offset(pinX, pinY), linePaint);
 
-    // Épingle boutique
     final pinPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = isEligible ? campusLime : AppTheme.red;
-    canvas.drawCircle(Offset(pinX, pinY), 7, pinPaint);
+      ..color = accentColor;
+    canvas.drawCircle(Offset(pinX, pinY), 8, pinPaint);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = AppTheme.cream;
-    canvas.drawCircle(Offset(pinX, pinY), 7, borderPaint);
+      ..strokeWidth = 2.5
+      ..color = AppTheme.paper;
+    canvas.drawCircle(Offset(pinX, pinY), 8, borderPaint);
   }
 
   @override

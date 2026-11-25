@@ -35,11 +35,17 @@ class Pricing {
     final nowMs = parseTimestampToMs(nowInput) ?? 0;
 
     if (mode == modeFixed || mode == 'FIXED') {
-      final discounted = pricing['discountedPriceMillimes'] ??
-          offer['discountedPriceMillimes'] ??
-          offer['targetPriceMillimes'] ??
+      final rawDiscounted = pricing['discountedPriceMillimes'] ?? offer['discountedPriceMillimes'];
+      if (rawDiscounted != null) {
+        return (rawDiscounted as num).round();
+      }
+      final fallbackFixed = offer['targetPriceMillimes'] ??
+          offer['currentPriceMillimes'] ??
+          pricing['floorPriceMillimes'] ??
+          pricing['startPriceMillimes'] ??
+          offer['originalPriceMillimes'] ??
           0;
-      return (discounted as num).round();
+      return (fallbackFixed as num).round();
     }
 
     if (mode == modeDutchAuction || mode == modeDutch || mode == 'DUTCH_AUCTION' || mode == 'DUTCH') {

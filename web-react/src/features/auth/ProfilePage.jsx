@@ -18,6 +18,7 @@ import {
 import { LogOut, Save, Bell, Mail, Phone, User } from 'lucide-react';
 import { AVATAR_PRESETS, resolveAvatarPreset } from '@shared/avatars.js';
 import { getPushStatus, enablePush, sendTestPush } from '../../lib/push.js';
+import { emitMascotNotification } from '../../components/ui/MascotToast.jsx';
 
 // Libellés français (présentation uniquement)
 const ROLE_LABELS = {
@@ -69,6 +70,11 @@ function PushCard() {
       const r = await sendTestPush();
       setResult({ ok: r.ok, text: `${r.sentCount}/${r.tokensCount} appareil(s) · ${r.diagnostics}` });
     } catch (err) {
+      emitMascotNotification({
+        title: 'CampusSave : alerte fraîcheur !',
+        body: 'Aperçu du bandeau mascotte actif sur cet appareil.',
+        data: { type: 'TEST', route: '/profile' },
+      });
       setResult({ ok: false, text: err?.response?.data?.error?.message || 'Envoi du test impossible.' });
     } finally {
       setBusy(false);
@@ -91,11 +97,9 @@ function PushCard() {
             Activer les notifications
           </button>
         )}
-        {status === 'active' && (
-          <button type="button" onClick={handleTest} disabled={busy} className="cs-btn cs-btn-mustard cs-btn-sm">
-            Tester une notification
-          </button>
-        )}
+        <button type="button" onClick={handleTest} disabled={busy} className="cs-btn cs-btn-mustard cs-btn-sm">
+          Tester une notification
+        </button>
       </div>
       {result && (
         <p role="status" className={`mt-4 text-base font-semibold ${result.ok ? 'text-[#1F7A3A]' : 'text-[#DA0711]'}`}>{result.text}</p>

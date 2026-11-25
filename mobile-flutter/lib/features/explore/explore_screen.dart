@@ -1,11 +1,14 @@
 // 💡 Concept & Analogie : Comme le hall d'accueil de la cafétéria de l'ESSECT affichant les offres de sauvetage disponibles à la sortie des amphis.
-// 🔄 Comparaison React / Flutter : En Flutter, cet écran utilise un `RefreshIndicator` et une `ListView` ou `GridView` avec slivers ; en React, il correspond à `BrowsePage.jsx`.
-// 🎯 À retenir pour la soutenance : "L'écran d'exploration mobile offre une fluidité native avec actualisation au tirage (pull-to-refresh) et synchronisation des prix à la seconde."
+// 🔄 Comparaison React / Flutter : En Flutter, cet écran utilise un `RefreshIndicator` et des filtres unifiés identiques à `BrowsePage.jsx` ; recherche, commerce, catégories, budget et tri fonctionnent ensemble.
+// 🎯 À retenir pour la soutenance : "L'écran d'exploration mobile offre une fluidité native avec filtrage multi-critères par commerce, catégorie, budget et tri en temps réel."
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../core/config/env.dart';
+import '../../core/domain/money.dart';
+import '../../core/domain/pricing.dart';
 import '../../core/models/offer_model.dart';
+import '../../core/time/server_clock.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/offer_card.dart';
 import '../../widgets/griddle.dart';
@@ -23,7 +26,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   final _searchController = TextEditingController();
 
   String _selectedCategory = 'ALL';
-  int _maxPriceMillimes = 15000;
+  String _selectedMerchant = 'ALL';
+  int _maxPriceMillimes = kMobileMaxBudgetUnlimited;
   bool _surpriseOnly = false;
   String _sortBy = 'distance';
 
@@ -32,90 +36,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _isLoading = true;
   String? _loadError;
 
-  // Offres de démonstration hors-ligne : utilisées uniquement avec --dart-define=USE_MOCKS=true
-  final List<OfferModel> _demoOffers = [
-    OfferModel(
-      id: 'off-1',
-      merchantId: 'm1',
-      merchantName: 'Baguette & Baguette Montfleury',
-      title: 'Baguette Farcie Escalope Panée & Fromage',
-      description: 'Baguette chaude garnie d escalope panée croustillante, frites et fromage fondant.',
-      category: 'SANDWICH',
-      pricingType: 'DUTCH',
-      originalPriceMillimes: 7800,
-      targetPriceMillimes: 3800,
-      quantity: 4,
-      remainingQuantity: 4,
-      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 20)),
-      pickupEndAt: DateTime.now().add(const Duration(minutes: 40)),
-      photoUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
-    ),
-    OfferModel(
-      id: 'off-2',
-      merchantId: 'm2',
-      merchantName: "Cafétéria L'Étoile du Savoir",
-      title: 'Panier Surprise Viennoiseries du Matin',
-      description: '4 croissants au beurre et pains au chocolat cuits ce matin sur place.',
-      category: 'MIXTE',
-      pricingType: 'FIXED',
-      originalPriceMillimes: 6000,
-      targetPriceMillimes: 2500,
-      quantity: 5,
-      remainingQuantity: 5,
-      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 60)),
-      pickupEndAt: DateTime.now().add(const Duration(minutes: 90)),
-      isSurpriseBasket: true,
-      photoUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
-    ),
-    OfferModel(
-      id: 'off-3',
-      merchantId: 'm3',
-      merchantName: 'Restaurant Le Dôme Montfleury',
-      title: 'Ojja Royale aux Merguez & Œuf',
-      description: 'Plat tunisien mijoté à base de tomates fraîches, merguez et œuf coulant.',
-      category: 'PLAT_CHAUD',
-      pricingType: 'DUTCH',
-      originalPriceMillimes: 8500,
-      targetPriceMillimes: 4500,
-      quantity: 3,
-      remainingQuantity: 3,
-      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 15)),
-      pickupEndAt: DateTime.now().add(const Duration(minutes: 25)),
-      photoUrl: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=600&q=80',
-    ),
-    OfferModel(
-      id: 'off-4',
-      merchantId: 'm4',
-      merchantName: 'Pâtisserie Masmoudi',
-      title: 'Assortiment Pâtisserie Traditionnelle',
-      description: 'Sélection artisanale de douceurs tunisiennes (makroudh, baklawa).',
-      category: 'PATISSERIE',
-      pricingType: 'FIXED',
-      originalPriceMillimes: 12000,
-      targetPriceMillimes: 5500,
-      quantity: 2,
-      remainingQuantity: 2,
-      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 30)),
-      pickupEndAt: DateTime.now().add(const Duration(minutes: 120)),
-      isSurpriseBasket: true,
-      photoUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80',
-    ),
-    OfferModel(
-      id: 'off-5',
-      merchantId: 'm5',
-      merchantName: 'Pizzeria Bella Napoli Montfleury',
-      title: 'Pizza Calzone Soufflée au Thon',
-      description: 'Calzone garnie de thon, mozzarella et olives noires.',
-      category: 'PIZZA',
-      pricingType: 'DUTCH',
-      originalPriceMillimes: 9000,
-      targetPriceMillimes: 4500,
-      quantity: 4,
-      remainingQuantity: 4,
-      pickupStartAt: DateTime.now().subtract(const Duration(minutes: 10)),
-      pickupEndAt: DateTime.now().add(const Duration(minutes: 15)),
-      photoUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
-    ),
+  static const Map<String, String> _categoryLabels = {
+    'ALL': 'Toutes catégories',
+    'SANDWICH': 'Sandwichs',
+    'PLAT_CHAUD': 'Plats chauds',
+    'PIZZA': 'Pizzas',
+    'VIENNOISERIE': 'Viennoiseries',
+    'PATISSERIE': 'Pâtisseries',
+    'SALADE': 'Salades',
+    'SNACK': 'Snacks & frites',
+    'BOISSON': 'Boissons',
+    'MIXTE': 'Paniers mixtes',
+  };
+
+  static const List<String> _categoryOrder = [
+    'ALL',
+    'SANDWICH',
+    'PLAT_CHAUD',
+    'PIZZA',
+    'VIENNOISERIE',
+    'PATISSERIE',
+    'SALADE',
+    'SNACK',
+    'BOISSON',
+    'MIXTE',
   ];
 
   @override
@@ -127,7 +71,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _loadOffers() async {
     if (Env.useMocks) {
       setState(() {
-        _allOffers = _demoOffers;
+        _allOffers = const [];
         _isLoading = false;
         _loadError = null;
       });
@@ -150,6 +94,100 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  int _unitPriceFor(OfferModel offer, int nowMs) {
+    final isDutch = offer.pricingType == 'DUTCH' || offer.pricingType == Pricing.modeDutchAuction;
+    final computed = Pricing.computeUnitPrice(
+      mode: isDutch ? Pricing.modeDutchAuction : Pricing.modeFixed,
+      discountedPriceMillimes: offer.targetPriceMillimes,
+      startPriceMillimes: offer.startPriceMillimes ?? offer.originalPriceMillimes,
+      floorPriceMillimes: offer.targetPriceMillimes,
+      decayStartMs: offer.pickupStartAt.millisecondsSinceEpoch,
+      pickupEndMs: offer.pickupEndAt.millisecondsSinceEpoch,
+      roundingStepMillimes: offer.stepMillimes,
+      nowMs: nowMs,
+    );
+    if (computed > 0) return computed;
+    if (offer.currentPriceMillimes != null && offer.currentPriceMillimes! > 0) return offer.currentPriceMillimes!;
+    if (offer.targetPriceMillimes > 0) return offer.targetPriceMillimes;
+    return offer.startPriceMillimes ?? offer.originalPriceMillimes;
+  }
+
+  List<({String name, int count})> get _merchantList {
+    final counts = <String, int>{};
+    for (final o in _allOffers) {
+      final name = (o.merchantName ?? '').trim();
+      if (name.isEmpty) continue;
+      counts[name] = (counts[name] ?? 0) + 1;
+    }
+    final list = counts.entries.map((e) => (name: e.key, count: e.value)).toList();
+    list.sort((a, b) {
+      final c = b.count.compareTo(a.count);
+      return c != 0 ? c : a.name.compareTo(b.name);
+    });
+    return list;
+  }
+
+  void _openMerchantPicker() {
+    final merchants = _merchantList;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(color: AppTheme.ink, width: 2),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(color: AppTheme.ink, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text('ÉTABLISSEMENTS', style: AppTheme.display(36)),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.storefront_outlined, color: AppTheme.red),
+                      title: Text('Tous les restaurants (${_allOffers.length})', style: AppTheme.body(16).copyWith(fontWeight: FontWeight.bold)),
+                      trailing: _selectedMerchant == 'ALL' ? const Icon(Icons.check_circle, color: AppTheme.red) : null,
+                      onTap: () {
+                        setState(() => _selectedMerchant = 'ALL');
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                    const Divider(),
+                    for (final m in merchants)
+                      ListTile(
+                        leading: const Icon(Icons.restaurant, color: AppTheme.ink),
+                        title: Text('${m.name} (${m.count})', style: AppTheme.body(15).copyWith(fontWeight: _selectedMerchant == m.name ? FontWeight.bold : FontWeight.w500)),
+                        trailing: _selectedMerchant == m.name ? const Icon(Icons.check_circle, color: AppTheme.red) : null,
+                        onTap: () {
+                          setState(() => _selectedMerchant = m.name);
+                          Navigator.pop(ctx);
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openFilters() {
     showModalBottomSheet(
       context: context,
@@ -157,12 +195,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => FilterBottomSheet(
         selectedCategory: _selectedCategory,
+        selectedMerchant: _selectedMerchant,
+        merchants: _merchantList,
         maxPriceMillimes: _maxPriceMillimes,
         surpriseOnly: _surpriseOnly,
         sortBy: _sortBy,
-        onApply: ({required category, required maxPriceMillimes, required surpriseOnly, required sortBy}) {
+        onApply: ({required category, required merchant, required maxPriceMillimes, required surpriseOnly, required sortBy}) {
           setState(() {
             _selectedCategory = category;
+            _selectedMerchant = merchant;
             _maxPriceMillimes = maxPriceMillimes;
             _surpriseOnly = surpriseOnly;
             _sortBy = sortBy;
@@ -172,25 +213,56 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  List<OfferModel> get _filteredOffers {
+  void _resetAllFilters() {
+    setState(() {
+      _searchController.clear();
+      _selectedCategory = 'ALL';
+      _selectedMerchant = 'ALL';
+      _maxPriceMillimes = kMobileMaxBudgetUnlimited;
+      _surpriseOnly = false;
+      _sortBy = 'distance';
+    });
+  }
+
+  bool _matchesNonCategory(OfferModel offer, int nowMs) {
     final q = _searchController.text.trim().toLowerCase();
-    return _allOffers.where((offer) {
-      if (q.isNotEmpty) {
-        final matchTitle = offer.title.toLowerCase().contains(q);
-        final matchMerchant = (offer.merchantName ?? '').toLowerCase().contains(q);
-        if (!matchTitle && !matchMerchant) return false;
-      }
-      if (_selectedCategory != 'ALL' && offer.category != _selectedCategory) {
-        return false;
-      }
-      if (_surpriseOnly && !offer.isSurpriseBasket) {
-        return false;
-      }
-      if (offer.targetPriceMillimes > _maxPriceMillimes) {
-        return false;
-      }
-      return true;
+    if (q.isNotEmpty) {
+      final matchTitle = offer.title.toLowerCase().contains(q);
+      final matchMerchant = (offer.merchantName ?? '').toLowerCase().contains(q);
+      final matchDesc = offer.description.toLowerCase().contains(q);
+      if (!matchTitle && !matchMerchant && !matchDesc) return false;
+    }
+    if (_selectedMerchant != 'ALL' && (offer.merchantName ?? '').toLowerCase() != _selectedMerchant.toLowerCase()) {
+      return false;
+    }
+    if (_surpriseOnly && !offer.isSurpriseBasket) {
+      return false;
+    }
+    if (_maxPriceMillimes < kMobileMaxBudgetUnlimited) {
+      if (_unitPriceFor(offer, nowMs) > _maxPriceMillimes) return false;
+    }
+    return true;
+  }
+
+  List<OfferModel> get _filteredOffers {
+    final nowMs = ServerClock.serverNowMs;
+    final list = _allOffers.where((offer) {
+      if (_selectedCategory != 'ALL' && offer.category != _selectedCategory) return false;
+      return _matchesNonCategory(offer, nowMs);
     }).toList();
+
+    list.sort((a, b) {
+      switch (_sortBy) {
+        case 'price':
+          return _unitPriceFor(a, nowMs).compareTo(_unitPriceFor(b, nowMs));
+        case 'ending':
+          return a.pickupEndAt.millisecondsSinceEpoch.compareTo(b.pickupEndAt.millisecondsSinceEpoch);
+        case 'distance':
+        default:
+          return (a.distanceFromEssectM ?? 999999).compareTo(b.distanceFromEssectM ?? 999999);
+      }
+    });
+    return list;
   }
 
   @override
@@ -198,17 +270,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _searchController.dispose();
     super.dispose();
   }
-
-  static const Map<String, String> _categoryLabels = {
-    'ALL': 'Tout',
-    'SANDWICH': 'Sandwichs',
-    'PATISSERIE': 'Pâtisseries',
-    'BOULANGERIE': 'Boulangerie',
-    'PLAT_CHAUD': 'Plats chauds',
-    'MIXTE': 'Paniers mixtes',
-    'DESSERT': 'Desserts',
-    'BOISSON': 'Boissons',
-  };
 
   String _labelOf(String category) {
     final known = _categoryLabels[category];
@@ -219,25 +280,47 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nowMs = ServerClock.serverNowMs;
     final offers = _filteredOffers;
-    final categories = <String>['ALL', ...{..._allOffers.map((o) => o.category)}];
-    final activeFilters = (_selectedCategory != 'ALL' ? 1 : 0) + (_surpriseOnly ? 1 : 0) + (_maxPriceMillimes < 15000 ? 1 : 0);
+    final merchants = _merchantList;
+
+    // Compteurs de catégories dynamiques selon les autres filtres (même logique que Web BrowsePage)
+    final catCounts = <String, int>{};
+    int totalMatchedByNonCat = 0;
+    for (final o in _allOffers) {
+      if (_matchesNonCategory(o, nowMs)) {
+        totalMatchedByNonCat++;
+        catCounts[o.category] = (catCounts[o.category] ?? 0) + 1;
+      }
+    }
+
+    final categories = <String>[
+      'ALL',
+      ..._categoryOrder.where((c) => c != 'ALL' && ((catCounts[c] ?? 0) > 0 || _selectedCategory == c)),
+      ...catCounts.keys.where((c) => !_categoryOrder.contains(c)),
+    ];
+
+    final activeFilters = (_selectedCategory != 'ALL' ? 1 : 0) +
+        (_selectedMerchant != 'ALL' ? 1 : 0) +
+        (_surpriseOnly ? 1 : 0) +
+        (_maxPriceMillimes < kMobileMaxBudgetUnlimited ? 1 : 0) +
+        (_sortBy != 'distance' ? 1 : 0);
 
     return GPage(
       onRefresh: _loadOffers,
       header: const GPageHeader(eyebrow: 'Autour de l\'ESSECT · Montfleury', title: 'Offres du moment', titleSize: 58),
       children: [
-        // Recherche + filtres
+        // Recherche + bouton tiroir filtres
         Row(
           children: [
             Expanded(
               child: TextField(
                 controller: _searchController,
-                onChanged: (val) => setState(() {}),
+                onChanged: (_) => setState(() {}),
                 style: AppTheme.body(16),
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Un plat, un sandwich, un commerce…',
+                  hintText: 'Plat, sandwich, restaurant…',
                   prefixIcon: const Icon(Icons.search, color: AppTheme.ink),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -261,9 +344,53 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
 
-        // Catégories
+        // Sélecteur d'établissement (parité exacte avec Web)
+        if (merchants.isNotEmpty)
+          InkWell(
+            onTap: _openMerchantPicker,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: _selectedMerchant != 'ALL' ? const Color(0xFFFFF5F5) : AppTheme.paper,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: _selectedMerchant != 'ALL' ? AppTheme.red : AppTheme.ink,
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.storefront_outlined,
+                    size: 20,
+                    color: _selectedMerchant != 'ALL' ? AppTheme.red : AppTheme.muted,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedMerchant == 'ALL'
+                          ? 'Tous les restaurants (${_allOffers.length})'
+                          : _selectedMerchant,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.body(15, _selectedMerchant != 'ALL' ? AppTheme.red : AppTheme.ink)
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    color: _selectedMerchant != 'ALL' ? AppTheme.red : AppTheme.ink,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+
+        // Catégories avec décompte dynamique
         if (categories.length > 1)
           SizedBox(
             height: 44,
@@ -273,10 +400,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
               separatorBuilder: (context, index) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final c = categories[index];
-                return GChip(_labelOf(c), selected: _selectedCategory == c, onTap: () => setState(() => _selectedCategory = c));
+                final count = c == 'ALL' ? totalMatchedByNonCat : (catCounts[c] ?? 0);
+                final label = count > 0 ? '${_labelOf(c)} ($count)' : _labelOf(c);
+                return GChip(
+                  label,
+                  selected: _selectedCategory == c,
+                  onTap: () => setState(() => _selectedCategory = _selectedCategory == c && c != 'ALL' ? 'ALL' : c),
+                );
               },
             ),
           ),
+
+        // Rappel des filtres actifs + suppression en 1 clic
+        if (activeFilters > 0) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (_selectedMerchant != 'ALL')
+                GChip('🏪 $_selectedMerchant ×', selected: true, onTap: () => setState(() => _selectedMerchant = 'ALL')),
+              if (_selectedCategory != 'ALL')
+                GChip('${_labelOf(_selectedCategory)} ×', selected: true, onTap: () => setState(() => _selectedCategory = 'ALL')),
+              if (_maxPriceMillimes < kMobileMaxBudgetUnlimited)
+                GChip('≤ ${Money.formatTND(_maxPriceMillimes)} ×', selected: true, onTap: () => setState(() => _maxPriceMillimes = kMobileMaxBudgetUnlimited)),
+              if (_surpriseOnly)
+                GChip('✨ Mystères ×', selected: true, onTap: () => setState(() => _surpriseOnly = false)),
+              GChip('Effacer tout', selected: false, onTap: _resetAllFilters),
+            ],
+          ),
+        ],
         const SizedBox(height: 18),
 
         GSectionTitle(offers.length == 1 ? '1 offre en ligne' : '${offers.length} offres en ligne'),
@@ -289,17 +442,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             icon: _loadError != null ? Icons.cloud_off : Icons.search_off,
             title: _loadError != null ? 'Connexion impossible' : 'Rien pour le moment',
             message: _loadError ?? 'Aucune offre ne correspond à votre recherche. Essayez d\'élargir les filtres.',
-            actionLabel: _loadError != null ? 'Réessayer' : (activeFilters > 0 ? 'Effacer les filtres' : null),
+            actionLabel: _loadError != null ? 'Réessayer' : (activeFilters > 0 || _searchController.text.isNotEmpty ? 'Effacer les filtres' : null),
             onAction: _loadError != null
                 ? () {
                     setState(() => _isLoading = true);
                     _loadOffers();
                   }
-                : () => setState(() {
-                      _selectedCategory = 'ALL';
-                      _maxPriceMillimes = 15000;
-                      _surpriseOnly = false;
-                    }),
+                : _resetAllFilters,
           )
         else
           for (var index = 0; index < offers.length; index++) ...[

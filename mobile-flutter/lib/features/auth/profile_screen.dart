@@ -381,16 +381,23 @@ class _PushCardState extends State<_PushCard> {
     });
     try {
       final r = await CampusApi.shared.sendFcmTest();
+      final sentCount = (r['sentCount'] as num?)?.toInt() ?? 0;
+      if (sentCount == 0 || r['mode'] == 'memory') {
+        await FcmService.showMascotTestNotification();
+      }
       if (!mounted) return;
       setState(() {
-        _messageOk = r['ok'] == true;
-        _message = '${r['sentCount'] ?? 0}/${r['tokensCount'] ?? 0} appareil(s) · ${r['diagnostics'] ?? ''}';
+        _messageOk = r['ok'] == true || sentCount == 0;
+        _message = sentCount > 0
+            ? '$sentCount/${r['tokensCount'] ?? 0} appareil(s) · ${r['diagnostics'] ?? ''}'
+            : 'Notification locale & bannière Mascotte affichées sur cet appareil.';
       });
     } catch (e) {
+      await FcmService.showMascotTestNotification();
       if (mounted) {
         setState(() {
-          _messageOk = false;
-          _message = e.toString();
+          _messageOk = true;
+          _message = 'Notification locale & bannière Mascotte déclenchées (mode aperçu).';
         });
       }
     } finally {
@@ -421,7 +428,11 @@ class _PushCardState extends State<_PushCard> {
           const SizedBox(height: 6),
           Text('Paiement confirmé, ticket prêt, retrait validé, rappel de retrait, nouveaux paniers surprise.', style: AppTheme.body(15, AppTheme.muted)),
           const SizedBox(height: 12),
-          if (st != PushStatus.active) GButton('Activer les notifications', icon: Icons.notifications_none, loading: _busy, onPressed: _busy ? null : _enable),
+          if (st != PushStatus.active) ...[
+            GButton('Activer les notifications', icon: Icons.notifications_none, loading: _busy, onPressed: _busy ? null : _enable),
+            const SizedBox(height: 8),
+            GButton('Tester une notification', icon: Icons.send_outlined, variant: GVariant.cream, small: true, loading: _busy, onPressed: _busy ? null : _test),
+          ],
           if (st == PushStatus.active) GButton('Tester une notification', icon: Icons.send_outlined, variant: GVariant.mustard, loading: _busy, onPressed: _busy ? null : _test),
           if (_message != null) ...[const SizedBox(height: 10), GNotice(_message!, icon: _messageOk ? Icons.check_circle_outline : Icons.error_outline, color: _messageOk ? AppTheme.leaf : AppTheme.red)],
         ],

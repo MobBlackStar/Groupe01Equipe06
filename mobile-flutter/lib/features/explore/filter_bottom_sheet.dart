@@ -1,5 +1,5 @@
 // 💡 Concept & Analogie : Comme le tiroir de rangement ergonomique qui glisse depuis le bas de l'écran tactile, ce volet permet d'ajuster finement les critères de recherche sans quitter la vue des résultats.
-// 🔄 Comparaison React / Flutter : En Flutter, il s'ouvre via `showModalBottomSheet` avec un `StatefulBuilder` pour mettre à jour les curseurs en direct ; en React, il correspond à `FilterPanel.jsx`.
+// 🔄 Comparaison React / Flutter : En Flutter, il s'ouvre via `showModalBottomSheet` ; en React, il correspond à `FilterPanel.jsx`.
 // 🎯 À retenir pour la soutenance : "Une expérience mobile fluide grâce à une feuille de filtres modale optimisée pour l'usage à une main sur smartphone."
 
 import 'package:flutter/material.dart';
@@ -7,13 +7,18 @@ import '../../app/theme.dart';
 import '../../core/domain/money.dart';
 import '../../widgets/griddle.dart';
 
+const int kMobileMaxBudgetUnlimited = 20000;
+
 class FilterBottomSheet extends StatefulWidget {
   final String selectedCategory;
+  final String selectedMerchant;
+  final List<({String name, int count})> merchants;
   final int maxPriceMillimes;
   final bool surpriseOnly;
   final String sortBy;
   final Function({
     required String category,
+    required String merchant,
     required int maxPriceMillimes,
     required bool surpriseOnly,
     required String sortBy,
@@ -22,6 +27,8 @@ class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({
     super.key,
     required this.selectedCategory,
+    this.selectedMerchant = 'ALL',
+    this.merchants = const [],
     required this.maxPriceMillimes,
     required this.surpriseOnly,
     required this.sortBy,
@@ -34,37 +41,47 @@ class FilterBottomSheet extends StatefulWidget {
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late String _category;
+  late String _merchant;
   late double _maxPrice;
   late bool _surpriseOnly;
   late String _sortBy;
 
-  final List<Map<String, String>> _categories = [
-    {'id': 'ALL', 'label': 'Tous', 'icon': '🍽️'},
-    {'id': 'SANDWICH', 'label': 'Sandwiches', 'icon': '🥪'},
-    {'id': 'PLAT_CHAUD', 'label': 'Plats Chauds', 'icon': '🍲'},
-    {'id': 'PIZZA', 'label': 'Pizzas', 'icon': '🍕'},
-    {'id': 'VIENNOISERIE', 'label': 'Viennoiseries', 'icon': '🥐'},
-    {'id': 'PATISSERIE', 'label': 'Pâtisseries', 'icon': '🧁'},
-    {'id': 'SALADE', 'label': 'Salades', 'icon': '🥗'},
-    {'id': 'MIXTE', 'label': 'Paniers Mixtes', 'icon': '🎁'},
+  static const List<Map<String, String>> _categories = [
+    {'id': 'ALL', 'label': 'Toutes catégories'},
+    {'id': 'SANDWICH', 'label': 'Sandwichs'},
+    {'id': 'PLAT_CHAUD', 'label': 'Plats chauds'},
+    {'id': 'PIZZA', 'label': 'Pizzas'},
+    {'id': 'VIENNOISERIE', 'label': 'Viennoiseries'},
+    {'id': 'PATISSERIE', 'label': 'Pâtisseries'},
+    {'id': 'SALADE', 'label': 'Salades'},
+    {'id': 'SNACK', 'label': 'Snacks & frites'},
+    {'id': 'BOISSON', 'label': 'Boissons'},
+    {'id': 'MIXTE', 'label': 'Paniers mixtes'},
   ];
 
   @override
   void initState() {
     super.initState();
     _category = widget.selectedCategory;
-    _maxPrice = widget.maxPriceMillimes.toDouble();
+    _merchant = widget.selectedMerchant;
+    _maxPrice = widget.maxPriceMillimes.clamp(1000, kMobileMaxBudgetUnlimited).toDouble();
     _surpriseOnly = widget.surpriseOnly;
     _sortBy = widget.sortBy;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isUnlimited = _maxPrice.toInt() >= kMobileMaxBudgetUnlimited;
+
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.cream,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(top: BorderSide(color: AppTheme.ink, width: 2), left: BorderSide(color: AppTheme.ink, width: 2), right: BorderSide(color: AppTheme.ink, width: 2)),
+        border: Border(
+          top: BorderSide(color: AppTheme.ink, width: 2),
+          left: BorderSide(color: AppTheme.ink, width: 2),
+          right: BorderSide(color: AppTheme.ink, width: 2),
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       child: SafeArea(
@@ -92,7 +109,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     onPressed: () {
                       setState(() {
                         _category = 'ALL';
-                        _maxPrice = 15000;
+                        _merchant = 'ALL';
+                        _maxPrice = kMobileMaxBudgetUnlimited.toDouble();
                         _surpriseOnly = false;
                         _sortBy = 'distance';
                       });
@@ -101,6 +119,25 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 ],
               ),
               const SizedBox(height: 18),
+
+              if (widget.merchants.isNotEmpty) ...[
+                Text('ÉTABLISSEMENT', style: AppTheme.label()),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    GChip('Tous', selected: _merchant == 'ALL', onTap: () => setState(() => _merchant = 'ALL')),
+                    for (final m in widget.merchants)
+                      GChip(
+                        '${m.name} (${m.count})',
+                        selected: _merchant == m.name,
+                        onTap: () => setState(() => _merchant = _merchant == m.name ? 'ALL' : m.name),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+              ],
 
               Text('CATÉGORIE', style: AppTheme.label()),
               const SizedBox(height: 10),
@@ -116,13 +153,16 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               Row(
                 children: [
                   Expanded(child: Text('BUDGET MAXIMUM', style: AppTheme.label())),
-                  Text(Money.formatTND(_maxPrice.toInt()), style: AppTheme.figure(34, AppTheme.red)),
+                  Text(
+                    isUnlimited ? 'Tout budget' : Money.formatTND(_maxPrice.toInt()),
+                    style: AppTheme.figure(34, isUnlimited ? AppTheme.ink : AppTheme.red),
+                  ),
                 ],
               ),
               Slider(
                 value: _maxPrice,
                 min: 1000,
-                max: 20000,
+                max: kMobileMaxBudgetUnlimited.toDouble(),
                 divisions: 19,
                 activeColor: AppTheme.red,
                 inactiveColor: AppTheme.sand,
@@ -161,6 +201,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 onPressed: () {
                   widget.onApply(
                     category: _category,
+                    merchant: _merchant,
                     maxPriceMillimes: _maxPrice.toInt(),
                     surpriseOnly: _surpriseOnly,
                     sortBy: _sortBy,

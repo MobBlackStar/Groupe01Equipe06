@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'app/app.dart';
 import 'app/router.dart';
@@ -20,12 +21,13 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint('⚠️ Initialisation Firebase ignorée / mode démo local : $e');
   }
 
   FcmService.navigatorKey = AppRouter.rootNavigatorKey;
-  FcmService.initialize(); // écouteurs de notifications (sans bloquer le démarrage)
+  await FcmService.initialize(); // écouteurs de notifications système + bannière mascotte
 
   runApp(
     MultiProvider(
