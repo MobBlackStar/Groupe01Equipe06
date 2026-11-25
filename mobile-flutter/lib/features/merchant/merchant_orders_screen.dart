@@ -125,7 +125,16 @@ class _OrderTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(order.offerTitle.toUpperCase(), style: AppTheme.h3(20)),
+          Text(order.summaryTitle.toUpperCase(), style: AppTheme.h3(20)),
+          if (order.normalizedItems.length > 1) ...[
+            const SizedBox(height: 4),
+            Text(
+              order.normalizedItems.map((l) => '${l.quantity}x ${l.title}').join(' · '),
+              style: AppTheme.body(13, AppTheme.muted),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
           const SizedBox(height: 2),
           Row(children: [
             const Icon(Icons.person_outline, size: 18, color: AppTheme.red),
@@ -136,7 +145,7 @@ class _OrderTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Expanded(child: Text('${order.quantity} portion${order.quantity > 1 ? 's' : ''}', style: AppTheme.body(15, AppTheme.muted))),
+              Expanded(child: Text('${order.totalQuantity} portion${order.totalQuantity > 1 ? 's' : ''}', style: AppTheme.body(15, AppTheme.muted))),
               Text(Money.formatTND(order.totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
             ],
           ),

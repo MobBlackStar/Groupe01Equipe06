@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 import '../../core/crypto/ticket_crypto.dart';
+import '../../core/models/order_model.dart';
 import '../../core/time/server_clock.dart';
 import 'halftone_mascot_qr.dart';
 
@@ -86,6 +87,7 @@ class BoardingPass extends StatefulWidget {
   final String offerTitle;
   final String merchantName;
   final int quantity;
+  final List<OrderLine> items;
   /// Clé HMAC réelle renvoyée par `GET /orders/:id/ticket` (jamais de valeur par défaut : un QR factice ne validerait pas).
   final String ticketKeyHex;
 
@@ -96,6 +98,7 @@ class BoardingPass extends StatefulWidget {
     required this.offerTitle,
     required this.merchantName,
     this.quantity = 1,
+    this.items = const [],
     required this.ticketKeyHex,
   });
 
@@ -257,7 +260,12 @@ class _BoardingPassState extends State<BoardingPass> {
                   const SizedBox(height: 6),
                   _buildReceiptRow('CAMPUS', 'ESSECT TUNIS (MONTFLEURY)'),
                   const SizedBox(height: 6),
-                  _buildReceiptRow('ARTICLE', '${widget.quantity}x ${widget.offerTitle}'),
+                  _buildReceiptRow(
+                    widget.items.length > 1 ? 'ARTICLES' : 'ARTICLE',
+                    widget.items.length > 1
+                        ? widget.items.map((l) => '${l.quantity}x ${l.title}').join(' • ')
+                        : '${widget.quantity}x ${widget.offerTitle}',
+                  ),
                   const SizedBox(height: 6),
                   _buildReceiptRow('STATUT', 'PAYÉ & RÉSERVÉ'),
                   const SizedBox(height: 10),

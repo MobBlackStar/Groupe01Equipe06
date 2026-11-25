@@ -25,6 +25,8 @@ import '../features/merchant/merchant_store_screen.dart';
 import 'theme.dart';
 import 'package:provider/provider.dart';
 import '../features/auth/profile_screen.dart';
+import '../features/orders/bag_sheet.dart';
+import '../services/bag_service.dart';
 import '../widgets/griddle.dart';
 class AppRouter {
   static final AuthService authService = AuthService();
@@ -160,6 +162,7 @@ class _StudentShellState extends State<StudentShell> {
   @override
   Widget build(BuildContext context) {
     final points = context.watch<AuthService>().profile?.ecoPoints;
+    final bagCount = context.watch<BagService>().totalCount;
     return Scaffold(
       backgroundColor: AppTheme.cream,
       body: SafeArea(
@@ -168,6 +171,8 @@ class _StudentShellState extends State<StudentShell> {
           children: [
             GTopBar(
               points: points,
+              bagCount: bagCount,
+              onBag: () => showBagSheet(context),
               onProfile: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
             ),
             Expanded(child: IndexedStack(index: _currentIndex, children: _pages)),

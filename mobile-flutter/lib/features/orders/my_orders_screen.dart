@@ -211,7 +211,16 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(order.offerTitle.toUpperCase(), style: AppTheme.h3(20), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(order.summaryTitle.toUpperCase(), style: AppTheme.h3(20), maxLines: 2, overflow: TextOverflow.ellipsis),
+          if (order.normalizedItems.length > 1) ...[
+            const SizedBox(height: 4),
+            Text(
+              order.normalizedItems.map((l) => '${l.quantity}x ${l.title}').join(' · '),
+              style: AppTheme.body(13, AppTheme.muted),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
           Row(children: [
             const Icon(Icons.storefront_outlined, size: 17, color: AppTheme.red),
             const SizedBox(width: 6),
@@ -221,7 +230,7 @@ class _OrderCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Expanded(child: Text('${order.quantity} portion${order.quantity > 1 ? 's' : ''}', style: AppTheme.body(15, AppTheme.muted))),
+              Expanded(child: Text('${order.totalQuantity} portion${order.totalQuantity > 1 ? 's' : ''}', style: AppTheme.body(15, AppTheme.muted))),
               Text(Money.formatTND(order.totalMillimes), style: AppTheme.figure(34, AppTheme.red)),
             ],
           ),

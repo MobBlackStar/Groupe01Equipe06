@@ -17,6 +17,48 @@ DateTime? parseApiDate(dynamic value) {
   return null;
 }
 
+class OrderLine {
+  final String offerId;
+  final String title;
+  final int quantity;
+  final int unitPriceMillimes;
+  final int originalUnitPriceMillimes;
+  final int lineSubtotalMillimes;
+  final String? photoUrl;
+  final bool isSurpriseBasket;
+  final String? rarity;
+
+  const OrderLine({
+    required this.offerId,
+    required this.title,
+    required this.quantity,
+    required this.unitPriceMillimes,
+    required this.originalUnitPriceMillimes,
+    required this.lineSubtotalMillimes,
+    this.photoUrl,
+    this.isSurpriseBasket = false,
+    this.rarity,
+  });
+
+  factory OrderLine.fromApi(Map<String, dynamic> json) {
+    final qty = (json['quantity'] as num?)?.toInt() ?? 1;
+    final unit = (json['unitPriceMillimes'] as num?)?.toInt() ?? 0;
+    final original = (json['originalUnitPriceMillimes'] as num?)?.toInt() ?? unit;
+    final lineSubtotal = (json['lineSubtotalMillimes'] as num?)?.toInt() ?? (unit * qty);
+    return OrderLine(
+      offerId: (json['offerId'] ?? '').toString(),
+      title: (json['title'] ?? 'Article').toString(),
+      quantity: qty,
+      unitPriceMillimes: unit,
+      originalUnitPriceMillimes: original,
+      lineSubtotalMillimes: lineSubtotal,
+      photoUrl: json['photoUrl']?.toString(),
+      isSurpriseBasket: json['isSurpriseBasket'] == true,
+      rarity: json['rarity']?.toString(),
+    );
+  }
+}
+
 class OrderModel {
   final String id;
   final String orderCode;
@@ -38,6 +80,7 @@ class OrderModel {
   final List<Map<String, dynamic>> revealItems; // contenu du panier surprise révélé au retrait : [{name, quantity}]
   final String? revealNote;
   final int? pointsAwarded;
+  final List<OrderLine> items;
 
   const OrderModel({
     required this.id,
@@ -60,10 +103,43 @@ class OrderModel {
     this.revealItems = const [],
     this.revealNote,
     this.pointsAwarded,
+    this.items = const [],
   });
 
   bool get isReserved => status == 'RESERVED';
   bool get isPaid => status == 'PAID';
+
+  /// Lignes normalisées : garantit au moins une ligne même pour une commande mono-article historique.
+  List<OrderLine> get normalizedItems {
+    if (items.isNotEmpty) return items;
+    if (offerTitle.isEmpty && quantity <= 0) return const [];
+    return [
+      OrderLine(
+        offerId: '',
+        title: offerTitle.isNotEmpty ? offerTitle : 'Article',
+        quantity: quantity > 0 ? quantity : 1,
+        unitPriceMillimes: lockedUnitPriceMillimes,
+        originalUnitPriceMillimes: lockedUnitPriceMillimes,
+        lineSubtotalMillimes: subtotalMillimes > 0 ? subtotalMillimes : (lockedUnitPriceMillimes * (quantity > 0 ? quantity : 1)),
+        isSurpriseBasket: isSurpriseBasket,
+        rarity: rarity,
+      ),
+    ];
+  }
+
+  String get summaryTitle {
+    final lines = normalizedItems;
+    if (lines.length <= 1) {
+      return offerTitle.isNotEmpty ? offerTitle : (lines.isNotEmpty ? lines.first.title : 'Commande');
+    }
+    final extra = lines.length - 1;
+    return '${lines.first.title} + $extra autre${extra > 1 ? 's' : ''}';
+  }
+
+  int get totalQuantity {
+    if (quantity > 0) return quantity;
+    return normalizedItems.fold(0, (sum, line) => sum + line.quantity);
+  }
 
   /// Parse un document commande ; accepte `orderId` (création) comme `id` (listes).
   factory OrderModel.fromApi(Map<String, dynamic> json) {
@@ -84,18 +160,39 @@ class OrderModel {
         else if (it != null)
           {'name': it.toString(), 'quantity': 1},
     ];
-    final quantity = millimes(json['quantity']);
-    final unit = millimes(pricing['lockedUnitPriceMillimes']);
-    final subtotal = pricing['subtotalMillimes'] != null ? millimes(pricing['subtotalMillimes']) : unit * quantity;
+    final rawItems = json['items'] as List? ?? const [];
+    final parsedItems = <OrderLine>[
+      for (final raw in rawItems)
+        if (raw is Map) OrderLine.fromApi(Map<String, dynamic>.from(raw)),
+    ];
+    final itemsQty = parsedItems.fold<int>(0, (sum, line) => sum + line.quantity);
+    final rawQty = millimes(json['quantity']);
+    final quantity = rawQty > 0 ? rawQty : itemsQty;
+    final unit = pricing['lockedUnitPriceMillimes'] != null
+        ? millimes(pricing['lockedUnitPriceMillimes'])
+        : (parsedItems.isNotEmpty ? parsedItems.first.unitPriceMillimes : 0);
+    final subtotal = pricing['subtotalMillimes'] != null
+        ? millimes(pricing['subtotalMillimes'])
+        : (parsedItems.isNotEmpty ? parsedItems.fold<int>(0, (sum, l) => sum + l.lineSubtotalMillimes) : unit * quantity);
     final discount = millimes(reward['discountMillimes']);
     final total = pricing['totalMillimes'] != null ? millimes(pricing['totalMillimes']) : (subtotal - discount);
+    final snapshotTitle = (offer['title'] ?? '').toString();
+    final resolvedTitle = snapshotTitle.isNotEmpty
+        ? snapshotTitle
+        : (parsedItems.isEmpty
+            ? ''
+            : parsedItems.length == 1
+                ? parsedItems.first.title
+                : '${parsedItems.first.title} + ${parsedItems.length - 1} autre${parsedItems.length - 1 > 1 ? 's' : ''}');
+    final hasSurprise = offer['isSurpriseBasket'] == true || parsedItems.any((line) => line.isSurpriseBasket);
+    final resolvedRarity = offer['rarity']?.toString() ?? parsedItems.where((l) => l.rarity != null).map((l) => l.rarity).firstOrNull;
 
     return OrderModel(
       id: (json['orderId'] ?? json['id'] ?? '').toString(),
       orderCode: (json['orderCode'] ?? '').toString(),
       status: (json['status'] ?? '').toString(),
       quantity: quantity,
-      offerTitle: (offer['title'] ?? '').toString(),
+      offerTitle: resolvedTitle,
       merchantName: (merchant['name'] ?? '').toString(),
       pickupStartAt: parseApiDate(offer['pickupStartAt']),
       pickupEndAt: parseApiDate(offer['pickupEndAt']),
@@ -105,12 +202,13 @@ class OrderModel {
       discountMillimes: discount,
       totalMillimes: total,
       createdAt: parseApiDate(json['createdAt']),
-      isSurpriseBasket: offer['isSurpriseBasket'] == true,
-      rarity: offer['rarity']?.toString(),
+      isSurpriseBasket: hasSurprise,
+      rarity: resolvedRarity,
       ratingStars: (rating['stars'] as num?)?.toInt(),
       revealItems: revealItems,
       revealNote: reveal['note']?.toString(),
       pointsAwarded: (rewardsDoc['pointsAwarded'] as num?)?.toInt(),
+      items: parsedItems,
     );
   }
 }

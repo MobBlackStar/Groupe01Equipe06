@@ -75,13 +75,23 @@ class CampusApi {
 
   // --- Commandes ----------------------------------------------------------
 
-  /// `POST /orders` : le serveur fige le prix et applique le coupon (`rewardId`) ; aucun calcul côté client.
-  Future<OrderModel> createOrder({required String offerId, required int quantity, String? rewardId}) async {
-    final data = await _call(() => _dio.post(Endpoints.orders, data: {
-          'offerId': offerId,
-          'quantity': quantity,
-          if (rewardId != null) 'rewardId': rewardId,
-        }));
+  /// `POST /orders` : accepte soit un sac multi-articles (`items`) d'un seul commerce, soit `{ offerId, quantity }`.
+  Future<OrderModel> createOrder({
+    String? offerId,
+    int? quantity,
+    List<Map<String, dynamic>>? items,
+    String? rewardId,
+  }) async {
+    final payload = <String, dynamic>{
+      if (items != null && items.isNotEmpty)
+        'items': items
+      else ...{
+        'offerId': offerId,
+        'quantity': quantity ?? 1,
+      },
+      if (rewardId != null) 'rewardId': rewardId,
+    };
+    final data = await _call(() => _dio.post(Endpoints.orders, data: payload));
     return OrderModel.fromApi(Map<String, dynamic>.from(data['order'] as Map));
   }
 

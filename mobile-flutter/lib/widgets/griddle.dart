@@ -515,8 +515,16 @@ class _GTickerState extends State<GTicker> with SingleTickerProviderStateMixin {
 class GTopBar extends StatelessWidget {
   final int? points;
   final VoidCallback? onProfile;
+  final int bagCount;
+  final VoidCallback? onBag;
 
-  const GTopBar({super.key, this.points, this.onProfile});
+  const GTopBar({
+    super.key,
+    this.points,
+    this.onProfile,
+    this.bagCount = 0,
+    this.onBag,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -528,15 +536,43 @@ class GTopBar extends StatelessWidget {
         children: [
           Image.asset('assets/brand/mascot-sticker.png', height: 38, filterQuality: FilterQuality.medium, errorBuilder: (_, __, ___) => const SizedBox(width: 38)),
           const SizedBox(width: 8),
-          Text('CAMPUSSAVE', style: AppTheme.display(34, AppTheme.red)),
-          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'CAMPUSSAVE',
+              style: AppTheme.display(32, AppTheme.red),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('essect', style: const TextStyle(fontFamily: AppTheme.fontSticker, fontSize: 15, color: AppTheme.ink)),
+            child: Text('essect', style: const TextStyle(fontFamily: AppTheme.fontSticker, fontSize: 14, color: AppTheme.ink)),
           ),
           const Spacer(),
+          if (onBag != null) ...[
+            InkWell(
+              onTap: onBag,
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: AppTheme.pill(color: bagCount > 0 ? AppTheme.red : AppTheme.cream),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.shopping_bag_outlined, size: 15, color: bagCount > 0 ? AppTheme.cream : AppTheme.ink),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$bagCount',
+                      style: AppTheme.label(bagCount > 0 ? AppTheme.cream : AppTheme.ink).copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
           if (points != null) GPill('$points PTS', color: AppTheme.mustard),
-          if (onProfile != null) ...[const SizedBox(width: 8), GIconButton(icon: Icons.person_outline, onPressed: onProfile, tooltip: 'Mon profil')],
+          if (onProfile != null) ...[const SizedBox(width: 6), GIconButton(icon: Icons.person_outline, onPressed: onProfile, tooltip: 'Mon profil')],
         ],
       ),
     );

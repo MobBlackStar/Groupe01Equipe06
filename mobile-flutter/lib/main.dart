@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'app/app.dart';
 import 'app/router.dart';
 import 'services/auth_service.dart';
+import 'services/bag_service.dart';
 import 'services/fcm_service.dart';
 
 void main() async {
@@ -32,6 +33,7 @@ void main() async {
       providers: [
         // Une seule instance : celle du routeur (connexion, déconnexion, redirections) ; le profil et les points la lisent aussi.
         ChangeNotifierProvider<AuthService>.value(value: AppRouter.authService),
+        ChangeNotifierProvider<BagService>(create: (_) => BagService()),
       ],
       child: const CampusSaveApp(),
     ),

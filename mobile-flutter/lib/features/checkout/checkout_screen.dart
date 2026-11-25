@@ -177,7 +177,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(_order.offerTitle.toUpperCase(), style: AppTheme.h3(22)),
+                  Text(_order.summaryTitle.toUpperCase(), style: AppTheme.h3(22)),
                   const SizedBox(height: 2),
                   Row(
                     children: [
@@ -187,9 +187,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                   const _ReceiptRule(),
-                  _ReceiptRow('Quantité', 'x ${_order.quantity}'),
-                  const SizedBox(height: 8),
-                  _ReceiptRow('Prix unitaire verrouillé', Money.formatTND(_order.lockedUnitPriceMillimes)),
+                  if (_order.normalizedItems.length > 1) ...[
+                    for (final line in _order.normalizedItems) ...[
+                      _ReceiptRow('${line.quantity}x ${line.title}', Money.formatTND(line.lineSubtotalMillimes)),
+                      const SizedBox(height: 6),
+                    ],
+                    const SizedBox(height: 2),
+                    _ReceiptRow('Total portions', '${_order.totalQuantity}'),
+                  ] else ...[
+                    _ReceiptRow('Quantité', 'x ${_order.totalQuantity}'),
+                    const SizedBox(height: 8),
+                    _ReceiptRow('Prix unitaire verrouillé', Money.formatTND(_order.lockedUnitPriceMillimes)),
+                  ],
                   if (discount > 0) ...[
                     const SizedBox(height: 8),
                     _ReceiptRow('Avantage fidélité', '-${Money.formatTND(discount)}', color: AppTheme.leaf),

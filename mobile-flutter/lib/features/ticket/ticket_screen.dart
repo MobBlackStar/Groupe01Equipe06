@@ -135,9 +135,10 @@ class _TicketScreenState extends State<TicketScreen> {
               BoardingPass(
                 orderId: order.id,
                 orderCode: ticket.orderCode.isNotEmpty ? ticket.orderCode : order.orderCode,
-                offerTitle: order.offerTitle,
+                offerTitle: order.summaryTitle,
                 merchantName: order.merchantName,
-                quantity: order.quantity,
+                quantity: order.totalQuantity,
+                items: order.normalizedItems,
                 ticketKeyHex: ticket.ticketKeyHex,
               ),
               const SizedBox(height: 24),

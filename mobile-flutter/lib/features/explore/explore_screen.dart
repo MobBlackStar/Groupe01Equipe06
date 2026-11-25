@@ -3,12 +3,15 @@
 // 🎯 À retenir pour la soutenance : "L'écran d'exploration mobile offre une fluidité native avec actualisation au tirage (pull-to-refresh) et synchronisation des prix à la seconde."
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../app/theme.dart';
 import '../../core/config/env.dart';
 import '../../core/models/offer_model.dart';
+import '../../services/bag_service.dart';
 import '../../services/campus_api.dart';
 import '../../widgets/offer_card.dart';
 import '../../widgets/griddle.dart';
+import '../orders/bag_sheet.dart';
 import 'filter_bottom_sheet.dart';
 import 'offer_detail_screen.dart';
 
@@ -126,6 +129,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Future<void> _loadOffers() async {
     if (Env.useMocks) {
+      context.read<BagService>().syncCatalog(_demoOffers);
       setState(() {
         _allOffers = _demoOffers;
         _isLoading = false;
@@ -136,6 +140,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final offers = await CampusApi.shared.fetchOffers();
       if (!mounted) return;
+      context.read<BagService>().syncCatalog(offers);
       setState(() {
         _allOffers = offers;
         _isLoading = false;
@@ -309,6 +314,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               return OfferCard(
                 offer: offer,
                 distanceFromEssectM: dist,
+                onAddToBag: () => addOfferToBagWithPrompt(context, offer),
                 onTap: () {
                   Navigator.push(
                     context,
